@@ -209,6 +209,18 @@ const assigneeTabItems = computed(() => {
   }));
 });
 
+// Simplified tabs for operators - Block 1 requirement
+// Only showing "Dialogs" (me), "Unanswered" (unassigned), "Mentions", and "Categories"
+const simplifiedAssigneeTabItems = computed(() => {
+  const operatorEssentialTabs = ['me', 'unassigned'];
+  const filteredTabs = assigneeTabItems.value.filter(item =>
+    operatorEssentialTabs.includes(item.key)
+  );
+
+  // Add counter for unanswered messages to categories section
+  return filteredTabs;
+});
+
 const showAssigneeInConversationCard = computed(() => {
   return (
     hasAppliedFiltersOrActiveFolders.value ||
@@ -885,9 +897,10 @@ watch(conversationFilters, (newVal, oldVal) => {
       @close="onCloseDeleteFoldersModal"
     />
 
+    <!-- Simplified tabs for operators - only showing essential tabs -->
     <ChatTypeTabs
       v-if="!hasAppliedFiltersOrActiveFolders"
-      :items="assigneeTabItems"
+      :items="simplifiedAssigneeTabItems"
       :active-tab="activeAssigneeTab"
       is-compact
       @chat-tab-change="updateAssigneeTab"

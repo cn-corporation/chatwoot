@@ -8,17 +8,15 @@ import Avatar from 'next/avatar/Avatar.vue';
 import SocialIcons from './SocialIcons.vue';
 import EditContact from './EditContact.vue';
 import ContactMergeModal from 'dashboard/modules/contact/ContactMergeModal.vue';
-import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
-import { BUS_EVENTS } from 'shared/constants/busEvents';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import VoiceCallButton from 'dashboard/components-next/Contacts/VoiceCallButton.vue';
+import MultiselectDropdown from 'shared/components/ui/MultiselectDropdown.vue';
 
 import {
   isAConversationRoute,
   isAInboxViewRoute,
   getConversationDashboardRoute,
 } from '../../../../helper/routeHelpers';
-import { emitter } from 'shared/helpers/mitt';
 
 export default {
   components: {
@@ -26,10 +24,10 @@ export default {
     ContactInfoRow,
     EditContact,
     Avatar,
-    ComposeConversation,
     SocialIcons,
     ContactMergeModal,
     VoiceCallButton,
+    MultiselectDropdown,
   },
   props: {
     contact: {
@@ -56,9 +54,26 @@ export default {
     };
   },
   computed: {
-    ...mapGetters({ uiFlags: 'contacts/getUIFlags' }),
+    ...mapGetters({
+      uiFlags: 'contacts/getUIFlags',
+      agents: 'agents/getAgents',
+      currentChat: 'getSelectedChat',
+    }),
     contactProfileLink() {
       return `/app/accounts/${this.$route.params.accountId}/contacts/${this.contact.id}`;
+    },
+    assignedAgent() {
+      return this.currentChat?.meta?.assignee || null;
+    },
+    agentsList() {
+      return [
+        {
+          id: null,
+          name: this.$t('CONVERSATION.UNASSIGNED'),
+          thumbnail: '',
+        },
+        ...this.agents,
+      ];
     },
     additionalAttributes() {
       return this.contact.additional_attributes || {};
@@ -106,16 +121,19 @@ export default {
     toggleEditModal() {
       this.showEditModal = !this.showEditModal;
     },
-    openComposeConversationModal(toggleFn) {
-      toggleFn();
-      // Flag to prevent triggering drag n drop,
-      // When compose modal is active
-      emitter.emit(BUS_EVENTS.NEW_CONVERSATION_MODAL, true);
-    },
-    closeComposeConversationModal() {
-      // Flag to enable drag n drop,
-      // When compose modal is closed
-      emitter.emit(BUS_EVENTS.NEW_CONVERSATION_MODAL, false);
+    onAssignAgent(agent) {
+      if (!this.currentChat?.id) return;
+
+      const agentId = agent?.id || 0;
+      this.$store.dispatch('setCurrentChatAssignee', agent);
+      this.$store
+        .dispatch('assignAgent', {
+          conversationId: this.currentChat.id,
+          agentId,
+        })
+        .then(() => {
+          useAlert(this.$t('CONVERSATION.CHANGE_AGENT'));
+        });
     },
     toggleDeleteModal() {
       this.showDeleteModal = !this.showDeleteModal;
@@ -178,6 +196,7 @@ export default {
 </script>
 
 <template>
+  <!-- Block 4: Simplified contact info panel for operators -->
   <div class="relative items-center w-full p-4">
     <div class="flex flex-col w-full gap-2 text-left rtl:text-right">
       <div class="flex flex-row justify-between">
@@ -262,24 +281,30 @@ export default {
           />
           <SocialIcons :social-profiles="socialProfiles" />
         </div>
+
+        <!-- Block 4: Agent selector for operators -->
+        <div v-if="currentChat" class="mt-4">
+          <p class="text-xs font-medium text-n-slate-11 mb-2">
+            {{ $t('CONVERSATION_SIDEBAR.ASSIGNEE_LABEL') }}
+          </p>
+          <MultiselectDropdown
+            :options="agentsList"
+            :selected-item="assignedAgent"
+            :multiselector-title="$t('AGENT_MGMT.MULTI_SELECTOR.TITLE.AGENT')"
+            :multiselector-placeholder="
+              $t('AGENT_MGMT.MULTI_SELECTOR.PLACEHOLDER')
+            "
+            :no-search-result="
+              $t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.NO_RESULTS.AGENT')
+            "
+            :input-placeholder="
+              $t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.PLACEHOLDER.AGENT')
+            "
+            @select="onAssignAgent"
+          />
+        </div>
       </div>
       <div class="flex items-center w-full mt-0.5 gap-2">
-        <ComposeConversation
-          :contact-id="String(contact.id)"
-          is-modal
-          @close="closeComposeConversationModal"
-        >
-          <template #trigger="{ toggle }">
-            <NextButton
-              v-tooltip.top-end="$t('CONTACT_PANEL.NEW_MESSAGE')"
-              icon="i-ph-chat-circle-dots"
-              slate
-              faded
-              sm
-              @click="openComposeConversationModal(toggle)"
-            />
-          </template>
-        </ComposeConversation>
         <VoiceCallButton
           :phone="contact.phone_number"
           icon="i-ri-phone-fill"

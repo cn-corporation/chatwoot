@@ -122,10 +122,8 @@ export default {
             label: this.$t('CONVERSATION.PRIORITY.OPTIONS.NONE'),
             key: null,
           },
-          {
-            label: this.$t('CONVERSATION.PRIORITY.OPTIONS.URGENT'),
-            key: 'urgent',
-          },
+          // Block 3: Hide URGENT option from UI but keep constant for compatibility
+          // Only show None, High, Medium, Low in the menu
           {
             label: this.$t('CONVERSATION.PRIORITY.OPTIONS.HIGH'),
             key: 'high',
