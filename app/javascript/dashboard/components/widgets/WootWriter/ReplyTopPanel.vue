@@ -1,13 +1,11 @@
 <script>
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import { REPLY_EDITOR_MODES, CHAR_LENGTH_WARNING } from './constants';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 import EditorModeToggle from './EditorModeToggle.vue';
 
 export default {
   name: 'ReplyTopPanel',
   components: {
-    NextButton,
     EditorModeToggle,
   },
   props: {
@@ -24,7 +22,7 @@ export default {
       default: () => 0,
     },
   },
-  emits: ['setReplyMode', 'togglePopout'],
+  emits: ['setReplyMode'],
   setup(props, { emit }) {
     const setReplyMode = mode => {
       emit('setReplyMode', mode);
@@ -98,11 +96,5 @@ export default {
         </span>
       </div>
     </div>
-    <NextButton
-      ghost
-      class="ltr:rounded-bl-md rtl:rounded-br-md ltr:rounded-br-none rtl:rounded-bl-none ltr:rounded-tl-none rtl:rounded-tr-none text-n-slate-11 ltr:rounded-tr-[11px] rtl:rounded-tl-[11px]"
-      icon="i-lucide-maximize-2"
-      @click="$emit('togglePopout')"
-    />
   </div>
 </template>

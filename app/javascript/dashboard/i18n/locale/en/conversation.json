@@ -122,6 +122,24 @@
         "FAILED": "Couldn't change priority. Please try again."
       }
     },
+    "QUALITY_RATING": {
+      "TITLE": "Rate Service Quality",
+      "SUBTITLE": "How would you rate the operator {agentName}?",
+      "SUBTITLE_NO_AGENT": "How would you rate the service quality?",
+      "RATINGS": {
+        "POOR": "Poor",
+        "FAIR": "Fair",
+        "GOOD": "Good",
+        "VERY_GOOD": "Very Good",
+        "EXCELLENT": "Excellent"
+      },
+      "COMMENT_LABEL": "Comment (optional)",
+      "COMMENT_PLACEHOLDER": "Tell us more about your experience...",
+      "SUBMIT": "Submit Rating",
+      "SKIP": "Skip",
+      "SUCCESS": "Thank you for your rating!",
+      "ERROR": "Error saving rating. Please try again."
+    },
     "DELETE_CONVERSATION": {
       "TITLE": "Delete conversation #{conversationId}",
       "DESCRIPTION": "Are you sure you want to delete this conversation?",
@@ -402,5 +420,23 @@
   },
   "GALLERY_VIEW": {
     "ERROR_DOWNLOADING": "Unable to download attachment. Please try again"
+  },
+  "QUALITY_RATING": {
+    "TITLE": "Rate Service Quality",
+    "QUESTION_WITH_AGENT": "How would you rate the operator {agentName}?",
+    "QUESTION_GENERAL": "How would you rate the service quality?",
+    "COMMENT_LABEL": "Comment (optional)",
+    "COMMENT_PLACEHOLDER": "Tell us more about your experience...",
+    "SKIP_BUTTON": "Skip",
+    "SUBMIT_BUTTON": "Submit Rating",
+    "RATINGS": {
+      "POOR": "Poor",
+      "FAIR": "Fair",
+      "GOOD": "Good",
+      "VERY_GOOD": "Very Good",
+      "EXCELLENT": "Excellent"
+    },
+    "SUCCESS_MESSAGE": "Thank you for your rating!",
+    "ERROR_MESSAGE": "Error saving rating. Please try again."
   }
 }
