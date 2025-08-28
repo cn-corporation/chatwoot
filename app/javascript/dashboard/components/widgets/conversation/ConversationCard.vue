@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { getLastMessage } from 'dashboard/helper/conversationHelper';
@@ -53,6 +53,10 @@ const contextMenu = ref({
   y: null,
 });
 
+// Dynamic priority based on waiting time
+const currentTime = ref(Date.now());
+let intervalId = null;
+
 const currentChat = useMapGetter('getSelectedChat');
 const inboxesList = useMapGetter('inboxes/getInboxes');
 const activeInbox = useMapGetter('getSelectedInbox');
@@ -96,11 +100,58 @@ const showInboxName = computed(() => {
   );
 });
 
+// Calculate waiting time in minutes
+const waitingTime = computed(() => {
+  const lastIncomingMessageAt =
+    props.chat.last_incoming_message_at || props.chat.created_at;
+  if (!lastIncomingMessageAt) return 0;
+
+  const waitingMs = currentTime.value - lastIncomingMessageAt * 1000;
+  return Math.floor(waitingMs / 60000);
+});
+
+// Calculate dynamic priority based on waiting time
+const dynamicPriority = computed(() => {
+  // If priority is manually set, use it
+  if (props.chat.priority) {
+    return props.chat.priority;
+  }
+
+  const minutes = waitingTime.value;
+
+  // Automatically assign priority based on waiting time
+  if (minutes <= 5) {
+    return 'low'; // Low priority (green) - responded quickly
+  }
+  if (minutes <= 10) {
+    return 'medium'; // Medium priority (yellow) - moderate wait
+  }
+  return 'high'; // High priority (red) - long wait
+});
+
+// Format waiting time for display
+const formattedWaitingTime = computed(() => {
+  const minutes = waitingTime.value;
+
+  if (minutes < 1) {
+    return 'сейчас';
+  }
+  if (minutes < 60) {
+    return `${minutes} мин`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (mins === 0) {
+    return `${hours} ч`;
+  }
+  return `${hours} ч ${mins} мин`;
+});
+
 const showMetaSection = computed(() => {
   return (
     showInboxName.value ||
     (props.showAssignee && assignee.value.name) ||
-    props.chat.priority
+    dynamicPriority.value
   );
 });
 
@@ -224,6 +275,19 @@ const deleteConversation = () => {
   emit('deleteConversation', props.chat.id);
   closeContextMenu();
 };
+
+// Update time every minute to recalculate priority
+onMounted(() => {
+  intervalId = setInterval(() => {
+    currentTime.value = Date.now();
+  }, 60000); // Update every minute
+});
+
+onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
+});
 </script>
 
 <template>
@@ -298,7 +362,12 @@ const deleteConversation = () => {
             <fluent-icon icon="person" size="12" class="text-n-slate-11" />
             {{ assignee.name }}
           </span>
-          <PriorityMark :priority="chat.priority" class="flex-shrink-0" />
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <PriorityMark :priority="dynamicPriority" />
+            <span v-if="waitingTime > 0" class="text-xs text-n-slate-10">{{
+              formattedWaitingTime
+            }}</span>
+          </div>
         </div>
       </div>
       <h4
@@ -363,7 +432,7 @@ const deleteConversation = () => {
       <ConversationContextMenu
         :status="chat.status"
         :inbox-id="inbox.id"
-        :priority="chat.priority"
+        :priority="dynamicPriority"
         :chat-id="chat.id"
         :has-unread-messages="hasUnread"
         :conversation-url="conversationPath"
