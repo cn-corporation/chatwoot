@@ -142,18 +142,21 @@ export default {
       );
     },
     showRichContentEditor() {
-      if (this.isOnPrivateNote || this.isRichEditorEnabled) {
-        return true;
-      }
-
-      if (this.isAPIInbox) {
-        const {
-          display_rich_content_editor: displayRichContentEditor = false,
-        } = this.uiSettings;
-        return displayRichContentEditor;
-      }
-
-      return false;
+      // Always show rich content editor for poker operators
+      // This enables markdown formatting for all messages (not just private notes)
+      return true;
+      
+      // Original logic kept for reference:
+      // if (this.isOnPrivateNote || this.isRichEditorEnabled) {
+      //   return true;
+      // }
+      // if (this.isAPIInbox) {
+      //   const {
+      //     display_rich_content_editor: displayRichContentEditor = false,
+      //   } = this.uiSettings;
+      //   return displayRichContentEditor;
+      // }
+      // return false;
     },
     assignedAgent: {
       get() {
