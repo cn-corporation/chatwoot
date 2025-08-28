@@ -7,6 +7,7 @@ import { useEmitter } from 'dashboard/composables/emitter';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 
 import QualityRatingModal from 'dashboard/components/QualityRatingModal.vue';
+import ConversationCloseReasonModal from 'dashboard/components/ConversationCloseReasonModal.vue';
 import wootConstants from 'dashboard/constants/globals';
 import {
   CMD_REOPEN_CONVERSATION,
@@ -21,6 +22,7 @@ const { t } = useI18n();
 
 const isLoading = ref(false);
 const showRatingModal = ref(false);
+const showCloseReasonModal = ref(false);
 const ratingConversationId = ref(null);
 const ratingAgentName = ref('');
 
@@ -64,6 +66,15 @@ const getConversationParams = () => {
 };
 
 const toggleStatus = (status, snoozedUntil) => {
+  // Show close reason modal first when resolving
+  if (status === wootConstants.STATUS_TYPE.RESOLVED) {
+    ratingConversationId.value = currentChat.value.id;
+    ratingAgentName.value = currentChat.value.meta?.assignee?.name || '';
+    showCloseReasonModal.value = true;
+    return;
+  }
+
+  // For other status changes, proceed normally
   isLoading.value = true;
   store
     .dispatch('toggleStatus', {
@@ -74,13 +85,6 @@ const toggleStatus = (status, snoozedUntil) => {
     .then(() => {
       useAlert(t('CONVERSATION.CHANGE_STATUS'));
       isLoading.value = false;
-
-      // Show quality rating modal when conversation is resolved
-      if (status === wootConstants.STATUS_TYPE.RESOLVED) {
-        ratingConversationId.value = currentChat.value.id;
-        ratingAgentName.value = currentChat.value.meta?.assignee?.name || '';
-        showRatingModal.value = true;
-      }
     });
 };
 
@@ -88,6 +92,18 @@ const closeRatingModal = () => {
   showRatingModal.value = false;
   ratingConversationId.value = null;
   ratingAgentName.value = '';
+};
+
+const closeCloseReasonModal = () => {
+  showCloseReasonModal.value = false;
+  ratingConversationId.value = null;
+  ratingAgentName.value = '';
+};
+
+const onCloseReasonSuccess = () => {
+  showCloseReasonModal.value = false;
+  // After close reason is submitted, show quality rating modal
+  showRatingModal.value = true;
 };
 
 const onCmdOpenConversation = () => {
@@ -151,6 +167,14 @@ useEmitter(CMD_RESOLVE_CONVERSATION, onCmdResolveConversation);
       color="slate"
       :is-loading="isLoading"
       @click="onCmdOpenConversation"
+    />
+    <!-- Close Reason Modal -->
+    <ConversationCloseReasonModal
+      v-if="showCloseReasonModal"
+      :show="showCloseReasonModal"
+      :conversation-id="ratingConversationId"
+      @close="closeCloseReasonModal"
+      @success="onCloseReasonSuccess"
     />
     <!-- Quality Rating Modal -->
     <QualityRatingModal

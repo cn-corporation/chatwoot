@@ -421,6 +421,28 @@
   "GALLERY_VIEW": {
     "ERROR_DOWNLOADING": "Unable to download attachment. Please try again"
   },
+  "CLOSE_REASON": {
+    "TITLE": "Select Resolution Status",
+    "RESOLUTION_TYPE": "How was the ticket resolved?",
+    "SUCCESSFUL": "Successfully",
+    "UNSUCCESSFUL": "Unsuccessfully",
+    "SELECT_REASON": "Select reason for unsuccessful resolution:",
+    "NO_REASON": "Without reason",
+    "CLIENT_BLOCK_BOT": "Client blocked bot",
+    "NO_ANSWER": "No answer from client",
+    "BETTER_OFFERS": "More attractive offers from competitors",
+    "NO_DEPOSIT": "We cannot accept deposit",
+    "NO_GAMES": "Lack of preferred game formats",
+    "BAD_REPUTATION": "Negative reviews or bad club reputation",
+    "BAD_UI": "Poor user interface",
+    "CUSTOM": "Other (specify)",
+    "CUSTOM_PLACEHOLDER": "Enter custom reason...",
+    "SUCCESS_INFO": "The ticket will be marked as successfully resolved.",
+    "SUCCESS_MESSAGE": "Resolution status saved successfully",
+    "ERROR_MESSAGE": "Failed to save resolution status",
+    "CANCEL": "Cancel",
+    "SAVE": "Save"
+  },
   "QUALITY_RATING": {
     "TITLE": "Rate Service Quality",
     "QUESTION_WITH_AGENT": "How would you rate the operator {agentName}?",
