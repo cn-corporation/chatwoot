@@ -26,7 +26,6 @@ const isOpen = ref(props.show);
 const selectedReason = ref('');
 const customReason = ref('');
 const isSubmitting = ref(false);
-const successResolution = ref(true); // true = Успешно, false = Не успешно
 
 // Watch for prop changes
 import { watch } from 'vue';
@@ -38,13 +37,12 @@ watch(
     if (newVal) {
       selectedReason.value = '';
       customReason.value = '';
-      successResolution.value = true;
     }
   }
 );
 
-// Predefined reasons for unsuccessful resolution
-const unsuccessfulReasons = computed(() => [
+// Predefined close reasons
+const closeReasons = computed(() => [
   { value: 'no_reason', label: t('CLOSE_REASON.NO_REASON') },
   { value: 'client_block_bot', label: t('CLOSE_REASON.CLIENT_BLOCK_BOT') },
   { value: 'no_answer', label: t('CLOSE_REASON.NO_ANSWER') },
@@ -57,10 +55,7 @@ const unsuccessfulReasons = computed(() => [
 ]);
 
 const canSubmit = computed(() => {
-  if (successResolution.value) {
-    return true; // Can always submit successful resolution
-  }
-  // For unsuccessful, need a reason
+  // Need a reason to submit
   if (selectedReason.value === 'custom') {
     return customReason.value.trim().length > 0;
   }
@@ -80,28 +75,20 @@ const submitReason = async () => {
   try {
     // Prepare the reason data
     let reason = '';
-    let resolutionStatus = '';
 
-    if (successResolution.value) {
-      resolutionStatus = 'successful';
-      reason = 'Successful resolution';
+    if (selectedReason.value === 'custom') {
+      reason = customReason.value;
     } else {
-      resolutionStatus = 'unsuccessful';
-      if (selectedReason.value === 'custom') {
-        reason = customReason.value;
-      } else {
-        const reasonObj = unsuccessfulReasons.value.find(
-          r => r.value === selectedReason.value
-        );
-        reason = reasonObj ? reasonObj.label : selectedReason.value;
-      }
+      const reasonObj = closeReasons.value.find(
+        r => r.value === selectedReason.value
+      );
+      reason = reasonObj ? reasonObj.label : selectedReason.value;
     }
 
     // Save resolution reason to conversation custom attributes
     await store.dispatch('updateCustomAttributes', {
       conversationId: props.conversationId,
       customAttributes: {
-        resolution_status: resolutionStatus,
         resolution_reason: reason,
         resolved_at: new Date().toISOString(),
       },
@@ -114,7 +101,7 @@ const submitReason = async () => {
     });
 
     useAlert(t('CLOSE_REASON.SUCCESS_MESSAGE'));
-    emit('success', { status: resolutionStatus, reason });
+    emit('success', { reason });
     closeModal();
   } catch (error) {
     useAlert(t('CLOSE_REASON.ERROR_MESSAGE'));
@@ -136,43 +123,12 @@ const submitReason = async () => {
 
       <!-- Body -->
       <div class="flex flex-col gap-4 p-4">
-        <!-- Resolution type selector -->
+        <!-- Reason selector -->
         <div class="flex flex-col gap-2">
-          <p class="text-sm font-medium text-n-slate-11">
-            {{ $t('CLOSE_REASON.RESOLUTION_TYPE') }}
-          </p>
-          <div class="flex gap-3">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input
-                v-model="successResolution"
-                type="radio"
-                :value="true"
-                class="text-blue-600"
-              />
-              <span class="text-sm">{{ $t('CLOSE_REASON.SUCCESSFUL') }}</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input
-                v-model="successResolution"
-                type="radio"
-                :value="false"
-                class="text-blue-600"
-              />
-              <span class="text-sm">{{ $t('CLOSE_REASON.UNSUCCESSFUL') }}</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Reason selector (only for unsuccessful) -->
-        <div v-if="!successResolution" class="flex flex-col gap-2">
-          <p class="text-sm font-medium text-n-slate-11">
-            {{ $t('CLOSE_REASON.SELECT_REASON') }}
-          </p>
-
           <!-- Predefined reasons -->
           <div class="flex flex-col gap-2 max-h-64 overflow-y-auto">
             <label
-              v-for="reason in unsuccessfulReasons"
+              v-for="reason in closeReasons"
               :key="reason.value"
               class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-n-slate-3 transition-colors"
               :class="{ 'bg-n-slate-3': selectedReason === reason.value }"
@@ -196,16 +152,6 @@ const submitReason = async () => {
               rows="3"
             />
           </div>
-        </div>
-
-        <!-- Info message -->
-        <div
-          v-if="successResolution"
-          class="p-3 bg-green-50 border border-green-200 rounded-lg"
-        >
-          <p class="text-sm text-green-800">
-            {{ $t('CLOSE_REASON.SUCCESS_INFO') }}
-          </p>
         </div>
       </div>
 

@@ -67,6 +67,7 @@ provideSidebarContext({
 const inboxes = useMapGetter('inboxes/getInboxes');
 const labels = useMapGetter('labels/getLabelsOnSidebar');
 const teams = useMapGetter('teams/getMyTeams');
+const totalUnreadCount = useMapGetter('getTotalUnreadCount');
 // Removed unused custom views - simplified for poker operator UI
 
 onMounted(() => {
@@ -77,6 +78,7 @@ onMounted(() => {
   store.dispatch('attributes/get');
   store.dispatch('customViews/get', 'conversation');
   store.dispatch('customViews/get', 'contact');
+  store.dispatch('fetchAllConversations');
 });
 
 const sortedInboxes = computed(() =>
@@ -116,6 +118,7 @@ const menuItems = computed(() => {
           activeOn: ['conversation_through_unattended'],
           label: t('SIDEBAR.UNATTENDED_CONVERSATIONS'),
           to: accountScopedRoute('conversation_unattended'),
+          count: totalUnreadCount.value || 0,
         },
         {
           name: 'Mentions',

@@ -7,7 +7,6 @@ import {
   buildConversationList,
   isOnMentionsView,
   isOnUnattendedView,
-  isOnFoldersView,
 } from './helpers/actionHelpers';
 import messageReadActions from './actions/messageReadActions';
 import messageTranslateActions from './actions/messageTranslateActions';
@@ -337,22 +336,25 @@ const actions = {
     }
   },
 
-  addConversation({ commit, state, dispatch, rootState }, conversation) {
+  addConversation({ commit, state, dispatch }, conversation) {
     const { currentInbox, appliedFilters } = state;
     const {
       inbox_id: inboxId,
       meta: { sender },
     } = conversation;
-    const hasAppliedFilters = !!appliedFilters.length;
+
+    // Skip if there are applied filters (custom filters have their own logic)
+    if (appliedFilters && appliedFilters.length > 0) {
+      return;
+    }
+
+    // Check if inbox matches current filter
     const isMatchingInboxFilter =
       !currentInbox || Number(currentInbox) === inboxId;
-    if (
-      !hasAppliedFilters &&
-      !isOnFoldersView(rootState) &&
-      !isOnMentionsView(rootState) &&
-      !isOnUnattendedView(rootState) &&
-      isMatchingInboxFilter
-    ) {
+
+    // Always add conversation to the store if inbox matches
+    // The getters will handle filtering for different views
+    if (isMatchingInboxFilter) {
       commit(types.ADD_CONVERSATION, conversation);
       dispatch('contacts/setContact', sender);
     }

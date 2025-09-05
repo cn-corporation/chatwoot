@@ -6,7 +6,6 @@ import { useStore, useStoreGetters } from 'dashboard/composables/store';
 import { useEmitter } from 'dashboard/composables/emitter';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 
-import QualityRatingModal from 'dashboard/components/QualityRatingModal.vue';
 import ConversationCloseReasonModal from 'dashboard/components/ConversationCloseReasonModal.vue';
 import wootConstants from 'dashboard/constants/globals';
 import {
@@ -21,10 +20,8 @@ const getters = useStoreGetters();
 const { t } = useI18n();
 
 const isLoading = ref(false);
-const showRatingModal = ref(false);
 const showCloseReasonModal = ref(false);
-const ratingConversationId = ref(null);
-const ratingAgentName = ref('');
+const closeConversationId = ref(null);
 
 const currentChat = computed(() => getters.getSelectedChat.value);
 
@@ -68,8 +65,7 @@ const getConversationParams = () => {
 const toggleStatus = (status, snoozedUntil) => {
   // Show close reason modal first when resolving
   if (status === wootConstants.STATUS_TYPE.RESOLVED) {
-    ratingConversationId.value = currentChat.value.id;
-    ratingAgentName.value = currentChat.value.meta?.assignee?.name || '';
+    closeConversationId.value = currentChat.value.id;
     showCloseReasonModal.value = true;
     return;
   }
@@ -88,22 +84,16 @@ const toggleStatus = (status, snoozedUntil) => {
     });
 };
 
-const closeRatingModal = () => {
-  showRatingModal.value = false;
-  ratingConversationId.value = null;
-  ratingAgentName.value = '';
-};
-
 const closeCloseReasonModal = () => {
   showCloseReasonModal.value = false;
-  ratingConversationId.value = null;
-  ratingAgentName.value = '';
+  closeConversationId.value = null;
 };
 
 const onCloseReasonSuccess = () => {
   showCloseReasonModal.value = false;
-  // After close reason is submitted, show quality rating modal
-  showRatingModal.value = true;
+  closeConversationId.value = null;
+  // No quality rating modal - just close
+  useAlert(t('CONVERSATION.CHANGE_STATUS'));
 };
 
 const onCmdOpenConversation = () => {
@@ -172,16 +162,9 @@ useEmitter(CMD_RESOLVE_CONVERSATION, onCmdResolveConversation);
     <ConversationCloseReasonModal
       v-if="showCloseReasonModal"
       :show="showCloseReasonModal"
-      :conversation-id="ratingConversationId"
+      :conversation-id="closeConversationId"
       @close="closeCloseReasonModal"
       @success="onCloseReasonSuccess"
-    />
-    <!-- Quality Rating Modal -->
-    <QualityRatingModal
-      v-if="showRatingModal"
-      :conversation-id="ratingConversationId"
-      :agent-name="ratingAgentName"
-      @close="closeRatingModal"
     />
   </div>
 </template>
