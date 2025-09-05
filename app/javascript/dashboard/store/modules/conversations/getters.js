@@ -161,6 +161,13 @@ const getters = {
   getCopilotAssistant: _state => {
     return _state.copilotAssistant;
   },
+
+  // Get total unread count across all conversations
+  getTotalUnreadCount: _state => {
+    return _state.allConversations.reduce((total, conversation) => {
+      return total + (conversation.unread_count || 0);
+    }, 0);
+  },
 };
 
 export default getters;
