@@ -21,6 +21,7 @@ const MENU = {
   AGENT: 'agent',
   TEAM: 'team',
   LABEL: 'label',
+  CREATE_TASK: 'create-task',
   DELETE: 'delete',
   OPEN_NEW_TAB: 'open-new-tab',
   COPY_LINK: 'copy-link',
@@ -70,6 +71,7 @@ export default {
     'assignAgent',
     'assignTeam',
     'assignLabel',
+    'createTask',
     'deleteConversation',
     'close',
   ],
@@ -153,6 +155,11 @@ export default {
         icon: 'people-team-add',
         label: this.$t('CONVERSATION.CARD_CONTEXT_MENU.ASSIGN_TEAM'),
       },
+      createTaskOption: {
+        key: MENU.CREATE_TASK,
+        icon: 'add',
+        label: this.$t('TODO.CREATE_TASK'),
+      },
       deleteOption: {
         key: MENU.DELETE,
         icon: 'delete',
@@ -228,6 +235,9 @@ export default {
     },
     assignPriority(priority) {
       this.$emit('assignPriority', priority);
+    },
+    createTask() {
+      this.$emit('createTask', this.chatId);
     },
     deleteConversation() {
       this.$emit('deleteConversation', this.chatId);
@@ -354,6 +364,14 @@ export default {
           @click.stop="$emit('assignTeam', team)"
         />
       </MenuItemWithSubmenu>
+      <hr class="m-1 rounded border-b border-n-weak dark:border-n-weak" />
+    </template>
+    <template v-if="isAllowed([MENU.CREATE_TASK])">
+      <MenuItem
+        :option="createTaskOption"
+        variant="icon"
+        @click.stop="createTask"
+      />
       <hr class="m-1 rounded border-b border-n-weak dark:border-n-weak" />
     </template>
     <template v-if="isAllowed([MENU.OPEN_NEW_TAB, MENU.COPY_LINK])">
