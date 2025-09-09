@@ -52,23 +52,56 @@ export default {
     // Player status options
     playerStatusOptions() {
       return [
-        { value: 'beginner', label: this.$t('CONTACT_FORM.PLAYER_STATUS.BEGINNER') },
-        { value: 'amateur', label: this.$t('CONTACT_FORM.PLAYER_STATUS.AMATEUR') },
-        { value: 'regular', label: this.$t('CONTACT_FORM.PLAYER_STATUS.REGULAR') },
-        { value: 'advanced', label: this.$t('CONTACT_FORM.PLAYER_STATUS.ADVANCED') },
-        { value: 'professional', label: this.$t('CONTACT_FORM.PLAYER_STATUS.PROFESSIONAL') },
-        { value: 'high_roller', label: this.$t('CONTACT_FORM.PLAYER_STATUS.HIGH_ROLLER') },
+        {
+          value: 'beginner',
+          label: this.$t('CONTACT_FORM.PLAYER_STATUS.BEGINNER'),
+        },
+        {
+          value: 'amateur',
+          label: this.$t('CONTACT_FORM.PLAYER_STATUS.AMATEUR'),
+        },
+        {
+          value: 'regular',
+          label: this.$t('CONTACT_FORM.PLAYER_STATUS.REGULAR'),
+        },
+        {
+          value: 'advanced',
+          label: this.$t('CONTACT_FORM.PLAYER_STATUS.ADVANCED'),
+        },
+        {
+          value: 'professional',
+          label: this.$t('CONTACT_FORM.PLAYER_STATUS.PROFESSIONAL'),
+        },
+        {
+          value: 'high_roller',
+          label: this.$t('CONTACT_FORM.PLAYER_STATUS.HIGH_ROLLER'),
+        },
       ];
     },
-    // Behavior status options  
+    // Behavior status options
     behaviorStatusOptions() {
       return [
-        { value: 'toxic', label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.TOXIC') },
-        { value: 'manipulator', label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.MANIPULATOR') },
-        { value: 'loyal', label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.LOYAL') },
+        {
+          value: 'toxic',
+          label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.TOXIC'),
+        },
+        {
+          value: 'manipulator',
+          label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.MANIPULATOR'),
+        },
+        {
+          value: 'loyal',
+          label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.LOYAL'),
+        },
         { value: 'tilt', label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.TILT') },
-        { value: 'artist', label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.ARTIST') },
-        { value: 'teapot', label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.TEAPOT') },
+        {
+          value: 'artist',
+          label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.ARTIST'),
+        },
+        {
+          value: 'teapot',
+          label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.TEAPOT'),
+        },
       ];
     },
   },

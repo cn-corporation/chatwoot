@@ -145,7 +145,7 @@ export default {
       // Always show rich content editor for poker operators
       // This enables markdown formatting for all messages (not just private notes)
       return true;
-      
+
       // Original logic kept for reference:
       // if (this.isOnPrivateNote || this.isRichEditorEnabled) {
       //   return true;
