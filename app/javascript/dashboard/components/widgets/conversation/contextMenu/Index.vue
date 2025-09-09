@@ -312,17 +312,7 @@ export default {
     <template
       v-if="isAllowed([MENU.PRIORITY, MENU.LABEL, MENU.AGENT, MENU.TEAM])"
     >
-      <MenuItemWithSubmenu
-        v-if="isAllowed([MENU.PRIORITY])"
-        :option="priorityConfig"
-      >
-        <MenuItem
-          v-for="(option, i) in priorityConfig.options"
-          :key="i"
-          :option="option"
-          @click.stop="assignPriority(option.key)"
-        />
-      </MenuItemWithSubmenu>
+      <!-- Priority assignment removed - now automatic based on waiting time -->
       <MenuItemWithSubmenu
         v-if="isAllowed([MENU.LABEL])"
         :option="labelMenuConfig"

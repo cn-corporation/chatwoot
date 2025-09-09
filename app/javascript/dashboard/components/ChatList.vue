@@ -38,7 +38,6 @@ import { useAlert } from 'dashboard/composables';
 import { useChatListKeyboardEvents } from 'dashboard/composables/chatlist/useChatListKeyboardEvents';
 import { useBulkActions } from 'dashboard/composables/chatlist/useBulkActions';
 import { useFilter } from 'shared/composables/useFilter';
-import { useTrack } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 import {
   useCamelCase,
@@ -65,7 +64,6 @@ import {
   filterItemsByPermission,
 } from 'dashboard/helper/permissionsHelper.js';
 import { matchesFilters } from '../store/modules/conversations/helpers/filterHelpers';
-import { CONVERSATION_EVENTS } from '../helper/AnalyticsHelper/events';
 import { ASSIGNEE_TYPE_TAB_PERMISSIONS } from 'dashboard/constants/permissions.js';
 
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
@@ -685,23 +683,20 @@ function redirectToConversationList() {
   );
 }
 
+// Auto-assign priority based on waiting time (no manual assignment)
 async function assignPriority(priority, conversationId = null) {
+  // Skip if trying to set null or same priority
+  const conversation = chatLists.value.find(c => c.id === conversationId);
+  if (!priority || (conversation && conversation.priority === priority)) {
+    return;
+  }
+
   store.dispatch('setCurrentChatPriority', {
     priority,
     conversationId,
   });
-  store.dispatch('assignPriority', { conversationId, priority }).then(() => {
-    useTrack(CONVERSATION_EVENTS.CHANGE_PRIORITY, {
-      newValue: priority,
-      from: 'Context menu',
-    });
-    useAlert(
-      t('CONVERSATION.PRIORITY.CHANGE_PRIORITY.SUCCESSFUL', {
-        priority,
-        conversationId,
-      })
-    );
-  });
+  // Silent update for automatic priority changes
+  await store.dispatch('assignPriority', { conversationId, priority });
 }
 
 async function markAsUnread(conversationId) {
@@ -815,7 +810,7 @@ provide('updateConversationStatus', toggleConversationStatus);
 provide('toggleContextMenu', onContextMenuToggle);
 provide('markAsUnread', markAsUnread);
 provide('markAsRead', markAsRead);
-provide('assignPriority', assignPriority);
+provide('assignPriority', assignPriority); // Used for automatic priority updates
 provide('isConversationSelected', isConversationSelected);
 provide('deleteConversation', handleDelete);
 
