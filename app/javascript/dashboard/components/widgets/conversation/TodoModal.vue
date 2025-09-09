@@ -21,9 +21,12 @@ const store = useStore();
 const isOpen = ref(props.show);
 
 // Watch for prop changes
-watch(() => props.show, (newVal) => {
-  isOpen.value = newVal;
-});
+watch(
+  () => props.show,
+  newVal => {
+    isOpen.value = newVal;
+  }
+);
 
 // Get current account ID from store
 const accountId = computed(() => {
@@ -39,9 +42,11 @@ const contactName = computed(() => {
 // Build iframe URL with query parameters
 const iframeUrl = computed(() => {
   // Get URL from environment variable or use default
-  const baseUrl = window.chatwootConfig?.todoAppUrl || 
-                  process.env.VUE_APP_TODO_URL || 
-                  'http://localhost:3002';
+  // TODO: Replace with actual deployed URL
+  const baseUrl =
+    window.chatwootConfig?.todoAppUrl ||
+    process.env.VUE_APP_TODO_URL ||
+    'http://c4sokgg0sk8w0o8wo8gogskk.95.164.91.243.sslip.io/';
   const params = new URLSearchParams({
     accountId: accountId.value,
     chatId: props.currentChat?.id || '',
@@ -86,10 +91,7 @@ const closeModal = () => {
 
       <!-- Footer -->
       <div class="flex justify-end gap-2 p-4 border-t border-n-slate-5">
-        <button
-          class="button button--light"
-          @click="closeModal"
-        >
+        <button class="button button--light" @click="closeModal">
           {{ $t('TODO.CLOSE') }}
         </button>
       </div>

@@ -15,9 +15,11 @@ const accountId = computed(() => {
 // Build iframe URL
 const iframeUrl = computed(() => {
   // Get URL from environment variable or use default
-  const baseUrl = window.chatwootConfig?.todoAppUrl || 
-                  process.env.VUE_APP_TODO_URL || 
-                  'http://localhost:3002';
+  // TODO: Replace with actual deployed URL
+  const baseUrl =
+    window.chatwootConfig?.todoAppUrl ||
+    process.env.VUE_APP_TODO_URL ||
+    'http://c4sokgg0sk8w0o8wo8gogskk.95.164.91.243.sslip.io/';
   const params = new URLSearchParams({
     accountId: accountId.value,
     embedded: 'true',
