@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { getLastMessage } from 'dashboard/helper/conversationHelper';
@@ -36,7 +36,6 @@ const emit = defineEmits([
   'assignTeam',
   'markAsUnread',
   'markAsRead',
-  'assignPriority',
   'updateConversationStatus',
   'deleteConversation',
   'selectConversation',
@@ -45,6 +44,9 @@ const emit = defineEmits([
 
 const router = useRouter();
 const store = useStore();
+
+// Inject assignPriority function from parent
+const assignPriority = inject('assignPriority', null);
 
 const hovered = ref(false);
 const showContextMenu = ref(false);
@@ -102,31 +104,45 @@ const showInboxName = computed(() => {
 
 // Calculate waiting time in minutes
 const waitingTime = computed(() => {
-  const lastIncomingMessageAt =
-    props.chat.last_incoming_message_at || props.chat.created_at;
-  if (!lastIncomingMessageAt) return 0;
+  // Use timestamp (last activity) for waiting time calculation
+  // This is updated when new messages arrive
+  const lastActivityAt = props.chat.timestamp;
 
-  const waitingMs = currentTime.value - lastIncomingMessageAt * 1000;
+  // If there's no activity timestamp, no need to calculate
+  if (!lastActivityAt) return 0;
+
+  // Calculate time since last activity
+  const waitingMs = currentTime.value - lastActivityAt * 1000;
   return Math.floor(waitingMs / 60000);
 });
 
 // Calculate dynamic priority based on waiting time
 const dynamicPriority = computed(() => {
-  // If priority is manually set, use it
-  if (props.chat.priority) {
-    return props.chat.priority;
+  // Priority is now always dynamic, no manual override
+
+  // Don't show priority for resolved conversations
+  if (props.chat.status === 'resolved') {
+    return null;
+  }
+
+  // Check if there are unread messages (means client wrote and operator hasn't read yet)
+  const hasUnreadMessages = props.chat.unread_count > 0;
+
+  // Only show priority if there are unread messages from client
+  if (!hasUnreadMessages) {
+    return null;
   }
 
   const minutes = waitingTime.value;
 
-  // Automatically assign priority based on waiting time
+  // Automatically assign priority based on waiting time since last unread message
   if (minutes <= 5) {
-    return 'low'; // Low priority (green) - responded quickly
+    return 'low'; // Low priority (green) - new message (0-5 min)
   }
   if (minutes <= 10) {
-    return 'medium'; // Medium priority (yellow) - moderate wait
+    return 'medium'; // Medium priority (yellow) - moderate wait (5-10 min)
   }
-  return 'high'; // High priority (red) - long wait
+  return 'high'; // High priority (red) - long wait (10+ min)
 });
 
 // Format waiting time for display
@@ -266,18 +282,40 @@ const markAsRead = () => {
   closeContextMenu();
 };
 
-const assignPriority = priority => {
-  emit('assignPriority', priority, props.chat.id);
-  closeContextMenu();
-};
-
 const deleteConversation = () => {
   emit('deleteConversation', props.chat.id);
   closeContextMenu();
 };
 
+// Update priority in store when dynamic priority changes
+watch(dynamicPriority, async (newPriority, oldPriority) => {
+  // Skip if priority didn't actually change or if it's the initial load
+  if (oldPriority === undefined) return;
+
+  // Only update if priority actually changed and assignPriority is available
+  if (
+    newPriority !== oldPriority &&
+    newPriority !== props.chat.priority &&
+    assignPriority
+  ) {
+    // Use the proper assignPriority method that updates backend and store
+    await assignPriority(newPriority, props.chat.id);
+  }
+});
+
 // Update time every minute to recalculate priority
-onMounted(() => {
+onMounted(async () => {
+  // Set initial priority if different from stored
+  const currentPriority = dynamicPriority.value;
+  if (
+    currentPriority &&
+    currentPriority !== props.chat.priority &&
+    assignPriority
+  ) {
+    await assignPriority(currentPriority, props.chat.id);
+  }
+
+  // Start interval for updating time
   intervalId = setInterval(() => {
     currentTime.value = Date.now();
   }, 60000); // Update every minute
@@ -364,9 +402,12 @@ onUnmounted(() => {
           </span>
           <div class="flex items-center gap-1 flex-shrink-0">
             <PriorityMark :priority="dynamicPriority" />
-            <span v-if="waitingTime > 0" class="text-xs text-n-slate-10">{{
-              formattedWaitingTime
-            }}</span>
+            <span
+              v-if="dynamicPriority && waitingTime > 0"
+              class="text-xs text-n-slate-10"
+            >
+              {{ formattedWaitingTime }}
+            </span>
           </div>
         </div>
       </div>
@@ -432,7 +473,7 @@ onUnmounted(() => {
       <ConversationContextMenu
         :status="chat.status"
         :inbox-id="inbox.id"
-        :priority="dynamicPriority"
+        :priority="chat.priority || dynamicPriority"
         :chat-id="chat.id"
         :has-unread-messages="hasUnread"
         :conversation-url="conversationPath"

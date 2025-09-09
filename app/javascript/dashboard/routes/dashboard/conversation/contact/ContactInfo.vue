@@ -244,7 +244,7 @@ export default {
         </p>
 
         <!-- Block 4: Agent selector for operators -->
-        <div v-if="currentChat" class="mt-4">
+        <div v-if="currentChat" class="mt-4 w-full">
           <p class="text-xs font-medium text-n-slate-11 mb-2">
             {{ $t('CONVERSATION_SIDEBAR.ASSIGNEE_LABEL') }}
           </p>

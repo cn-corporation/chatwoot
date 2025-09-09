@@ -150,8 +150,9 @@ class Conversation < ApplicationRecord
   end
 
   def toggle_priority(priority = nil)
-    self.priority = priority.presence
-    save
+    # Use update_column to skip callbacks and timestamp updates
+    # This prevents the timestamp from being updated when priority changes
+    update_column(:priority, priority.presence)
   end
 
   def bot_handoff!
