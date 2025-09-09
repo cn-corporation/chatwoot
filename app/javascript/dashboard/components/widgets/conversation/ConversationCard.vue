@@ -37,6 +37,7 @@ const emit = defineEmits([
   'markAsUnread',
   'markAsRead',
   'updateConversationStatus',
+  'createTask',
   'deleteConversation',
   'selectConversation',
   'deSelectConversation',
@@ -282,6 +283,11 @@ const markAsRead = () => {
   closeContextMenu();
 };
 
+const createTask = () => {
+  emit('createTask', props.chat.id);
+  closeContextMenu();
+};
+
 const deleteConversation = () => {
   emit('deleteConversation', props.chat.id);
   closeContextMenu();
@@ -485,6 +491,7 @@ onUnmounted(() => {
         @mark-as-unread="markAsUnread"
         @mark-as-read="markAsRead"
         @assign-priority="assignPriority"
+        @create-task="createTask"
         @delete-conversation="deleteConversation"
         @close="closeContextMenu"
       />

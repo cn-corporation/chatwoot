@@ -32,6 +32,7 @@ import ConversationBulkActions from './widgets/conversation/conversationBulkActi
 import IntersectionObserver from './IntersectionObserver.vue';
 import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import TodoModal from './widgets/conversation/TodoModal.vue';
 
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAlert } from 'dashboard/composables';
@@ -783,6 +784,8 @@ onMounted(() => {
 
 const deleteConversationDialogRef = ref(null);
 const selectedConversationId = ref(null);
+const showTodoModal = ref(false);
+const selectedChatForTask = ref(null);
 
 async function deleteConversation() {
   try {
@@ -801,6 +804,19 @@ const handleDelete = conversationId => {
   deleteConversationDialogRef.value.open();
 };
 
+const handleCreateTask = conversationId => {
+  const conversation = chatLists.value.find(c => c.id === conversationId);
+  if (conversation) {
+    selectedChatForTask.value = conversation;
+    showTodoModal.value = true;
+  }
+};
+
+const closeTodoModal = () => {
+  showTodoModal.value = false;
+  selectedChatForTask.value = null;
+};
+
 provide('selectConversation', selectConversation);
 provide('deSelectConversation', deSelectConversation);
 provide('assignAgent', onAssignAgent);
@@ -812,6 +828,7 @@ provide('markAsUnread', markAsUnread);
 provide('markAsRead', markAsRead);
 provide('assignPriority', assignPriority); // Used for automatic priority updates
 provide('isConversationSelected', isConversationSelected);
+provide('createTask', handleCreateTask);
 provide('deleteConversation', handleDelete);
 
 watch(activeTeam, () => resetAndFetchData());
@@ -991,6 +1008,12 @@ watch(conversationFilters, (newVal, oldVal) => {
       :confirm-button-label="$t('CONVERSATION.DELETE_CONVERSATION.CONFIRM')"
       @confirm="deleteConversation"
       @close="selectedConversationId = null"
+    />
+    <TodoModal
+      v-if="showTodoModal"
+      :show="showTodoModal"
+      :current-chat="selectedChatForTask"
+      @cancel="closeTodoModal"
     />
     <TeleportWithDirection
       v-if="showAdvancedFilters"
