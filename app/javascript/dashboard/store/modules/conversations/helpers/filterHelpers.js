@@ -68,6 +68,7 @@ const getValueFromConversation = (conversation, attributeKey) => {
     case 'labels':
     case 'created_at':
     case 'last_activity_at':
+    case 'resolution_reason':
       return conversation[attributeKey];
     case 'assignee_id':
       return conversation.meta?.assignee?.id;

@@ -13,6 +13,7 @@
 #  identifier             :string
 #  last_activity_at       :datetime         not null
 #  priority               :integer
+#  resolution_reason      :integer
 #  snoozed_until          :datetime
 #  status                 :integer          default("open"), not null
 #  uuid                   :uuid             not null
@@ -42,6 +43,7 @@
 #  index_conversations_on_id_and_account_id           (account_id,id)
 #  index_conversations_on_inbox_id                    (inbox_id)
 #  index_conversations_on_priority                    (priority)
+#  index_conversations_on_resolution_reason           (resolution_reason)
 #  index_conversations_on_status_and_account_id       (status,account_id)
 #  index_conversations_on_status_and_priority         (status,priority)
 #  index_conversations_on_team_id                     (team_id)
@@ -71,6 +73,14 @@ class Conversation < ApplicationRecord
 
   enum status: { open: 0, resolved: 1, pending: 2, snoozed: 3 }
   enum priority: { low: 0, medium: 1, high: 2, urgent: 3 }
+  enum resolution_reason: {
+    resolved_success: 0,
+    resolved_compensation: 1,
+    partially_resolved: 2,
+    waiting_client: 3,
+    escalated: 4,
+    conflict: 5
+  }, _prefix: true
 
   scope :unassigned, -> { where(assignee_id: nil) }
   scope :assigned, -> { where.not(assignee_id: nil) }

@@ -123,12 +123,15 @@ export const mutations = {
 
   [types.CHANGE_CONVERSATION_STATUS](
     _state,
-    { conversationId, status, snoozedUntil }
+    { conversationId, status, snoozedUntil, resolutionReason }
   ) {
     const conversation =
       getters.getConversationById(_state)(conversationId) || {};
     conversation.snoozed_until = snoozedUntil;
     conversation.status = status;
+    if (resolutionReason !== undefined) {
+      conversation.resolution_reason = resolutionReason;
+    }
   },
 
   [types.MUTE_CONVERSATION](_state) {

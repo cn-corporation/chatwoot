@@ -54,6 +54,7 @@
       "LABELS": "Категории",
       "BROWSER_LANGUAGE": "Язык браузера",
       "PRIORITY": "Приоритет",
+      "RESOLUTION_REASON": "Причина закрытия",
       "COUNTRY_NAME": "Название страны",
       "REFERER_LINK": "Ссылка реферера",
       "CUSTOM_ATTRIBUTE_LIST": "Список",

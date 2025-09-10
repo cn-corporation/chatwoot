@@ -235,7 +235,7 @@ const actions = {
 
   toggleStatus: async (
     { commit },
-    { conversationId, status, snoozedUntil = null }
+    { conversationId, status, snoozedUntil = null, resolutionReason = null }
   ) => {
     try {
       const {
@@ -243,17 +243,20 @@ const actions = {
           payload: {
             current_status: updatedStatus,
             snoozed_until: updatedSnoozedUntil,
+            resolution_reason: updatedResolutionReason,
           } = {},
         } = {},
       } = await ConversationApi.toggleStatus({
         conversationId,
         status,
         snoozedUntil,
+        resolutionReason,
       });
       commit(types.CHANGE_CONVERSATION_STATUS, {
         conversationId,
         status: updatedStatus,
         snoozedUntil: updatedSnoozedUntil,
+        resolutionReason: updatedResolutionReason,
       });
     } catch (error) {
       // Handle error

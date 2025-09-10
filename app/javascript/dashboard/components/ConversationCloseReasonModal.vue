@@ -74,35 +74,35 @@ const submitReason = async () => {
   isSubmitting.value = true;
 
   try {
-    // Prepare the reason data
-    let reason = '';
+    // Prepare the reason value
+    let reasonValue = selectedReason.value;
+    let customReasonText = null;
 
+    // If custom reason is selected, save the text to custom_attributes
     if (selectedReason.value === 'custom') {
-      reason = customReason.value;
-    } else {
-      const reasonObj = closeReasons.value.find(
-        r => r.value === selectedReason.value
-      );
-      reason = reasonObj ? reasonObj.label : selectedReason.value;
+      customReasonText = customReason.value;
     }
 
-    // Save resolution reason to conversation custom attributes
-    await store.dispatch('updateCustomAttributes', {
-      conversationId: props.conversationId,
-      customAttributes: {
-        resolution_reason: reason,
-        resolved_at: new Date().toISOString(),
-      },
-    });
-
-    // Mark conversation as resolved
+    // Update conversation with resolution reason
     await store.dispatch('toggleStatus', {
       conversationId: props.conversationId,
       status: 'resolved',
+      resolutionReason: reasonValue === 'custom' ? null : reasonValue,
     });
 
+    // If custom reason, save it to custom_attributes
+    if (customReasonText) {
+      await store.dispatch('updateCustomAttributes', {
+        conversationId: props.conversationId,
+        customAttributes: {
+          custom_resolution_reason: customReasonText,
+          resolved_at: new Date().toISOString(),
+        },
+      });
+    }
+
     useAlert(t('CLOSE_REASON.SUCCESS_MESSAGE'));
-    emit('success', { reason });
+    emit('success', { reason: reasonValue, customReason: customReasonText });
     closeModal();
   } catch (error) {
     useAlert(t('CLOSE_REASON.ERROR_MESSAGE'));
