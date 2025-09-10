@@ -117,6 +117,29 @@ export function useConversationFilterContext() {
       attributeModel: 'standard',
     },
     {
+      attributeKey: CONVERSATION_ATTRIBUTES.RESOLUTION_REASON,
+      value: CONVERSATION_ATTRIBUTES.RESOLUTION_REASON,
+      attributeName: t('FILTER.ATTRIBUTES.RESOLUTION_REASON'),
+      label: t('FILTER.ATTRIBUTES.RESOLUTION_REASON'),
+      inputType: 'multiSelect',
+      options: [
+        'resolved_success',
+        'resolved_compensation',
+        'partially_resolved',
+        'waiting_client',
+        'escalated',
+        'conflict',
+      ].map(id => {
+        return {
+          id,
+          name: t(`CLOSE_REASON.${id.toUpperCase()}`),
+        };
+      }),
+      dataType: 'text',
+      filterOperators: [...equalityOperators.value, ...presenceOperators.value],
+      attributeModel: 'standard',
+    },
+    {
       attributeKey: CONVERSATION_ATTRIBUTES.ASSIGNEE_ID,
       value: CONVERSATION_ATTRIBUTES.ASSIGNEE_ID,
       attributeName: t('FILTER.ATTRIBUTES.ASSIGNEE_NAME'),
