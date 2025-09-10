@@ -43,14 +43,15 @@ watch(
 
 // Predefined close reasons
 const closeReasons = computed(() => [
-  { value: 'no_reason', label: t('CLOSE_REASON.NO_REASON') },
-  { value: 'client_block_bot', label: t('CLOSE_REASON.CLIENT_BLOCK_BOT') },
-  { value: 'no_answer', label: t('CLOSE_REASON.NO_ANSWER') },
-  { value: 'better_offers', label: t('CLOSE_REASON.BETTER_OFFERS') },
-  { value: 'no_deposit', label: t('CLOSE_REASON.NO_DEPOSIT') },
-  { value: 'no_games', label: t('CLOSE_REASON.NO_GAMES') },
-  { value: 'bad_reputation', label: t('CLOSE_REASON.BAD_REPUTATION') },
-  { value: 'bad_ui', label: t('CLOSE_REASON.BAD_UI') },
+  { value: 'resolved_success', label: t('CLOSE_REASON.RESOLVED_SUCCESS') },
+  {
+    value: 'resolved_compensation',
+    label: t('CLOSE_REASON.RESOLVED_COMPENSATION'),
+  },
+  { value: 'partially_resolved', label: t('CLOSE_REASON.PARTIALLY_RESOLVED') },
+  { value: 'waiting_client', label: t('CLOSE_REASON.WAITING_CLIENT') },
+  { value: 'escalated', label: t('CLOSE_REASON.ESCALATED') },
+  { value: 'conflict', label: t('CLOSE_REASON.CONFLICT') },
   { value: 'custom', label: t('CLOSE_REASON.CUSTOM') },
 ]);
 
