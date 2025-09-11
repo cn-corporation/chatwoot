@@ -156,6 +156,10 @@ class Conversation < ApplicationRecord
     # FIXME: implement state machine with aasm
     self.status = open? ? :resolved : :open
     self.status = :open if pending? || snoozed?
+    
+    # Clear resolution reason when opening conversation
+    self.resolution_reason = nil if status == 'open'
+    
     save
   end
 
