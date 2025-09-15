@@ -115,6 +115,7 @@ const chatLists = useMapGetter('getFilteredConversations');
 const mineChatsList = useMapGetter('getMineChats');
 const allChatList = useMapGetter('getAllStatusChats');
 const unAssignedChatsList = useMapGetter('getUnAssignedChats');
+const resolvedChatsList = useMapGetter('getResolvedChats');
 const chatListLoading = useMapGetter('getChatListLoadingStatus');
 const activeInbox = useMapGetter('getSelectedInbox');
 const conversationStats = useMapGetter('conversationStats/getStats');
@@ -209,9 +210,9 @@ const assigneeTabItems = computed(() => {
 });
 
 // Simplified tabs for operators - Block 1 requirement
-// Only showing "Dialogs" (me), "Unanswered" (unassigned), "Mentions", and "Categories"
+// Only showing "Dialogs" (me), "Unanswered" (unassigned), "All dialogs" (all), "Mentions", and "Categories"
 const simplifiedAssigneeTabItems = computed(() => {
-  const operatorEssentialTabs = ['me', 'unassigned'];
+  const operatorEssentialTabs = ['me', 'unassigned', 'resolved'];
   const filteredTabs = assigneeTabItems.value.filter(item =>
     operatorEssentialTabs.includes(item.key)
   );
@@ -280,10 +281,14 @@ const conversationListPagination = computed(() => {
 });
 
 const conversationFilters = computed(() => {
+  // For resolved tab, override status to 'resolved'
+  const status =
+    activeAssigneeTab.value === 'resolved' ? 'resolved' : activeStatus.value;
+
   return {
     inboxId: props.conversationInbox ? props.conversationInbox : undefined,
     assigneeType: activeAssigneeTab.value,
-    status: activeStatus.value,
+    status,
     sortBy: activeSortBy.value,
     page: conversationListPagination.value,
     labels: props.label ? [props.label] : undefined,
@@ -336,6 +341,9 @@ const conversationList = computed(() => {
       localConversationList = [...mineChatsList.value(filters)];
     } else if (activeAssigneeTab.value === 'unassigned') {
       localConversationList = [...unAssignedChatsList.value(filters)];
+    } else if (activeAssigneeTab.value === 'resolved') {
+      // Use dedicated resolved chats list
+      localConversationList = [...resolvedChatsList.value(filters)];
     } else {
       localConversationList = [...allChatList.value(filters)];
     }
@@ -766,7 +774,7 @@ function toggleSelectAll(check) {
 
 useEmitter('fetch_conversation_stats', () => {
   if (hasAppliedFiltersOrActiveFolders.value) return;
-  store.dispatch('conversationStats/get', conversationFilters.value);
+  fetchConversations();
 });
 
 useEventListener(conversationDynamicScroller, 'scroll', handleScroll);
