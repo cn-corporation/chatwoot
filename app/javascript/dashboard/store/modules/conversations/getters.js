@@ -102,6 +102,13 @@ const getters = {
       return isUnAssigned && shouldFilter;
     });
   },
+  getResolvedChats: _state => activeFilters => {
+    return _state.allConversations.filter(conversation => {
+      const isResolved = conversation.status === 'resolved';
+      const shouldFilter = applyPageFilters(conversation, activeFilters);
+      return isResolved && shouldFilter;
+    });
+  },
   getAllStatusChats: (_state, _, __, rootGetters) => activeFilters => {
     const currentUser = rootGetters.getCurrentUser;
     const currentUserId = rootGetters.getCurrentUser.id;
