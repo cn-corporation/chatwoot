@@ -54,6 +54,27 @@ const actions = {
     }
   },
 
+  fetchAllConversationsForCounts: async ({ commit }) => {
+    try {
+      // Fetch all conversations without filters to get accurate counts
+      const params = {
+        page: 1,
+        per_page: 100, // Get more conversations for accurate counts
+        status: 'all',
+      };
+      const {
+        data: { data },
+      } = await ConversationApi.get(params);
+
+      // Store these separately or update existing ones for counts only
+      if (data.payload && data.payload.length > 0) {
+        commit(types.UPDATE_CONVERSATIONS_FOR_COUNTS, data.payload);
+      }
+    } catch (error) {
+      // Handle error silently - counts are not critical
+    }
+  },
+
   fetchFilteredConversations: async ({ commit, dispatch }, params) => {
     commit(types.SET_LIST_LOADING_STATUS);
     try {
