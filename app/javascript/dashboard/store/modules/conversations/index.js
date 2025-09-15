@@ -26,37 +26,67 @@ const state = {
 
 // mutations
 export const mutations = {
-  [types.SET_ALL_CONVERSATION](_state, conversationList) {
-    const newAllConversations = [..._state.allConversations];
-    conversationList.forEach(conversation => {
-      const indexInCurrentList = newAllConversations.findIndex(
-        c => c.id === conversation.id
-      );
-      if (indexInCurrentList < 0) {
-        newAllConversations.push(conversation);
-      } else if (conversation.id !== _state.selectedChatId) {
-        // If the conversation is already in the list, replace it
-        // Added this to fix the issue of the conversation not being updated
-        // When reconnecting to the websocket. If the selectedChatId is not the same as
-        // the conversation.id in the store, replace the existing conversation with the new one
-        newAllConversations[indexInCurrentList] = conversation;
-      } else {
-        // If the conversation is already in the list and selectedChatId is the same,
-        // replace all data except the messages array, attachments, dataFetched, allMessagesLoaded
-        const existingConversation = newAllConversations[indexInCurrentList];
-        newAllConversations[indexInCurrentList] = {
-          ...conversation,
-          allMessagesLoaded: existingConversation.allMessagesLoaded,
-          messages: existingConversation.messages,
-          dataFetched: existingConversation.dataFetched,
-        };
-      }
-    });
-    _state.allConversations = newAllConversations;
+  [types.SET_ALL_CONVERSATION](_state, payload) {
+    // Handle both old format (array) and new format (object with conversations and replace flag)
+    const conversationList = Array.isArray(payload)
+      ? payload
+      : payload.conversations;
+    const shouldReplace = payload.replace === true;
+
+    if (shouldReplace && conversationList.length > 0) {
+      // Only replace if we have new data to avoid clearing counts
+      _state.allConversations = conversationList;
+    } else if (!shouldReplace) {
+      // Add/update conversations (for pagination or updates)
+      const newAllConversations = [..._state.allConversations];
+      conversationList.forEach(conversation => {
+        const indexInCurrentList = newAllConversations.findIndex(
+          c => c.id === conversation.id
+        );
+        if (indexInCurrentList < 0) {
+          newAllConversations.push(conversation);
+        } else if (conversation.id !== _state.selectedChatId) {
+          // If the conversation is already in the list, replace it
+          // Added this to fix the issue of the conversation not being updated
+          // When reconnecting to the websocket. If the selectedChatId is not the same as
+          // the conversation.id in the store, replace the existing conversation with the new one
+          newAllConversations[indexInCurrentList] = conversation;
+        } else {
+          // If the conversation is already in the list and selectedChatId is the same,
+          // replace all data except the messages array, attachments, dataFetched, allMessagesLoaded
+          const existingConversation = newAllConversations[indexInCurrentList];
+          newAllConversations[indexInCurrentList] = {
+            ...conversation,
+            allMessagesLoaded: existingConversation.allMessagesLoaded,
+            messages: existingConversation.messages,
+            dataFetched: existingConversation.dataFetched,
+          };
+        }
+      });
+      _state.allConversations = newAllConversations;
+    }
   },
   [types.EMPTY_ALL_CONVERSATION](_state) {
-    _state.allConversations = [];
+    // Don't clear conversations immediately to avoid flickering
+    // They will be replaced when new data arrives
     _state.selectedChatId = null;
+  },
+
+  [types.UPDATE_CONVERSATIONS_FOR_COUNTS](_state, conversations) {
+    // Update or add conversations for count purposes only
+    conversations.forEach(newConv => {
+      const existing = _state.allConversations.find(c => c.id === newConv.id);
+      if (existing) {
+        // Update counts only
+        existing.unread_count = newConv.unread_count;
+        existing.unread_count_full = newConv.unread_count_full;
+        existing.labels = newConv.labels;
+        existing.inbox_id = newConv.inbox_id;
+      } else {
+        // Add new conversation if not exists
+        _state.allConversations.push(newConv);
+      }
+    });
   },
   [types.SET_ALL_MESSAGES_LOADED](_state) {
     const [chat] = getSelectedChatConversation(_state);
@@ -194,8 +224,16 @@ export const mutations = {
     } else {
       chat.messages.push(message);
       chat.timestamp = message.created_at;
-      const { conversation: { unread_count: unreadCount = 0 } = {} } = message;
+      const {
+        conversation: {
+          unread_count: unreadCount = 0,
+          unread_count_full: unreadCountFull,
+        } = {},
+      } = message;
       chat.unread_count = unreadCount;
+      if (unreadCountFull !== undefined) {
+        chat.unread_count_full = unreadCountFull;
+      }
       if (selectedChatId === conversationId) {
         emitter.emit(BUS_EVENTS.FETCH_LABEL_SUGGESTIONS);
         emitter.emit(BUS_EVENTS.SCROLL_TO_MESSAGE);
@@ -246,12 +284,15 @@ export const mutations = {
 
   [types.UPDATE_MESSAGE_UNREAD_COUNT](
     _state,
-    { id, lastSeen, unreadCount = 0 }
+    { id, lastSeen, unreadCount = 0, unreadCountFull }
   ) {
     const [chat] = _state.allConversations.filter(c => c.id === id);
     if (chat) {
       chat.agent_last_seen_at = lastSeen;
       chat.unread_count = unreadCount;
+      if (unreadCountFull !== undefined) {
+        chat.unread_count_full = unreadCountFull;
+      }
     }
   },
   [types.CHANGE_CHAT_STATUS_FILTER](_state, data) {

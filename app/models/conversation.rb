@@ -182,6 +182,10 @@ class Conversation < ApplicationRecord
     unread_messages.where(account_id: account_id).incoming.last(10)
   end
 
+  def unread_incoming_messages_count
+    unread_messages.where(account_id: account_id).incoming.count
+  end
+
   def cached_label_list_array
     (cached_label_list || '').split(',').map(&:strip)
   end
