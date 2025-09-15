@@ -68,17 +68,21 @@ const inboxes = useMapGetter('inboxes/getInboxes');
 const labels = useMapGetter('labels/getLabelsOnSidebar');
 const teams = useMapGetter('teams/getMyTeams');
 const totalUnreadCount = useMapGetter('getTotalUnreadCount');
+const getUnreadCountForLabel = useMapGetter('getUnreadCountForLabel');
 // Removed unused custom views - simplified for poker operator UI
 
-onMounted(() => {
-  store.dispatch('labels/get');
-  store.dispatch('inboxes/get');
-  store.dispatch('notifications/unReadCount');
-  store.dispatch('teams/get');
-  store.dispatch('attributes/get');
-  store.dispatch('customViews/get', 'conversation');
-  store.dispatch('customViews/get', 'contact');
-  store.dispatch('fetchAllConversations');
+onMounted(async () => {
+  await Promise.all([
+    store.dispatch('labels/get'),
+    store.dispatch('inboxes/get'),
+    store.dispatch('notifications/unReadCount'),
+    store.dispatch('teams/get'),
+    store.dispatch('attributes/get'),
+    store.dispatch('customViews/get', 'conversation'),
+    store.dispatch('customViews/get', 'contact'),
+    // Load all conversations for sidebar counts
+    store.dispatch('fetchAllConversationsForCounts'),
+  ]);
 });
 
 const sortedInboxes = computed(() =>
@@ -160,17 +164,43 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.LABELS'),
           icon: 'i-lucide-tag',
           activeOn: ['conversations_through_label'],
-          children: labels.value.map(label => ({
-            name: `${label.title}-${label.id}`,
-            label: label.title,
-            icon: h('span', {
-              class: `size-[12px] ring-1 ring-n-alpha-1 dark:ring-white/20 ring-inset rounded-sm`,
-              style: { backgroundColor: label.color },
-            }),
-            to: accountScopedRoute('label_conversations', {
+          children: labels.value.map(label => {
+            const unreadCount = getUnreadCountForLabel.value(label.title);
+            return {
+              name: `${label.title}-${label.id}`,
               label: label.title,
-            }),
-          })),
+              count: unreadCount,
+              icon: h('span', {
+                class: `size-[12px] ring-1 ring-n-alpha-1 dark:ring-white/20 ring-inset rounded-sm`,
+                style: { backgroundColor: label.color },
+              }),
+              to: accountScopedRoute('label_conversations', {
+                label: label.title,
+              }),
+              component: leafProps =>
+                h('div', { class: 'flex items-center gap-2 flex-1 min-w-0' }, [
+                  h('span', {
+                    class: `size-[12px] ring-1 ring-n-alpha-1 dark:ring-white/20 ring-inset rounded-sm flex-shrink-0`,
+                    style: { backgroundColor: label.color },
+                  }),
+                  h(
+                    'div',
+                    { class: 'flex-1 truncate min-w-0' },
+                    leafProps.label
+                  ),
+                  leafProps.count > 0
+                    ? h(
+                        'div',
+                        {
+                          class:
+                            'grid place-content-center min-w-5 h-5 px-1 bg-n-solid-blue rounded-full text-xs font-medium text-white',
+                        },
+                        leafProps.count > 99 ? '99+' : leafProps.count
+                      )
+                    : null,
+                ]),
+            };
+          }),
         },
       ],
     },

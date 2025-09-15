@@ -175,6 +175,41 @@ const getters = {
       return total + (conversation.unread_count || 0);
     }, 0);
   },
+
+  // Get unread count for specific inbox
+  getUnreadCountForInbox: _state => inboxId => {
+    return _state.allConversations
+      .filter(conversation => conversation.inbox_id === inboxId)
+      .reduce((total, conversation) => {
+        // Use full count for sidebar if available, fallback to regular count
+        return (
+          total +
+          (conversation.unread_count_full || conversation.unread_count || 0)
+        );
+      }, 0);
+  },
+
+  // Get unread count for specific label
+  getUnreadCountForLabel: _state => labelTitle => {
+    return _state.allConversations
+      .filter(conversation => {
+        if (!conversation.labels || !Array.isArray(conversation.labels))
+          return false;
+        // Labels can be either strings or objects with title property
+        return conversation.labels.some(label =>
+          typeof label === 'string'
+            ? label === labelTitle
+            : label.title === labelTitle
+        );
+      })
+      .reduce((total, conversation) => {
+        // Use full count for sidebar if available, fallback to regular count
+        return (
+          total +
+          (conversation.unread_count_full || conversation.unread_count || 0)
+        );
+      }, 0);
+  },
 };
 
 export default getters;
