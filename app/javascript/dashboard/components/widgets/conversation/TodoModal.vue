@@ -46,7 +46,7 @@ const iframeUrl = computed(() => {
   const baseUrl =
     window.chatwootConfig?.todoAppUrl ||
     process.env.VUE_APP_TODO_URL ||
-    'http://c4sokgg0sk8w0o8wo8gogskk.95.164.91.243.sslip.io/';
+    'https://todolist-test.swgaming.dev/';
   const params = new URLSearchParams({
     accountId: accountId.value,
     chatId: props.currentChat?.id || '',
