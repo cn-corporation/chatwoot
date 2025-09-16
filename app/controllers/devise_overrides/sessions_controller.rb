@@ -23,6 +23,14 @@ class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController
     render partial: 'devise/auth', formats: [:json], locals: { resource: @resource }
   end
 
+  def destroy
+    # Unassign all conversations when user logs out
+    if current_user
+      current_user.assigned_conversations.open.update_all(assignee_id: nil)
+    end
+    super
+  end
+
   private
 
   def login_page_url(error: nil)
