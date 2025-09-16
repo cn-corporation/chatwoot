@@ -210,6 +210,19 @@ const getters = {
         );
       }, 0);
   },
+
+  // Get unread count for specific team
+  getUnreadCountForTeam: _state => teamId => {
+    return _state.allConversations
+      .filter(conversation => conversation.meta?.team?.id === teamId)
+      .reduce((total, conversation) => {
+        // Use full count for sidebar if available, fallback to regular count
+        return (
+          total +
+          (conversation.unread_count_full || conversation.unread_count || 0)
+        );
+      }, 0);
+  },
 };
 
 export default getters;

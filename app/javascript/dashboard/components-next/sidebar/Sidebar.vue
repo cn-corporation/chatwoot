@@ -69,6 +69,7 @@ const labels = useMapGetter('labels/getLabelsOnSidebar');
 const teams = useMapGetter('teams/getMyTeams');
 const totalUnreadCount = useMapGetter('getTotalUnreadCount');
 const getUnreadCountForLabel = useMapGetter('getUnreadCountForLabel');
+const getUnreadCountForTeam = useMapGetter('getUnreadCountForTeam');
 // Removed unused custom views - simplified for poker operator UI
 
 onMounted(async () => {
@@ -136,11 +137,15 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.TEAMS'),
           icon: 'i-lucide-users',
           activeOn: ['conversations_through_team'],
-          children: teams.value.map(team => ({
-            name: `${team.name}-${team.id}`,
-            label: team.name,
-            to: accountScopedRoute('team_conversations', { teamId: team.id }),
-          })),
+          children: teams.value.map(team => {
+            const unreadCount = getUnreadCountForTeam.value(team.id);
+            return {
+              name: `${team.name}-${team.id}`,
+              label: team.name,
+              count: unreadCount,
+              to: accountScopedRoute('team_conversations', { teamId: team.id }),
+            };
+          }),
         },
         {
           name: 'Channels',
