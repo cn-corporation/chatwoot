@@ -262,9 +262,8 @@ export default {
       if (this.isPrivate) {
         sendMessageText = this.$t('CONVERSATION.REPLYBOX.CREATE');
       }
-      const keyLabel = this.isEditorHotKeyEnabled('cmd_enter')
-        ? '(⌘ + ↵)'
-        : '(↵)';
+      // Always show Enter as the send key for poker operator UI
+      const keyLabel = '(↵)';
       return `${sendMessageText} ${keyLabel}`;
     },
     replyBoxClass() {
@@ -605,6 +604,18 @@ export default {
       };
     },
     isAValidEvent(selectedKey) {
+      // For Enter key, always return true for poker operator UI
+      if (selectedKey === 'enter') {
+        return (
+          !this.showUserMentions &&
+          !this.showMentions &&
+          !this.showCannedMenu &&
+          !this.showVariablesMenu &&
+          this.isFocused
+        );
+      }
+
+      // For other keys, check the setting
       return (
         !this.showUserMentions &&
         !this.showMentions &&
