@@ -22,6 +22,8 @@ const state = {
   syncConversationsMessages: {},
   conversationFilters: {},
   copilotAssistant: {},
+  // Separate storage for sidebar counts
+  sidebarCountsData: [],
 };
 
 // mutations
@@ -73,20 +75,14 @@ export const mutations = {
   },
 
   [types.UPDATE_CONVERSATIONS_FOR_COUNTS](_state, conversations) {
-    // Update or add conversations for count purposes only
-    conversations.forEach(newConv => {
-      const existing = _state.allConversations.find(c => c.id === newConv.id);
-      if (existing) {
-        // Update counts only
-        existing.unread_count = newConv.unread_count;
-        existing.unread_count_full = newConv.unread_count_full;
-        existing.labels = newConv.labels;
-        existing.inbox_id = newConv.inbox_id;
-      } else {
-        // Add new conversation if not exists
-        _state.allConversations.push(newConv);
-      }
-    });
+    // Store sidebar counts data separately from main conversations
+    _state.sidebarCountsData = conversations.map(conv => ({
+      id: conv.id,
+      unread_count: conv.unread_count || 0,
+      labels: conv.labels || [],
+      inbox_id: conv.inbox_id,
+      team_id: conv.meta?.team?.id,
+    }));
   },
   [types.SET_ALL_MESSAGES_LOADED](_state) {
     const [chat] = getSelectedChatConversation(_state);
@@ -210,10 +206,10 @@ export const mutations = {
     });
   },
 
-  [types.ADD_MESSAGE]({ allConversations, selectedChatId }, message) {
+  [types.ADD_MESSAGE](_state, message) {
     const { conversation_id: conversationId } = message;
     const [chat] = getSelectedChatConversation({
-      allConversations,
+      allConversations: _state.allConversations,
       selectedChatId: conversationId,
     });
     if (!chat) return;
@@ -234,7 +230,14 @@ export const mutations = {
       if (unreadCountFull !== undefined) {
         chat.unread_count_full = unreadCountFull;
       }
-      if (selectedChatId === conversationId) {
+      // Update sidebar counts if conversation exists there
+      const sidebarItem = _state.sidebarCountsData.find(
+        c => c.id === conversationId
+      );
+      if (sidebarItem) {
+        sidebarItem.unread_count = unreadCount;
+      }
+      if (_state.selectedChatId === conversationId) {
         emitter.emit(BUS_EVENTS.FETCH_LABEL_SUGGESTIONS);
         emitter.emit(BUS_EVENTS.SCROLL_TO_MESSAGE);
       }
@@ -243,6 +246,16 @@ export const mutations = {
 
   [types.ADD_CONVERSATION](_state, conversation) {
     _state.allConversations.push(conversation);
+    // Also add to sidebar counts if needed
+    if (!_state.sidebarCountsData.find(c => c.id === conversation.id)) {
+      _state.sidebarCountsData.push({
+        id: conversation.id,
+        unread_count: conversation.unread_count || 0,
+        labels: conversation.labels || [],
+        inbox_id: conversation.inbox_id,
+        team_id: conversation.meta?.team?.id,
+      });
+    }
   },
 
   [types.DELETE_CONVERSATION](_state, conversationId) {
@@ -265,12 +278,40 @@ export const mutations = {
 
       const { messages, ...updates } = conversation;
       allConversations[index] = { ...selectedConversation, ...updates };
+
+      // Update sidebar counts data
+      const sidebarItem = _state.sidebarCountsData.find(
+        c => c.id === conversation.id
+      );
+      if (sidebarItem) {
+        sidebarItem.unread_count = conversation.unread_count || 0;
+        sidebarItem.labels = conversation.labels || [];
+        sidebarItem.team_id = conversation.meta?.team?.id;
+      } else {
+        _state.sidebarCountsData.push({
+          id: conversation.id,
+          unread_count: conversation.unread_count || 0,
+          labels: conversation.labels || [],
+          inbox_id: conversation.inbox_id,
+          team_id: conversation.meta?.team?.id,
+        });
+      }
       if (_state.selectedChatId === conversation.id) {
         emitter.emit(BUS_EVENTS.FETCH_LABEL_SUGGESTIONS);
         emitter.emit(BUS_EVENTS.SCROLL_TO_MESSAGE);
       }
     } else {
       _state.allConversations.push(conversation);
+      // Also add to sidebar counts if new
+      if (!_state.sidebarCountsData.find(c => c.id === conversation.id)) {
+        _state.sidebarCountsData.push({
+          id: conversation.id,
+          unread_count: conversation.unread_count || 0,
+          labels: conversation.labels || [],
+          inbox_id: conversation.inbox_id,
+          team_id: conversation.meta?.team?.id,
+        });
+      }
     }
   },
 
@@ -293,6 +334,11 @@ export const mutations = {
       if (unreadCountFull !== undefined) {
         chat.unread_count_full = unreadCountFull;
       }
+    }
+    // Also update sidebar counts
+    const sidebarItem = _state.sidebarCountsData.find(c => c.id === id);
+    if (sidebarItem) {
+      sidebarItem.unread_count = unreadCount;
     }
   },
   [types.CHANGE_CHAT_STATUS_FILTER](_state, data) {
