@@ -107,6 +107,20 @@ export default {
     confirmDeleteMessage() {
       return ` ${this.contact.name}?`;
     },
+    playerStatus() {
+      return this.additionalAttributes.player_status || null;
+    },
+    playerStatusLabel() {
+      const statusMap = {
+        beginner: this.$t('CONTACT_FORM.PLAYER_STATUS.BEGINNER'),
+        amateur: this.$t('CONTACT_FORM.PLAYER_STATUS.AMATEUR'),
+        regular: this.$t('CONTACT_FORM.PLAYER_STATUS.REGULAR'),
+        advanced: this.$t('CONTACT_FORM.PLAYER_STATUS.ADVANCED'),
+        professional: this.$t('CONTACT_FORM.PLAYER_STATUS.PROFESSIONAL'),
+        high_roller: this.$t('CONTACT_FORM.PLAYER_STATUS.HIGH_ROLLER'),
+      };
+      return statusMap[this.playerStatus] || this.playerStatus;
+    },
   },
   watch: {
     'contact.id': {
@@ -242,6 +256,16 @@ export default {
         <p v-if="additionalAttributes.description" class="break-words mb-0.5">
           {{ additionalAttributes.description }}
         </p>
+
+        <!-- Player status display -->
+        <div
+          v-if="playerStatus"
+          class="flex items-center text-n-slate-11 text-xs"
+        >
+          <span class="font-medium">
+            {{ playerStatusLabel }}
+          </span>
+        </div>
 
         <!-- Block 4: Agent selector for operators -->
         <div v-if="currentChat" class="mt-4 w-full">
