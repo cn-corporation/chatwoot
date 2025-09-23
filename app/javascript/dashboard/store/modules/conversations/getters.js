@@ -169,29 +169,43 @@ const getters = {
     return _state.copilotAssistant;
   },
 
-  // Get total unread count across all conversations
+  // Get total unread count across all conversations (uses separate counts data)
   getTotalUnreadCount: _state => {
-    return _state.allConversations.reduce((total, conversation) => {
+    // Use sidebar counts data if available, fallback to allConversations
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    return source.reduce((total, conversation) => {
       return total + (conversation.unread_count || 0);
     }, 0);
   },
 
-  // Get unread count for specific inbox
+  // Get unread count for specific inbox (uses separate counts data)
   getUnreadCountForInbox: _state => inboxId => {
-    return _state.allConversations
+    // Use sidebar counts data if available, fallback to allConversations
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    return source
       .filter(conversation => conversation.inbox_id === inboxId)
       .reduce((total, conversation) => {
-        // Use full count for sidebar if available, fallback to regular count
-        return (
-          total +
-          (conversation.unread_count_full || conversation.unread_count || 0)
-        );
+        return total + (conversation.unread_count || 0);
       }, 0);
   },
 
-  // Get unread count for specific label
+  // Get unread count for specific label (uses separate counts data)
   getUnreadCountForLabel: _state => labelTitle => {
-    return _state.allConversations
+    // Use sidebar counts data if available, fallback to allConversations
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    return source
       .filter(conversation => {
         if (!conversation.labels || !Array.isArray(conversation.labels))
           return false;
@@ -203,24 +217,25 @@ const getters = {
         );
       })
       .reduce((total, conversation) => {
-        // Use full count for sidebar if available, fallback to regular count
-        return (
-          total +
-          (conversation.unread_count_full || conversation.unread_count || 0)
-        );
+        return total + (conversation.unread_count || 0);
       }, 0);
   },
 
-  // Get unread count for specific team
+  // Get unread count for specific team (uses separate counts data)
   getUnreadCountForTeam: _state => teamId => {
-    return _state.allConversations
-      .filter(conversation => conversation.meta?.team?.id === teamId)
+    // Use sidebar counts data if available, fallback to allConversations
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    return source
+      .filter(conversation => {
+        const convTeamId = conversation.team_id || conversation.meta?.team?.id;
+        return convTeamId === teamId;
+      })
       .reduce((total, conversation) => {
-        // Use full count for sidebar if available, fallback to regular count
-        return (
-          total +
-          (conversation.unread_count_full || conversation.unread_count || 0)
-        );
+        return total + (conversation.unread_count || 0);
       }, 0);
   },
 };

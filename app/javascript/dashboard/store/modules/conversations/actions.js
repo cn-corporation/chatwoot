@@ -59,14 +59,14 @@ const actions = {
       // Fetch all conversations without filters to get accurate counts
       const params = {
         page: 1,
-        per_page: 100, // Get more conversations for accurate counts
+        per_page: 500, // Get more conversations for accurate counts
         status: 'all',
       };
       const {
         data: { data },
       } = await ConversationApi.get(params);
 
-      // Store these separately or update existing ones for counts only
+      // Store these separately for sidebar counts
       if (data.payload && data.payload.length > 0) {
         commit(types.UPDATE_CONVERSATIONS_FOR_COUNTS, data.payload);
       }
