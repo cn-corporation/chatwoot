@@ -112,6 +112,7 @@ const advancedFilterTypes = ref(
 
 const currentUser = useMapGetter('getCurrentUser');
 const chatLists = useMapGetter('getFilteredConversations');
+const allConversations = useMapGetter('getAllConversations');
 const mineChatsList = useMapGetter('getMineChats');
 const allChatList = useMapGetter('getAllStatusChats');
 const unAssignedChatsList = useMapGetter('getUnAssignedChats');
@@ -198,15 +199,57 @@ const userPermissions = computed(() => {
 });
 
 const assigneeTabItems = computed(() => {
+  const isLabelView = props.label && props.label !== '';
+
   return filterItemsByPermission(
     ASSIGNEE_TYPE_TAB_PERMISSIONS,
     userPermissions.value,
     item => item.permissions
-  ).map(({ key, count: countKey }) => ({
-    key,
-    name: t(`CHAT_LIST.ASSIGNEE_TYPE_TABS.${key}`),
-    count: conversationStats.value[countKey] || 0,
-  }));
+  ).map(({ key, count: countKey }) => {
+    let count = 0;
+    if (isLabelView) {
+      const allFilteredConversations =
+        allConversations.value?.filter(conv => {
+          if (!conv.labels || !Array.isArray(conv.labels)) return false;
+          return conv.labels.includes(props.label);
+        }) || [];
+
+      switch (key) {
+        case 'me':
+          count = allFilteredConversations.filter(
+            c =>
+              c.status !== 'resolved' &&
+              c.meta?.assignee?.id === currentUser.value?.id
+          ).length;
+          break;
+        case 'unassigned':
+          count = allFilteredConversations.filter(
+            c => c.status !== 'resolved' && !c.meta?.assignee?.id
+          ).length;
+          break;
+        case 'all':
+          count = allFilteredConversations.filter(
+            c => c.status !== 'resolved'
+          ).length;
+          break;
+        case 'resolved':
+          count = allFilteredConversations.filter(
+            c => c.status === 'resolved'
+          ).length;
+          break;
+        default:
+          count = 0;
+      }
+    } else {
+      count = conversationStats.value[countKey] || 0;
+    }
+
+    return {
+      key,
+      name: t(`CHAT_LIST.ASSIGNEE_TYPE_TABS.${key}`),
+      count,
+    };
+  });
 });
 
 // Simplified tabs for operators - Block 1 requirement
