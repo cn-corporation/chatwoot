@@ -75,6 +75,13 @@ const actions = {
     }
   },
 
+  cleanupInboxCounts: ({ commit, state }, inboxId) => {
+    const filteredCounts = state.sidebarCountsData.filter(
+      conversation => conversation.inbox_id !== inboxId
+    );
+    commit(types.UPDATE_CONVERSATIONS_FOR_COUNTS, filteredCounts);
+  },
+
   fetchFilteredConversations: async ({ commit, dispatch }, params) => {
     commit(types.SET_LIST_LOADING_STATUS);
     try {
