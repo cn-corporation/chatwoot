@@ -262,6 +262,10 @@ export const mutations = {
     _state.allConversations = _state.allConversations.filter(
       c => c.id !== conversationId
     );
+    // Also remove from sidebar counts data
+    _state.sidebarCountsData = _state.sidebarCountsData.filter(
+      c => c.id !== conversationId
+    );
   },
 
   [types.UPDATE_CONVERSATION](_state, conversation) {

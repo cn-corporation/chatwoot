@@ -1,5 +1,5 @@
 <script setup>
-import { h, computed, onMounted } from 'vue';
+import { h, computed, onMounted, onUnmounted } from 'vue';
 import { provideSidebarContext } from './provider';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useKbd } from 'dashboard/composables/utils/useKbd';
@@ -8,6 +8,8 @@ import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 import { useStorage } from '@vueuse/core';
 import { useSidebarKeyboardShortcuts } from './useSidebarKeyboardShortcuts';
+import { BUS_EVENTS } from 'shared/constants/busEvents';
+import { emitter } from 'shared/helpers/mitt';
 import { vOnClickOutside } from '@vueuse/components';
 
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -72,6 +74,10 @@ const getUnreadCountForLabel = useMapGetter('getUnreadCountForLabel');
 const getUnreadCountForTeam = useMapGetter('getUnreadCountForTeam');
 // Removed unused custom views - simplified for poker operator UI
 
+const refreshCounts = async () => {
+  await store.dispatch('fetchAllConversationsForCounts');
+};
+
 onMounted(async () => {
   await Promise.all([
     store.dispatch('labels/get'),
@@ -84,6 +90,15 @@ onMounted(async () => {
     // Load all conversations for sidebar counts
     store.dispatch('fetchAllConversationsForCounts'),
   ]);
+
+  // Refresh counts when conversations are updated
+  emitter.on(BUS_EVENTS.WEBSOCKET_RECONNECT, refreshCounts);
+  emitter.on('fetch_conversation_stats', refreshCounts);
+});
+
+onUnmounted(() => {
+  emitter.off(BUS_EVENTS.WEBSOCKET_RECONNECT, refreshCounts);
+  emitter.off('fetch_conversation_stats', refreshCounts);
 });
 
 const sortedInboxes = computed(() =>
