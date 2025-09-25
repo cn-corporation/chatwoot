@@ -39,12 +39,12 @@ const unreadCount = computed(() => {
   </span>
   <div class="flex-1 truncate min-w-0">{{ label }}</div>
   <div class="flex items-center gap-1">
-    <div
+    <span
       v-if="unreadCount > 0"
-      class="grid place-content-center min-w-5 h-5 px-1 bg-n-solid-blue rounded-full text-xs font-medium text-white"
+      class="ml-auto text-xs font-semibold px-1.5 py-0.5 rounded bg-red-500 text-white"
     >
       {{ unreadCount > 99 ? '99+' : unreadCount }}
-    </div>
+    </span>
     <div
       v-if="reauthorizationRequired"
       v-tooltip.top-end="$t('SIDEBAR.REAUTHORIZE')"

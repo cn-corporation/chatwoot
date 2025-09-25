@@ -210,10 +210,10 @@ const menuItems = computed(() => {
                   ),
                   leafProps.count > 0
                     ? h(
-                        'div',
+                        'span',
                         {
                           class:
-                            'grid place-content-center min-w-5 h-5 px-1 bg-n-solid-blue rounded-full text-xs font-medium text-white',
+                            'ml-auto text-xs font-semibold px-1.5 py-0.5 rounded bg-red-500 text-white',
                         },
                         leafProps.count > 99 ? '99+' : leafProps.count
                       )
