@@ -677,10 +677,14 @@ function updateAssigneeTab(selectedTab) {
   if (activeAssigneeTab.value !== selectedTab) {
     resetBulkActions();
     emitter.emit('clearSearchInput');
+
+    // Reset page counter for the new tab before switching
+    store.dispatch('conversationPage/reset');
+
     activeAssigneeTab.value = selectedTab;
-    if (!currentPage.value) {
-      fetchConversations();
-    }
+
+    // Always fetch conversations for the new tab (will fetch page 1 now)
+    fetchConversations();
   }
 }
 
