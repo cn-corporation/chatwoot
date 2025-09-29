@@ -112,7 +112,6 @@ const advancedFilterTypes = ref(
 
 const currentUser = useMapGetter('getCurrentUser');
 const chatLists = useMapGetter('getFilteredConversations');
-const allConversations = useMapGetter('getAllConversations');
 const mineChatsList = useMapGetter('getMineChats');
 const allChatList = useMapGetter('getAllStatusChats');
 const unAssignedChatsList = useMapGetter('getUnAssignedChats');
@@ -198,10 +197,14 @@ const userPermissions = computed(() => {
   return getUserPermissions(currentUser.value, currentAccountId.value);
 });
 
-const getConversationsForLabelTabs = useMapGetter('getConversationsForLabelTabs');
+const getConversationsForLabelTabs = useMapGetter(
+  'getConversationsForLabelTabs'
+);
+const getConversationsForTeamTabs = useMapGetter('getConversationsForTeamTabs');
 
 const assigneeTabItems = computed(() => {
   const isLabelView = props.label && props.label !== '';
+  const isTeamView = props.teamId && props.teamId !== 0;
 
   return filterItemsByPermission(
     ASSIGNEE_TYPE_TAB_PERMISSIONS,
@@ -209,17 +212,17 @@ const assigneeTabItems = computed(() => {
     item => item.permissions
   ).map(({ key, count: countKey }) => {
     let count = 0;
-    
+
     if (isLabelView) {
       // Use the store getter that has access to sidebarCountsData
-      const labelConversations = getConversationsForLabelTabs.value(props.label) || [];
-      
+      const labelConversations =
+        getConversationsForLabelTabs.value(props.label) || [];
+
       switch (key) {
         case 'me':
           count = labelConversations.filter(
             c =>
-              c.status !== 'resolved' &&
-              c.assignee_id === currentUser.value?.id
+              c.status !== 'resolved' && c.assignee_id === currentUser.value?.id
           ).length;
           break;
         case 'unassigned':
@@ -236,6 +239,32 @@ const assigneeTabItems = computed(() => {
           count = labelConversations.filter(
             c => c.status === 'resolved'
           ).length;
+          break;
+        default:
+          count = 0;
+      }
+    } else if (isTeamView) {
+      // Use the store getter that has access to sidebarCountsData
+      const teamConversations =
+        getConversationsForTeamTabs.value(props.teamId) || [];
+
+      switch (key) {
+        case 'me':
+          count = teamConversations.filter(
+            c =>
+              c.status !== 'resolved' && c.assignee_id === currentUser.value?.id
+          ).length;
+          break;
+        case 'unassigned':
+          count = teamConversations.filter(
+            c => c.status !== 'resolved' && !c.assignee_id
+          ).length;
+          break;
+        case 'all':
+          count = teamConversations.filter(c => c.status !== 'resolved').length;
+          break;
+        case 'resolved':
+          count = teamConversations.filter(c => c.status === 'resolved').length;
           break;
         default:
           count = 0;
