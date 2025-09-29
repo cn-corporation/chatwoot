@@ -253,6 +253,19 @@ const getters = {
       return conversation.labels.includes(label);
     });
   },
+
+  // Get conversations for tab counts in team views
+  getConversationsForTeamTabs: _state => teamId => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    return source.filter(conversation => {
+      const convTeamId = conversation.team_id || conversation.meta?.team?.id;
+      return convTeamId === Number(teamId);
+    });
+  },
 };
 
 export default getters;
