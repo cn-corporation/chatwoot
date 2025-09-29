@@ -82,6 +82,8 @@ export const mutations = {
       labels: conv.labels || [],
       inbox_id: conv.inbox_id,
       team_id: conv.meta?.team?.id,
+      status: conv.status,
+      assignee_id: conv.meta?.assignee?.id,
     }));
   },
   [types.SET_ALL_MESSAGES_LOADED](_state) {
@@ -254,6 +256,8 @@ export const mutations = {
         labels: conversation.labels || [],
         inbox_id: conversation.inbox_id,
         team_id: conversation.meta?.team?.id,
+        status: conversation.status,
+        assignee_id: conversation.meta?.assignee?.id,
       });
     }
   },
@@ -291,6 +295,8 @@ export const mutations = {
         sidebarItem.unread_count = conversation.unread_count || 0;
         sidebarItem.labels = conversation.labels || [];
         sidebarItem.team_id = conversation.meta?.team?.id;
+        sidebarItem.status = conversation.status;
+        sidebarItem.assignee_id = conversation.meta?.assignee?.id;
       } else {
         _state.sidebarCountsData.push({
           id: conversation.id,

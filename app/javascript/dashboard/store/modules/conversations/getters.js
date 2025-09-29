@@ -238,6 +238,21 @@ const getters = {
         return total + (conversation.unread_count || 0);
       }, 0);
   },
+
+  // Get conversations for tab counts in label views
+  getConversationsForLabelTabs: _state => label => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    return source.filter(conversation => {
+      if (!conversation.labels || !Array.isArray(conversation.labels)) {
+        return false;
+      }
+      return conversation.labels.includes(label);
+    });
+  },
 };
 
 export default getters;

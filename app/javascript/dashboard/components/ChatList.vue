@@ -198,6 +198,8 @@ const userPermissions = computed(() => {
   return getUserPermissions(currentUser.value, currentAccountId.value);
 });
 
+const getConversationsForLabelTabs = useMapGetter('getConversationsForLabelTabs');
+
 const assigneeTabItems = computed(() => {
   const isLabelView = props.label && props.label !== '';
 
@@ -207,33 +209,31 @@ const assigneeTabItems = computed(() => {
     item => item.permissions
   ).map(({ key, count: countKey }) => {
     let count = 0;
+    
     if (isLabelView) {
-      const allFilteredConversations =
-        allConversations.value?.filter(conv => {
-          if (!conv.labels || !Array.isArray(conv.labels)) return false;
-          return conv.labels.includes(props.label);
-        }) || [];
-
+      // Use the store getter that has access to sidebarCountsData
+      const labelConversations = getConversationsForLabelTabs.value(props.label) || [];
+      
       switch (key) {
         case 'me':
-          count = allFilteredConversations.filter(
+          count = labelConversations.filter(
             c =>
               c.status !== 'resolved' &&
-              c.meta?.assignee?.id === currentUser.value?.id
+              c.assignee_id === currentUser.value?.id
           ).length;
           break;
         case 'unassigned':
-          count = allFilteredConversations.filter(
-            c => c.status !== 'resolved' && !c.meta?.assignee?.id
+          count = labelConversations.filter(
+            c => c.status !== 'resolved' && !c.assignee_id
           ).length;
           break;
         case 'all':
-          count = allFilteredConversations.filter(
+          count = labelConversations.filter(
             c => c.status !== 'resolved'
           ).length;
           break;
         case 'resolved':
-          count = allFilteredConversations.filter(
+          count = labelConversations.filter(
             c => c.status === 'resolved'
           ).length;
           break;
@@ -835,6 +835,8 @@ onMounted(() => {
   if (hasActiveFolders.value) {
     store.dispatch('campaigns/get');
   }
+  // Refresh conversation stats to get accurate counts
+  store.dispatch('conversationStats/get', conversationFilters.value);
 });
 
 const deleteConversationDialogRef = ref(null);
