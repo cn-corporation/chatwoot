@@ -39,7 +39,7 @@ RUN apk update && apk add --no-cache \
   curl \
   xz \
   && mkdir -p /var/app \
-  && gem install bundler
+  && gem install bundler -v ${BUNDLER_VERSION} --no-document
 
 COPY --from=node /usr/local/bin/node /usr/local/bin/
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
@@ -47,7 +47,6 @@ RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
   && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 RUN npm install -g pnpm@${PNPM_VERSION}
-RUN pnpm config set allow-scripts true
 
 RUN echo 'export PNPM_HOME="/root/.local/share/pnpm"' >> /root/.shrc \
   && echo 'export PATH="$PNPM_HOME:$PATH"' >> /root/.shrc \
@@ -78,7 +77,7 @@ RUN if [ "$RAILS_ENV" = "production" ]; then \
 
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm pkg delete scripts.prepare || true \
-  && pnpm install --frozen-lockfile
+  && pnpm install --frozen-lockfile --config.allow-scripts=true
 
 COPY . /app
 
@@ -138,7 +137,7 @@ RUN apk update && apk add --no-cache \
   imagemagick \
   git \
   vips \
-  && gem install bundler
+  && gem install bundler -v ${BUNDLER_VERSION} --no-document
 
 COPY --from=node /usr/local/bin/node /usr/local/bin/
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
