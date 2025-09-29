@@ -4,6 +4,8 @@ x-chatwoot-build: &chatwoot-build
   build:
     context: .
     dockerfile: docker/Dockerfile
+    args:
+      SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
   image: chatwoot:${SOURCE_COMMIT:-latest}
 
 services:
