@@ -6,6 +6,8 @@ ARG NODE_VERSION="23.7.0"
 ARG PNPM_VERSION="10.2.0"
 ENV NODE_VERSION=${NODE_VERSION}
 ENV PNPM_VERSION=${PNPM_VERSION}
+ENV HUSKY=0
+ENV HUSKY=0
 
 # ARG default to production settings
 # For development docker-compose file overrides ARGS
@@ -43,6 +45,7 @@ RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
   && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 RUN npm install -g pnpm@${PNPM_VERSION}
+RUN pnpm config set allow-scripts "core-js esbuild vue-demi"
 
 RUN echo 'export PNPM_HOME="/root/.local/share/pnpm"' >> /root/.shrc \
   && echo 'export PATH="$PNPM_HOME:$PATH"' >> /root/.shrc \
@@ -138,6 +141,7 @@ RUN if [ "$RAILS_ENV" != "production" ]; then \
   && ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
   && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
   && npm install -g pnpm@${PNPM_VERSION} \
+  && pnpm config set allow-scripts "core-js esbuild vue-demi" \
   && pnpm --version; \
   fi
 
