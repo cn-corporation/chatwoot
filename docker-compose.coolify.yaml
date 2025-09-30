@@ -15,6 +15,7 @@ services:
       - REDIS_URL=${REDIS_URL:-redis://default:${REDIS_PASSWORD:-redis_password}@redis:6379/0}
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
       - REDIS_OPENSSL_VERIFY_MODE=${REDIS_OPENSSL_VERIFY_MODE:-none}
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - POSTGRES_DATABASE=${POSTGRES_DB:-chatwoot}
       - POSTGRES_USERNAME=${POSTGRES_USERNAME:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
@@ -56,6 +57,7 @@ services:
       - REDIS_URL=${REDIS_URL:-redis://default:${REDIS_PASSWORD:-redis_password}@redis:6379/0}
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
       - REDIS_OPENSSL_VERIFY_MODE=${REDIS_OPENSSL_VERIFY_MODE:-none}
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - POSTGRES_DATABASE=${POSTGRES_DB:-chatwoot}
       - POSTGRES_USERNAME=${POSTGRES_USERNAME:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
@@ -107,7 +109,7 @@ services:
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "$SERVICE_PASSWORD_REDIS", "PING"]
+      test: ["CMD", "redis-cli", "-a", "$REDIS_PASSWORD", "PING"]
       interval: 30s
       timeout: 10s
       retries: 5
