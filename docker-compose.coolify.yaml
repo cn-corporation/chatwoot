@@ -21,7 +21,7 @@ x-env-common: &env_common
   FORCE_SSL: ${FORCE_SSL:-false}
 
 x-image: &chatwoot_image
-  image: ${CHATWOOT_IMAGE:-ghcr.io/cn-corporation/chatwoot:main-aa38ac6}
+  image: ${CHATWOOT_IMAGE:-ghcr.io/cn-corporation/chatwoot:latest}
 
 services:
   postgres:
