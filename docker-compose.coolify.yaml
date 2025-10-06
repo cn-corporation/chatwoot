@@ -117,5 +117,5 @@ services:
 volumes:
   rails-data:
   rails-assets:
-  postgres-data:
+  postgres-db:
   redis-data:
