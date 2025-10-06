@@ -21,7 +21,7 @@ x-env-common: &env_common
   FORCE_SSL: ${FORCE_SSL:-false}
 
 x-image: &chatwoot_image
-  image: ${CHATWOOT_IMAGE:-chatwoot:${SOURCE_COMMIT:-latest}}
+  image: ${CHATWOOT_IMAGE:-ghcr.io/cn-corporation/chatwoot:latest}
 
 services:
   postgres:
@@ -59,14 +59,7 @@ services:
 
   chatwoot:
     <<: *chatwoot_image
-    pull_policy: never
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile
-      args:
-        RAILS_ENV: production
-        NODE_ENV: production
-        SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
+    pull_policy: always
     restart: always
     environment:
       <<: *env_common
@@ -97,14 +90,7 @@ services:
 
   sidekiq:
     <<: *chatwoot_image
-    pull_policy: never
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile
-      args:
-        RAILS_ENV: production
-        NODE_ENV: production
-        SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
+    pull_policy: always
     restart: always
     environment:
       <<: *env_common
