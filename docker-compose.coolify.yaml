@@ -1,5 +1,6 @@
 version: "3.9"
 
+# Спільні змінні оточення для всіх сервісів Chatwoot
 x-env-common: &env_common
   RAILS_ENV: ${RAILS_ENV:-production}
   NODE_ENV: ${NODE_ENV:-production}
@@ -9,18 +10,31 @@ x-env-common: &env_common
   DATABASE_URL: postgres://${POSTGRES_USERNAME:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-chatwoot}
   REDIS_URL: redis://default:${REDIS_PASSWORD}@redis:6379/0
   REDIS_OPENSSL_VERIFY_MODE: ${REDIS_OPENSSL_VERIFY_MODE:-none}
+  RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
+  RAILS_LOG_TO_STDOUT: ${RAILS_LOG_TO_STDOUT:-true}
   MAILER_SENDER_EMAIL: ${MAILER_SENDER_EMAIL:-Chatwoot <accounts@example.com>}
-  SMTP_ADDRESS: ${SMTP_ADDRESS:-smtp.example.com}
+  SMTP_ADDRESS: ${SMTP_ADDRESS}
   SMTP_PORT: ${SMTP_PORT:-587}
-  SMTP_USERNAME: ${SMTP_USERNAME:-smtp-user}
-  SMTP_PASSWORD: ${SMTP_PASSWORD:-smtp-password}
-  SMTP_DOMAIN: ${SMTP_DOMAIN:-example.com}
+  SMTP_USERNAME: ${SMTP_USERNAME}
+  SMTP_PASSWORD: ${SMTP_PASSWORD}
+  SMTP_DOMAIN: ${SMTP_DOMAIN}
   SMTP_AUTHENTICATION: ${SMTP_AUTHENTICATION:-login}
   SMTP_ENABLE_STARTTLS_AUTO: ${SMTP_ENABLE_STARTTLS_AUTO:-true}
   ENABLE_ACCOUNT_SIGNUP: ${ENABLE_ACCOUNT_SIGNUP:-false}
   DEFAULT_LOCALE: ${CHATWOOT_DEFAULT_LOCALE:-en}
   ACTIVE_STORAGE_SERVICE: ${ACTIVE_STORAGE_SERVICE:-local}
   FORCE_SSL: ${FORCE_SSL:-false}
+  S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  AWS_REGION: ${AWS_REGION}
+  FB_VERIFY_TOKEN: ${FB_VERIFY_TOKEN}
+  FB_APP_SECRET: ${FB_APP_SECRET}
+  FB_APP_ID: ${FB_APP_ID}
+
+x-image: &chatwoot_image
+  image: ${CHATWOOT_IMAGE:-chatwoot:${SOURCE_COMMIT:-latest}}
+  pull_policy: ${CHATWOOT_IMAGE:+always}
 
 services:
   postgres:
@@ -57,12 +71,16 @@ services:
       retries: 12
 
   db_prepare:
-    image: ${CHATWOOT_IMAGE:-romsribn/chatwoot-poker:latest}
-    pull_policy: always
+    <<: *chatwoot_image
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      args:
+        RAILS_ENV: production
+        NODE_ENV: production
     restart: "no"
     environment:
       <<: *env_common
-
     command: ["bundle", "exec", "rails", "db:chatwoot_prepare"]
     depends_on:
       postgres:
@@ -71,8 +89,13 @@ services:
         condition: service_healthy
 
   chatwoot:
-    image: ${CHATWOOT_IMAGE:-romsribn/chatwoot-poker:latest}
-    pull_policy: always
+    <<: *chatwoot_image
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      args:
+        RAILS_ENV: production
+        NODE_ENV: production
     restart: always
     environment:
       <<: *env_common
@@ -92,10 +115,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 24
+    labels:
+      - "coolify.managed=true"
 
   sidekiq:
-    image: ${CHATWOOT_IMAGE:-romsribn/chatwoot-poker:latest}
-    pull_policy: always
+    <<: *chatwoot_image
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      args:
+        RAILS_ENV: production
+        NODE_ENV: production
     restart: always
     environment:
       <<: *env_common
