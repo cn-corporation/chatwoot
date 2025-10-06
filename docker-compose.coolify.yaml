@@ -11,7 +11,6 @@ x-env-common: &env_common
   POSTGRES_DB: ${POSTGRES_DB:-chatwoot}
   POSTGRES_USERNAME: postgres
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  REDIS_URL: redis://default:${REDIS_PASSWORD}@redis:6379/0
   REDIS_PASSWORD: ${REDIS_PASSWORD}
   REDIS_OPENSSL_VERIFY_MODE: ${REDIS_OPENSSL_VERIFY_MODE:-none}
   RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
@@ -66,6 +65,7 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        export REDIS_URL="redis://default:${REDIS_PASSWORD}@redis:6379/0"
         echo "Preparing database..."
         cd /app && bundle exec rails db:prepare
         echo "Removing old server PID..."
@@ -97,6 +97,7 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        export REDIS_URL="redis://default:${REDIS_PASSWORD}@redis:6379/0"
         echo "Waiting for Chatwoot to start..."
         sleep 10
         echo "Starting Sidekiq..."
