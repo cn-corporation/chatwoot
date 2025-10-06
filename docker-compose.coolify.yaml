@@ -69,30 +69,6 @@ services:
       timeout: 5s
       retries: 12
 
-  db_prepare:
-    <<: *chatwoot_image
-    pull_policy: never
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile
-      args:
-        RAILS_ENV: production
-        NODE_ENV: production
-        SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
-    restart: "no"
-    environment:
-      <<: *env_common
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        echo "Running database migrations..."
-        cd /app && bundle exec rails db:prepare
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
   chatwoot:
     <<: *chatwoot_image
     pull_policy: never
@@ -110,15 +86,17 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        echo "Preparing database..."
+        cd /app && bundle exec rails db:prepare
+        echo "Removing old server PID..."
         rm -f /app/tmp/pids/server.pid
-        cd /app && exec bundle exec rails s -p 3000 -b 0.0.0.0
+        echo "Starting Rails server..."
+        exec bundle exec rails s -p 3000 -b 0.0.0.0
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      db_prepare:
-        condition: service_completed_successfully
     volumes:
       - rails-data:/app/storage
       - rails-assets:/app/public/packs
@@ -146,14 +124,13 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        echo "Waiting for Chatwoot to start..."
+        sleep 10
+        echo "Starting Sidekiq..."
         cd /app && exec bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      db_prepare:
-        condition: service_completed_successfully
+      chatwoot:
+        condition: service_started
     volumes:
       - rails-data:/app/storage
       - rails-assets:/app/public/packs
