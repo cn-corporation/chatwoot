@@ -34,7 +34,6 @@ x-env-common: &env_common
 
 x-image: &chatwoot_image
   image: ${CHATWOOT_IMAGE:-chatwoot:${SOURCE_COMMIT:-latest}}
-  pull_policy: ${CHATWOOT_IMAGE:+always}
 
 services:
   postgres:
@@ -72,6 +71,7 @@ services:
 
   db_prepare:
     <<: *chatwoot_image
+    pull_policy: never
     build:
       context: .
       dockerfile: ./docker/Dockerfile
@@ -90,6 +90,7 @@ services:
 
   chatwoot:
     <<: *chatwoot_image
+    pull_policy: never
     build:
       context: .
       dockerfile: ./docker/Dockerfile
@@ -120,6 +121,7 @@ services:
 
   sidekiq:
     <<: *chatwoot_image
+    pull_policy: never
     build:
       context: .
       dockerfile: ./docker/Dockerfile
