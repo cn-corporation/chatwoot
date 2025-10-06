@@ -4,12 +4,8 @@ FROM ruby:3.4.4-alpine3.21 AS pre-builder
 
 ARG NODE_VERSION="23.7.0"
 ARG PNPM_VERSION="10.2.0"
-ARG SOURCE_COMMIT="unknown"
 ENV NODE_VERSION=${NODE_VERSION}
 ENV PNPM_VERSION=${PNPM_VERSION}
-ENV SOURCE_COMMIT=${SOURCE_COMMIT}
-ENV HUSKY=0
-ENV HUSKY_SKIP_INSTALL=1
 
 # ARG default to production settings
 # For development docker-compose file overrides ARGS
@@ -39,7 +35,7 @@ RUN apk update && apk add --no-cache \
   curl \
   xz \
   && mkdir -p /var/app \
-  && gem install bundler -v ${BUNDLER_VERSION} --no-document
+  && gem install bundler
 
 COPY --from=node /usr/local/bin/node /usr/local/bin/
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
@@ -76,8 +72,7 @@ RUN if [ "$RAILS_ENV" = "production" ]; then \
   fi
 
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm pkg delete scripts.prepare || true \
-  && pnpm install --frozen-lockfile --config.allow-scripts=true
+RUN pnpm i
 
 COPY . /app
 
@@ -92,7 +87,7 @@ RUN if [ "$RAILS_ENV" = "production" ]; then \
   fi
 
 # Generate .git_sha file with current commit hash
-RUN echo "${SOURCE_COMMIT}" > /app/.git_sha
+RUN git rev-parse HEAD > /app/.git_sha
 
 # Remove unnecessary files
 RUN rm -rf /gems/ruby/3.4.0/cache/*.gem \
@@ -105,10 +100,8 @@ FROM ruby:3.4.4-alpine3.21
 
 ARG NODE_VERSION="23.7.0"
 ARG PNPM_VERSION="10.2.0"
-ARG SOURCE_COMMIT="unknown"
 ENV NODE_VERSION=${NODE_VERSION}
 ENV PNPM_VERSION=${PNPM_VERSION}
-ENV SOURCE_COMMIT=${SOURCE_COMMIT}
 
 ARG BUNDLE_WITHOUT="development:test"
 ENV BUNDLE_WITHOUT ${BUNDLE_WITHOUT}
@@ -126,8 +119,6 @@ ENV BUNDLE_FORCE_RUBY_PLATFORM ${BUNDLE_FORCE_RUBY_PLATFORM}
 ARG RAILS_ENV=production
 ENV RAILS_ENV ${RAILS_ENV}
 ENV BUNDLE_PATH="/gems"
-ENV HUSKY=0
-ENV HUSKY_SKIP_INSTALL=1
 
 RUN apk update && apk add --no-cache \
   build-base \
@@ -137,7 +128,7 @@ RUN apk update && apk add --no-cache \
   imagemagick \
   git \
   vips \
-  && gem install bundler -v ${BUNDLER_VERSION} --no-document
+  && gem install bundler
 
 COPY --from=node /usr/local/bin/node /usr/local/bin/
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
@@ -147,7 +138,6 @@ RUN if [ "$RAILS_ENV" != "production" ]; then \
   && ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
   && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
   && npm install -g pnpm@${PNPM_VERSION} \
-  && pnpm config set allow-scripts true \
   && pnpm --version; \
   fi
 
