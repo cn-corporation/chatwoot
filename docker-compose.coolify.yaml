@@ -78,6 +78,7 @@ services:
       args:
         RAILS_ENV: production
         NODE_ENV: production
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
     restart: "no"
     environment:
       <<: *env_common
@@ -97,6 +98,7 @@ services:
       args:
         RAILS_ENV: production
         NODE_ENV: production
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
     restart: always
     environment:
       <<: *env_common
@@ -128,6 +130,7 @@ services:
       args:
         RAILS_ENV: production
         NODE_ENV: production
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
     restart: always
     environment:
       <<: *env_common
