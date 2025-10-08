@@ -25,6 +25,7 @@ x-image: &chatwoot_image
 services:
   postgres:
     image: pgvector/pgvector:pg16
+    container_name: chatwoot-pgvector
     pull_policy: always
     restart: always
     environment:
@@ -42,6 +43,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: chatwoot-redis
     pull_policy: always
     restart: always
     command: >
@@ -58,6 +60,7 @@ services:
 
   chatwoot:
     <<: *chatwoot_image
+    container_name: chatwoot-main-app
     pull_policy: always
     restart: always
     environment:
@@ -90,6 +93,7 @@ services:
 
   sidekiq:
     <<: *chatwoot_image
+    container_name: chatwoot-sidekiq
     pull_policy: always
     restart: always
     environment:
