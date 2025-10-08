@@ -56,18 +56,23 @@ const actions = {
 
   fetchAllConversationsForCounts: async ({ commit }) => {
     try {
-      const params = {
-        page: 1,
-        status: 'all',
-        assigneeType: 'me',
-      };
+      const [meResponse, unassignedResponse] = await Promise.all([
+        ConversationApi.get({ page: 1, status: 'all', assigneeType: 'me' }),
+        ConversationApi.get({
+          page: 1,
+          status: 'all',
+          assigneeType: 'unassigned',
+        }),
+      ]);
 
-      const {
-        data: { data },
-      } = await ConversationApi.get(params);
+      const meConversations = meResponse.data.data.payload || [];
+      const unassignedConversations =
+        unassignedResponse.data.data.payload || [];
 
-      if (data.payload?.length > 0) {
-        commit(types.UPDATE_CONVERSATIONS_FOR_COUNTS, data.payload);
+      const allConversations = [...meConversations, ...unassignedConversations];
+
+      if (allConversations.length > 0) {
+        commit(types.UPDATE_CONVERSATIONS_FOR_COUNTS, allConversations);
       }
     } catch (error) {
       // Handle error silently - counts are not critical
