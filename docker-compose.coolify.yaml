@@ -123,3 +123,4 @@ volumes:
   rails-assets:
   postgres-db:
   redis-data:
+
