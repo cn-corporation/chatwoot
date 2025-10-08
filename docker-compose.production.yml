@@ -1,7 +1,14 @@
 version: '3.8'
 
 x-base: &base
-  image: romsribn/chatwoot-poker:latest
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+    args:
+      RAILS_ENV: production
+      NODE_ENV: production
+      BUNDLE_WITHOUT: "development:test"
+      RAILS_SERVE_STATIC_FILES: "true"
   env_file: .env
   environment:
     - NODE_ENV=production
