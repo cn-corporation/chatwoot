@@ -56,19 +56,23 @@ const actions = {
 
   fetchAllConversationsForCounts: async ({ commit }) => {
     try {
-      // Fetch all conversations without filters to get accurate counts
-      const params = {
-        page: 1,
-        per_page: 500, // Get more conversations for accurate counts
-        status: 'all',
-      };
-      const {
-        data: { data },
-      } = await ConversationApi.get(params);
+      const [meResponse, unassignedResponse] = await Promise.all([
+        ConversationApi.get({ page: 1, status: 'all', assigneeType: 'me' }),
+        ConversationApi.get({
+          page: 1,
+          status: 'all',
+          assigneeType: 'unassigned',
+        }),
+      ]);
 
-      // Store these separately for sidebar counts
-      if (data.payload && data.payload.length > 0) {
-        commit(types.UPDATE_CONVERSATIONS_FOR_COUNTS, data.payload);
+      const meConversations = meResponse.data.data.payload || [];
+      const unassignedConversations =
+        unassignedResponse.data.data.payload || [];
+
+      const allConversations = [...meConversations, ...unassignedConversations];
+
+      if (allConversations.length > 0) {
+        commit(types.UPDATE_CONVERSATIONS_FOR_COUNTS, allConversations);
       }
     } catch (error) {
       // Handle error silently - counts are not critical
