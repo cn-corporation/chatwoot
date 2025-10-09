@@ -161,6 +161,35 @@ export default {
       // }
       // return false;
     },
+    assignedAgent: {
+      get() {
+        return this.currentChat.meta.assignee;
+      },
+      set(agent) {
+        const agentId = agent ? agent.id : 0;
+        this.$store.dispatch('setCurrentChatAssignee', agent);
+        this.$store
+          .dispatch('assignAgent', {
+            conversationId: this.currentChat.id,
+            agentId,
+          })
+          .then(() => {
+            useAlert(this.$t('CONVERSATION.CHANGE_AGENT'));
+          });
+      },
+    },
+    showSelfAssignBanner() {
+      if (this.message !== '' && !this.isOnPrivateNote) {
+        if (!this.assignedAgent) {
+          return true;
+        }
+        if (this.assignedAgent.id !== this.currentUser.id) {
+          return true;
+        }
+      }
+
+      return false;
+    },
     showWhatsappTemplates() {
       return this.isAWhatsAppCloudChannel && !this.isPrivate;
     },
