@@ -32,7 +32,7 @@ const unreadCount = computed(() => {
 
 <template>
   <span
-    class="size-4 grid place-content-center rounded-full bg-n-alpha-2"
+    class="size-5 grid place-content-center rounded-full bg-n-alpha-2"
     :class="{ 'bg-n-solid-blue': active }"
   >
     <ChannelIcon :inbox="inbox" class="size-3" />

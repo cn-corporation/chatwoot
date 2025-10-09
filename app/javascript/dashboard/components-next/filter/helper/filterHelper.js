@@ -29,6 +29,7 @@ export const CONTACT_ATTRIBUTES = {
   LAST_ACTIVITY_AT: 'last_activity_at',
   REFERER: 'referer',
   BLOCKED: 'blocked',
+  LABELS: 'labels',
 };
 
 /**

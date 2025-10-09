@@ -13,6 +13,10 @@ export default {
       type: String,
       default: REPLY_EDITOR_MODES.REPLY,
     },
+    isReplyRestricted: {
+      type: Boolean,
+      default: false,
+    },
     isMessageLengthReachingThreshold: {
       type: Boolean,
       default: () => false,
@@ -28,6 +32,7 @@ export default {
       emit('setReplyMode', mode);
     };
     const handleReplyClick = () => {
+      if (props.isReplyRestricted) return;
       setReplyMode(REPLY_EDITOR_MODES.REPLY);
     };
     const handleNoteClick = () => {
@@ -86,6 +91,7 @@ export default {
   <div class="flex justify-between h-[3.25rem] gap-2 ltr:pl-3 rtl:pr-3">
     <EditorModeToggle
       :mode="mode"
+      :disabled="isReplyRestricted"
       class="mt-3"
       @toggle-mode="handleModeToggle"
     />
