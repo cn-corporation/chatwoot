@@ -2,6 +2,7 @@
 import { mapGetters } from 'vuex';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAccount } from 'dashboard/composables/useAccount';
+import { useWindowSize } from '@vueuse/core';
 import ChatList from '../../../components/ChatList.vue';
 import ConversationBox from '../../../components/widgets/conversation/ConversationBox.vue';
 import wootConstants from 'dashboard/constants/globals';
@@ -9,6 +10,8 @@ import { BUS_EVENTS } from 'shared/constants/busEvents';
 import CmdBarConversationSnooze from 'dashboard/routes/dashboard/commands/CmdBarConversationSnooze.vue';
 import { emitter } from 'shared/helpers/mitt';
 import ConversationSidebar from 'dashboard/components/widgets/conversation/ConversationSidebar.vue';
+import { Splitpanes, Pane } from 'splitpanes';
+import 'splitpanes/dist/splitpanes.css';
 
 export default {
   components: {
@@ -16,6 +19,8 @@ export default {
     ConversationBox,
     CmdBarConversationSnooze,
     ConversationSidebar,
+    Splitpanes,
+    Pane,
   },
   beforeRouteLeave(to, from, next) {
     // Clear selected state if navigating away from a conversation to a route without a conversationId to prevent stale data issues
@@ -54,16 +59,24 @@ export default {
   setup() {
     const { uiSettings, updateUISettings } = useUISettings();
     const { accountId } = useAccount();
+    const { width: windowWidth } = useWindowSize();
 
     return {
       uiSettings,
       updateUISettings,
       accountId,
+      windowWidth,
     };
   },
   data() {
     return {
       showSearchModal: false,
+      splitpaneSizes: {
+        chatList: 15,
+        conversationBox: 65,
+        sidebar: 20,
+      },
+      isLayoutLocked: false,
     };
   },
   computed: {
@@ -71,10 +84,19 @@ export default {
       chatList: 'getAllConversations',
       currentChat: 'getSelectedChat',
     }),
+    isMobileView() {
+      return this.windowWidth < wootConstants.SMALL_SCREEN_BREAKPOINT;
+    },
     showConversationList() {
+      if (this.isMobileView) {
+        return !this.conversationId;
+      }
       return this.isOnExpandedLayout ? !this.conversationId : true;
     },
     showMessageView() {
+      if (this.isMobileView) {
+        return this.conversationId && !this.shouldShowSidebar;
+      }
       return this.conversationId ? true : !this.isOnExpandedLayout;
     },
     isOnExpandedLayout() {
@@ -115,6 +137,7 @@ export default {
     this.$store.dispatch('agents/get');
     this.$store.dispatch('portals/index');
     this.initialize();
+    this.loadSplitpaneSizes();
     this.$watch('$store.state.route', () => this.initialize());
     this.$watch('chatList.length', () => {
       this.setActiveChat();
@@ -193,28 +216,236 @@ export default {
     closeSearch() {
       this.showSearchModal = false;
     },
+    loadSplitpaneSizes() {
+      const savedSizes = localStorage.getItem('splitpane_sizes');
+      if (savedSizes) {
+        try {
+          const sizes = JSON.parse(savedSizes);
+          this.splitpaneSizes = sizes;
+          this.isLayoutLocked = true;
+        } catch {
+          // Failed to parse, use default sizes
+        }
+      }
+    },
+    saveSplitpaneSizes() {
+      localStorage.setItem(
+        'splitpane_sizes',
+        JSON.stringify(this.splitpaneSizes)
+      );
+    },
+    removeSavedSizes() {
+      localStorage.removeItem('splitpane_sizes');
+    },
+    onSplitpaneResize({ panes }) {
+      if (panes && panes.length === 3) {
+        this.splitpaneSizes.chatList = panes[0]?.size;
+        this.splitpaneSizes.conversationBox = panes[1]?.size;
+        this.splitpaneSizes.sidebar = panes[2]?.size;
+      }
+    },
+    toggleLayoutLock() {
+      if (this.isLayoutLocked) {
+        this.removeSavedSizes();
+        this.isLayoutLocked = false;
+      } else {
+        this.saveSplitpaneSizes();
+        this.isLayoutLocked = true;
+      }
+    },
   },
 };
 </script>
 
 <template>
-  <section class="flex w-full h-full min-w-0">
-    <ChatList
-      :show-conversation-list="showConversationList"
-      :conversation-inbox="inboxId"
-      :label="label"
-      :team-id="teamId"
-      :conversation-type="conversationType"
-      :folders-id="foldersId"
-      :is-on-expanded-layout="isOnExpandedLayout"
-      @conversation-load="onConversationLoad"
-    />
-    <ConversationBox
-      v-if="showMessageView"
-      :inbox-id="inboxId"
-      :is-on-expanded-layout="isOnExpandedLayout"
-    />
-    <ConversationSidebar v-if="shouldShowSidebar" :current-chat="currentChat" />
+  <section class="flex w-full h-full min-w-0 relative">
+    <!-- Desktop: Splitpanes layout -->
+    <Splitpanes
+      v-if="!isMobileView"
+      class="w-full h-full"
+      :class="{ 'splitpanes-locked': isLayoutLocked }"
+      @resized="onSplitpaneResize"
+    >
+      <Pane
+        :size="splitpaneSizes.chatList"
+        min-size="10"
+        max-size="20"
+        class="flex h-full"
+      >
+        <ChatList
+          :show-conversation-list="showConversationList"
+          :conversation-inbox="inboxId"
+          :label="label"
+          :team-id="teamId"
+          :conversation-type="conversationType"
+          :folders-id="foldersId"
+          :is-on-expanded-layout="isOnExpandedLayout"
+          @conversation-load="onConversationLoad"
+        />
+      </Pane>
+      <Pane
+        :size="splitpaneSizes.conversationBox"
+        min-size="30"
+        max-size="100"
+        class="flex h-full"
+      >
+        <ConversationBox
+          :inbox-id="inboxId"
+          :is-on-expanded-layout="isOnExpandedLayout"
+        />
+      </Pane>
+      <Pane
+        :size="splitpaneSizes.sidebar"
+        min-size="15"
+        max-size="50"
+        class="flex h-full"
+      >
+        <ConversationSidebar :current-chat="currentChat" />
+      </Pane>
+    </Splitpanes>
+
+    <!-- Mobile: Simple flex layout (one panel at a time) -->
+    <div v-else class="flex w-full h-full">
+      <div v-show="showConversationList" class="flex h-full w-full">
+        <ChatList
+          :show-conversation-list="showConversationList"
+          :conversation-inbox="inboxId"
+          :label="label"
+          :team-id="teamId"
+          :conversation-type="conversationType"
+          :folders-id="foldersId"
+          :is-on-expanded-layout="isOnExpandedLayout"
+          @conversation-load="onConversationLoad"
+        />
+      </div>
+      <div v-show="showMessageView" class="flex h-full w-full">
+        <ConversationBox
+          :inbox-id="inboxId"
+          :is-on-expanded-layout="isOnExpandedLayout"
+        />
+      </div>
+      <div v-show="shouldShowSidebar" class="flex h-full w-full">
+        <ConversationSidebar :current-chat="currentChat" />
+      </div>
+    </div>
+
+    <button
+      v-if="!isMobileView"
+      type="button"
+      class="absolute top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors outline-none"
+      :class="{
+        'border-woot-500 dark:border-woot-400': isLayoutLocked,
+      }"
+      @click="toggleLayoutLock"
+    >
+      <svg
+        v-if="isLayoutLocked"
+        class="w-3.5 h-3.5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+        />
+      </svg>
+      <svg
+        v-else
+        class="w-3.5 h-3.5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+        />
+      </svg>
+      {{
+        isLayoutLocked
+          ? $t('CONVERSATION.UNLOCK_LAYOUT')
+          : $t('CONVERSATION.LOCK_LAYOUT')
+      }}
+    </button>
     <CmdBarConversationSnooze />
   </section>
 </template>
+
+<style>
+/* Splitpanes customization - minimal styles for resizer appearance */
+.splitpanes__splitter {
+  background-color: rgb(229 231 235);
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+:is(.dark .splitpanes__splitter) {
+  background-color: rgb(51 65 85);
+}
+
+.splitpanes__splitter:hover {
+  background-color: rgb(209 213 219);
+}
+
+:is(.dark .splitpanes__splitter:hover) {
+  background-color: rgb(71 85 105);
+}
+
+.splitpanes__splitter::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 40px;
+  background-color: rgb(156 163 175);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+:is(.dark .splitpanes__splitter::before) {
+  background-color: rgb(100 116 139);
+}
+
+.splitpanes__splitter:hover::before {
+  opacity: 1;
+}
+
+.splitpanes--vertical > .splitpanes__splitter {
+  width: 6px;
+  border-left: 1px solid rgb(229 231 235);
+  border-right: 1px solid rgb(229 231 235);
+  cursor: col-resize;
+}
+
+:is(.dark .splitpanes--vertical > .splitpanes__splitter) {
+  border-left-color: rgb(51 65 85);
+  border-right-color: rgb(51 65 85);
+}
+
+/* Disable resizing when locked */
+.splitpanes-locked .splitpanes__splitter {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.5;
+}
+
+.splitpanes-locked .splitpanes__splitter:hover {
+  background-color: rgb(229 231 235);
+}
+
+:is(.dark .splitpanes-locked .splitpanes__splitter:hover) {
+  background-color: rgb(51 65 85);
+}
+
+.splitpanes-locked .splitpanes__splitter::before {
+  opacity: 0 !important;
+}
+</style>
