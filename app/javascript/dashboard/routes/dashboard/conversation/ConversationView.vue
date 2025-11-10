@@ -269,8 +269,8 @@ export default {
       <Pane
         :size="splitpaneSizes.chatList"
         min-size="10"
-        max-size="20"
-        class="flex h-full"
+        max-size="40"
+        class="flex h-full chat-list-pane"
       >
         <ChatList
           :show-conversation-list="showConversationList"
@@ -285,7 +285,7 @@ export default {
       </Pane>
       <Pane
         :size="splitpaneSizes.conversationBox"
-        min-size="30"
+        min-size="20"
         max-size="100"
         class="flex h-full"
       >
@@ -303,7 +303,6 @@ export default {
         <ConversationSidebar :current-chat="currentChat" />
       </Pane>
     </Splitpanes>
-
     <!-- Mobile: Simple flex layout (one panel at a time) -->
     <div v-else class="flex w-full h-full">
       <div v-show="showConversationList" class="flex h-full w-full">
@@ -378,6 +377,12 @@ export default {
 
 <style>
 /* Splitpanes customization - minimal styles for resizer appearance */
+
+/* Allow dropdowns to escape the chat list pane */
+.splitpanes__pane.chat-list-pane {
+  overflow: visible;
+}
+
 .splitpanes__splitter {
   background-color: rgb(229 231 235);
   transition: background-color 0.2s;
