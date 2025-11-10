@@ -101,6 +101,9 @@ export default {
         ...(socialProfiles || {}),
       };
     },
+    telegramId() {
+      return this.additionalAttributes.social_telegram_user_id || null;
+    },
     // Delete Modal
     confirmDeleteMessage() {
       return ` ${this.contact.name}?`;
@@ -151,6 +154,13 @@ export default {
       navigator.clipboard.writeText(this.contact.name).then(() => {
         useAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
       });
+    },
+    copyTelegramId() {
+      if (this.telegramId) {
+        navigator.clipboard.writeText(this.telegramId).then(() => {
+          useAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
+        });
+      }
     },
     onAssignAgent(agent) {
       if (!this.currentChat?.id) return;
@@ -275,6 +285,25 @@ export default {
               <span class="i-lucide-external-link text-sm text-n-slate-10" />
             </a>
           </div>
+        </div>
+
+        <!-- Telegram ID display -->
+        <div
+          v-if="telegramId"
+          class="flex items-center gap-2 text-sm text-n-slate-11"
+        >
+          <span
+            v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_ID')"
+            class="cursor-pointer hover:text-n-slate-12"
+            @click="copyTelegramId"
+          >
+            {{ telegramId }}
+          </span>
+          <button
+            v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_ID')"
+            class="i-lucide-copy text-xs text-n-slate-10 hover:text-n-slate-12 cursor-pointer"
+            @click="copyTelegramId"
+          />
         </div>
 
         <p v-if="additionalAttributes.description" class="break-words mb-0.5">

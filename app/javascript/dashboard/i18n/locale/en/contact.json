@@ -6,6 +6,7 @@
     "IDENTIFIER": "Identifier",
     "COPY_SUCCESSFUL": "Copied to clipboard successfully",
     "COPY_CONTACT_NAME": "Copy contact name",
+    "COPY_TELEGRAM_ID": "Copy Telegram ID",
     "COMPANY": "Company",
     "LOCATION": "Location",
     "BROWSER_LANGUAGE": "Browser Language",
