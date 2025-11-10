@@ -10,7 +10,6 @@ import EditContact from './EditContact.vue';
 import ContactMergeModal from 'dashboard/modules/contact/ContactMergeModal.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import VoiceCallButton from 'dashboard/components-next/Contacts/VoiceCallButton.vue';
-import MultiselectDropdown from 'shared/components/ui/MultiselectDropdown.vue';
 
 import {
   isAConversationRoute,
@@ -27,7 +26,6 @@ export default {
     // SocialIcons, // Removed for poker UI
     ContactMergeModal,
     VoiceCallButton,
-    MultiselectDropdown,
   },
   props: {
     contact: {
@@ -301,28 +299,6 @@ export default {
               {{ behaviorStatusLabel }}
             </span>
           </div>
-        </div>
-
-        <!-- Block 4: Agent selector for operators -->
-        <div v-if="currentChat" class="mt-4 w-full">
-          <p class="text-xs font-medium text-n-slate-11 mb-2">
-            {{ $t('CONVERSATION_SIDEBAR.ASSIGNEE_LABEL') }}
-          </p>
-          <MultiselectDropdown
-            :options="agentsList"
-            :selected-item="assignedAgent"
-            :multiselector-title="$t('AGENT_MGMT.MULTI_SELECTOR.TITLE.AGENT')"
-            :multiselector-placeholder="
-              $t('AGENT_MGMT.MULTI_SELECTOR.PLACEHOLDER')
-            "
-            :no-search-result="
-              $t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.NO_RESULTS.AGENT')
-            "
-            :input-placeholder="
-              $t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.PLACEHOLDER.AGENT')
-            "
-            @select="onAssignAgent"
-          />
         </div>
       </div>
       <div class="flex items-center w-full mt-0.5 gap-2">
