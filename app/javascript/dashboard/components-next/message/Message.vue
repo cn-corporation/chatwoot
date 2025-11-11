@@ -355,6 +355,9 @@ const contextMenuEnabledOptions = computed(() => {
     props.status === MESSAGE_STATUS.FAILED ||
     props.status === MESSAGE_STATUS.PROGRESS;
 
+  const inbox = store.getters['inboxes/getInbox'](props.inboxId);
+  const isTelegramInbox = inbox?.channel_type === 'Channel::Telegram';
+
   return {
     copy: hasText,
     delete:
@@ -372,7 +375,7 @@ const contextMenuEnabledOptions = computed(() => {
     edit:
       isOutgoing &&
       hasText &&
-      !hasAttachments &&
+      (!hasAttachments || isTelegramInbox) &&
       !!props.sourceId &&
       !isFailedOrProcessing &&
       !isMessageDeleted.value,

@@ -14,7 +14,7 @@ class Telegram::EditMessageService
 
   def should_edit_on_telegram?
     return false unless message.outgoing?
-    return false unless message.source_id.present?
+    return false if message.source_id.blank?
     return false unless message.inbox.channel_type == 'Channel::Telegram'
     return false unless message.saved_change_to_content?
 
@@ -26,12 +26,21 @@ class Telegram::EditMessageService
     chat_id = message.conversation.additional_attributes['chat_id']
     business_connection_id = message.conversation.additional_attributes['business_connection_id']
 
-    response = channel.edit_message_on_telegram(
-      chat_id: chat_id,
-      message_id: message.source_id,
-      text: message.content,
-      business_connection_id: business_connection_id
-    )
+    response = if message.attachments.present?
+                 channel.edit_message_caption_on_telegram(
+                   chat_id: chat_id,
+                   message_id: message.source_id,
+                   caption: message.content,
+                   business_connection_id: business_connection_id
+                 )
+               else
+                 channel.edit_message_on_telegram(
+                   chat_id: chat_id,
+                   message_id: message.source_id,
+                   text: message.content,
+                   business_connection_id: business_connection_id
+                 )
+               end
 
     handle_response(response)
   end
@@ -39,7 +48,7 @@ class Telegram::EditMessageService
   def handle_response(response)
     return if response.success?
 
-    error_message = response.parsed_response.dig('description') || 'Unknown error'
+    error_message = response.parsed_response['description'] || 'Unknown error'
     Rails.logger.error "Failed to edit Telegram message: #{error_message}"
 
     # Update message with error if needed

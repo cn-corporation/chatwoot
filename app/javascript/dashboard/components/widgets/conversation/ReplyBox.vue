@@ -935,6 +935,11 @@ export default {
       });
     },
     attachFile({ blob, file }) {
+      if (this.isATelegramChannel && this.attachedFiles.length >= 1) {
+        useAlert(this.$t('CONVERSATION.TELEGRAM_MAX_ATTACHMENTS_REACHED'));
+        return;
+      }
+
       const reader = new FileReader();
       reader.readAsDataURL(file.file);
       reader.onloadend = () => {
