@@ -32,13 +32,50 @@ const subscribedEvents = computed(() => {
     )
     .join(', ');
 });
+
+const maskedUrl = computed(() => {
+  const url = props.webhook.url;
+  if (!url) return '';
+
+  try {
+    const urlObj = new URL(url);
+    const protocol = urlObj.protocol;
+    const hostname = urlObj.hostname;
+
+    // Show protocol and hostname, mask the rest
+    let masked = `${protocol}//${hostname}`;
+
+    // If there's a path, show it partially masked
+    if (urlObj.pathname && urlObj.pathname !== '/') {
+      const pathParts = urlObj.pathname.split('/').filter(Boolean);
+      if (pathParts.length > 0) {
+        masked += `/${pathParts[0]}/***`;
+      }
+    } else {
+      masked += '/***';
+    }
+
+    // Always hide query params and hash (they often contain secrets)
+    if (urlObj.search || urlObj.hash) {
+      masked += '?***';
+    }
+
+    return masked;
+  } catch {
+    // If URL parsing fails, just mask most of it
+    if (url.length > 20) {
+      return url.substring(0, 15) + '***';
+    }
+    return url;
+  }
+});
 </script>
 
 <template>
   <tr>
     <td class="py-4 ltr:pr-4 rtl:pl-4">
-      <div class="font-medium break-words text-n-slate-12">
-        {{ webhook.url }}
+      <div class="font-medium break-words text-n-slate-12 font-mono text-sm">
+        {{ maskedUrl }}
       </div>
       <div class="block mt-1 text-sm text-n-slate-11">
         <span class="font-medium">

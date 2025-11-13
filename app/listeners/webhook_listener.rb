@@ -31,6 +31,28 @@ class WebhookListener < BaseListener
     payload = message.webhook_data.merge(event: __method__.to_s)
     deliver_webhook_payloads(payload, inbox)
   end
+1
+  def message_created_with_context(event)
+    message = extract_message_and_account(event)[0]
+    inbox = message.inbox
+
+    return unless message.webhook_sendable?
+
+    context_service = Messages::ContextFetcherService.new(message)
+    payload = context_service.webhook_payload_with_context.merge(event: __method__.to_s)
+    deliver_webhook_payloads(payload, inbox)
+  end
+
+  def inbound_message_created_with_context(event)
+    message = extract_message_and_account(event)[0]
+    inbox = message.inbox
+
+    return unless message.webhook_sendable?
+
+    context_service = Messages::ContextFetcherService.new(message)
+    payload = context_service.webhook_payload_with_context.merge(event: __method__.to_s)
+    deliver_webhook_payloads(payload, inbox)
+  end
 
   def message_updated(event)
     message = extract_message_and_account(event)[0]

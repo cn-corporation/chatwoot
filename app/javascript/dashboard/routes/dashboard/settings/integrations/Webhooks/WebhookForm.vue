@@ -1,17 +1,33 @@
 <script>
 import { useVuelidate } from '@vuelidate/core';
-import { required, url, minLength } from '@vuelidate/validators';
+import { required, minLength, helpers } from '@vuelidate/validators';
 import wootConstants from 'dashboard/constants/globals';
 import { getI18nKey } from 'dashboard/routes/dashboard/settings/helper/settingsHelper';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 
 const { EXAMPLE_WEBHOOK_URL } = wootConstants;
 
+// Custom URL validator that allows localhost
+const webhookUrl = helpers.withMessage(
+  'Must be a valid HTTP or HTTPS URL',
+  value => {
+    if (!value) return true;
+    try {
+      const url = new URL(value);
+      return ['http:', 'https:'].includes(url.protocol);
+    } catch {
+      return false;
+    }
+  }
+);
+
 const SUPPORTED_WEBHOOK_EVENTS = [
   'conversation_created',
   'conversation_status_changed',
   'conversation_updated',
   'message_created',
+  'message_created_with_context',
+  'inbound_message_created_with_context',
   'message_updated',
   'webwidget_triggered',
   'contact_created',
@@ -46,7 +62,7 @@ export default {
     url: {
       required,
       minLength: minLength(7),
-      url,
+      webhookUrl,
     },
     subscriptions: {
       required,
@@ -95,6 +111,9 @@ export default {
         />
         <span v-if="v$.url.$error" class="message">
           {{ $t('INTEGRATION_SETTINGS.WEBHOOK.FORM.END_POINT.ERROR') }}
+        </span>
+        <span v-else class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+          {{ $t('INTEGRATION_SETTINGS.WEBHOOK.FORM.END_POINT.HELP') }}
         </span>
       </label>
       <label :class="{ error: v$.url.$error }" class="mb-2">

@@ -38,6 +38,8 @@
             "CONVERSATION_STATUS_CHANGED": "Статус диалога изменён",
             "CONVERSATION_UPDATED": "Диалог обновлён",
             "MESSAGE_CREATED": "Сообщение создано",
+            "MESSAGE_CREATED_WITH_CONTEXT": "Сообщение создано с контекстом",
+            "INBOUND_MESSAGE_CREATED_WITH_CONTEXT": "Входящее сообщение создано с контекстом",
             "MESSAGE_UPDATED": "Сообщение обновлено",
             "WEBWIDGET_TRIGGERED": "Виджет онлайн чата, открыт пользователем",
             "CONTACT_CREATED": "Контакт создан",
@@ -49,6 +51,7 @@
         "END_POINT": {
           "LABEL": "URL вебхука",
           "PLACEHOLDER": "Пример: {webhookExampleURL}",
+          "HELP": "Совет: Добавьте пользовательские заголовки используя ?header_ИмяЗаголовка=значение (например, ?header_X-API-Key=abc123)",
           "ERROR": "Пожалуйста, введите правильный URL"
         },
         "EDIT_SUBMIT": "Обновить webhook",
@@ -759,8 +762,9 @@
         "CONVERSATION": "Диалог #{id}"
       },
       "SELECTED": "Выбрано {count}",
-      "SELECT_ALL": "Select all ({count})",
-      "UNSELECT_ALL": "Unselect all ({count})",
+      "SELECT_ALL": "Выбрать все ({count})",
+      "UNSELECT_ALL": "Снять выбор ({count})",
+      "SEARCH_PLACEHOLDER": "Поиск FAQ...",
       "BULK_APPROVE_BUTTON": "Одобрить",
       "BULK_DELETE_BUTTON": "Удалить",
       "BULK_APPROVE": {
