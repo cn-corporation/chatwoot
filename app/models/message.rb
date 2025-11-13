@@ -41,6 +41,7 @@
 class Message < ApplicationRecord
   include MessageFilterHelpers
   include Liquidable
+  include Events::Types
   NUMBER_OF_PERMITTED_ATTACHMENTS = 15
 
   TEMPLATE_PARAMS_SCHEMA = {
@@ -306,6 +307,14 @@ class Message < ApplicationRecord
 
   def dispatch_create_events
     Rails.configuration.dispatcher.dispatch(MESSAGE_CREATED, Time.zone.now, message: self, performed_by: Current.executed_by)
+
+    # Dispatch context event for all messages (legacy)
+    Rails.configuration.dispatcher.dispatch(MESSAGE_CREATED_WITH_CONTEXT, Time.zone.now, message: self, performed_by: Current.executed_by)
+
+    # Dispatch inbound-specific context event only for incoming messages
+    if incoming?
+      Rails.configuration.dispatcher.dispatch(INBOUND_MESSAGE_CREATED_WITH_CONTEXT, Time.zone.now, message: self, performed_by: Current.executed_by)
+    end
 
     if valid_first_reply?
       Rails.configuration.dispatcher.dispatch(FIRST_REPLY_CREATED, Time.zone.now, message: self, performed_by: Current.executed_by)

@@ -32,6 +32,8 @@ module Events::Types
 
   # message events
   MESSAGE_CREATED = 'message.created'
+  MESSAGE_CREATED_WITH_CONTEXT = 'message.created_with_context'
+  INBOUND_MESSAGE_CREATED_WITH_CONTEXT = 'inbound_message.created_with_context'
   FIRST_REPLY_CREATED = 'first.reply.created'
   REPLY_CREATED = 'reply.created'
   MESSAGE_UPDATED = 'message.updated'

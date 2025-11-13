@@ -117,6 +117,14 @@ class ChatwootExtraAPI {
     );
     return response.data;
   }
+
+  async getAISuggestion(conversationId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/ai-suggestions/${conversationId}`,
+      { headers: this.headers }
+    );
+    return response.data?.data || null;
+  }
 }
 
 export default new ChatwootExtraAPI();

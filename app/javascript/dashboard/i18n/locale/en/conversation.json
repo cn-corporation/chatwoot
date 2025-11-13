@@ -463,5 +463,14 @@
     },
     "SUCCESS_MESSAGE": "Thank you for your rating!",
     "ERROR_MESSAGE": "Error saving rating. Please try again."
+  },
+  "AI_SUGGESTION": {
+    "LOADING": "Loading AI suggestion...",
+    "TITLE": "AI Suggested Response",
+    "BADGE": "Auto-generated",
+    "USE_BUTTON": "Use this response",
+    "DISMISS_BUTTON": "Dismiss",
+    "RELOAD_TOOLTIP": "Reload suggestion",
+    "GET_BUTTON": "Get AI Suggestion"
   }
 }

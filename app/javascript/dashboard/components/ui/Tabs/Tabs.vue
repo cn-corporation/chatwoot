@@ -66,28 +66,26 @@ watch(
 <template>
   <div
     ref="tabsContainer"
-    class="flex"
-    :class="[border && 'border-b border-b-n-weak']"
+    class="flex w-full"
+    :class="[border && 'border-b border-b-n-weak', !hasScroll && 'pl-3']"
   >
     <button
       v-if="hasScroll"
-      class="items-center rounded-none cursor-pointer flex h-auto justify-center min-w-8"
+      class="items-center rounded-none cursor-pointer flex flex-shrink-0 h-auto justify-center w-10 sm:w-8"
       @click="onScrollClick('left')"
     >
       <fluent-icon icon="chevron-left" :size="16" />
     </button>
     <ul
       ref="tabsList"
-      class="border-r-0 border-l-0 border-t-0 flex min-w-[6.25rem] py-0 px-4 list-none mb-0"
-      :class="
-        hasScroll ? 'overflow-hidden py-0 px-1 max-w-[calc(100%-64px)]' : ''
-      "
+      class="border-r-0 border-l-0 border-t-0 flex py-0 px-0 list-none mb-0 max-w-[calc(100%-80px)] sm:max-w-[calc(100%-64px)]"
+      :class="hasScroll ? 'overflow-hidden' : ''"
     >
       <slot />
     </ul>
     <button
       v-if="hasScroll"
-      class="items-center rounded-none cursor-pointer flex h-auto justify-center min-w-8"
+      class="items-center rounded-none cursor-pointer flex flex-shrink-0 h-auto justify-center w-10 sm:w-8"
       @click="onScrollClick('right')"
     >
       <fluent-icon icon="chevron-right" :size="16" />
