@@ -33,9 +33,9 @@ class Channel::Telegram < ApplicationRecord
   end
 
   def send_message_on_telegram(message)
-    message_id = send_message(message) if message.outgoing_content.present?
-    message_id = Telegram::SendAttachmentsService.new(message: message).perform if message.attachments.present?
-    message_id
+    return Telegram::SendAttachmentsService.new(message: message).perform if message.attachments.present?
+
+    send_message(message) if message.outgoing_content.present?
   end
 
   def edit_message_on_telegram(chat_id:, message_id:, text:, business_connection_id: nil)
@@ -49,6 +49,21 @@ class Channel::Telegram < ApplicationRecord
                     chat_id: chat_id,
                     message_id: message_id,
                     text: text_payload,
+                    parse_mode: 'HTML'
+                  }.merge(business_body))
+  end
+
+  def edit_message_caption_on_telegram(chat_id:, message_id:, caption:, business_connection_id: nil)
+    caption_payload = convert_markdown_to_telegram_html(caption)
+
+    business_body = {}
+    business_body[:business_connection_id] = business_connection_id if business_connection_id
+
+    HTTParty.post("#{telegram_api_url}/editMessageCaption",
+                  body: {
+                    chat_id: chat_id,
+                    message_id: message_id,
+                    caption: caption_payload,
                     parse_mode: 'HTML'
                   }.merge(business_body))
   end

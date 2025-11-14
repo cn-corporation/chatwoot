@@ -47,9 +47,10 @@ class Telegram::SendAttachmentsService
   def group_attachments_by_type
     attachments_by_type = { media: [], audio: [], document: [] }
 
-    message.attachments.each do |attachment|
+    message.attachments.each_with_index do |attachment, index|
       type = attachment_type(attachment[:file_type])
       attachment_data = { type: type, media: attachment.download_url, attachment: attachment }
+      attachment_data[:caption] = message.content if index.zero? && message.content.present?
       case type
       when 'document'
         attachments_by_type[:document] << attachment_data
@@ -88,7 +89,7 @@ class Telegram::SendAttachmentsService
 
   def document_request(chat_id, attachment, reply_to_message_id)
     temp_file_path = save_attachment_to_tempfile(attachment[:attachment])
-    response = send_file(chat_id, temp_file_path, reply_to_message_id)
+    response = send_file(chat_id, temp_file_path, reply_to_message_id, attachment[:caption])
     File.delete(temp_file_path)
     response
   end
@@ -104,15 +105,17 @@ class Telegram::SendAttachmentsService
     temp_file_path
   end
 
-  def send_file(chat_id, file_path, reply_to_message_id)
+  def send_file(chat_id, file_path, reply_to_message_id, caption = nil)
     File.open(file_path, 'rb') do |file|
+      body = {
+        chat_id: chat_id,
+        **business_connection_body,
+        document: file,
+        reply_to_message_id: reply_to_message_id
+      }
+      body[:caption] = caption if caption.present?
       HTTParty.post("#{channel.telegram_api_url}/sendDocument",
-                    body: {
-                      chat_id: chat_id,
-                      **business_connection_body,
-                      document: file,
-                      reply_to_message_id: reply_to_message_id
-                    },
+                    body: body,
                     multipart: true)
     end
   end

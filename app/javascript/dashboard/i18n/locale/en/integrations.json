@@ -38,6 +38,8 @@
             "CONVERSATION_STATUS_CHANGED": "Conversation Status Changed",
             "CONVERSATION_UPDATED": "Conversation Updated",
             "MESSAGE_CREATED": "Message created",
+            "MESSAGE_CREATED_WITH_CONTEXT": "Message created with context",
+            "INBOUND_MESSAGE_CREATED_WITH_CONTEXT": "Inbound message created with context",
             "MESSAGE_UPDATED": "Message updated",
             "WEBWIDGET_TRIGGERED": "Live chat widget opened by the user",
             "CONTACT_CREATED": "Contact created",
@@ -49,6 +51,7 @@
         "END_POINT": {
           "LABEL": "Webhook URL",
           "PLACEHOLDER": "Example: {webhookExampleURL}",
+          "HELP": "Tip: Add custom headers using ?header_HeaderName=value (e.g., ?header_X-API-Key=abc123)",
           "ERROR": "Please enter a valid URL"
         },
         "EDIT_SUBMIT": "Update webhook",

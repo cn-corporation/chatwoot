@@ -843,8 +843,20 @@ export default {
         this.onFocus();
       }
       if (!this.showRichContentEditor) {
-        const { selectionStart, selectionEnd } = this.$refs.messageInput.$el;
-        this.insertIntoTextEditor(content, selectionStart, selectionEnd);
+        const textareaEl = this.$refs.messageInput?.$el;
+        if (textareaEl) {
+          // Default to end of message if no selection
+          const messageLength = this.message.length;
+          const selectionStart = textareaEl.selectionStart ?? messageLength;
+          const selectionEnd = textareaEl.selectionEnd ?? messageLength;
+          this.insertIntoTextEditor(content, selectionStart, selectionEnd);
+          // Focus the textarea and set cursor to end of inserted content
+          this.$nextTick(() => {
+            textareaEl.focus();
+            const newCursorPosition = selectionStart + content.length;
+            textareaEl.setSelectionRange(newCursorPosition, newCursorPosition);
+          });
+        }
       }
     },
     clearMessage() {
@@ -935,6 +947,11 @@ export default {
       });
     },
     attachFile({ blob, file }) {
+      if (this.isATelegramChannel && this.attachedFiles.length >= 1) {
+        useAlert(this.$t('CONVERSATION.TELEGRAM_MAX_ATTACHMENTS_REACHED'));
+        return;
+      }
+
       const reader = new FileReader();
       reader.readAsDataURL(file.file);
       reader.onloadend = () => {
