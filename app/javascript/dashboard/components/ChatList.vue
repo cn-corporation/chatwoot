@@ -45,7 +45,6 @@ import {
   useSnakeCase,
 } from 'dashboard/composables/useTransformKeys';
 import { useEmitter } from 'dashboard/composables/emitter';
-import { useEventListener } from '@vueuse/core';
 
 import { emitter } from 'shared/helpers/mitt';
 
@@ -103,6 +102,7 @@ const showAddFoldersModal = ref(false);
 const showDeleteFoldersModal = ref(false);
 const isContextMenuOpen = ref(false);
 const appliedFilter = ref([]);
+const isLoadingMore = ref(false);
 const advancedFilterTypes = ref(
   advancedFilterOptions.map(filter => ({
     ...filter,
@@ -340,33 +340,7 @@ const conversationCustomAttributes = useFunctionGetter(
   'conversation_attribute'
 );
 
-const activeAssigneeTabCount = computed(() => {
-  // For all-operators tab, use the 'all' count since they map to the same backend data
-  const tabKey =
-    activeAssigneeTab.value === 'all-operators'
-      ? 'all'
-      : activeAssigneeTab.value;
-  const tabItem = assigneeTabItems.value.find(item => item.key === tabKey);
-  return tabItem ? tabItem.count : 0;
-});
-
 const conversationListPagination = computed(() => {
-  const conversationsPerPage = 25;
-  const hasChatsOnView =
-    chatsOnView.value &&
-    Array.isArray(chatsOnView.value) &&
-    !chatsOnView.value.length;
-  const isNoFiltersOrFoldersAndChatListNotEmpty =
-    !hasAppliedFiltersOrActiveFolders.value && hasChatsOnView;
-  const isUnderPerPage =
-    chatsOnView.value.length < conversationsPerPage &&
-    activeAssigneeTabCount.value < conversationsPerPage &&
-    activeAssigneeTabCount.value > chatsOnView.value.length;
-
-  if (isNoFiltersOrFoldersAndChatListNotEmpty && isUnderPerPage) {
-    return 1;
-  }
-
   return currentPage.value + 1;
 });
 
@@ -704,29 +678,30 @@ function resetAndFetchData() {
 }
 
 function loadMoreConversations() {
-  if (hasCurrentPageEndReached.value || chatListLoading.value) {
+  // Guard against multiple simultaneous requests
+  if (
+    hasCurrentPageEndReached.value ||
+    chatListLoading.value ||
+    isLoadingMore.value
+  ) {
     return;
   }
 
-  if (!hasAppliedFiltersOrActiveFolders.value) {
-    fetchConversations();
-  } else if (hasActiveFolders.value) {
-    const payload = activeFolder.value.query;
-    fetchSavedFilteredConversations(payload);
-  } else if (hasAppliedFilters.value) {
-    fetchFilteredConversations(appliedFilters.value);
-  }
-}
+  isLoadingMore.value = true;
 
-// Add a method to handle scroll events
-function handleScroll() {
-  const scroller = conversationDynamicScroller.value;
-  if (scroller && scroller.hasScrollbar) {
-    const { scrollTop, scrollHeight, clientHeight } = scroller.$el;
-    if (scrollHeight - (scrollTop + clientHeight) < 100) {
-      loadMoreConversations();
-    }
+  let loadPromise;
+  if (!hasAppliedFiltersOrActiveFolders.value) {
+    loadPromise = fetchConversations();
+  } else if (hasActiveFolders.value) {
+    loadPromise = fetchSavedFilteredConversations(activeFolder.value.query);
+  } else if (hasAppliedFilters.value) {
+    loadPromise = fetchFilteredConversations(appliedFilters.value);
   }
+
+  // Ensure flag is cleared even if request fails
+  Promise.resolve(loadPromise).finally(() => {
+    isLoadingMore.value = false;
+  });
 }
 
 function updateAssigneeTab(selectedTab) {
@@ -879,8 +854,6 @@ useEmitter('fetch_conversation_stats', () => {
   if (hasAppliedFiltersOrActiveFolders.value) return;
   fetchConversations();
 });
-
-useEventListener(conversationDynamicScroller, 'scroll', handleScroll);
 
 onMounted(() => {
   store.dispatch('setChatListFilters', conversationFilters.value);
