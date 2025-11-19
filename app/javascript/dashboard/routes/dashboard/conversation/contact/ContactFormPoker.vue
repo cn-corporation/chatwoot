@@ -220,6 +220,7 @@ export default {
         <input
           v-model="name"
           type="text"
+          :maxlength="9"
           :placeholder="$t('CONTACT_FORM.FORM.NAME.PLACEHOLDER')"
           @input="v$.name.$touch"
         />
