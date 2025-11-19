@@ -5,7 +5,7 @@ import ContactFormPoker from './ContactFormPoker.vue'; // Simplified poker form
 
 export default {
   components: {
-    ContactForm: ContactFormPoker, // Use simplified form for poker operators
+    ContactFormPoker, // Use simplified form for poker operators
   },
   props: {
     show: {
@@ -63,7 +63,7 @@ export default {
         }`"
         :header-content="$t('EDIT_CONTACT.DESC')"
       />
-      <ContactForm
+      <ContactFormPoker
         :contact="contact"
         :in-progress="uiFlags.isUpdating"
         :on-submit="onSubmit"

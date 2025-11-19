@@ -266,6 +266,7 @@ defineExpose({
             v-else
             v-model="getFormBinding(item.key).value"
             :placeholder="item.placeholder"
+            :maxlength="item.key === 'FIRST_NAME' ? 9 : undefined"
             :message-type="getMessageType(item.key)"
             :custom-input-class="`h-8 !pt-1 !pb-1 ${
               !isDetailsView
