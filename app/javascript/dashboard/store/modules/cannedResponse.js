@@ -12,6 +12,7 @@ const state = {
     updatingItem: false,
     deletingItem: false,
   },
+  requestCounter: 0,
 };
 
 const getters = {
@@ -34,16 +35,25 @@ const getters = {
 
 const actions = {
   getCannedResponse: async function getCannedResponse(
-    { commit },
+    { commit, state: _state },
     { searchKey } = {}
   ) {
     commit(types.default.SET_CANNED_UI_FLAG, { fetchingList: true });
+
+    const currentRequestId = _state.requestCounter + 1;
+    commit(types.default.SET_REQUEST_COUNTER, currentRequestId);
+
     try {
       const response = await CannedResponseAPI.get({ searchKey });
-      commit(types.default.SET_CANNED, response.data);
-      commit(types.default.SET_CANNED_UI_FLAG, { fetchingList: false });
+
+      if (_state.requestCounter === currentRequestId) {
+        commit(types.default.SET_CANNED, response.data);
+        commit(types.default.SET_CANNED_UI_FLAG, { fetchingList: false });
+      }
     } catch (error) {
-      commit(types.default.SET_CANNED_UI_FLAG, { fetchingList: false });
+      if (_state.requestCounter === currentRequestId) {
+        commit(types.default.SET_CANNED_UI_FLAG, { fetchingList: false });
+      }
     }
   },
 
@@ -99,6 +109,10 @@ const mutations = {
       ..._state.uiFlags,
       ...data,
     };
+  },
+
+  [types.default.SET_REQUEST_COUNTER](_state, counter) {
+    _state.requestCounter = counter;
   },
 
   [types.default.SET_CANNED]: MutationHelpers.set,
