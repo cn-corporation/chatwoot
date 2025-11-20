@@ -39,8 +39,15 @@ class ConversationFinder
   def perform
     set_inboxes
     set_assignee_type
+    set_team
 
     find_all_conversations # find all with the inbox
+
+    # Apply team and label filters before counting
+    filter_by_team
+    filter_by_labels
+    filter_by_query
+    filter_by_source_id
 
     # Calculate counts for different tabs
     # Base query includes all filters except status and assignee_type
