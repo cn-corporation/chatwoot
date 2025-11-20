@@ -174,7 +174,13 @@ const getFormBinding = key => {
     set: async value => {
       // Handle name fields specially to maintain the combined 'name' field
       if (field === 'firstName' || field === 'lastName') {
-        state[field] = value;
+        // Strip commas and extra spaces to prevent name splitting issues
+        // For lastName, only allow single word (no spaces)
+        if (field === 'lastName') {
+          state[field] = value.replace(/[,\s]/g, '');
+        } else {
+          state[field] = value.replace(/,/g, '');
+        }
         // Example: firstName="John", lastName="Doe" → name="John Doe"
         state.name = `${state.firstName} ${state.lastName}`.trim();
       } else {
@@ -266,6 +272,7 @@ defineExpose({
             v-else
             v-model="getFormBinding(item.key).value"
             :placeholder="item.placeholder"
+            :maxlength="item.key === 'FIRST_NAME' ? 9 : undefined"
             :message-type="getMessageType(item.key)"
             :custom-input-class="`h-8 !pt-1 !pb-1 ${
               !isDetailsView

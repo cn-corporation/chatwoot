@@ -1331,7 +1331,7 @@ export default {
 }
 
 .emoji-dialog {
-  @apply top-[unset] -bottom-10 ltr:-left-80 ltr:right-[unset] rtl:left-[unset] rtl:-right-80;
+  @apply top-[unset] bottom-36 ltr:left-0 ltr:right-[unset] rtl:left-[unset] rtl:right-0;
 
   &::before {
     filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.08));
