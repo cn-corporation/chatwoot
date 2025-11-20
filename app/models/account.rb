@@ -9,10 +9,10 @@
 #  feature_flags         :bigint           default(0), not null
 #  internal_attributes   :jsonb            not null
 #  limits                :jsonb
-#  locale                :integer          default("en")
+#  locale                :integer          default(0)
 #  name                  :string           not null
 #  settings              :jsonb
-#  status                :integer          default("active")
+#  status                :integer          default(0)
 #  support_email         :string(100)
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
