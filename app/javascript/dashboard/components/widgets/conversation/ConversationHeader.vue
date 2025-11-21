@@ -6,6 +6,7 @@ import { useElementSize } from '@vueuse/core';
 import BackButton from '../BackButton.vue';
 import InboxName from '../InboxName.vue';
 import MoreActions from './MoreActions.vue';
+import OperatorPresenceDropdown from './OperatorPresenceDropdown.vue';
 import Avatar from 'next/avatar/Avatar.vue';
 import SLACardLabel from './components/SLACardLabel.vue';
 import wootConstants from 'dashboard/constants/globals';
@@ -150,6 +151,10 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
         show-extended-info
         :parent-width="width"
         class="hidden md:flex"
+      />
+      <OperatorPresenceDropdown
+        v-if="currentChat.id"
+        :conversation-id="currentChat.id"
       />
       <MoreActions :conversation-id="currentChat.id" />
     </div>
