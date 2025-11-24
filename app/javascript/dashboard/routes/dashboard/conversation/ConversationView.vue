@@ -287,7 +287,7 @@ export default {
         :size="splitpaneSizes.conversationBox"
         min-size="20"
         max-size="100"
-        class="flex h-full"
+        class="flex h-full conversation-box-pane"
       >
         <ConversationBox
           :inbox-id="inboxId"
@@ -380,6 +380,11 @@ export default {
 
 /* Allow dropdowns to escape the chat list pane */
 .splitpanes__pane.chat-list-pane {
+  overflow: visible;
+}
+
+/* Allow dropdowns to escape the conversation box pane */
+.splitpanes__pane.conversation-box-pane {
   overflow: visible;
 }
 

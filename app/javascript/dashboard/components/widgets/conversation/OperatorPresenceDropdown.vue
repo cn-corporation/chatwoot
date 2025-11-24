@@ -100,7 +100,7 @@ watch(
     >
       <div
         v-if="isOpen"
-        class="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-md bg-n-background border border-n-weak shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+        class="absolute left-0 z-[50] mt-2 w-64 origin-top-right rounded-md bg-n-background border border-n-weak shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
       >
         <div class="py-1 max-h-80 overflow-y-auto">
           <div
