@@ -125,6 +125,49 @@ class ChatwootExtraAPI {
     );
     return response.data?.data || null;
   }
+
+  // Operator Presence API
+  async getPresenceState(conversationId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/operator-presence/conversations/${conversationId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async joinConversation(conversationId, operatorId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-presence/conversations/${conversationId}/join`,
+      { operatorId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async leaveConversation(conversationId, operatorId) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/operator-presence/conversations/${conversationId}/leave`,
+      {
+        data: { operatorId },
+        headers: this.headers,
+      }
+    );
+    return response.data;
+  }
+
+  async sendHeartbeat(conversationId, operatorId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-presence/conversations/${conversationId}/heartbeat`,
+      { operatorId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  getOperatorPresenceStreamURL(conversationId, operatorId) {
+    const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
+    return `${this.baseURL}/api/operator-presence/conversations/${conversationId}/stream?operatorId=${operatorId}&apiKey=${apiKey}`;
+  }
 }
 
 export default new ChatwootExtraAPI();
