@@ -9,25 +9,34 @@ export const useOperatorPresence = (conversationId, operatorId) => {
 
   let eventSource = null;
   let heartbeatInterval = null;
-  let hasJoined = ref(false);
+  const hasJoined = ref(false);
+  const currentConversationId = ref(null);
   let debounceTimer = null;
   let lastSwitchTime = 0;
+  const isTabVisible = ref(true);
+  let focusHandler = null;
+  let beforeUnloadHandler = null;
+  let isUnmounted = false;
 
-  const startHeartbeat = (interval = 30000) => {
+  const sendHeartbeat = async () => {
+    if (hasJoined.value && conversationId.value) {
+      try {
+        await ChatwootExtraAPI.sendHeartbeat(
+          conversationId.value,
+          operatorId.value
+        );
+      } catch {
+        error.value = 'Connection unstable';
+      }
+    }
+  };
+
+  const startHeartbeat = (interval = 15000) => {
     if (heartbeatInterval) clearInterval(heartbeatInterval);
 
-    heartbeatInterval = setInterval(async () => {
-      if (hasJoined.value && conversationId.value) {
-        try {
-          await ChatwootExtraAPI.sendHeartbeat(
-            conversationId.value,
-            operatorId.value
-          );
-        } catch {
-          error.value = 'Connection unstable';
-        }
-      }
-    }, interval);
+    sendHeartbeat();
+
+    heartbeatInterval = setInterval(sendHeartbeat, interval);
   };
 
   const connectSSE = () => {
@@ -77,7 +86,7 @@ export const useOperatorPresence = (conversationId, operatorId) => {
         }
 
         setTimeout(() => {
-          if (hasJoined.value) connectSSE();
+          if (hasJoined.value && !isUnmounted) connectSSE();
         }, 3000);
       };
     } catch {
@@ -86,7 +95,15 @@ export const useOperatorPresence = (conversationId, operatorId) => {
   };
 
   const joinConversation = async () => {
-    if (!conversationId.value || !operatorId.value || hasJoined.value) return;
+    if (!conversationId.value || !operatorId.value || isUnmounted) return;
+
+    if (
+      hasJoined.value &&
+      currentConversationId.value === conversationId.value
+    ) {
+      return;
+    }
+
     isTransitioning.value = true;
 
     try {
@@ -94,83 +111,139 @@ export const useOperatorPresence = (conversationId, operatorId) => {
         conversationId.value,
         operatorId.value
       );
+
+      if (isUnmounted) return;
+
       hasJoined.value = true;
+      currentConversationId.value = conversationId.value;
       connectSSE();
       startHeartbeat();
     } catch {
-      error.value = 'Failed to join';
-      isTransitioning.value = false;
+      if (!isUnmounted) {
+        error.value = 'Failed to join';
+        isTransitioning.value = false;
+      }
     }
   };
 
   const leaveConversation = async () => {
-    if (!conversationId.value || !operatorId.value || !hasJoined.value) return;
+    if (!currentConversationId.value || !operatorId.value || !hasJoined.value)
+      return;
 
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+
+    const convId = currentConversationId.value;
+    const opId = operatorId.value;
+
+    hasJoined.value = false;
+    currentConversationId.value = null;
+    isConnected.value = false;
+    operators.value = [];
+
+    // Make API call last (can fail or take time)
     try {
-      if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        heartbeatInterval = null;
-      }
-
-      if (eventSource) {
-        eventSource.close();
-        eventSource = null;
-      }
-
-      await ChatwootExtraAPI.leaveConversation(
-        conversationId.value,
-        operatorId.value
-      );
-
-      hasJoined.value = false;
-      isConnected.value = false;
-      operators.value = [];
+      await ChatwootExtraAPI.leaveConversation(convId, opId);
     } catch {
       // Silently handle leave failures
     }
   };
 
-  // ✅ Hybrid debounce logic with immediate loader
-  watch(conversationId, (newId, oldId) => {
-    isTransitioning.value = true; // show loader right away
-    if (debounceTimer) clearTimeout(debounceTimer);
-
-    const now = Date.now();
-    const diff = now - lastSwitchTime;
-    lastSwitchTime = now;
-
-    if (diff > 2000) {
-      // first or normal switch → do immediately
-      (async () => {
-        if (oldId && oldId !== newId) await leaveConversation();
-        if (newId) await joinConversation();
-      })();
-    } else {
-      // user spamming → debounce to last action
-      debounceTimer = setTimeout(async () => {
-        if (oldId && oldId !== newId) await leaveConversation();
-        if (newId) await joinConversation();
-      }, 2000);
+  const handleWindowFocus = async () => {
+    if (isUnmounted) return;
+    isTabVisible.value = true;
+    if (!hasJoined.value && conversationId.value) {
+      await joinConversation();
     }
-  });
+  };
 
-  onUnmounted(() => {
-    if (debounceTimer) clearTimeout(debounceTimer);
-    leaveConversation();
-  });
+  watch(
+    conversationId,
+    (newId, oldId) => {
+      if (!isTabVisible.value) {
+        isTransitioning.value = false;
+        return;
+      }
+
+      isTransitioning.value = true;
+      if (debounceTimer) clearTimeout(debounceTimer);
+
+      const now = Date.now();
+      const diff = now - lastSwitchTime;
+      lastSwitchTime = now;
+
+      if (diff > 500) {
+        (async () => {
+          if (oldId && oldId !== newId) await leaveConversation();
+          if (newId) await joinConversation();
+        })();
+      } else {
+        debounceTimer = setTimeout(async () => {
+          if (oldId && oldId !== newId) await leaveConversation();
+          if (newId) await joinConversation();
+        }, 500);
+      }
+    },
+    { immediate: true }
+  );
 
   if (typeof window !== 'undefined') {
-    window.addEventListener('beforeunload', () => {
+    isTabVisible.value = !document.hidden;
+
+    focusHandler = handleWindowFocus;
+    window.addEventListener('focus', focusHandler);
+
+    beforeUnloadHandler = () => {
       if (hasJoined.value) {
         const baseURL =
           window.chatwootConfig?.chatwootExtraApiUrl || 'http://localhost:3001';
         navigator.sendBeacon(
-          `${baseURL}/api/operator-presence/conversations/${conversationId.value}/leave`,
+          `${baseURL}/api/operator-presence/conversations/${currentConversationId.value}/leave`,
           JSON.stringify({ operatorId: operatorId.value })
         );
       }
-    });
+    };
+    window.addEventListener('beforeunload', beforeUnloadHandler);
   }
+
+  onUnmounted(() => {
+    isUnmounted = true;
+
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+
+    if (typeof window !== 'undefined') {
+      if (focusHandler) {
+        window.removeEventListener('focus', focusHandler);
+        focusHandler = null;
+      }
+      if (beforeUnloadHandler) {
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+        beforeUnloadHandler = null;
+      }
+    }
+
+    leaveConversation();
+  });
 
   return {
     operators,
