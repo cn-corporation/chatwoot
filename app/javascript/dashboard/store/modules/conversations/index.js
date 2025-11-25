@@ -51,6 +51,8 @@ export const mutations = {
               messages: existingSelectedConv.messages,
               dataFetched: existingSelectedConv.dataFetched,
             };
+          } else {
+            conversationList.push(existingSelectedConv);
           }
         }
       }
