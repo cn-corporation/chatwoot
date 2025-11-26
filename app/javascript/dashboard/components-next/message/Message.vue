@@ -361,6 +361,7 @@ const contextMenuEnabledOptions = computed(() => {
   return {
     copy: hasText,
     delete:
+      !props.private &&
       isOutgoing &&
       (hasText || hasAttachments) &&
       !isFailedOrProcessing &&
