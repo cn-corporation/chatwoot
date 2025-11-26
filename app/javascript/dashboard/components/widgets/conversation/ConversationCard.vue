@@ -1,15 +1,17 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { getLastMessage } from 'dashboard/helper/conversationHelper';
 import { frontendURL, conversationUrl } from 'dashboard/helper/URLHelper';
+import { calculateTimePriority } from 'dashboard/helper/conversationPriority';
 import Avatar from 'next/avatar/Avatar.vue';
 import MessagePreview from './MessagePreview.vue';
 import InboxName from '../InboxName.vue';
 import ConversationContextMenu from './contextMenu/Index.vue';
 import CardLabels from './conversationCardComponents/CardLabels.vue';
 import SLACardLabel from './components/SLACardLabel.vue';
+import PriorityMark from './PriorityMark.vue';
 import ContextMenu from 'dashboard/components/ui/ContextMenu.vue';
 import { useSourceChannelColors } from 'dashboard/composables/useSourceChannelColors';
 import {
@@ -85,6 +87,16 @@ const isActiveChat = computed(() => {
 const unreadCount = computed(() => props.chat.unread_count);
 
 const hasUnread = computed(() => unreadCount.value > 0);
+
+// Inject the reactive timer trigger from ChatList
+const timerTick = inject('conversationTimerTick', ref(Date.now()));
+
+// Compute priority based on elapsed time (updates when timerTick changes)
+const computedPriority = computed(() => {
+  // eslint-disable-next-line no-unused-vars
+  const _ = timerTick.value; // Force reactivity on timer updates
+  return calculateTimePriority(props.chat);
+});
 
 const isInboxNameVisible = computed(() => !activeInbox.value);
 
@@ -358,14 +370,17 @@ const deleteConversation = () => {
         </span>
       </p>
       <div
-        class="absolute flex flex-col ltr:right-3 rtl:left-3"
+        class="absolute flex flex-col ltr:right-3 rtl:left-3 items-end"
         :class="showMetaSection ? 'top-8' : 'top-4'"
       >
-        <span class="ml-auto font-normal leading-4 text-xxs text-n-slate-10">
-          {{ formattedTimestamp }}
-        </span>
+        <div class="flex items-center gap-1 mb-0.5">
+          <PriorityMark v-if="computedPriority" :priority="computedPriority" />
+          <span class="font-normal leading-4 text-xxs text-n-slate-10">
+            {{ formattedTimestamp }}
+          </span>
+        </div>
         <span
-          class="shadow-lg rounded-full text-xxs font-semibold h-4 leading-4 ltr:ml-auto rtl:mr-auto mt-1 min-w-[1rem] px-1 py-0 text-center text-white bg-n-teal-9"
+          class="shadow-lg rounded-full text-xxs font-semibold h-4 leading-4 mt-0.5 min-w-[1rem] px-1 py-0 text-center text-white bg-n-teal-9"
           :class="hasUnread ? 'block' : 'hidden'"
         >
           {{ unreadCount > 9 ? '9+' : unreadCount }}

@@ -8,6 +8,7 @@ import {
   computed,
   watch,
   onMounted,
+  onUnmounted,
   defineEmits,
 } from 'vue';
 import { useStore } from 'vuex';
@@ -89,6 +90,26 @@ const conversationListRef = ref(null);
 const conversationDynamicScroller = ref(null);
 
 provide('contextMenuElementTarget', conversationDynamicScroller);
+
+// Single timer for all conversation priority calculations
+const conversationTimerTick = ref(Date.now());
+let priorityTimer = null;
+
+// Update timer every 30 seconds to recalculate priorities
+const startPriorityTimer = () => {
+  priorityTimer = setInterval(() => {
+    conversationTimerTick.value = Date.now();
+  }, 30000); // 30 seconds
+};
+
+const stopPriorityTimer = () => {
+  if (priorityTimer) {
+    clearInterval(priorityTimer);
+    priorityTimer = null;
+  }
+};
+
+provide('conversationTimerTick', conversationTimerTick);
 
 const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ME);
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
@@ -866,6 +887,11 @@ onMounted(() => {
   }
   // Refresh conversation stats to get accurate counts
   store.dispatch('conversationStats/get', conversationFilters.value);
+  startPriorityTimer();
+});
+
+onUnmounted(() => {
+  stopPriorityTimer();
 });
 
 const deleteConversationDialogRef = ref(null);
