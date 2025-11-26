@@ -36,7 +36,26 @@ export const mutations = {
     const shouldReplace = payload.replace === true;
 
     if (shouldReplace && conversationList.length > 0) {
-      // Only replace if we have new data to avoid clearing counts
+      if (_state.selectedChatId) {
+        const existingSelectedConv = _state.allConversations.find(
+          c => c.id === _state.selectedChatId
+        );
+        if (existingSelectedConv) {
+          const newSelectedIndex = conversationList.findIndex(
+            c => c.id === _state.selectedChatId
+          );
+          if (newSelectedIndex >= 0) {
+            conversationList[newSelectedIndex] = {
+              ...conversationList[newSelectedIndex],
+              allMessagesLoaded: existingSelectedConv.allMessagesLoaded,
+              messages: existingSelectedConv.messages,
+              dataFetched: existingSelectedConv.dataFetched,
+            };
+          } else {
+            conversationList.push(existingSelectedConv);
+          }
+        }
+      }
       _state.allConversations = conversationList;
     } else if (!shouldReplace) {
       // Add/update conversations (for pagination or updates)

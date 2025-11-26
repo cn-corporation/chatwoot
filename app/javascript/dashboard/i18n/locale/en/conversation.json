@@ -231,6 +231,13 @@
           "YES": "Send",
           "CANCEL": "Cancel"
         }
+      },
+      "QUOTED_REPLY": {
+        "ENABLE_TOOLTIP": "Include quoted email thread",
+        "DISABLE_TOOLTIP": "Don't include quoted email thread",
+        "REMOVE_PREVIEW": "Remove quoted email thread",
+        "COLLAPSE": "Collapse preview",
+        "EXPAND": "Expand preview"
       }
     },
     "VISIBLE_TO_AGENTS": "Private Note: Only visible to you and your team",
@@ -472,5 +479,12 @@
     "DISMISS_BUTTON": "Dismiss",
     "RELOAD_TOOLTIP": "Reload suggestion",
     "GET_BUTTON": "Get AI Suggestion"
+  },
+  "OPERATOR_PRESENCE": {
+    "TITLE": "Operators Viewing",
+    "NO_OPERATORS": "No operators are currently viewing this conversation",
+    "YOU": "You",
+    "VIEWING": "Currently viewing",
+    "CONNECTING": "Connecting..."
   }
 }

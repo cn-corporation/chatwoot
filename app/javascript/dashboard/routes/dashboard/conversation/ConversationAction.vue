@@ -53,7 +53,7 @@ export default {
         return this.currentChat.meta.assignee;
       },
       set(agent) {
-        const agentId = agent ? agent.id : 0;
+        const agentId = agent ? agent.id : null;
         this.$store.dispatch('setCurrentChatAssignee', agent);
         this.$store
           .dispatch('assignAgent', {
