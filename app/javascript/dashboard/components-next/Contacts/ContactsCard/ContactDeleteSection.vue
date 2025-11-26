@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useToggle } from '@vueuse/core';
 
@@ -22,10 +22,14 @@ const confirmDeleteContactDialogRef = ref(null);
 const openConfirmDeleteContactDialog = () => {
   confirmDeleteContactDialogRef.value?.dialogRef.open();
 };
+
+const isDevelopmentEnvironment = computed(() => {
+  return window.chatwootConfig?.environment === 'development';
+});
 </script>
 
 <template>
-  <Policy :permissions="['administrator']">
+  <Policy v-if="isDevelopmentEnvironment" :permissions="['administrator']">
     <div class="flex flex-col items-start border-t border-n-strong px-6 py-5">
       <Button
         :label="t('CONTACTS_LAYOUT.DETAILS.DELETE_CONTACT')"

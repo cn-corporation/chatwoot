@@ -79,6 +79,8 @@ export default {
     const { isAdmin } = useAdmin();
     return {
       isAdmin,
+      isDevelopmentEnvironment:
+        window.chatwootConfig?.environment === 'development',
     };
   },
   data() {
@@ -388,7 +390,9 @@ export default {
         @click.stop="copyConversationLink"
       />
     </template>
-    <template v-if="isAdmin && isAllowed([MENU.DELETE])">
+    <template
+      v-if="isAdmin && isDevelopmentEnvironment && isAllowed([MENU.DELETE])"
+    >
       <hr class="m-1 rounded border-b border-n-weak dark:border-n-weak" />
       <MenuItem
         :option="deleteOption"

@@ -42,6 +42,8 @@ export default {
     const { isAdmin } = useAdmin();
     return {
       isAdmin,
+      isDevelopmentEnvironment:
+        window.chatwootConfig?.environment === 'development',
     };
   },
   data() {
@@ -357,7 +359,7 @@ export default {
           @click="openMergeModal"
         />
         <NextButton
-          v-if="isAdmin"
+          v-if="isAdmin && isDevelopmentEnvironment"
           v-tooltip.top-end="$t('DELETE_CONTACT.BUTTON_LABEL')"
           icon="i-ph-trash"
           slate
