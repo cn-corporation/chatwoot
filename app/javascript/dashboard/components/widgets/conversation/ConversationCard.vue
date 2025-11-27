@@ -373,12 +373,14 @@ const deleteConversation = () => {
         class="absolute flex flex-col ltr:right-3 rtl:left-3 items-end"
         :class="showMetaSection ? 'top-8' : 'top-4'"
       >
-        <div class="flex items-center gap-1 mb-0.5">
-          <PriorityMark v-if="computedPriority" :priority="computedPriority" />
-          <span class="font-normal leading-4 text-xxs text-n-slate-10">
-            {{ formattedTimestamp }}
-          </span>
-        </div>
+        <PriorityMark
+          v-if="computedPriority"
+          :priority="computedPriority"
+          class="mb-0.5"
+        />
+        <span class="font-normal leading-4 text-xxs text-n-slate-10">
+          {{ formattedTimestamp }}
+        </span>
         <span
           class="shadow-lg rounded-full text-xxs font-semibold h-4 leading-4 mt-0.5 min-w-[1rem] px-1 py-0 text-center text-white bg-n-teal-9"
           :class="hasUnread ? 'block' : 'hidden'"
