@@ -298,7 +298,7 @@ export default {
         :size="splitpaneSizes.sidebar"
         min-size="15"
         max-size="50"
-        class="flex h-full"
+        class="flex h-full conversation-box-pane"
       >
         <ConversationSidebar :current-chat="currentChat" />
       </Pane>

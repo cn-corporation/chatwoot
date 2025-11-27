@@ -111,7 +111,7 @@ export default {
       return ` ${this.contact.name}?`;
     },
     playerStatus() {
-      return this.additionalAttributes.player_status || null;
+      return this.additionalAttributes.player_status || 'beginner';
     },
     playerStatusLabel() {
       const statusMap = {
@@ -125,7 +125,7 @@ export default {
       return statusMap[this.playerStatus] || this.playerStatus;
     },
     behaviorStatus() {
-      return this.additionalAttributes.behavior_status || null;
+      return this.additionalAttributes.behavior_status || 'loyal';
     },
     behaviorStatusLabel() {
       const statusMap = {
@@ -313,7 +313,7 @@ export default {
         </p>
 
         <!-- Player status display -->
-        <div v-if="playerStatus" class="flex flex-col gap-1 text-xs">
+        <div class="flex flex-col gap-1 text-xs">
           <div class="flex items-center text-n-slate-11">
             <span class="font-medium text-n-slate-10 mr-1.5">
               {{ $t('CONTACT_FORM.PLAYER_STATUS.LABEL') }}:
@@ -322,7 +322,7 @@ export default {
               {{ playerStatusLabel }}
             </span>
           </div>
-          <div v-if="behaviorStatus" class="flex items-center text-n-slate-11">
+          <div class="flex items-center text-n-slate-11">
             <span class="font-medium text-n-slate-10 mr-1.5">
               {{ $t('CONTACT_FORM.BEHAVIOR_STATUS.LABEL') }}:
             </span>
