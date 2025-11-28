@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed, nextTick } from 'vue';
+import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { useKeyboardNavigableList } from 'dashboard/composables/useKeyboardNavigableList';
 
 const props = defineProps({
@@ -17,6 +17,18 @@ const emit = defineEmits(['mentionSelect']);
 
 const mentionsListContainerRef = ref(null);
 const selectedIndex = ref(0);
+const maxHeight = ref(607);
+
+const calculateMaxHeight = () => {
+  const container = mentionsListContainerRef.value;
+  if (!container) return;
+
+  const rect = container.getBoundingClientRect();
+  const availableHeight = rect.bottom - 16;
+  const desiredMaxHeight = 607;
+
+  maxHeight.value = Math.min(desiredMaxHeight, availableHeight);
+};
 
 const adjustScroll = () => {
   nextTick(() => {
@@ -65,12 +77,24 @@ const onListItemSelection = index => {
 const variableKey = (item = {}) => {
   return props.type === 'variable' ? `{{${item.label}}}` : `/${item.label}`;
 };
+
+onMounted(() => {
+  nextTick(() => {
+    calculateMaxHeight();
+  });
+  window.addEventListener('resize', calculateMaxHeight);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', calculateMaxHeight);
+});
 </script>
 
 <template>
   <div
     ref="mentionsListContainerRef"
-    class="bg-n-solid-1 p-1 rounded-xl overflow-auto absolute w-full z-20 shadow-md left-0 bottom-full max-h-96 border border-solid border-n-strong mention--box"
+    class="bg-n-solid-1 p-1 rounded-xl overflow-auto absolute w-full z-20 shadow-md left-0 bottom-full border border-solid border-n-strong mention--box"
+    :style="{ maxHeight: `${maxHeight}px` }"
   >
     <ul class="mb-0 vertical dropdown menu">
       <woot-dropdown-item
