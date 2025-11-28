@@ -19,6 +19,7 @@
       "unassigned": "Неназначен",
       "all": "Все",
       "all-operators": "Все",
+      "pending": "В ожидании",
       "resolved": "Архив"
     },
     "CHAT_STATUS_FILTER_ITEMS": {
