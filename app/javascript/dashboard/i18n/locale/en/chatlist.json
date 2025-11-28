@@ -19,6 +19,7 @@
       "unassigned": "Unassigned",
       "all": "All",
       "all-operators": "All",
+      "pending": "Pending",
       "resolved": "Archived"
     },
     "CHAT_STATUS_FILTER_ITEMS": {

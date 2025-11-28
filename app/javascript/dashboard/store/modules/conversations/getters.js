@@ -177,9 +177,15 @@ const getters = {
         ? _state.sidebarCountsData
         : _state.allConversations;
 
-    return source.reduce((total, conversation) => {
-      return total + (conversation.unread_count || 0);
-    }, 0);
+    // Only count unread from open and pending conversations, not resolved
+    return source
+      .filter(
+        conversation =>
+          conversation.status === 'open' || conversation.status === 'pending'
+      )
+      .reduce((total, conversation) => {
+        return total + (conversation.unread_count || 0);
+      }, 0);
   },
 
   // Get unread count for specific inbox (uses separate counts data)
@@ -190,8 +196,13 @@ const getters = {
         ? _state.sidebarCountsData
         : _state.allConversations;
 
+    // Only count unread from open and pending conversations, not resolved
     return source
-      .filter(conversation => conversation.inbox_id === inboxId)
+      .filter(
+        conversation =>
+          conversation.inbox_id === inboxId &&
+          (conversation.status === 'open' || conversation.status === 'pending')
+      )
       .reduce((total, conversation) => {
         return total + (conversation.unread_count || 0);
       }, 0);
@@ -205,9 +216,12 @@ const getters = {
         ? _state.sidebarCountsData
         : _state.allConversations;
 
+    // Only count unread from open and pending conversations, not resolved
     return source
       .filter(conversation => {
         if (!conversation.labels || !Array.isArray(conversation.labels))
+          return false;
+        if (conversation.status !== 'open' && conversation.status !== 'pending')
           return false;
         // Labels can be either strings or objects with title property
         return conversation.labels.some(label =>
@@ -229,10 +243,14 @@ const getters = {
         ? _state.sidebarCountsData
         : _state.allConversations;
 
+    // Only count unread from open and pending conversations, not resolved
     return source
       .filter(conversation => {
         const convTeamId = conversation.team_id || conversation.meta?.team?.id;
-        return convTeamId === teamId;
+        return (
+          convTeamId === teamId &&
+          (conversation.status === 'open' || conversation.status === 'pending')
+        );
       })
       .reduce((total, conversation) => {
         return total + (conversation.unread_count || 0);

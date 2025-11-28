@@ -439,6 +439,9 @@ const actions = {
           },
         ]);
       }
+
+      // Refresh conversation stats to update tab counts (including pending_count)
+      dispatch('conversationStats/get', {}, { root: true });
     }
   },
 

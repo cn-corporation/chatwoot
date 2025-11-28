@@ -6,6 +6,7 @@ const state = {
   mineCount: 0,
   unAssignedCount: 0,
   allCount: 0,
+  pendingCount: 0,
   resolvedCount: 0,
 };
 
@@ -57,13 +58,15 @@ export const mutations = {
       mine_count: mineCount,
       unassigned_count: unAssignedCount,
       all_count: allCount,
+      pending_count: pendingCount,
       resolved_count: resolvedCount,
     } = {}
   ) {
-    $state.mineCount = mineCount;
-    $state.allCount = allCount;
-    $state.unAssignedCount = unAssignedCount;
-    $state.resolvedCount = resolvedCount;
+    $state.mineCount = mineCount || 0;
+    $state.allCount = allCount || 0;
+    $state.unAssignedCount = unAssignedCount || 0;
+    $state.pendingCount = pendingCount || 0;
+    $state.resolvedCount = resolvedCount || 0;
     $state.updatedOn = new Date();
   },
 };
