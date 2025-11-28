@@ -46,13 +46,28 @@ module Filters::FilterHelper
   end
 
   def handle_additional_attributes(query_hash, filter_operator_value, data_type)
-    if data_type == 'text_case_insensitive'
-      "LOWER(#{filter_config[:table_name]}.additional_attributes ->> '#{query_hash[:attribute_key]}') " \
-        "#{filter_operator_value} #{query_hash[:query_operator]}"
-    else
-      "#{filter_config[:table_name]}.additional_attributes ->> '#{query_hash[:attribute_key]}' " \
-        "#{filter_operator_value} #{query_hash[:query_operator]} "
-    end
+    table_name = filter_config[:table_name]
+    attribute_key = query_hash[:attribute_key]
+
+    # Handle contact-level attributes when filtering conversations
+    table_name = 'contacts' if filter_config[:entity] == 'Conversation' && %w[player_status behavior_status].include?(attribute_key)
+
+    # Define default values for player_status and behavior_status
+    default_values = {
+      'player_status' => 'beginner',
+      'behavior_status' => 'loyal'
+    }
+
+    # Use COALESCE to apply default values for player_status and behavior_status
+    attribute_expression = if default_values.key?(attribute_key)
+                             "COALESCE(#{table_name}.additional_attributes ->> '#{attribute_key}', '#{default_values[attribute_key]}')"
+                           elsif data_type == 'text_case_insensitive'
+                             "LOWER(#{table_name}.additional_attributes ->> '#{attribute_key}')"
+                           else
+                             "#{table_name}.additional_attributes ->> '#{attribute_key}'"
+                           end
+
+    "#{attribute_expression} #{filter_operator_value} #{query_hash[:query_operator]} "
   end
 
   def handle_standard_attributes(current_filter, query_hash, current_index, filter_operator_value)
