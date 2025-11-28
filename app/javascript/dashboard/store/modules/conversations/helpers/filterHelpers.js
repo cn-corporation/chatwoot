@@ -80,6 +80,16 @@ const getValueFromConversation = (conversation, attributeKey) => {
     case 'country_code':
     case 'referer':
       return conversation.additional_attributes?.[attributeKey];
+    case 'player_status':
+      return (
+        conversation.meta?.sender?.additional_attributes?.player_status ||
+        'beginner'
+      );
+    case 'behavior_status':
+      return (
+        conversation.meta?.sender?.additional_attributes?.behavior_status ||
+        'loyal'
+      );
     default:
       // Check if it's a custom attribute
       if (

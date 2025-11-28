@@ -16,6 +16,8 @@ export const CONVERSATION_ATTRIBUTES = {
   REFERER: 'referer',
   CREATED_AT: 'created_at',
   LAST_ACTIVITY_AT: 'last_activity_at',
+  PLAYER_STATUS: 'player_status',
+  BEHAVIOR_STATUS: 'behavior_status',
 };
 
 export const CONTACT_ATTRIBUTES = {
@@ -30,6 +32,8 @@ export const CONTACT_ATTRIBUTES = {
   REFERER: 'referer',
   BLOCKED: 'blocked',
   LABELS: 'labels',
+  PLAYER_STATUS: 'player_status',
+  BEHAVIOR_STATUS: 'behavior_status',
 };
 
 /**
