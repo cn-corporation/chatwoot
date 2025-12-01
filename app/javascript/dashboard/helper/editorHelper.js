@@ -174,7 +174,7 @@ export const scrollCursorIntoView = view => {
 
   // Scroll the node into view.
   if (node && node.scrollIntoView) {
-    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    node.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 };
 
