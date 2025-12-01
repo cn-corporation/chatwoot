@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import InboxReconnectionRequired from '../../components/InboxReconnectionRequired.vue';
@@ -26,6 +26,7 @@ const { t } = useI18n();
 
 const isRequestingAuthorization = ref(false);
 const isLoadingFacebook = ref(true);
+const messageHandlerRef = ref(null);
 
 const whatsappAppId = computed(() => window.chatwootConfig.whatsappAppId);
 const whatsappConfigurationId = computed(
@@ -104,6 +105,7 @@ const startEmbeddedSignup = authCode => {
   const messageHandler = createMessageHandler(data =>
     handleEmbeddedSignupEvents(data, authCode)
   );
+  messageHandlerRef.value = messageHandler;
   window.addEventListener('message', messageHandler);
 };
 
@@ -190,6 +192,13 @@ onMounted(async () => {
     useAlert(t('INBOX.REAUTHORIZE.FACEBOOK_LOAD_ERROR'));
   } finally {
     isLoadingFacebook.value = false;
+  }
+});
+
+onBeforeUnmount(() => {
+  if (messageHandlerRef.value) {
+    window.removeEventListener('message', messageHandlerRef.value);
+    messageHandlerRef.value = null;
   }
 });
 

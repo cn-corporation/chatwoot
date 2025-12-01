@@ -21,7 +21,10 @@ export default {
     },
   },
   data() {
-    return { isUploading: false };
+    return {
+      isUploading: false,
+      createdObjectURLs: [],
+    };
   },
   computed: {
     ...mapGetters({
@@ -42,6 +45,8 @@ export default {
   },
   unmounted() {
     document.removeEventListener('paste', this.handleClipboardPaste);
+    this.createdObjectURLs.forEach(url => window.URL.revokeObjectURL(url));
+    this.createdObjectURLs = [];
   },
   methods: {
     handleClipboardPaste(e) {
@@ -135,8 +140,10 @@ export default {
       this.isUploading = false;
     },
     getLocalFileAttributes(file) {
+      const thumbUrl = window.URL.createObjectURL(file.file);
+      this.createdObjectURLs.push(thumbUrl);
       return {
-        thumbUrl: window.URL.createObjectURL(file.file),
+        thumbUrl,
         fileType: this.getFileType(file.type),
       };
     },

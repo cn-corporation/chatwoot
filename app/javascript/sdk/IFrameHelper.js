@@ -112,11 +112,20 @@ export const IFrameHelper = {
       }
     };
   },
+  handleWindowResize: null,
+  handleWidgetScroll: null,
   initWindowSizeListener: () => {
-    window.addEventListener('resize', () => IFrameHelper.toggleCloseButton());
+    IFrameHelper.handleWindowResize = () => IFrameHelper.toggleCloseButton();
+    window.addEventListener('resize', IFrameHelper.handleWindowResize);
+  },
+  removeWindowSizeListener: () => {
+    if (IFrameHelper.handleWindowResize) {
+      window.removeEventListener('resize', IFrameHelper.handleWindowResize);
+      IFrameHelper.handleWindowResize = null;
+    }
   },
   preventDefaultScroll: () => {
-    widgetHolder.addEventListener('wheel', event => {
+    IFrameHelper.handleWidgetScroll = event => {
       const deltaY = event.deltaY;
       const contentHeight = widgetHolder.scrollHeight;
       const visibleHeight = widgetHolder.offsetHeight;
@@ -128,7 +137,17 @@ export const IFrameHelper = {
       ) {
         event.preventDefault();
       }
-    });
+    };
+    widgetHolder.addEventListener('wheel', IFrameHelper.handleWidgetScroll);
+  },
+  removeScrollListener: () => {
+    if (IFrameHelper.handleWidgetScroll) {
+      widgetHolder.removeEventListener(
+        'wheel',
+        IFrameHelper.handleWidgetScroll
+      );
+      IFrameHelper.handleWidgetScroll = null;
+    }
   },
 
   setFrameHeightToFitContent: (extraHeight, isFixedHeight) => {

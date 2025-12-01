@@ -1,6 +1,6 @@
 <script setup>
 import EmptyState from 'dashboard/components/widgets/EmptyState.vue';
-import { onMounted } from 'vue';
+import { onMounted, onBeforeUnmount } from 'vue';
 
 const toggleSupportWidgetVisibility = () => {
   if (window.$chatwoot) {
@@ -8,15 +8,25 @@ const toggleSupportWidgetVisibility = () => {
   }
 };
 
+const handleChatwootMessage = () => {
+  toggleSupportWidgetVisibility();
+};
+
 const setupListenerForWidgetEvent = () => {
-  window.addEventListener('chatwoot:on-message', () => {
-    toggleSupportWidgetVisibility();
-  });
+  window.addEventListener('chatwoot:on-message', handleChatwootMessage);
+};
+
+const removeListenerForWidgetEvent = () => {
+  window.removeEventListener('chatwoot:on-message', handleChatwootMessage);
 };
 
 onMounted(() => {
   toggleSupportWidgetVisibility();
   setupListenerForWidgetEvent();
+});
+
+onBeforeUnmount(() => {
+  removeListenerForWidgetEvent();
 });
 </script>
 
