@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, computed, reactive } from 'vue';
+import { defineProps, computed, reactive, watch, onBeforeUnmount } from 'vue';
 import Message from './Message.vue';
 import { MESSAGE_TYPES } from './constants.js';
 import { useCamelCase } from 'dashboard/composables/useTransformKeys';
@@ -48,7 +48,22 @@ const allMessages = computed(() => {
 const currentChat = useMapGetter('getSelectedChat');
 
 // Cache for fetched reply messages to avoid duplicate API calls
+// Limited to 100 entries to prevent unbounded memory growth
+const MAX_CACHE_SIZE = 100;
 const fetchedReplyMessages = reactive(new Map());
+
+// Clear cache when conversation changes to prevent memory accumulation
+watch(
+  () => currentChat.value?.id,
+  () => {
+    fetchedReplyMessages.clear();
+  }
+);
+
+// Clear cache on component unmount
+onBeforeUnmount(() => {
+  fetchedReplyMessages.clear();
+});
 
 /**
  * Fetches a specific message from the API by trying to get messages around it
@@ -74,14 +89,29 @@ const fetchReplyMessage = async (messageId, conversationId) => {
 
     if (targetMessage) {
       const camelCaseMessage = useCamelCase(targetMessage);
+
+      // Implement LRU eviction: remove oldest entry if cache is full
+      if (fetchedReplyMessages.size >= MAX_CACHE_SIZE) {
+        const firstKey = fetchedReplyMessages.keys().next().value;
+        fetchedReplyMessages.delete(firstKey);
+      }
+
       fetchedReplyMessages.set(messageId, camelCaseMessage);
       return camelCaseMessage;
     }
 
     // Cache null result to avoid repeated API calls
+    if (fetchedReplyMessages.size >= MAX_CACHE_SIZE) {
+      const firstKey = fetchedReplyMessages.keys().next().value;
+      fetchedReplyMessages.delete(firstKey);
+    }
     fetchedReplyMessages.set(messageId, null);
     return null;
   } catch (error) {
+    if (fetchedReplyMessages.size >= MAX_CACHE_SIZE) {
+      const firstKey = fetchedReplyMessages.keys().next().value;
+      fetchedReplyMessages.delete(firstKey);
+    }
     fetchedReplyMessages.set(messageId, null);
     return null;
   }

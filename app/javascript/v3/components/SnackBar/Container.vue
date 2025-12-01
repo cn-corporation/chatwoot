@@ -15,6 +15,7 @@ export default {
   data() {
     return {
       snackbarAlertMessages: [],
+      timeoutIds: [],
     };
   },
 
@@ -23,6 +24,8 @@ export default {
   },
   unmounted() {
     emitter.off(BUS_EVENTS.SHOW_TOAST, this.onNewToastMessage);
+    this.timeoutIds.forEach(timeoutId => clearTimeout(timeoutId));
+    this.timeoutIds = [];
   },
   methods: {
     onNewToastMessage({ message, action }) {
@@ -31,9 +34,14 @@ export default {
         message,
         action,
       });
-      window.setTimeout(() => {
+      const timeoutId = window.setTimeout(() => {
         this.snackbarAlertMessages.splice(0, 1);
+        const index = this.timeoutIds.indexOf(timeoutId);
+        if (index > -1) {
+          this.timeoutIds.splice(index, 1);
+        }
       }, this.duration);
+      this.timeoutIds.push(timeoutId);
     },
   },
 };

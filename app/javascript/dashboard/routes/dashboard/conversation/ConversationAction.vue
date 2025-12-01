@@ -50,9 +50,10 @@ export default {
     },
     assignedAgent: {
       get() {
-        return this.currentChat.meta.assignee;
+        return this.currentChat?.meta?.assignee;
       },
       set(agent) {
+        if (!this.currentChat) return;
         const agentId = agent ? agent.id : null;
         this.$store.dispatch('setCurrentChatAssignee', agent);
         this.$store
@@ -67,9 +68,10 @@ export default {
     },
     assignedTeam: {
       get() {
-        return this.currentChat.meta.team;
+        return this.currentChat?.meta?.team;
       },
       set(team) {
+        if (!this.currentChat) return;
         const conversationId = this.currentChat.id;
         const teamId = team ? team.id : 0;
         this.$store.dispatch('setCurrentChatTeam', { team, conversationId });
@@ -134,7 +136,7 @@ export default {
 </script>
 
 <template>
-  <div class="bg-n-background">
+  <div v-if="currentChat && currentChat.meta" class="bg-n-background">
     <div class="multiselect-wrap--small">
       <ContactDetailsItem
         compact

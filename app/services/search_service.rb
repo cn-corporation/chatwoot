@@ -31,10 +31,14 @@ class SearchService
   end
 
   def filter_conversations
+    return current_account.conversations.none if search_query.blank?
+
     @conversations = current_account.conversations.where(inbox_id: accessable_inbox_ids)
                                     .joins('INNER JOIN contacts ON conversations.contact_id = contacts.id')
+                                    .joins('LEFT JOIN contact_inboxes ON conversations.contact_inbox_id = contact_inboxes.id')
                                     .where("cast(conversations.display_id as text) ILIKE :search OR contacts.name ILIKE :search OR contacts.email
-                            ILIKE :search OR contacts.phone_number ILIKE :search OR contacts.identifier ILIKE :search", search: "%#{search_query}%")
+                            ILIKE :search OR contacts.phone_number ILIKE :search OR contacts.identifier ILIKE :search OR contact_inboxes.source_id = :exact_search", search: "%#{search_query}%", exact_search: search_query)
+                                    .distinct
                                     .order('conversations.created_at DESC')
                                     .page(params[:page])
                                     .per(15)
@@ -57,31 +61,29 @@ class SearchService
   def advanced_search; end
 
   def filter_messages_with_gin
+    return current_account.messages.none if search_query.blank?
+
     base_query = message_base_query
 
-    if search_query.present?
-      # Use the @@ operator with to_tsquery for better GIN index utilization
-      # Convert search query to tsquery format with prefix matching
+    # Use the @@ operator with to_tsquery for better GIN index utilization
+    # Convert search query to tsquery format with prefix matching
 
-      # Use this if we wanna match splitting the words
-      # split_query = search_query.split.map { |term| "#{term} | #{term}:*" }.join(' & ')
+    # Use this if we wanna match splitting the words
+    # split_query = search_query.split.map { |term| "#{term} | #{term}:*" }.join(' & ')
 
-      # This will do entire sentence matching using phrase distance operator
-      tsquery = search_query.split.join(' <-> ')
+    # This will do entire sentence matching using phrase distance operator
+    tsquery = search_query.split.join(' <-> ')
 
-      # Apply the text search using the GIN index
-      base_query.where('content @@ to_tsquery(?)', tsquery)
-                .reorder('created_at DESC')
-                .page(params[:page])
-                .per(15)
-    else
-      base_query.reorder('created_at DESC')
-                .page(params[:page])
-                .per(15)
-    end
+    # Apply the text search using the GIN index
+    base_query.where('content @@ to_tsquery(?)', tsquery)
+              .reorder('created_at DESC')
+              .page(params[:page])
+              .per(15)
   end
 
   def filter_messages_with_like
+    return current_account.messages.none if search_query.blank?
+
     message_base_query
       .where('messages.content ILIKE :search', search: "%#{search_query}%")
       .reorder('created_at DESC')
@@ -108,15 +110,24 @@ class SearchService
   end
 
   def filter_contacts
-    @contacts = current_account.contacts.where(
-      "name ILIKE :search OR email ILIKE :search OR phone_number
-      ILIKE :search OR identifier ILIKE :search", search: "%#{search_query}%"
-    ).resolved_contacts(
-      use_crm_v2: current_account.feature_enabled?('crm_v2')
-    ).order_on_last_activity_at('desc').page(params[:page]).per(15)
+    return current_account.contacts.none if search_query.blank?
+
+    @contacts = current_account.contacts
+                               .joins('LEFT JOIN contact_inboxes ON contacts.id = contact_inboxes.contact_id')
+                               .where(
+                                 "contacts.name ILIKE :search OR contacts.email ILIKE :search OR contacts.phone_number
+      ILIKE :search OR contacts.identifier ILIKE :search OR contact_inboxes.source_id = :exact_search",
+                                 search: "%#{search_query}%",
+                                 exact_search: search_query
+                               ).distinct
+                               .order_on_last_activity_at('desc')
+                               .page(params[:page])
+                               .per(15)
   end
 
   def filter_articles
+    return current_account.articles.none if search_query.blank?
+
     @articles = current_account.articles
                                .text_search(search_query)
                                .page(params[:page])

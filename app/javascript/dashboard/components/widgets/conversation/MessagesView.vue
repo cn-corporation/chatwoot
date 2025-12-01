@@ -315,14 +315,16 @@ export default {
   },
 
   created() {
+    this.handleMessageSent = () => {
+      this.messageSentSinceOpened = true;
+    };
+
     emitter.on(BUS_EVENTS.SCROLL_TO_MESSAGE, this.onScrollToMessage);
     // when a new message comes in, we refetch the label suggestions
     emitter.on(BUS_EVENTS.FETCH_LABEL_SUGGESTIONS, this.fetchSuggestions);
     // when a message is sent we set the flag to true this hides the label suggestions,
     // until the chat is changed and the flag is reset in the watch for currentChat
-    emitter.on(BUS_EVENTS.MESSAGE_SENT, () => {
-      this.messageSentSinceOpened = true;
-    });
+    emitter.on(BUS_EVENTS.MESSAGE_SENT, this.handleMessageSent);
   },
 
   mounted() {
@@ -432,6 +434,8 @@ export default {
     },
     removeBusListeners() {
       emitter.off(BUS_EVENTS.SCROLL_TO_MESSAGE, this.onScrollToMessage);
+      emitter.off(BUS_EVENTS.FETCH_LABEL_SUGGESTIONS, this.fetchSuggestions);
+      emitter.off(BUS_EVENTS.MESSAGE_SENT, this.handleMessageSent);
     },
     onScrollToMessage({ messageId = '' } = {}) {
       this.$nextTick(() => {
@@ -454,7 +458,10 @@ export default {
       this.isLoadingPrevious = false;
     },
     removeScrollListener() {
-      this.conversationPanel.removeEventListener('scroll', this.handleScroll);
+      if (this.conversationPanel) {
+        this.conversationPanel.removeEventListener('scroll', this.handleScroll);
+        this.conversationPanel = null;
+      }
     },
     scrollToBottom() {
       this.isProgrammaticScroll = true;

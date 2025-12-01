@@ -8,17 +8,34 @@ export default {
       showBannerMessage: false,
       bannerMessage: '',
       bannerType: 'error',
+      bannerTimeout: null,
     };
   },
   mounted() {
-    emitter.on(BUS_EVENTS.SHOW_ALERT, ({ message, type = 'error' }) => {
+    emitter.on(BUS_EVENTS.SHOW_ALERT, this.handleShowAlert);
+  },
+  beforeUnmount() {
+    emitter.off(BUS_EVENTS.SHOW_ALERT, this.handleShowAlert);
+    if (this.bannerTimeout) {
+      clearTimeout(this.bannerTimeout);
+      this.bannerTimeout = null;
+    }
+  },
+  methods: {
+    handleShowAlert({ message, type = 'error' }) {
       this.bannerMessage = message;
       this.bannerType = type;
       this.showBannerMessage = true;
-      setTimeout(() => {
+
+      if (this.bannerTimeout) {
+        clearTimeout(this.bannerTimeout);
+      }
+
+      this.bannerTimeout = setTimeout(() => {
         this.showBannerMessage = false;
+        this.bannerTimeout = null;
       }, 3000);
-    });
+    },
   },
 };
 </script>

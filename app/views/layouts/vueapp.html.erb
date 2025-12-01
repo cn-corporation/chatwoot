@@ -56,7 +56,8 @@
         selectedLocale: '<%= I18n.locale %>',
         todoAppUrl: '<%= ENV.fetch('TODO_APP_URL', 'http://localhost:3002') %>',
         chatwootExtraApiUrl: '<%= ENV.fetch('CHATWOOT_EXTRA_API_URL', 'http://localhost:3001') %>',
-        chatwootExtraApiKey: '<%= ENV.fetch('CHATWOOT_EXTRA_API_KEY', '') %>'
+        chatwootExtraApiKey: '<%= ENV.fetch('CHATWOOT_EXTRA_API_KEY', '') %>',
+        environment: '<%= ENV.fetch('ENVIRONMENT', 'production') %>'
       }
       window.globalConfig = <%= raw @global_config.to_json %>
       window.browserConfig = {

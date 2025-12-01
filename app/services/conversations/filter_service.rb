@@ -24,9 +24,20 @@ class Conversations::FilterService < FilterService
   end
 
   def base_relation
-    conversations = @account.conversations.includes(
-      :taggings, :inbox, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team, :messages, :contact_inbox
-    )
+    # Check if we need to join contacts for player_status or behavior_status filters
+    needs_contact_join = @params[:payload]&.any? do |filter|
+      %w[player_status behavior_status].include?(filter[:attribute_key])
+    end
+
+    conversations = if needs_contact_join
+                      @account.conversations.joins(:contact).distinct.includes(
+                        :taggings, :inbox, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team, :messages, :contact_inbox
+                      )
+                    else
+                      @account.conversations.includes(
+                        :taggings, :inbox, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team, :messages, :contact_inbox
+                      )
+                    end
 
     Conversations::PermissionFilterService.new(
       conversations,

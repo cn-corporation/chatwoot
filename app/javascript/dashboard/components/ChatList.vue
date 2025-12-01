@@ -8,6 +8,7 @@ import {
   computed,
   watch,
   onMounted,
+  onUnmounted,
   defineEmits,
 } from 'vue';
 import { useStore } from 'vuex';
@@ -89,6 +90,26 @@ const conversationListRef = ref(null);
 const conversationDynamicScroller = ref(null);
 
 provide('contextMenuElementTarget', conversationDynamicScroller);
+
+// Single timer for all conversation priority calculations
+const conversationTimerTick = ref(Date.now());
+let priorityTimer = null;
+
+// Update timer every 30 seconds to recalculate priorities
+const startPriorityTimer = () => {
+  priorityTimer = setInterval(() => {
+    conversationTimerTick.value = Date.now();
+  }, 30000); // 30 seconds
+};
+
+const stopPriorityTimer = () => {
+  if (priorityTimer) {
+    clearInterval(priorityTimer);
+    priorityTimer = null;
+  }
+};
+
+provide('conversationTimerTick', conversationTimerTick);
 
 const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ME);
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
@@ -235,6 +256,9 @@ const assigneeTabItems = computed(() => {
             c => c.status !== 'resolved'
           ).length;
           break;
+        case 'pending':
+          count = labelConversations.filter(c => c.status === 'pending').length;
+          break;
         case 'resolved':
           count = labelConversations.filter(
             c => c.status === 'resolved'
@@ -263,6 +287,9 @@ const assigneeTabItems = computed(() => {
         case 'all':
           count = teamConversations.filter(c => c.status !== 'resolved').length;
           break;
+        case 'pending':
+          count = teamConversations.filter(c => c.status === 'pending').length;
+          break;
         case 'resolved':
           count = teamConversations.filter(c => c.status === 'resolved').length;
           break;
@@ -285,14 +312,14 @@ const assigneeTabItems = computed(() => {
 // Only showing "Dialogs" (me), "Unanswered" (unassigned), "All dialogs" (all), "Mentions", and "Categories"
 // Admins also get "All" (all-operators) tab
 const simplifiedAssigneeTabItems = computed(() => {
-  const operatorEssentialTabs = ['me', 'unassigned', 'resolved'];
+  const operatorEssentialTabs = ['me', 'unassigned', 'pending', 'resolved'];
 
   // Check if current user is administrator
   const isAdmin = currentUser.value?.role === 'administrator';
 
   // Add all-operators tab for admins
   if (isAdmin) {
-    operatorEssentialTabs.splice(2, 0, 'all-operators'); // Insert before 'resolved'
+    operatorEssentialTabs.splice(2, 0, 'all-operators'); // Insert before 'pending'
   }
 
   const filteredTabs = assigneeTabItems.value.filter(item =>
@@ -346,8 +373,13 @@ const conversationListPagination = computed(() => {
 
 const conversationFilters = computed(() => {
   // For resolved tab, override status to 'resolved'
-  const status =
-    activeAssigneeTab.value === 'resolved' ? 'resolved' : activeStatus.value;
+  // For pending tab, override status to 'pending'
+  let status = activeStatus.value;
+  if (activeAssigneeTab.value === 'resolved') {
+    status = 'resolved';
+  } else if (activeAssigneeTab.value === 'pending') {
+    status = 'pending';
+  }
 
   // Map all-operators to 'all' for backend API (frontend-only distinction)
   const assigneeType =
@@ -414,6 +446,9 @@ const conversationList = computed(() => {
     } else if (activeAssigneeTab.value === 'resolved') {
       // Use dedicated resolved chats list
       localConversationList = [...resolvedChatsList.value(filters)];
+    } else if (activeAssigneeTab.value === 'pending') {
+      // Show all pending conversations
+      localConversationList = [...allChatList.value(filters)];
     } else if (activeAssigneeTab.value === 'all-operators') {
       // Show all conversations for admin's All tab
       localConversationList = [...allChatList.value(filters)];
@@ -866,6 +901,11 @@ onMounted(() => {
   }
   // Refresh conversation stats to get accurate counts
   store.dispatch('conversationStats/get', conversationFilters.value);
+  startPriorityTimer();
+});
+
+onUnmounted(() => {
+  stopPriorityTimer();
 });
 
 const deleteConversationDialogRef = ref(null);

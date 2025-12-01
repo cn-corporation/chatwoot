@@ -25,8 +25,13 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
 
   def destroy
     ActiveRecord::Base.transaction do
+      original_content = message.content
+      sender_name = Current.user&.name || 'Unknown User'
+
       message.update!(content: I18n.t('conversations.messages.deleted'), content_type: :text, content_attributes: { deleted: true })
       message.attachments.destroy_all
+
+      create_deletion_tracking_note(sender_name, original_content)
     end
   end
 
@@ -92,7 +97,14 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
       return
     end
 
-    message.update!(content: permitted_params[:content])
+    original_content = message.content
+    new_content = permitted_params[:content]
+    sender_name = Current.user&.name || 'Unknown User'
+
+    message.update!(content: new_content)
+
+    create_edit_tracking_note(sender_name, original_content, new_content)
+
     @message = message
   end
 
@@ -105,5 +117,20 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   def ensure_api_inbox
     # Only API inboxes can update messages
     render json: { error: 'Message status update is only allowed for API inboxes' }, status: :forbidden unless @conversation.inbox.api?
+  end
+
+  def create_edit_tracking_note(sender_name, old_content, new_content)
+    note_content = "#{sender_name} edited message from \"#{old_content}\" to \"#{new_content}\""
+    create_private_note(note_content)
+  end
+
+  def create_deletion_tracking_note(sender_name, deleted_content)
+    note_content = "#{sender_name} deleted message \"#{deleted_content}\""
+    create_private_note(note_content)
+  end
+
+  def create_private_note(content)
+    params = { content: content, private: true }
+    Messages::MessageBuilder.new(Current.user, @conversation, params).perform
   end
 end

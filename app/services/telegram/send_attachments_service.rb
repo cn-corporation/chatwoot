@@ -106,18 +106,27 @@ class Telegram::SendAttachmentsService
   end
 
   def send_file(chat_id, file_path, reply_to_message_id, caption = nil)
-    File.open(file_path, 'rb') do |file|
-      body = {
-        chat_id: chat_id,
-        **business_connection_body,
-        document: file,
-        reply_to_message_id: reply_to_message_id
-      }
-      body[:caption] = caption if caption.present?
-      HTTParty.post("#{channel.telegram_api_url}/sendDocument",
-                    body: body,
-                    multipart: true)
+    # Use string keys and ensure proper encoding for multipart request
+    body = {
+      'chat_id' => chat_id.to_s,
+      'reply_to_message_id' => reply_to_message_id.to_s
+    }
+
+    # Add business connection body with string keys
+    business_connection_body.each do |key, value|
+      body[key.to_s] = value.to_s
     end
+
+    body['caption'] = caption.to_s if caption.present?
+
+    # Use UploadIO to properly handle binary file uploads with encoding
+    filename = File.basename(file_path)
+    content_type = Marcel::MimeType.for(Pathname.new(file_path)) || 'application/octet-stream'
+    body['document'] = UploadIO.new(file_path, content_type, filename)
+
+    HTTParty.post("#{channel.telegram_api_url}/sendDocument",
+                  body: body,
+                  multipart: true)
   end
 
   def handle_response(response)

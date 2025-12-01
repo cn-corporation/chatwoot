@@ -15,6 +15,7 @@ const { t } = useI18n();
 
 const snackMessages = ref([]);
 const snackbarContainer = ref(null);
+const timeoutIds = ref([]);
 
 const showPopover = () => {
   try {
@@ -40,9 +41,15 @@ const onNewToastMessage = ({ message: originalMessage, action }) => {
 
   nextTick(showPopover);
 
-  setTimeout(() => {
+  const timeoutId = setTimeout(() => {
     snackMessages.value.shift();
+    const index = timeoutIds.value.indexOf(timeoutId);
+    if (index > -1) {
+      timeoutIds.value.splice(index, 1);
+    }
   }, duration);
+
+  timeoutIds.value.push(timeoutId);
 };
 
 onMounted(() => {
@@ -51,6 +58,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   emitter.off('newToastMessage', onNewToastMessage);
+  timeoutIds.value.forEach(timeoutId => clearTimeout(timeoutId));
+  timeoutIds.value = [];
 });
 </script>
 

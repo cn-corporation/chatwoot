@@ -36,7 +36,14 @@ export const filterByUnattended = (
 };
 
 export const applyPageFilters = (conversation, filters) => {
-  const { inboxId, status, labels = [], teamId, conversationType } = filters;
+  const {
+    inboxId,
+    status,
+    labels = [],
+    teamId,
+    conversationType,
+    assigneeType,
+  } = filters;
   const {
     status: chatStatus,
     inbox_id: chatInboxId,
@@ -48,7 +55,14 @@ export const applyPageFilters = (conversation, filters) => {
   const team = meta.team || {};
   const { id: chatTeamId } = team;
 
-  let shouldFilter = filterByStatus(chatStatus, status);
+  // For 'all' assignee type with 'open' status, include both open and pending conversations
+  let shouldFilter;
+  if (assigneeType === 'all' && status === 'open') {
+    shouldFilter = chatStatus === 'open' || chatStatus === 'pending';
+  } else {
+    shouldFilter = filterByStatus(chatStatus, status);
+  }
+
   shouldFilter = filterByInbox(shouldFilter, inboxId, chatInboxId);
   shouldFilter = filterByTeam(shouldFilter, teamId, chatTeamId);
   shouldFilter = filterByLabel(shouldFilter, labels, chatLabels);
