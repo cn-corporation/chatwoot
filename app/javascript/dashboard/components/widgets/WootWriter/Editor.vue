@@ -7,6 +7,7 @@ import {
   computed,
   watch,
   onMounted,
+  onBeforeUnmount,
   useTemplateRef,
   nextTick,
 } from 'vue';
@@ -705,6 +706,14 @@ onMounted(() => {
   if (props.focusOnMount) {
     focusEditorInputField();
   }
+});
+
+onBeforeUnmount(() => {
+  if (editorView) {
+    editorView.destroy();
+    editorView = null;
+  }
+  state = null;
 });
 
 // BUS Event to insert text or markdown into the editor at the

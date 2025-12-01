@@ -99,6 +99,16 @@ export default {
     this.registerUnreadEvents();
     this.registerCampaignEvents();
   },
+  beforeUnmount() {
+    if (this.isIFrame || this.isRNWebView) {
+      window.removeEventListener('message', this.handleWindowMessage);
+    }
+    emitter.off(ON_AGENT_MESSAGE_RECEIVED, this.handleAgentMessageReceived);
+    emitter.off(ON_UNREAD_MESSAGE_CLICK, this.handleUnreadMessageClick);
+    emitter.off(ON_CAMPAIGN_MESSAGE_CLICK, this.handleCampaignMessageClick);
+    emitter.off('execute-campaign', this.handleExecuteCampaign);
+    emitter.off('snooze-campaigns', this.handleSnoozeCampaigns);
+  },
   methods: {
     ...mapActions('appConfig', [
       'setAppConfig',
@@ -151,42 +161,47 @@ export default {
         this.$root.$i18n.locale = localeWithoutVariation;
       }
     },
+    handleAgentMessageReceived() {
+      const { name: routeName } = this.$route;
+      if ((this.isWidgetOpen || !this.isIFrame) && routeName === 'messages') {
+        this.$store.dispatch('conversation/setUserLastSeen');
+      }
+      this.setUnreadView();
+    },
+    handleUnreadMessageClick() {
+      this.router
+        .replace({ name: 'messages' })
+        .then(() => this.unsetUnreadView());
+    },
     registerUnreadEvents() {
-      emitter.on(ON_AGENT_MESSAGE_RECEIVED, () => {
-        const { name: routeName } = this.$route;
-        if ((this.isWidgetOpen || !this.isIFrame) && routeName === 'messages') {
-          this.$store.dispatch('conversation/setUserLastSeen');
-        }
-        this.setUnreadView();
-      });
-      emitter.on(ON_UNREAD_MESSAGE_CLICK, () => {
-        this.router
-          .replace({ name: 'messages' })
-          .then(() => this.unsetUnreadView());
-      });
+      emitter.on(ON_AGENT_MESSAGE_RECEIVED, this.handleAgentMessageReceived);
+      emitter.on(ON_UNREAD_MESSAGE_CLICK, this.handleUnreadMessageClick);
+    },
+    handleCampaignMessageClick() {
+      if (this.shouldShowPreChatForm) {
+        this.router.replace({ name: 'prechat-form' });
+      } else {
+        this.router.replace({ name: 'messages' });
+        emitter.emit('execute-campaign', {
+          campaignId: this.activeCampaign.id,
+        });
+      }
+      this.unsetUnreadView();
+    },
+    handleExecuteCampaign(campaignDetails) {
+      const { customAttributes, campaignId } = campaignDetails;
+      const { websiteToken } = window.chatwootWebChannel;
+      this.executeCampaign({ campaignId, websiteToken, customAttributes });
+      this.router.replace({ name: 'messages' });
+    },
+    handleSnoozeCampaigns() {
+      const expireBy = addHours(new Date(), 1);
+      this.campaignsSnoozedTill = Number(expireBy);
     },
     registerCampaignEvents() {
-      emitter.on(ON_CAMPAIGN_MESSAGE_CLICK, () => {
-        if (this.shouldShowPreChatForm) {
-          this.router.replace({ name: 'prechat-form' });
-        } else {
-          this.router.replace({ name: 'messages' });
-          emitter.emit('execute-campaign', {
-            campaignId: this.activeCampaign.id,
-          });
-        }
-        this.unsetUnreadView();
-      });
-      emitter.on('execute-campaign', campaignDetails => {
-        const { customAttributes, campaignId } = campaignDetails;
-        const { websiteToken } = window.chatwootWebChannel;
-        this.executeCampaign({ campaignId, websiteToken, customAttributes });
-        this.router.replace({ name: 'messages' });
-      });
-      emitter.on('snooze-campaigns', () => {
-        const expireBy = addHours(new Date(), 1);
-        this.campaignsSnoozedTill = Number(expireBy);
-      });
+      emitter.on(ON_CAMPAIGN_MESSAGE_CLICK, this.handleCampaignMessageClick);
+      emitter.on('execute-campaign', this.handleExecuteCampaign);
+      emitter.on('snooze-campaigns', this.handleSnoozeCampaigns);
     },
     setCampaignView() {
       const { messageCount, activeCampaign } = this;
@@ -246,93 +261,95 @@ export default {
       }
       this.$store.dispatch('events/create', { name: eventName });
     },
-    registerListeners() {
+    handleWindowMessage(e) {
+      if (!IFrameHelper.isAValidEvent(e)) {
+        return;
+      }
+      const message = IFrameHelper.getMessage(e);
       const { websiteToken } = window.chatwootWebChannel;
-      window.addEventListener('message', e => {
-        if (!IFrameHelper.isAValidEvent(e)) {
-          return;
-        }
-        const message = IFrameHelper.getMessage(e);
-        if (message.event === 'config-set') {
-          this.setLocale(message.locale);
-          this.setBubbleLabel();
-          this.fetchOldConversations().then(() => this.setUnreadView());
-          this.fetchAvailableAgents(websiteToken);
-          this.setAppConfig(message);
-          this.$store.dispatch('contacts/get');
-          this.setCampaignReadData(message.campaignsSnoozedTill);
-        } else if (message.event === 'widget-visible') {
-          this.scrollConversationToBottom();
-        } else if (message.event === 'change-url') {
-          const { referrerURL, referrerHost } = message;
-          this.initCampaigns({
-            currentURL: referrerURL,
-            websiteToken,
-            isInBusinessHours: this.isInWorkingHours,
-          });
-          window.referrerURL = referrerURL;
-          this.setReferrerHost(referrerHost);
-        } else if (message.event === 'toggle-close-button') {
-          this.isMobile = message.isMobile;
-        } else if (message.event === 'push-event') {
-          this.createWidgetEvents(message);
-        } else if (message.event === 'set-label') {
-          this.$store.dispatch('conversationLabels/create', message.label);
-        } else if (message.event === 'remove-label') {
-          this.$store.dispatch('conversationLabels/destroy', message.label);
-        } else if (message.event === 'set-user') {
-          this.$store.dispatch('contacts/setUser', message);
-        } else if (message.event === 'set-custom-attributes') {
-          this.$store.dispatch(
-            'contacts/setCustomAttributes',
-            message.customAttributes
-          );
-        } else if (message.event === 'delete-custom-attribute') {
-          this.$store.dispatch(
-            'contacts/deleteCustomAttribute',
-            message.customAttribute
-          );
-        } else if (message.event === 'set-conversation-custom-attributes') {
-          this.$store.dispatch(
-            'conversation/setCustomAttributes',
-            message.customAttributes
-          );
-        } else if (message.event === 'delete-conversation-custom-attribute') {
-          this.$store.dispatch(
-            'conversation/deleteCustomAttribute',
-            message.customAttribute
-          );
-        } else if (message.event === 'set-locale') {
-          this.setLocale(message.locale);
-          this.setBubbleLabel();
-        } else if (message.event === 'set-color-scheme') {
-          this.setColorScheme(message.darkMode);
-        } else if (message.event === 'toggle-open') {
-          this.$store.dispatch('appConfig/toggleWidgetOpen', message.isOpen);
 
-          const shouldShowMessageView =
-            ['home'].includes(this.$route.name) &&
-            message.isOpen &&
-            this.messageCount;
-          const shouldShowHomeView =
-            !message.isOpen &&
-            ['unread-messages', 'campaigns'].includes(this.$route.name);
+      if (message.event === 'config-set') {
+        this.setLocale(message.locale);
+        this.setBubbleLabel();
+        this.fetchOldConversations().then(() => this.setUnreadView());
+        this.fetchAvailableAgents(websiteToken);
+        this.setAppConfig(message);
+        this.$store.dispatch('contacts/get');
+        this.setCampaignReadData(message.campaignsSnoozedTill);
+      } else if (message.event === 'widget-visible') {
+        this.scrollConversationToBottom();
+      } else if (message.event === 'change-url') {
+        const { referrerURL, referrerHost } = message;
+        this.initCampaigns({
+          currentURL: referrerURL,
+          websiteToken,
+          isInBusinessHours: this.isInWorkingHours,
+        });
+        window.referrerURL = referrerURL;
+        this.setReferrerHost(referrerHost);
+      } else if (message.event === 'toggle-close-button') {
+        this.isMobile = message.isMobile;
+      } else if (message.event === 'push-event') {
+        this.createWidgetEvents(message);
+      } else if (message.event === 'set-label') {
+        this.$store.dispatch('conversationLabels/create', message.label);
+      } else if (message.event === 'remove-label') {
+        this.$store.dispatch('conversationLabels/destroy', message.label);
+      } else if (message.event === 'set-user') {
+        this.$store.dispatch('contacts/setUser', message);
+      } else if (message.event === 'set-custom-attributes') {
+        this.$store.dispatch(
+          'contacts/setCustomAttributes',
+          message.customAttributes
+        );
+      } else if (message.event === 'delete-custom-attribute') {
+        this.$store.dispatch(
+          'contacts/deleteCustomAttribute',
+          message.customAttribute
+        );
+      } else if (message.event === 'set-conversation-custom-attributes') {
+        this.$store.dispatch(
+          'conversation/setCustomAttributes',
+          message.customAttributes
+        );
+      } else if (message.event === 'delete-conversation-custom-attribute') {
+        this.$store.dispatch(
+          'conversation/deleteCustomAttribute',
+          message.customAttribute
+        );
+      } else if (message.event === 'set-locale') {
+        this.setLocale(message.locale);
+        this.setBubbleLabel();
+      } else if (message.event === 'set-color-scheme') {
+        this.setColorScheme(message.darkMode);
+      } else if (message.event === 'toggle-open') {
+        this.$store.dispatch('appConfig/toggleWidgetOpen', message.isOpen);
 
-          if (shouldShowMessageView) {
-            this.router.replace({ name: 'messages' });
-          }
-          if (shouldShowHomeView) {
-            this.$store.dispatch('conversation/setUserLastSeen');
-            this.unsetUnreadView();
-            this.router.replace({ name: 'home' });
-          }
-          if (!message.isOpen) {
-            this.resetCampaign();
-          }
-        } else if (message.event === SDK_SET_BUBBLE_VISIBILITY) {
-          this.setBubbleVisibility(message.hideMessageBubble);
+        const shouldShowMessageView =
+          ['home'].includes(this.$route.name) &&
+          message.isOpen &&
+          this.messageCount;
+        const shouldShowHomeView =
+          !message.isOpen &&
+          ['unread-messages', 'campaigns'].includes(this.$route.name);
+
+        if (shouldShowMessageView) {
+          this.router.replace({ name: 'messages' });
         }
-      });
+        if (shouldShowHomeView) {
+          this.$store.dispatch('conversation/setUserLastSeen');
+          this.unsetUnreadView();
+          this.router.replace({ name: 'home' });
+        }
+        if (!message.isOpen) {
+          this.resetCampaign();
+        }
+      } else if (message.event === SDK_SET_BUBBLE_VISIBILITY) {
+        this.setBubbleVisibility(message.hideMessageBubble);
+      }
+    },
+    registerListeners() {
+      window.addEventListener('message', this.handleWindowMessage);
     },
     sendLoadedEvent() {
       IFrameHelper.sendMessage(loadedEventConfig());

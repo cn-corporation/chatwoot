@@ -101,6 +101,10 @@ export const onClickChatBubble = () => {
   bubbleHolder.addEventListener('click', onBubbleClick);
 };
 
+export const removeBubbleClickListener = () => {
+  bubbleHolder.removeEventListener('click', onBubbleClick);
+};
+
 export const addUnreadClass = () => {
   const holderEl = document.querySelector('.woot-widget-holder');
   addClasses(holderEl, 'has-unread-view');

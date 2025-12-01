@@ -46,6 +46,8 @@ export const onLocationChange = ({ referrerURL, referrerHost }) => {
   });
 };
 
+let locationObserver = null;
+
 export const onLocationChangeListener = () => {
   let oldHref = document.location.href;
   const referrerHost = document.location.host;
@@ -59,7 +61,7 @@ export const onLocationChangeListener = () => {
   });
 
   const bodyList = document.querySelector('body');
-  const observer = new MutationObserver(mutations => {
+  locationObserver = new MutationObserver(mutations => {
     mutations.forEach(() => {
       if (oldHref !== document.location.href) {
         oldHref = document.location.href;
@@ -71,5 +73,13 @@ export const onLocationChangeListener = () => {
     });
   });
 
-  observer.observe(bodyList, config);
+  locationObserver.observe(bodyList, config);
+  return locationObserver;
+};
+
+export const disconnectLocationListener = () => {
+  if (locationObserver) {
+    locationObserver.disconnect();
+    locationObserver = null;
+  }
 };
