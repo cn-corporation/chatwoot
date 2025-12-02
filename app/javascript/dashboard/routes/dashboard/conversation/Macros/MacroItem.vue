@@ -25,6 +25,8 @@ const { t } = useI18n();
 
 const isExecuting = ref(false);
 const showPreview = ref(false);
+const buttonRef = ref(null);
+const previewPosition = ref({ bottom: 0, right: 0 });
 
 const executeMacro = async macro => {
   try {
@@ -43,6 +45,13 @@ const executeMacro = async macro => {
 };
 
 const toggleMacroPreview = () => {
+  if (!showPreview.value && buttonRef.value) {
+    const rect = buttonRef.value.$el.getBoundingClientRect();
+    previewPosition.value = {
+      bottom: window.innerHeight - rect.top,
+      right: window.innerWidth - rect.right,
+    };
+  }
   showPreview.value = !showPreview.value;
 };
 
@@ -54,7 +63,9 @@ const closeMacroPreview = () => {
 <template>
   <div
     class="relative flex items-center justify-between leading-4 rounded-md h-10 pl-3 pr-2 translate-x-0"
-    :class="showPreview ? 'cursor-default' : 'drag-handle cursor-grab'"
+    :class="[
+      showPreview ? 'cursor-default z-[999]' : 'drag-handle cursor-grab',
+    ]"
   >
     <span
       class="overflow-hidden whitespace-nowrap text-ellipsis font-medium text-n-slate-12"
@@ -63,6 +74,7 @@ const closeMacroPreview = () => {
     </span>
     <div class="flex items-center gap-1 justify-end">
       <NextButton
+        ref="buttonRef"
         v-tooltip.left-start="$t('MACROS.EXECUTE.PREVIEW')"
         icon="i-lucide-info"
         slate
@@ -80,12 +92,15 @@ const closeMacroPreview = () => {
         @click="executeMacro(macro)"
       />
     </div>
-    <transition name="menu-slide">
-      <MacroPreview
-        v-if="showPreview"
-        v-on-clickaway="closeMacroPreview"
-        :macro="macro"
-      />
-    </transition>
+    <Teleport to="body">
+      <transition name="menu-slide">
+        <MacroPreview
+          v-if="showPreview"
+          v-on-clickaway="closeMacroPreview"
+          :macro="macro"
+          :position="previewPosition"
+        />
+      </transition>
+    </Teleport>
   </div>
 </template>

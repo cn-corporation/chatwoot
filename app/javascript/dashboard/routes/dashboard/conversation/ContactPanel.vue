@@ -100,17 +100,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="w-full overflow-x-visible">
     <SidebarActionsHeader :title="$t('CONVERSATION.SIDEBAR.CONTACT')" />
     <ContactInfo :contact="contact" :channel-type="channelType" />
-    <div class="px-2 pb-8 list-group">
+    <div class="px-2 pb-8 list-group overflow-x-visible">
       <Draggable
         :list="conversationSidebarItems"
         animation="200"
         ghost-class="ghost"
         handle=".drag-handle"
         item-key="name"
-        class="sidebar-grid gap-3"
+        class="sidebar-grid gap-3 overflow-x-visible"
         @start="dragging = true"
         @end="onDragEnd"
       >
