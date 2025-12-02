@@ -50,7 +50,7 @@ const closeContactPanel = () => {
       },
     ]"
   >
-    <div class="flex flex-1 overflow-visible">
+    <div class="flex flex-1 overflow-y-auto">
       <ContactPanel
         v-show="activeTab === 0"
         :conversation-id="currentChat.id"
