@@ -13,6 +13,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  position: {
+    type: Object,
+    required: true,
+  },
 });
 
 const labels = useMapGetter('labels/getLabels');
@@ -47,7 +51,11 @@ const resolvedMacro = computed(() => {
 
 <template>
   <div
-    class="macro-preview absolute border border-n-weak max-h-[22.5rem] z-50 w-64 rounded-md bg-n-background shadow-lg bottom-8 right-8 overflow-y-auto p-4 text-left rtl:text-right"
+    class="macro-preview fixed border border-n-weak max-h-[22.5rem] z-[9999] w-64 rounded-md bg-n-background shadow-lg overflow-y-auto p-4 text-left rtl:text-right"
+    :style="{
+      bottom: `${position.bottom}px`,
+      right: `${position.right}px`,
+    }"
   >
     <h6 class="mb-4 text-sm text-n-slate-12">
       {{ macro.name }}
