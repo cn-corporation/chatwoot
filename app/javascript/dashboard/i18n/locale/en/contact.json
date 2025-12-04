@@ -162,24 +162,6 @@
     "GG_NICKNAME": {
       "LABEL": "GG Nickname",
       "PLACEHOLDER": "First nickname in GG history"
-    },
-    "PLAYER_STATUS": {
-      "LABEL": "Player Status",
-      "BEGINNER": "Beginner",
-      "AMATEUR": "Amateur",
-      "REGULAR": "Regular",
-      "ADVANCED": "Advanced Player",
-      "PROFESSIONAL": "Professional",
-      "HIGH_ROLLER": "High Roller"
-    },
-    "BEHAVIOR_STATUS": {
-      "LABEL": "Behavior Status",
-      "TOXIC": "Toxic",
-      "MANIPULATOR": "Manipulator",
-      "LOYAL": "Loyal",
-      "TILT": "On Tilt",
-      "ARTIST": "Artist",
-      "TEAPOT": "Teapot"
     }
   },
   "NEW_CONVERSATION": {

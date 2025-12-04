@@ -80,23 +80,27 @@ const getValueFromConversation = (conversation, attributeKey) => {
     case 'country_code':
     case 'referer':
       return conversation.additional_attributes?.[attributeKey];
-    case 'player_status':
-      return (
-        conversation.meta?.sender?.additional_attributes?.player_status ||
-        'beginner'
-      );
-    case 'behavior_status':
-      return (
-        conversation.meta?.sender?.additional_attributes?.behavior_status ||
-        'loyal'
-      );
     default:
-      // Check if it's a custom attribute
+      // Check if it's a conversation custom attribute
       if (
         conversation.custom_attributes &&
         conversation.custom_attributes[attributeKey]
       ) {
         return conversation.custom_attributes[attributeKey];
+      }
+      // Check if it's a contact custom attribute
+      if (
+        conversation.meta?.sender?.custom_attributes &&
+        conversation.meta.sender.custom_attributes[attributeKey]
+      ) {
+        return conversation.meta.sender.custom_attributes[attributeKey];
+      }
+      // Check if it's a contact additional attribute
+      if (
+        conversation.meta?.sender?.additional_attributes &&
+        conversation.meta.sender.additional_attributes[attributeKey]
+      ) {
+        return conversation.meta.sender.additional_attributes[attributeKey];
       }
       return null;
   }

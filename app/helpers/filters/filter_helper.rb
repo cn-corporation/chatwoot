@@ -41,7 +41,12 @@ module Filters::FilterHelper
   end
 
   def handle_nil_filter(query_hash, current_index)
-    attribute_type = "#{filter_config[:entity].downcase}_attribute"
+    # Check if this is a contact attribute when filtering conversations
+    attribute_type = if filter_config[:entity] == 'Conversation' && is_contact_attribute?(query_hash[:attribute_key])
+                       'contact_attribute'
+                     else
+                       "#{filter_config[:entity].downcase}_attribute"
+                     end
     custom_attribute_query(query_hash, attribute_type, current_index)
   end
 
@@ -50,24 +55,25 @@ module Filters::FilterHelper
     attribute_key = query_hash[:attribute_key]
 
     # Handle contact-level attributes when filtering conversations
-    table_name = 'contacts' if filter_config[:entity] == 'Conversation' && %w[player_status behavior_status].include?(attribute_key)
+    table_name = 'contacts' if filter_config[:entity] == 'Conversation' && is_contact_attribute?(attribute_key)
 
-    # Define default values for player_status and behavior_status
-    default_values = {
-      'player_status' => 'beginner',
-      'behavior_status' => 'loyal'
-    }
-
-    # Use COALESCE to apply default values for player_status and behavior_status
-    attribute_expression = if default_values.key?(attribute_key)
-                             "COALESCE(#{table_name}.additional_attributes ->> '#{attribute_key}', '#{default_values[attribute_key]}')"
-                           elsif data_type == 'text_case_insensitive'
+    # Build the attribute expression
+    attribute_expression = if data_type == 'text_case_insensitive'
                              "LOWER(#{table_name}.additional_attributes ->> '#{attribute_key}')"
                            else
                              "#{table_name}.additional_attributes ->> '#{attribute_key}'"
                            end
 
     "#{attribute_expression} #{filter_operator_value} #{query_hash[:query_operator]} "
+  end
+
+  def is_contact_attribute?(attribute_key)
+    # Check if the attribute is a custom contact attribute
+    return false unless @account
+
+    @account.custom_attribute_definitions
+            .contact_attribute
+            .exists?(attribute_key: attribute_key)
   end
 
   def handle_standard_attributes(current_filter, query_hash, current_index, filter_operator_value)
