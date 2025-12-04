@@ -90,8 +90,15 @@ module Filters::FilterHelper
   end
 
   def date_filter(current_filter, query_hash, filter_operator_value)
-    "(#{filter_config[:table_name]}.#{query_hash[:attribute_key]})::#{current_filter['data_type']} " \
-      "#{filter_operator_value}#{current_filter['data_type']} #{query_hash[:query_operator]}"
+    # For equal_to and not_equal_to, cast the column to date and use the operator without appending data_type
+    if %w[equal_to not_equal_to].include?(query_hash[:filter_operator])
+      "(#{filter_config[:table_name]}.#{query_hash[:attribute_key]})::#{current_filter['data_type']} " \
+        "#{filter_operator_value} #{query_hash[:query_operator]}"
+    else
+      # For other operators (is_greater_than, is_less_than, days_before), keep existing behavior
+      "(#{filter_config[:table_name]}.#{query_hash[:attribute_key]})::#{current_filter['data_type']} " \
+        "#{filter_operator_value}#{current_filter['data_type']} #{query_hash[:query_operator]}"
+    end
   end
 
   def text_case_insensitive_filter(query_hash, filter_operator_value)
