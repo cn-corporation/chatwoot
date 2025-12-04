@@ -27,6 +27,8 @@
     },
     "UNREAD_MESSAGES": "Непрочитанные сообщения",
     "UNREAD_MESSAGE": "Непрочитанное сообщение",
+    "NEW_MESSAGES": "{count} новых сообщений",
+    "NEW_MESSAGE": "Новое сообщение",
     "CLICK_HERE": "Нажмите здесь",
     "LOADING_INBOXES": "Загружаем источники",
     "LOADING_CONVERSATIONS": "Загрузка диалогов",

@@ -118,6 +118,9 @@ export default {
       isProgrammaticScroll: false,
       messageSentSinceOpened: false,
       labelSuggestions: [],
+      newMessagesWhileScrolledUp: 0,
+      lastTrackedConversationId: null,
+      lastMessageId: null,
     };
   },
 
@@ -289,6 +292,9 @@ export default {
 
       return { incoming, outgoing };
     },
+    shouldShowNewMessagesIndicator() {
+      return this.hasUserScrolled && this.newMessagesWhileScrolledUp > 0;
+    },
   },
 
   watch: {
@@ -303,6 +309,51 @@ export default {
       // TEMPORARILY DISABLED: AI suggestions
       // this.fetchAISuggestionForConversation();
       this.messageSentSinceOpened = false;
+      this.newMessagesWhileScrolledUp = 0;
+      this.lastTrackedConversationId = newChat.id;
+      const messages = this.getMessages;
+      this.lastMessageId =
+        messages.length > 0 ? messages[messages.length - 1].id : null;
+      // Always scroll to bottom when switching conversations
+      this.$nextTick(() => {
+        if (this.conversationPanel) {
+          this.scrollToBottom();
+        }
+      });
+    },
+    'getMessages.length'() {
+      const currentConversationId = this.currentChat?.id;
+      if (currentConversationId !== this.lastTrackedConversationId) {
+        return;
+      }
+
+      const messages = this.getMessages;
+      if (messages.length === 0) {
+        return;
+      }
+
+      const lastMessage = messages[messages.length - 1];
+      const currentLastMessageId = lastMessage?.id;
+
+      // Only count if there's a new message at the end AND user is scrolled up
+      if (
+        this.lastMessageId &&
+        currentLastMessageId &&
+        currentLastMessageId > this.lastMessageId &&
+        this.hasUserScrolled
+      ) {
+        let newMessageCount = 0;
+        for (let i = messages.length - 1; i >= 0; i -= 1) {
+          if (messages[i].id > this.lastMessageId) {
+            newMessageCount += 1;
+          } else {
+            break;
+          }
+        }
+        this.newMessagesWhileScrolledUp += newMessageCount;
+      }
+
+      this.lastMessageId = currentLastMessageId;
     },
     inboxId: {
       immediate: true,
@@ -333,6 +384,10 @@ export default {
     this.fetchSuggestions();
     // TEMPORARILY DISABLED: AI suggestions
     // this.fetchAISuggestionForConversation();
+    this.lastTrackedConversationId = this.currentChat?.id;
+    const messages = this.getMessages;
+    this.lastMessageId =
+      messages.length > 0 ? messages[messages.length - 1].id : null;
   },
 
   unmounted() {
@@ -444,7 +499,7 @@ export default {
           this.isProgrammaticScroll = true;
           messageElement.scrollIntoView({ behavior: 'smooth' });
           this.fetchPreviousMessages();
-        } else {
+        } else if (!this.hasUserScrolled) {
           this.scrollToBottom();
         }
       });
@@ -537,8 +592,14 @@ export default {
         // Reset the flag
         this.isProgrammaticScroll = false;
         this.hasUserScrolled = false;
+        this.newMessagesWhileScrolledUp = 0;
       } else {
-        this.hasUserScrolled = true;
+        const { scrollTop, scrollHeight, clientHeight } = e.target;
+        const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+        this.hasUserScrolled = !isNearBottom;
+        if (isNearBottom) {
+          this.newMessagesWhileScrolledUp = 0;
+        }
       }
       emitter.emit(BUS_EVENTS.ON_MESSAGE_LIST_SCROLL);
       this.fetchPreviousMessages(e.target.scrollTop);
@@ -552,12 +613,18 @@ export default {
       const payload = useSnakeCase(message);
       await this.$store.dispatch('sendMessageWithData', payload);
     },
+    onNewMessagesIndicatorClick() {
+      this.newMessagesWhileScrolledUp = 0;
+      this.scrollToBottom();
+    },
   },
 };
 </script>
 
 <template>
-  <div class="flex flex-col justify-between flex-grow h-full min-w-0 m-0">
+  <div
+    class="flex flex-col justify-between flex-grow h-full min-w-0 m-0 relative"
+  >
     <Banner
       v-if="!currentChat.can_reply"
       color-scheme="alert"
@@ -614,6 +681,43 @@ export default {
         />
       </template>
     </MessageList>
+    <!-- New messages indicator -->
+    <transition name="slide-up">
+      <button
+        v-if="shouldShowNewMessagesIndicator"
+        type="button"
+        class="absolute bottom-72 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-4 py-2.5 bg-n-brand hover:bg-n-brand-hover text-white text-sm font-medium rounded-full shadow-lg transition-all cursor-pointer"
+        @click="onNewMessagesIndicatorClick"
+      >
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 14l-7 7m0 0l-7-7m7 7V3"
+          />
+        </svg>
+        <span>
+          {{
+            newMessagesWhileScrolledUp === 1
+              ? $t('CONVERSATION.NEW_MESSAGE')
+              : $t('CONVERSATION.NEW_MESSAGES', {
+                  count: newMessagesWhileScrolledUp,
+                })
+          }}
+        </span>
+        <span
+          class="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-white text-n-brand text-xs font-bold rounded-full"
+        >
+          {{ newMessagesWhileScrolledUp }}
+        </span>
+      </button>
+    </transition>
     <div
       class="flex relative flex-col"
       :class="{
