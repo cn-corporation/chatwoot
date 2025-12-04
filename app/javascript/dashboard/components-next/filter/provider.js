@@ -53,6 +53,8 @@ export function useConversationFilterContext() {
     'attributes/getConversationAttributes'
   );
 
+  const contactAttributes = useMapGetter('attributes/getContactAttributes');
+
   const labels = useMapGetter('labels/getLabels');
   const agents = useMapGetter('agents/getAgents');
   const inboxes = useMapGetter('inboxes/getInboxes');
@@ -76,6 +78,17 @@ export function useConversationFilterContext() {
       conversationAttributes.value,
       getOperatorTypes,
       'conversation'
+    )
+  );
+
+  /**
+   * @type {import('vue').ComputedRef<FilterType[]>}
+   */
+  const contactAttributeFilterTypes = computed(() =>
+    buildAttributesFilterTypes(
+      contactAttributes.value,
+      getOperatorTypes,
+      'contact'
     )
   );
 
@@ -243,53 +256,8 @@ export function useConversationFilterContext() {
       filterOperators: dateOperators.value,
       attributeModel: 'standard',
     },
-    {
-      attributeKey: CONVERSATION_ATTRIBUTES.PLAYER_STATUS,
-      value: CONVERSATION_ATTRIBUTES.PLAYER_STATUS,
-      attributeName: t('FILTER.ATTRIBUTES.PLAYER_STATUS'),
-      label: t('FILTER.ATTRIBUTES.PLAYER_STATUS'),
-      inputType: 'multiSelect',
-      options: [
-        'beginner',
-        'amateur',
-        'regular',
-        'advanced',
-        'professional',
-        'high_roller',
-      ].map(id => {
-        return {
-          id,
-          name: t(`CONTACT_FORM.PLAYER_STATUS.${id.toUpperCase()}`),
-        };
-      }),
-      dataType: 'text',
-      filterOperators: equalityOperators.value,
-      attributeModel: 'standard',
-    },
-    {
-      attributeKey: CONVERSATION_ATTRIBUTES.BEHAVIOR_STATUS,
-      value: CONVERSATION_ATTRIBUTES.BEHAVIOR_STATUS,
-      attributeName: t('FILTER.ATTRIBUTES.BEHAVIOR_STATUS'),
-      label: t('FILTER.ATTRIBUTES.BEHAVIOR_STATUS'),
-      inputType: 'multiSelect',
-      options: [
-        'toxic',
-        'manipulator',
-        'loyal',
-        'tilt',
-        'artist',
-        'teapot',
-      ].map(id => {
-        return {
-          id,
-          name: t(`CONTACT_FORM.BEHAVIOR_STATUS.${id.toUpperCase()}`),
-        };
-      }),
-      dataType: 'text',
-      filterOperators: equalityOperators.value,
-      attributeModel: 'standard',
-    },
     ...customFilterTypes.value,
+    ...contactAttributeFilterTypes.value,
   ]);
 
   return { filterTypes };

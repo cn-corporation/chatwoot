@@ -37,8 +37,6 @@ export default {
       name: '',
       playerId: '',
       ggNickname: '',
-      playerStatus: 'beginner',
-      behaviorStatus: 'loyal',
       avatarFile: null,
       avatarUrl: '',
     };
@@ -46,63 +44,6 @@ export default {
   validations: {
     name: {
       required,
-    },
-  },
-  computed: {
-    // Player status options
-    playerStatusOptions() {
-      return [
-        {
-          value: 'beginner',
-          label: this.$t('CONTACT_FORM.PLAYER_STATUS.BEGINNER'),
-        },
-        {
-          value: 'amateur',
-          label: this.$t('CONTACT_FORM.PLAYER_STATUS.AMATEUR'),
-        },
-        {
-          value: 'regular',
-          label: this.$t('CONTACT_FORM.PLAYER_STATUS.REGULAR'),
-        },
-        {
-          value: 'advanced',
-          label: this.$t('CONTACT_FORM.PLAYER_STATUS.ADVANCED'),
-        },
-        {
-          value: 'professional',
-          label: this.$t('CONTACT_FORM.PLAYER_STATUS.PROFESSIONAL'),
-        },
-        {
-          value: 'high_roller',
-          label: this.$t('CONTACT_FORM.PLAYER_STATUS.HIGH_ROLLER'),
-        },
-      ];
-    },
-    // Behavior status options
-    behaviorStatusOptions() {
-      return [
-        {
-          value: 'toxic',
-          label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.TOXIC'),
-        },
-        {
-          value: 'manipulator',
-          label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.MANIPULATOR'),
-        },
-        {
-          value: 'loyal',
-          label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.LOYAL'),
-        },
-        { value: 'tilt', label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.TILT') },
-        {
-          value: 'artist',
-          label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.ARTIST'),
-        },
-        {
-          value: 'teapot',
-          label: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.TEAPOT'),
-        },
-      ];
     },
   },
   watch: {
@@ -127,8 +68,6 @@ export default {
       this.name = name || '';
       this.playerId = additionalAttributes.player_id || this.contact.id || '';
       this.ggNickname = additionalAttributes.gg_nickname || '';
-      this.playerStatus = additionalAttributes.player_status || 'beginner';
-      this.behaviorStatus = additionalAttributes.behavior_status || 'loyal';
       this.avatarUrl = this.contact.thumbnail || '';
     },
     getContactObject() {
@@ -139,8 +78,6 @@ export default {
           ...this.contact.additional_attributes,
           player_id: this.playerId,
           gg_nickname: this.ggNickname,
-          player_status: this.playerStatus,
-          behavior_status: this.behaviorStatus,
         },
       };
       if (this.avatarFile) {
@@ -252,38 +189,6 @@ export default {
           class="bg-n-slate-3"
           :placeholder="$t('CONTACT_FORM.GG_NICKNAME.PLACEHOLDER')"
         />
-      </label>
-    </div>
-
-    <!-- Player Status -->
-    <div class="w-full mb-4">
-      <label>
-        {{ $t('CONTACT_FORM.PLAYER_STATUS.LABEL') }}
-        <select v-model="playerStatus" class="form-control">
-          <option
-            v-for="status in playerStatusOptions"
-            :key="status.value"
-            :value="status.value"
-          >
-            {{ status.label }}
-          </option>
-        </select>
-      </label>
-    </div>
-
-    <!-- Behavior Status -->
-    <div class="w-full mb-4">
-      <label>
-        {{ $t('CONTACT_FORM.BEHAVIOR_STATUS.LABEL') }}
-        <select v-model="behaviorStatus" class="form-control">
-          <option
-            v-for="status in behaviorStatusOptions"
-            :key="status.value"
-            :value="status.value"
-          >
-            {{ status.label }}
-          </option>
-        </select>
       </label>
     </div>
 
