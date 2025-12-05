@@ -141,8 +141,9 @@ export default {
       return this.appliedFilters && this.appliedFilters.length > 0;
     },
     isReadOnlyMode() {
-      // Read-only when viewing all-operators tab or when filters are applied
-      return this.isAllOperatorsTab || this.hasAppliedFilters;
+      // Read-only when viewing all-operators tab only
+      // ReplyBox will handle disabling itself for resolved conversations
+      return this.isAllOperatorsTab;
     },
     isOpen() {
       return this.currentChat?.status === wootConstants.STATUS_TYPE.OPEN;

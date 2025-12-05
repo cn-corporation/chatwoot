@@ -7,6 +7,7 @@
     "COPY_SUCCESSFUL": "Copied to clipboard successfully",
     "COPY_CONTACT_NAME": "Copy contact name",
     "COPY_TELEGRAM_ID": "Copy Telegram ID",
+    "COPY_TELEGRAM_USERNAME": "Copy Telegram username",
     "COMPANY": "Company",
     "LOCATION": "Location",
     "BROWSER_LANGUAGE": "Browser Language",

@@ -106,6 +106,9 @@ export default {
     telegramId() {
       return this.additionalAttributes.social_telegram_user_id || null;
     },
+    telegramUsername() {
+      return this.additionalAttributes.social_telegram_user_name || null;
+    },
     // Delete Modal
     confirmDeleteMessage() {
       return ` ${this.contact.name}?`;
@@ -132,6 +135,13 @@ export default {
     copyTelegramId() {
       if (this.telegramId) {
         navigator.clipboard.writeText(this.telegramId).then(() => {
+          useAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
+        });
+      }
+    },
+    copyTelegramUsername() {
+      if (this.telegramUsername) {
+        navigator.clipboard.writeText(this.telegramUsername).then(() => {
           useAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
         });
       }
@@ -277,6 +287,25 @@ export default {
             v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_ID')"
             class="i-lucide-copy text-xs text-n-slate-10 hover:text-n-slate-12 cursor-pointer"
             @click="copyTelegramId"
+          />
+        </div>
+
+        <!-- Telegram Username display -->
+        <div
+          v-if="telegramUsername"
+          class="flex items-center gap-2 text-sm text-n-slate-11"
+        >
+          <span
+            v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_USERNAME')"
+            class="cursor-pointer hover:text-n-slate-12"
+            @click="copyTelegramUsername"
+          >
+            {{ telegramUsername }}
+          </span>
+          <button
+            v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_USERNAME')"
+            class="i-lucide-copy text-xs text-n-slate-10 hover:text-n-slate-12 cursor-pointer"
+            @click="copyTelegramUsername"
           />
         </div>
 
