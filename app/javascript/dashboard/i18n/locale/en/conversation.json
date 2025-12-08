@@ -29,6 +29,8 @@
     },
     "UNREAD_MESSAGES": "Unread Messages",
     "UNREAD_MESSAGE": "Unread Message",
+    "NEW_MESSAGES": "{count} new messages",
+    "NEW_MESSAGE": "New message",
     "CLICK_HERE": "Click here",
     "LOADING_INBOXES": "Loading inboxes",
     "LOADING_CONVERSATIONS": "Loading Conversations",

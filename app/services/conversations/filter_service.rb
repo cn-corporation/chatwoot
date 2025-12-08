@@ -24,15 +24,15 @@ class Conversations::FilterService < FilterService
   end
 
   def base_relation
-    # Check if we need to join contacts for player_status or behavior_status filters
+    # Check if we need to join contacts for any contact attribute filters
     needs_contact_join = @params[:payload]&.any? do |filter|
-      %w[player_status behavior_status].include?(filter[:attribute_key])
+      is_contact_attribute?(filter[:attribute_key])
     end
 
     conversations = if needs_contact_join
-                      @account.conversations.joins(:contact).distinct.includes(
+                      @account.conversations.joins(:contact).includes(
                         :taggings, :inbox, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team, :messages, :contact_inbox
-                      )
+                      ).references(:contacts)
                     else
                       @account.conversations.includes(
                         :taggings, :inbox, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team, :messages, :contact_inbox
@@ -44,6 +44,15 @@ class Conversations::FilterService < FilterService
       @user,
       @account
     ).perform
+  end
+
+  private
+
+  def is_contact_attribute?(attribute_key)
+    # Check if the attribute is a custom contact attribute
+    @account.custom_attribute_definitions
+            .contact_attribute
+            .exists?(attribute_key: attribute_key)
   end
 
   def current_page

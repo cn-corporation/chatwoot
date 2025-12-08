@@ -63,9 +63,7 @@
       "CUSTOM_ATTRIBUTE_LINK": "Link",
       "CUSTOM_ATTRIBUTE_CHECKBOX": "Checkbox",
       "CREATED_AT": "Created at",
-      "LAST_ACTIVITY": "Last activity",
-      "PLAYER_STATUS": "Player Status",
-      "BEHAVIOR_STATUS": "Behavior Status"
+      "LAST_ACTIVITY": "Last activity"
     },
     "ERRORS": {
       "VALUE_REQUIRED": "Value is required",

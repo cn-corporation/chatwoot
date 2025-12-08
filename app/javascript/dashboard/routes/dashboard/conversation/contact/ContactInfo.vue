@@ -106,37 +106,12 @@ export default {
     telegramId() {
       return this.additionalAttributes.social_telegram_user_id || null;
     },
+    telegramUsername() {
+      return this.additionalAttributes.social_telegram_user_name || null;
+    },
     // Delete Modal
     confirmDeleteMessage() {
       return ` ${this.contact.name}?`;
-    },
-    playerStatus() {
-      return this.additionalAttributes.player_status || 'beginner';
-    },
-    playerStatusLabel() {
-      const statusMap = {
-        beginner: this.$t('CONTACT_FORM.PLAYER_STATUS.BEGINNER'),
-        amateur: this.$t('CONTACT_FORM.PLAYER_STATUS.AMATEUR'),
-        regular: this.$t('CONTACT_FORM.PLAYER_STATUS.REGULAR'),
-        advanced: this.$t('CONTACT_FORM.PLAYER_STATUS.ADVANCED'),
-        professional: this.$t('CONTACT_FORM.PLAYER_STATUS.PROFESSIONAL'),
-        high_roller: this.$t('CONTACT_FORM.PLAYER_STATUS.HIGH_ROLLER'),
-      };
-      return statusMap[this.playerStatus] || this.playerStatus;
-    },
-    behaviorStatus() {
-      return this.additionalAttributes.behavior_status || 'loyal';
-    },
-    behaviorStatusLabel() {
-      const statusMap = {
-        toxic: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.TOXIC'),
-        manipulator: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.MANIPULATOR'),
-        loyal: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.LOYAL'),
-        tilt: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.TILT'),
-        artist: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.ARTIST'),
-        teapot: this.$t('CONTACT_FORM.BEHAVIOR_STATUS.TEAPOT'),
-      };
-      return statusMap[this.behaviorStatus] || this.behaviorStatus;
     },
   },
   watch: {
@@ -160,6 +135,13 @@ export default {
     copyTelegramId() {
       if (this.telegramId) {
         navigator.clipboard.writeText(this.telegramId).then(() => {
+          useAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
+        });
+      }
+    },
+    copyTelegramUsername() {
+      if (this.telegramUsername) {
+        navigator.clipboard.writeText(this.telegramUsername).then(() => {
           useAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
         });
       }
@@ -308,29 +290,28 @@ export default {
           />
         </div>
 
+        <!-- Telegram Username display -->
+        <div
+          v-if="telegramUsername"
+          class="flex items-center gap-2 text-sm text-n-slate-11"
+        >
+          <span
+            v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_USERNAME')"
+            class="cursor-pointer hover:text-n-slate-12"
+            @click="copyTelegramUsername"
+          >
+            {{ telegramUsername }}
+          </span>
+          <button
+            v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_USERNAME')"
+            class="i-lucide-copy text-xs text-n-slate-10 hover:text-n-slate-12 cursor-pointer"
+            @click="copyTelegramUsername"
+          />
+        </div>
+
         <p v-if="additionalAttributes.description" class="break-words mb-0.5">
           {{ additionalAttributes.description }}
         </p>
-
-        <!-- Player status display -->
-        <div class="flex flex-col gap-1 text-xs">
-          <div class="flex items-center text-n-slate-11">
-            <span class="font-medium text-n-slate-10 mr-1.5">
-              {{ $t('CONTACT_FORM.PLAYER_STATUS.LABEL') }}:
-            </span>
-            <span class="font-medium">
-              {{ playerStatusLabel }}
-            </span>
-          </div>
-          <div class="flex items-center text-n-slate-11">
-            <span class="font-medium text-n-slate-10 mr-1.5">
-              {{ $t('CONTACT_FORM.BEHAVIOR_STATUS.LABEL') }}:
-            </span>
-            <span class="font-medium">
-              {{ behaviorStatusLabel }}
-            </span>
-          </div>
-        </div>
       </div>
       <div class="flex items-center w-full mt-0.5 gap-2">
         <VoiceCallButton

@@ -80,23 +80,27 @@ const getValueFromConversation = (conversation, attributeKey) => {
     case 'country_code':
     case 'referer':
       return conversation.additional_attributes?.[attributeKey];
-    case 'player_status':
-      return (
-        conversation.meta?.sender?.additional_attributes?.player_status ||
-        'beginner'
-      );
-    case 'behavior_status':
-      return (
-        conversation.meta?.sender?.additional_attributes?.behavior_status ||
-        'loyal'
-      );
     default:
-      // Check if it's a custom attribute
+      // Check if it's a conversation custom attribute
       if (
         conversation.custom_attributes &&
         conversation.custom_attributes[attributeKey]
       ) {
         return conversation.custom_attributes[attributeKey];
+      }
+      // Check if it's a contact custom attribute
+      if (
+        conversation.meta?.sender?.custom_attributes &&
+        conversation.meta.sender.custom_attributes[attributeKey]
+      ) {
+        return conversation.meta.sender.custom_attributes[attributeKey];
+      }
+      // Check if it's a contact additional attribute
+      if (
+        conversation.meta?.sender?.additional_attributes &&
+        conversation.meta.sender.additional_attributes[attributeKey]
+      ) {
+        return conversation.meta.sender.additional_attributes[attributeKey];
       }
       return null;
   }
@@ -136,6 +140,19 @@ const resolveValue = candidate => {
  * 3. Otherwise: performs strict equality comparison
  */
 const equalTo = (filterValue, conversationValue) => {
+  // Handle date comparison when filterValue is a date string and conversationValue is a timestamp
+  if (
+    typeof filterValue === 'string' &&
+    typeof conversationValue === 'number' &&
+    /^\d{4}-\d{2}-\d{2}/.test(filterValue)
+  ) {
+    const conversationDate = new Date(conversationValue * 1000)
+      .toISOString()
+      .split('T')[0];
+    const filterDate = filterValue.split('T')[0];
+    return conversationDate === filterDate;
+  }
+
   if (Array.isArray(filterValue)) {
     if (filterValue.includes('all')) return true;
     if (filterValue === 'all') return true;
@@ -146,6 +163,21 @@ const equalTo = (filterValue, conversationValue) => {
     }
 
     if (!Array.isArray(conversationValue)) {
+      if (typeof conversationValue === 'number' && filterValue.length > 0) {
+        const firstFilterValue = filterValue[0];
+        if (
+          typeof firstFilterValue === 'string' &&
+          /^\d{4}-\d{2}-\d{2}/.test(firstFilterValue)
+        ) {
+          const conversationDate = new Date(conversationValue * 1000)
+            .toISOString()
+            .split('T')[0];
+          return filterValue.some(fv => {
+            const filterDate = fv.split('T')[0];
+            return conversationDate === filterDate;
+          });
+        }
+      }
       return filterValue.includes(conversationValue);
     }
   }

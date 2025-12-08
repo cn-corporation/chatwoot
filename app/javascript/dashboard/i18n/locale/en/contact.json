@@ -7,6 +7,7 @@
     "COPY_SUCCESSFUL": "Copied to clipboard successfully",
     "COPY_CONTACT_NAME": "Copy contact name",
     "COPY_TELEGRAM_ID": "Copy Telegram ID",
+    "COPY_TELEGRAM_USERNAME": "Copy Telegram username",
     "COMPANY": "Company",
     "LOCATION": "Location",
     "BROWSER_LANGUAGE": "Browser Language",
@@ -162,24 +163,6 @@
     "GG_NICKNAME": {
       "LABEL": "GG Nickname",
       "PLACEHOLDER": "First nickname in GG history"
-    },
-    "PLAYER_STATUS": {
-      "LABEL": "Player Status",
-      "BEGINNER": "Beginner",
-      "AMATEUR": "Amateur",
-      "REGULAR": "Regular",
-      "ADVANCED": "Advanced Player",
-      "PROFESSIONAL": "Professional",
-      "HIGH_ROLLER": "High Roller"
-    },
-    "BEHAVIOR_STATUS": {
-      "LABEL": "Behavior Status",
-      "TOXIC": "Toxic",
-      "MANIPULATOR": "Manipulator",
-      "LOYAL": "Loyal",
-      "TILT": "On Tilt",
-      "ARTIST": "Artist",
-      "TEAPOT": "Teapot"
     }
   },
   "NEW_CONVERSATION": {
