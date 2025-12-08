@@ -119,18 +119,28 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
     render json: { error: 'Message status update is only allowed for API inboxes' }, status: :forbidden unless @conversation.inbox.api?
   end
 
-  def create_edit_tracking_note(sender_name, old_content, new_content)
-    note_content = "#{sender_name} edited message from \"#{old_content}\" to \"#{new_content}\""
-    create_private_note(note_content)
+  def create_edit_tracking_note(sender_name, old_content, _new_content)
+    note_content = "#{sender_name} edited message from \"#{old_content}\""
+    create_private_note(note_content, { edit_delete_note: true, related_message_id: message.id })
   end
 
   def create_deletion_tracking_note(sender_name, deleted_content)
     note_content = "#{sender_name} deleted message \"#{deleted_content}\""
-    create_private_note(note_content)
+    create_private_note(note_content, { edit_delete_note: true, related_message_id: message.id })
   end
 
-  def create_private_note(content)
-    params = { content: content, private: true }
-    Messages::MessageBuilder.new(Current.user, @conversation, params).perform
+  def create_private_note(content, metadata = {})
+    # Build message manually to set content_attributes before save
+    note = @conversation.messages.build(
+      account_id: @conversation.account_id,
+      inbox_id: @conversation.inbox_id,
+      message_type: 'outgoing',
+      content: content,
+      private: true,
+      sender: Current.user,
+      content_attributes: metadata
+    )
+    note.save!
+    note
   end
 end

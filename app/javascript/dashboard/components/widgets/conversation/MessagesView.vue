@@ -186,11 +186,48 @@ export default {
       return '';
     },
     getMessages() {
-      const messages = this.currentChat.messages || [];
+      let messages = this.currentChat.messages || [];
       if (this.isAWhatsAppChannel) {
-        return filterDuplicateSourceMessages(messages);
+        messages = filterDuplicateSourceMessages(messages);
       }
-      return messages;
+
+      // Reorder edit/delete tracking notes to appear before their related message
+      const regularMessages = [];
+      const trackingNotes = [];
+
+      // Separate tracking notes from regular messages
+      messages.forEach(msg => {
+        if (
+          msg.content_attributes?.edit_delete_note &&
+          msg.content_attributes?.related_message_id
+        ) {
+          trackingNotes.push(msg);
+        } else {
+          regularMessages.push(msg);
+        }
+      });
+
+      // Insert tracking notes right before their related messages
+      const result = [];
+      regularMessages.forEach(msg => {
+        // Find any tracking notes for this message
+        const relatedNotes = trackingNotes.filter(
+          note => note.content_attributes.related_message_id === msg.id
+        );
+        // Add tracking notes first, then the message
+        result.push(...relatedNotes);
+        result.push(msg);
+      });
+
+      // Add any orphaned tracking notes at the end (shouldn't happen, but just in case)
+      const addedNoteIds = new Set(result.map(m => m.id));
+      trackingNotes.forEach(note => {
+        if (!addedNoteIds.has(note.id)) {
+          result.push(note);
+        }
+      });
+
+      return result;
     },
     readMessages() {
       return getReadMessages(
