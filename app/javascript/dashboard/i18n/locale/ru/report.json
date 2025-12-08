@@ -53,8 +53,8 @@
       "LAST_7_DAYS": "Последние 7 дней",
       "LAST_14_DAYS": "Последние 14 дней",
       "LAST_30_DAYS": "Последние 30 дней",
-      "THIS_MONTH": "This month",
-      "LAST_MONTH": "Last month",
+      "THIS_MONTH": "Текущий месяц",
+      "LAST_MONTH": "Прошлый месяц",
       "LAST_3_MONTHS": "Последние 3 месяца",
       "LAST_6_MONTHS": "Последние 6 месяцев",
       "LAST_YEAR": "За прошлый год",
@@ -104,16 +104,16 @@
     ],
     "GROUP_BY_YEAR_OPTIONS": [
       {
-        "id": 1,
-        "groupBy": "День"
-      },
-      {
         "id": 2,
         "groupBy": "Неделя"
       },
       {
         "id": 3,
         "groupBy": "Месяц"
+      },
+      {
+        "id": 4,
+        "groupBy": "Год"
       }
     ],
     "BUSINESS_HOURS": "Время работы",
@@ -491,10 +491,10 @@
       }
     },
     "TEAM_CONVERSATIONS": {
-      "ALL_TEAMS": "All Teams",
-      "HEADER": "Conversations by teams",
-      "LOADING_MESSAGE": "Loading team metrics...",
-      "NO_TEAMS": "There is no data available",
+      "ALL_TEAMS": "Все команды",
+      "HEADER": "Диалоги по командам",
+      "LOADING_MESSAGE": "Загрузка метрик команды...",
+      "NO_TEAMS": "Нет доступных данных",
       "TABLE_HEADER": {
         "TEAM": "Команда",
         "OPEN": "Открыть",
@@ -578,5 +578,14 @@
     "AVG_REPLY_TIME": "Среднее время ожидания клиента",
     "RESOLUTION_COUNT": "Количество завершенных",
     "CONVERSATIONS": "Количество диалогов"
+  },
+  "RESPONSE_STATISTICS": {
+    "HEADER": "Статистика времени ответа",
+    "DESCRIPTION": "Анализ времени ответа операторов и показателей эффективности",
+    "FILTERS": "Фильтры",
+    "TREND_CHART": "Тренд времени ответа",
+    "OPERATOR_CHART": "Производительность операторов (Топ 10)",
+    "DISTRIBUTION_CHART": "Распределение времени ответа",
+    "DAILY_TABLE": "Ежедневная статистика"
   }
 }
