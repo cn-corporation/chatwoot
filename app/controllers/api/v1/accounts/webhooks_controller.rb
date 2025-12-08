@@ -3,7 +3,7 @@ class Api::V1::Accounts::WebhooksController < Api::V1::Accounts::BaseController
   before_action :fetch_webhook, only: [:update, :destroy]
 
   def index
-    @webhooks = Current.account.webhooks
+    @webhooks = Current.account.webhooks.includes(:inbox)
   end
 
   def create
