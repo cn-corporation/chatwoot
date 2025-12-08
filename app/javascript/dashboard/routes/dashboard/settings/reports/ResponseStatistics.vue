@@ -3,6 +3,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
+import { Line, Bar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
   CategoryScale,
