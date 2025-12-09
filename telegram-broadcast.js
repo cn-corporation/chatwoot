@@ -115,7 +115,7 @@ function loadUserIds() {
     }
 
     const data = fs.readFileSync(USERS_FILE, 'utf8');
-    const users = Array.from(new Set(JSON.parse(data)));
+    const users = JSON.parse(data);
 
     // Handle different JSON formats
     if (Array.isArray(users)) {
@@ -163,7 +163,7 @@ async function broadcast() {
   console.log(`⏱️  Delay between messages: ${DELAY_MS}ms`);
   console.log('━'.repeat(50));
 
-  const userIds = loadUserIds();
+  const userIds = Array.from(new Set(loadUserIds()));
   console.log(`👥 Loaded ${userIds.length} users\n`);
 
   const results = {
