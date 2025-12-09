@@ -45,13 +45,11 @@ class Webhooks::Trigger
   end
 
   def perform_request
-    { content_type: :json, accept: :json }.merge(@custom_headers)
-
     RestClient::Request.execute(
       method: :post,
       url: @url,
       payload: @payload.to_json,
-      headers: { content_type: :json, accept: :json },
+      headers: { content_type: :json, accept: :json }.merge(@custom_headers),
       timeout: webhook_timeout
     )
   end

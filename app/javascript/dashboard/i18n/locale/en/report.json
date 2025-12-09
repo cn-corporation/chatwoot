@@ -578,5 +578,14 @@
     "AVG_REPLY_TIME": "Avg. Customer Waiting Time",
     "RESOLUTION_COUNT": "Resolution Count",
     "CONVERSATIONS": "No. of conversations"
+  },
+  "RESPONSE_STATISTICS": {
+    "HEADER": "Response Time Statistics",
+    "DESCRIPTION": "Analyze operator response times and performance metrics",
+    "FILTERS": "Filters",
+    "TREND_CHART": "Response Time Trend",
+    "OPERATOR_CHART": "Operator Performance (Top 10)",
+    "DISTRIBUTION_CHART": "Response Time Distribution",
+    "DAILY_TABLE": "Daily Statistics"
   }
 }

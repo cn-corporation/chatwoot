@@ -227,6 +227,72 @@ const menuItems = computed(() => {
     }
   );
 
+  const reportsChildren = [
+    {
+      name: 'Reports Overview',
+      label: t('SIDEBAR.REPORTS_OVERVIEW'),
+      icon: 'i-lucide-bar-chart-3',
+      to: accountScopedRoute('account_overview_reports'),
+    },
+    {
+      name: 'Reports Conversation',
+      label: t('SIDEBAR.REPORTS_CONVERSATION'),
+      icon: 'i-lucide-messages-square',
+      to: accountScopedRoute('conversation_reports'),
+    },
+    {
+      name: 'Reports Agent',
+      label: t('SIDEBAR.REPORTS_AGENT'),
+      icon: 'i-lucide-square-user',
+      to: accountScopedRoute('agent_reports_index'),
+    },
+    {
+      name: 'Reports Team',
+      label: t('SIDEBAR.REPORTS_TEAM'),
+      icon: 'i-lucide-users',
+      to: accountScopedRoute('team_reports_index'),
+    },
+    {
+      name: 'Reports Inbox',
+      label: t('SIDEBAR.REPORTS_INBOX'),
+      icon: 'i-lucide-inbox',
+      to: accountScopedRoute('inbox_reports_index'),
+    },
+    {
+      name: 'Reports Label',
+      label: t('SIDEBAR.REPORTS_LABEL'),
+      icon: 'i-lucide-tags',
+      to: accountScopedRoute('label_reports_index'),
+    },
+    {
+      name: 'Reports CSAT',
+      label: t('SIDEBAR.CSAT'),
+      icon: 'i-lucide-smile',
+      to: accountScopedRoute('csat_reports'),
+    },
+    {
+      name: 'Reports Bot',
+      label: t('SIDEBAR.REPORTS_BOT'),
+      icon: 'i-lucide-bot',
+      to: accountScopedRoute('bot_reports'),
+    },
+    {
+      name: 'Reports SLA',
+      label: t('SIDEBAR.REPORTS_SLA'),
+      icon: 'i-lucide-clock-alert',
+      to: accountScopedRoute('sla_reports'),
+    },
+  ];
+
+  if (isAdmin.value) {
+    reportsChildren.push({
+      name: 'Reports Response Statistics',
+      label: t('SIDEBAR.RESPONSE_STATISTICS'),
+      icon: 'i-lucide-timer',
+      to: accountScopedRoute('response_statistics'),
+    });
+  }
+
   return [
     {
       name: 'TodoList',
@@ -335,6 +401,12 @@ const menuItems = computed(() => {
           }),
         },
       ],
+    },
+    {
+      name: 'Reports',
+      label: t('SIDEBAR.REPORTS'),
+      icon: 'i-lucide-bar-chart-2',
+      children: reportsChildren,
     },
     {
       name: 'Settings',
