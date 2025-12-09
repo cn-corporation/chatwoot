@@ -51,7 +51,9 @@ if (!MESSAGE) {
   console.error(
     'Usage: node telegram-broadcast.js --token YOUR_TOKEN --message-file message.txt --users users.json'
   );
-  console.error('Or: node telegram-broadcast.js --token YOUR_TOKEN --message "Your text" --users users.json');
+  console.error(
+    'Or: node telegram-broadcast.js --token YOUR_TOKEN --message "Your text" --users users.json'
+  );
   process.exit(1);
 }
 
@@ -113,8 +115,7 @@ function loadUserIds() {
     }
 
     const data = fs.readFileSync(USERS_FILE, 'utf8');
-    const users = JSON.parse(data);
-    console.log({ users });
+    const users = Array.from(new Set(JSON.parse(data)));
 
     // Handle different JSON formats
     if (Array.isArray(users)) {

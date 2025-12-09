@@ -27,7 +27,7 @@ const INCLUDE_OPEN = getArg('--include-open') === 'true'; // Include open conver
 
 // Database configuration from Chatwoot .env
 const RAILS_ENV = process.env.RAILS_ENV || 'production';
-const DB_NAME = process.env.POSTGRES_DATABASE || `chatwoot_dev`;
+const DB_NAME = process.env.POSTGRES_DATABASE || `chatwoot_${RAILS_ENV}`;
 
 const DB_CONFIG = {
   host: process.env.POSTGRES_HOST || 'localhost',
