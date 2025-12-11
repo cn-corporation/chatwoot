@@ -202,6 +202,7 @@ Rails.application.routes.draw do
             delete :avatar, on: :member
             post :sync_templates, on: :member
             get :health, on: :member
+            get :bot_token, on: :member
           end
           resources :inbox_members, only: [:create, :show], param: :inbox_id do
             collection do

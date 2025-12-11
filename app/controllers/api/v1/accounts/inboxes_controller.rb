@@ -4,7 +4,7 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
   before_action :fetch_agent_bot, only: [:set_agent_bot]
   before_action :validate_limit, only: [:create]
   # we are already handling the authorization in fetch inbox
-  before_action :check_authorization, except: [:show, :health]
+  before_action :check_authorization, except: [:show, :health, :bot_token]
   before_action :validate_whatsapp_cloud_channel, only: [:health]
 
   def index
@@ -85,6 +85,13 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
   rescue StandardError => e
     Rails.logger.error "[INBOX HEALTH] Error fetching health data: #{e.message}"
     render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  def bot_token
+    return render json: { error: 'Not a Telegram channel' }, status: :unprocessable_entity unless @inbox.telegram?
+    return render json: { error: 'Unauthorized' }, status: :unauthorized unless Current.account_user&.administrator?
+
+    render json: { bot_token: @inbox.channel.bot_token }
   end
 
   private

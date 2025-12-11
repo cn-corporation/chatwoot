@@ -1,0 +1,72 @@
+{
+  "ADS": {
+    "HEADER": "Ads",
+    "DESCRIPTION": "Manage advertisements that can be sent to your customers through various channels. Create, edit, and organize your ad campaigns with HTML content and media attachments.",
+    "LEARN_MORE": "Learn more about ads",
+    "HEADER_BTN_TXT": "Add a new ad",
+    "LOADING": "Fetching ads",
+    "LIST": {
+      "TABLE_HEADER": {
+        "NAME": "Name",
+        "CREATED_AT": "Created At",
+        "ACTIONS": "Actions"
+      },
+      "404": "No ads found"
+    },
+    "CREATE": {
+      "TITLE": "Create New Ad",
+      "API": {
+        "SUCCESS_MESSAGE": "Ad created successfully",
+        "ERROR_MESSAGE": "Unable to create ad. Please try again later"
+      }
+    },
+    "EDIT": {
+      "TITLE": "Edit Ad",
+      "API": {
+        "SUCCESS_MESSAGE": "Ad updated successfully",
+        "ERROR_MESSAGE": "Unable to update ad. Please try again later"
+      }
+    },
+    "DELETE": {
+      "CONFIRM": {
+        "TITLE": "Confirm Deletion",
+        "MESSAGE": "Are you sure you want to delete",
+        "YES": "Yes, Delete",
+        "NO": "No"
+      },
+      "API": {
+        "SUCCESS_MESSAGE": "Ad deleted successfully",
+        "ERROR_MESSAGE": "Unable to delete ad. Please try again later"
+      }
+    },
+    "FORM": {
+      "NAME": {
+        "LABEL": "Ad Name",
+        "PLACEHOLDER": "Enter a name for your ad"
+      },
+      "SOURCE": {
+        "LABEL": "Source Channel",
+        "PLACEHOLDER": "Select a channel",
+        "HELP_TEXT": "The bot token from the selected Telegram channel will be automatically encrypted and stored securely"
+      },
+      "HTML_TEXT": {
+        "LABEL": "HTML Content",
+        "PLACEHOLDER": "Enter HTML content for your ad"
+      },
+      "MEDIA": {
+        "LABEL": "Media Attachment"
+      },
+      "BOT_TOKEN_ERROR": "Failed to retrieve or encrypt bot token. Please ensure you selected a valid Telegram channel.",
+      "CREATE": "Create Ad",
+      "UPDATE": "Update Ad",
+      "CANCEL": "Cancel"
+    },
+    "MEDIA": {
+      "UPLOAD_SUCCESS": "Media uploaded successfully",
+      "UPLOAD_ERROR": "Failed to upload media. Please try again",
+      "REMOVE_SUCCESS": "Media removed successfully",
+      "REMOVE_ERROR": "Failed to remove media. Please try again",
+      "UPLOADING": "Uploading media..."
+    }
+  }
+}

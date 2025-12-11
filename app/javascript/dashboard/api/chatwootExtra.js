@@ -168,6 +168,82 @@ class ChatwootExtraAPI {
     const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
     return `${this.baseURL}/api/operator-presence/conversations/${conversationId}/stream?operatorId=${operatorId}&apiKey=${apiKey}`;
   }
+
+  // Ads API
+  async createAd(data) {
+    const response = await axios.post(`${this.baseURL}/api/ads`, data, {
+      headers: this.headers,
+    });
+    return response.data;
+  }
+
+  async getAllAds() {
+    try {
+      const response = await axios.get(`${this.baseURL}/api/ads`, {
+        headers: this.headers,
+      });
+      return response.data?.data || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async getAd(id) {
+    try {
+      const response = await axios.get(`${this.baseURL}/api/ads/${id}`, {
+        headers: this.headers,
+      });
+      return response.data?.data || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async updateAd(id, data) {
+    const response = await axios.patch(`${this.baseURL}/api/ads/${id}`, data, {
+      headers: this.headers,
+    });
+    return response.data;
+  }
+
+  async deleteAd(id) {
+    const response = await axios.delete(`${this.baseURL}/api/ads/${id}`, {
+      headers: this.headers,
+    });
+    return response.data;
+  }
+
+  // Media API
+  async uploadMedia(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axios.post(`${this.baseURL}/api/media`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'X-API-Key': CHATWOOT_EXTRA_API_KEY,
+      },
+    });
+    return response.data;
+  }
+
+  async getMedia(id) {
+    try {
+      const response = await axios.get(`${this.baseURL}/api/media/${id}`, {
+        headers: this.headers,
+      });
+      return response.data?.data || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async deleteMedia(id) {
+    const response = await axios.delete(`${this.baseURL}/api/media/${id}`, {
+      headers: this.headers,
+    });
+    return response.data;
+  }
 }
 
 export default new ChatwootExtraAPI();
