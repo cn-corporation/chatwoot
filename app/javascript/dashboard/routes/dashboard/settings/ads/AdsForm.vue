@@ -29,7 +29,7 @@ const name = ref(props.adData.name || '');
 const htmlText = ref(props.adData.htmlText || '');
 const sourceId = ref(props.adData.sourceId || '');
 const selectedFile = ref(null);
-const uploadedMediaId = ref(props.adData.mediaId || null);
+const uploadedMediaId = ref(props.adData.mediaId || undefined);
 const mediaInfo = ref(props.adData.media || null);
 const fileInputKey = ref(0);
 
@@ -43,17 +43,21 @@ const isSubmitDisabled = computed(() => {
   return !name.value || !sourceId.value || !htmlText.value;
 });
 
-watch(() => props.adData, (newData) => {
-  if (newData) {
-    name.value = newData.name || '';
-    htmlText.value = newData.htmlText || '';
-    sourceId.value = newData.sourceId || '';
-    uploadedMediaId.value = newData.mediaId || null;
-    mediaInfo.value = newData.media || null;
-  }
-}, { deep: true, immediate: true });
+watch(
+  () => props.adData,
+  newData => {
+    if (newData) {
+      name.value = newData.name || '';
+      htmlText.value = newData.htmlText || '';
+      sourceId.value = newData.sourceId || '';
+      uploadedMediaId.value = newData.mediaId || null;
+      mediaInfo.value = newData.media || null;
+    }
+  },
+  { deep: true, immediate: true }
+);
 
-const handleFileChange = async (event) => {
+const handleFileChange = async event => {
   const file = event.target.files[0];
   if (!file) return;
 
@@ -100,8 +104,11 @@ const removeMedia = async () => {
 const handleSubmit = async () => {
   const formData = {
     htmlText: htmlText.value,
-    mediaId: uploadedMediaId.value,
   };
+
+  if (uploadedMediaId.value !== undefined && uploadedMediaId.value !== null) {
+    formData.mediaId = uploadedMediaId.value;
+  }
 
   if (!props.isEdit) {
     formData.name = name.value;
