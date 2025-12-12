@@ -94,6 +94,18 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
     render json: { bot_token: @inbox.channel.bot_token }
   end
 
+  def telegram_users
+    return render json: { error: 'Not a Telegram channel' }, status: :unprocessable_entity unless @inbox.telegram?
+
+    telegram_ids = @inbox.contact_inboxes
+                         .where.not(source_id: [nil, ''])
+                         .pluck(:source_id)
+                         .map(&:to_i)
+                         .uniq
+
+    render json: { telegram_ids: telegram_ids, count: telegram_ids.length }
+  end
+
   private
 
   def fetch_inbox

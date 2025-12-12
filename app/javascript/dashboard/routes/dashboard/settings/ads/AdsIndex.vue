@@ -32,11 +32,6 @@ const getSendOperation = adId => {
   return getters['ads/getSendOperation'].value(adId);
 };
 
-const isAdSending = adId => {
-  const operation = getSendOperation(adId);
-  return operation?.isRunning || false;
-};
-
 const loadLatestOperationForAd = async adId => {
   try {
     const operations = await store.dispatch('ads/getSendOperations', adId);
@@ -240,7 +235,6 @@ const tableHeaders = computed(() => {
   return [
     t('ADS.LIST.TABLE_HEADER.NAME'),
     t('ADS.LIST.TABLE_HEADER.CREATED_AT'),
-    t('ADS.LIST.TABLE_HEADER.STATUS'),
     t('ADS.LIST.TABLE_HEADER.ACTIONS'),
   ];
 });
@@ -298,41 +292,14 @@ const formatDate = dateString => {
               {{ formatDate(ad.createdAt) }}
             </td>
             <td class="py-4 ltr:pr-4 rtl:pl-4">
-              <div v-if="getSendOperation(ad.id)" class="flex flex-col gap-1">
-                <span
-                  v-if="isAdSending(ad.id)"
-                  class="text-sm font-medium text-green-600"
-                >
-                  {{ $t('ADS.STATUS.SENDING') }}
-                </span>
-                <span v-else class="text-sm text-n-slate-11">
-                  {{ $t('ADS.STATUS.IDLE') }}
-                </span>
-                <button
-                  v-if="getSendOperation(ad.id)"
-                  class="text-xs text-blue-600 hover:underline text-left"
-                  @click="openStatusDialog(ad)"
-                >
-                  {{ $t('ADS.STATUS.VIEW_DETAILS') }}
-                </button>
-              </div>
-              <div v-else class="flex flex-col gap-1">
-                <span class="text-sm text-n-slate-11">
-                  {{ $t('ADS.STATUS.NOT_SENT') }}
-                </span>
-                <button
-                  class="text-xs text-blue-600 hover:underline text-left"
-                  :disabled="uiFlags.isFetchingOperations"
-                  @click="loadLatestOperationForAd(ad.id)"
-                >
-                  {{ $t('ADS.STATUS.LOAD_STATUS') }}
-                </button>
-              </div>
-            </td>
-            <td class="py-4 ltr:pr-4 rtl:pl-4">
               <div class="flex gap-2 flex-wrap">
                 <Button
-                  v-if="!isAdSending(ad.id)"
+                  variant="ghost"
+                  size="small"
+                  icon="i-lucide-eye"
+                  @click="openStatusDialog(ad)"
+                />
+                <Button
                   variant="ghost"
                   size="small"
                   icon="i-lucide-send"
@@ -341,7 +308,6 @@ const formatDate = dateString => {
                   @click="startSendAd(ad)"
                 />
                 <Button
-                  v-else
                   variant="ghost"
                   size="small"
                   icon="i-lucide-square"
@@ -353,7 +319,6 @@ const formatDate = dateString => {
                   variant="ghost"
                   size="small"
                   icon="i-lucide-flask-conical"
-                  :disabled="uiFlags.isTestingSend || isAdSending(ad.id)"
                   @click="openTestAdDialog(ad)"
                 />
                 <Button
@@ -361,14 +326,12 @@ const formatDate = dateString => {
                   size="small"
                   icon="i-lucide-mail-x"
                   color-scheme="warning"
-                  :disabled="uiFlags.isDeletingSentMessages || isAdSending(ad.id)"
                   @click="openDeleteSentMessagesDialog(ad)"
                 />
                 <Button
                   variant="ghost"
                   size="small"
                   icon="i-lucide-pencil"
-                  :disabled="isAdSending(ad.id)"
                   @click="editAd(ad.id)"
                 />
                 <Button
@@ -376,7 +339,6 @@ const formatDate = dateString => {
                   size="small"
                   icon="i-lucide-trash-2"
                   color-scheme="alert"
-                  :disabled="isAdSending(ad.id)"
                   @click="openDeletePopup(ad)"
                 />
               </div>

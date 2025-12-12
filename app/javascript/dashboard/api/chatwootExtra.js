@@ -246,10 +246,10 @@ class ChatwootExtraAPI {
   }
 
   // Ads Send Operations API
-  async startAdSend(adId) {
+  async startAdSend(adId, bearerTokenHash, chatwootApiUrl) {
     const response = await axios.post(
       `${this.baseURL}/api/ads-send-operations/start`,
-      { adId },
+      { adId, bearerTokenHash, chatwootApiUrl },
       { headers: this.headers }
     );
     return response.data;

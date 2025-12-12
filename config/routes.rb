@@ -203,6 +203,7 @@ Rails.application.routes.draw do
             post :sync_templates, on: :member
             get :health, on: :member
             get :bot_token, on: :member
+            get :telegram_users, on: :member
           end
           resources :inbox_members, only: [:create, :show], param: :inbox_id do
             collection do

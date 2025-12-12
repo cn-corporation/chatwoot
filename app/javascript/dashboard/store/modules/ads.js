@@ -2,6 +2,8 @@ import * as MutationHelpers from 'shared/helpers/vuex/mutationHelpers';
 import types from '../mutation-types';
 import ChatwootExtraAPI from '../../api/chatwootExtra';
 import { throwErrorMessage } from '../utils/api';
+import { encrypt } from '../../helper/encryption';
+import Auth from '../../api/auth';
 
 export const state = {
   records: [],
@@ -137,10 +139,40 @@ export const actions = {
       commit(types.SET_ADS_UI_FLAG, { isDeletingMedia: false });
     }
   },
-  startSend: async ({ commit }, adId) => {
+  startSend: async ({ commit, rootGetters }, adId) => {
     commit(types.SET_ADS_UI_FLAG, { isStartingSend: true });
     try {
-      const response = await ChatwootExtraAPI.startAdSend(adId);
+      const accountId = rootGetters.getCurrentAccountId;
+      const authData = Auth.getAuthData();
+
+      if (!authData || !authData['access-token']) {
+        throw new Error('Authentication data not found. Please log in again.');
+      }
+
+      const bearerTokenData = {
+        'access-token': authData['access-token'],
+        'token-type': authData['token-type'] || 'Bearer',
+        client: authData.client,
+        expiry: authData.expiry,
+        uid: authData.uid,
+      };
+
+      const bearerToken = btoa(JSON.stringify(bearerTokenData));
+
+      const payload = {
+        bearerToken: bearerToken,
+        accountId: accountId,
+      };
+
+      const bearerTokenHash = await encrypt(JSON.stringify(payload));
+      const chatwootApiUrl = window.location.origin;
+
+      const response = await ChatwootExtraAPI.startAdSend(
+        adId,
+        bearerTokenHash,
+        chatwootApiUrl
+      );
+
       if (response.success && response.data) {
         commit(types.SET_SEND_OPERATION, { adId, operation: response.data });
         return response.data;
@@ -205,7 +237,10 @@ export const actions = {
     try {
       const response = await ChatwootExtraAPI.getAdSendOperations(adId);
       if (response.success && response.data) {
-        commit(types.SET_SEND_OPERATIONS_HISTORY, { adId, operations: response.data });
+        commit(types.SET_SEND_OPERATIONS_HISTORY, {
+          adId,
+          operations: response.data,
+        });
         return response.data;
       }
       return null;
