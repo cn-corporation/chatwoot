@@ -5,6 +5,8 @@ import { throwErrorMessage } from '../utils/api';
 
 export const state = {
   records: [],
+  sendOperations: {},
+  sendOperationsHistory: {},
   uiFlags: {
     isFetchingItem: false,
     isFetching: false,
@@ -13,6 +15,12 @@ export const state = {
     isUpdating: false,
     isUploadingMedia: false,
     isDeletingMedia: false,
+    isStartingSend: false,
+    isTestingSend: false,
+    isStoppingSend: false,
+    isFetchingStatus: false,
+    isFetchingOperations: false,
+    isDeletingSentMessages: false,
   },
 };
 
@@ -22,6 +30,12 @@ export const getters = {
   },
   getAd: $state => id => {
     return $state.records.find(record => record.id === id);
+  },
+  getSendOperation: $state => adId => {
+    return $state.sendOperations[adId];
+  },
+  getSendOperationsHistory: $state => adId => {
+    return $state.sendOperationsHistory[adId] || [];
   },
   getUIFlags($state) {
     return $state.uiFlags;
@@ -123,6 +137,100 @@ export const actions = {
       commit(types.SET_ADS_UI_FLAG, { isDeletingMedia: false });
     }
   },
+  startSend: async ({ commit }, adId) => {
+    commit(types.SET_ADS_UI_FLAG, { isStartingSend: true });
+    try {
+      const response = await ChatwootExtraAPI.startAdSend(adId);
+      if (response.success && response.data) {
+        commit(types.SET_SEND_OPERATION, { adId, operation: response.data });
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isStartingSend: false });
+    }
+  },
+  testSend: async ({ commit }, { adId, telegramId }) => {
+    commit(types.SET_ADS_UI_FLAG, { isTestingSend: true });
+    try {
+      const response = await ChatwootExtraAPI.testAdSend(adId, telegramId);
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isTestingSend: false });
+    }
+  },
+  stopSend: async ({ commit }, { adId, sendOpId }) => {
+    commit(types.SET_ADS_UI_FLAG, { isStoppingSend: true });
+    try {
+      const response = await ChatwootExtraAPI.stopAdSend(sendOpId);
+      if (response.success && response.data) {
+        commit(types.SET_SEND_OPERATION, { adId, operation: response.data });
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isStoppingSend: false });
+    }
+  },
+  getStatus: async ({ commit }, { adId, sendOpId }) => {
+    commit(types.SET_ADS_UI_FLAG, { isFetchingStatus: true });
+    try {
+      const response = await ChatwootExtraAPI.getAdSendStatus(sendOpId);
+      if (response.success && response.data) {
+        commit(types.SET_SEND_OPERATION, { adId, operation: response.data });
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isFetchingStatus: false });
+    }
+  },
+  getSendOperations: async ({ commit }, adId) => {
+    commit(types.SET_ADS_UI_FLAG, { isFetchingOperations: true });
+    try {
+      const response = await ChatwootExtraAPI.getAdSendOperations(adId);
+      if (response.success && response.data) {
+        commit(types.SET_SEND_OPERATIONS_HISTORY, { adId, operations: response.data });
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isFetchingOperations: false });
+    }
+  },
+  deleteSentMessages: async ({ commit }, adId) => {
+    commit(types.SET_ADS_UI_FLAG, { isDeletingSentMessages: true });
+    try {
+      const response = await ChatwootExtraAPI.deleteSentAds(adId);
+      if (response.success) {
+        return response;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isDeletingSentMessages: false });
+    }
+  },
 };
 
 export const mutations = {
@@ -130,6 +238,18 @@ export const mutations = {
     $state.uiFlags = {
       ...$state.uiFlags,
       ...data,
+    };
+  },
+  [types.SET_SEND_OPERATION]($state, { adId, operation }) {
+    $state.sendOperations = {
+      ...$state.sendOperations,
+      [adId]: operation,
+    };
+  },
+  [types.SET_SEND_OPERATIONS_HISTORY]($state, { adId, operations }) {
+    $state.sendOperationsHistory = {
+      ...$state.sendOperationsHistory,
+      [adId]: operations,
     };
   },
   [types.ADD_AD]: MutationHelpers.setSingleRecord,

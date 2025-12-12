@@ -9,6 +9,7 @@
       "TABLE_HEADER": {
         "NAME": "Name",
         "CREATED_AT": "Created At",
+        "STATUS": "Status",
         "ACTIONS": "Actions"
       },
       "404": "No ads found"
@@ -67,6 +68,63 @@
       "REMOVE_SUCCESS": "Media removed successfully",
       "REMOVE_ERROR": "Failed to remove media. Please try again",
       "UPLOADING": "Uploading media..."
+    },
+    "SEND": {
+      "START": {
+        "SUCCESS_MESSAGE": "Ad sending started successfully",
+        "ERROR_MESSAGE": "Failed to start ad sending. Please try again"
+      },
+      "STOP": {
+        "SUCCESS_MESSAGE": "Ad sending stopped successfully",
+        "ERROR_MESSAGE": "Failed to stop ad sending. Please try again"
+      },
+      "TEST": {
+        "TITLE": "Test Ad",
+        "DESCRIPTION": "Send this ad to a specific Telegram user ID for testing purposes",
+        "TELEGRAM_ID_PLACEHOLDER": "Enter Telegram user ID",
+        "INVALID_TELEGRAM_ID": "Please enter a valid Telegram user ID",
+        "SUCCESS_MESSAGE": "Test ad sent successfully",
+        "ERROR_MESSAGE": "Failed to send test ad. Please try again",
+        "SEND": "Send Test",
+        "CANCEL": "Cancel"
+      }
+    },
+    "DELETE_SENT": {
+      "SUCCESS_MESSAGE": "Deletion job started successfully. Check logs for progress",
+      "ERROR_MESSAGE": "Failed to start deletion job. Please try again",
+      "CONFIRM": {
+        "TITLE": "Delete Sent Messages",
+        "MESSAGE": "Are you sure you want to delete all sent messages for this ad? This action cannot be undone and will run in the background.",
+        "YES": "Yes, Delete All",
+        "NO": "Cancel"
+      }
+    },
+    "STATUS": {
+      "TITLE": "Ad Send Status",
+      "SENDING": "Sending",
+      "IDLE": "Idle",
+      "NOT_SENT": "Not sent yet",
+      "VIEW_DETAILS": "View details",
+      "LOAD_STATUS": "Load status",
+      "TOTAL": "Total",
+      "SENT": "Sent",
+      "SUCCESS": "Success",
+      "FAILED": "Failed",
+      "DELETED": "Deleted",
+      "LEFT": "Remaining",
+      "STATE": "State",
+      "RUNNING": "Running",
+      "CANCELLED": "Cancelled",
+      "COMPLETED": "Completed",
+      "REFRESH": "Refresh Stats",
+      "VIEW_HISTORY": "View History",
+      "CLOSE": "Close"
+    },
+    "OPERATIONS_HISTORY": {
+      "TITLE": "Send Operations History",
+      "LOADING": "Loading operations history...",
+      "EMPTY": "No send operations found for this ad",
+      "CLOSE": "Close"
     }
   }
 }

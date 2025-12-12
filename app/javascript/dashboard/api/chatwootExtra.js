@@ -244,6 +244,62 @@ class ChatwootExtraAPI {
     });
     return response.data;
   }
+
+  // Ads Send Operations API
+  async startAdSend(adId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/ads-send-operations/start`,
+      { adId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async testAdSend(adId, telegramId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/ads-send-operations/test`,
+      { adId, telegramId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async stopAdSend(sendOpId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/ads-send-operations/${sendOpId}/stop`,
+      {},
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getAdSendStatus(sendOpId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/ads-send-operations/${sendOpId}/status`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getAdSendOperations(adId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/ads-send-operations/ad/${adId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  // Ads Log API
+  async deleteSentAds(adId) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/ads-log/sent-ads`,
+      {
+        data: { adId },
+        headers: this.headers,
+      }
+    );
+    return response.data;
+  }
 }
 
 export default new ChatwootExtraAPI();
