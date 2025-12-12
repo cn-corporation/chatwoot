@@ -300,6 +300,18 @@ class ChatwootExtraAPI {
     );
     return response.data;
   }
+
+  async getAdLogsByUser(tgid, chatwootChannelId = null) {
+    const params = { tgid };
+    if (chatwootChannelId) {
+      params.chatwootChannelId = chatwootChannelId;
+    }
+    const response = await axios.get(`${this.baseURL}/api/ads-log/by-user`, {
+      params,
+      headers: this.headers,
+    });
+    return response.data;
+  }
 }
 
 export default new ChatwootExtraAPI();
