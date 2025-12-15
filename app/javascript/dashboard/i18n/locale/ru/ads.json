@@ -8,6 +8,7 @@
     "LIST": {
       "TABLE_HEADER": {
         "NAME": "Название",
+        "SOURCE_CHANNEL": "Канал источника",
         "CREATED_AT": "Дата создания",
         "STATUS": "Статус",
         "ACTIONS": "Действия"

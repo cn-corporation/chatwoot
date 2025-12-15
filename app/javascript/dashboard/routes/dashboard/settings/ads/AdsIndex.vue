@@ -25,6 +25,7 @@ const testTelegramId = ref('');
 
 const records = computed(() => getters['ads/getAds'].value);
 const uiFlags = computed(() => getters['ads/getUIFlags'].value);
+const inboxes = computed(() => getters['inboxes/getInboxes'].value);
 
 const deleteMessage = computed(() => ` ${selectedAd.value.name}?`);
 
@@ -48,6 +49,7 @@ const loadLatestOperationForAd = async adId => {
 };
 
 onMounted(async () => {
+  await store.dispatch('inboxes/get');
   await store.dispatch('ads/get');
 
   if (records.value && records.value.length > 0) {
@@ -234,10 +236,17 @@ const getSendOperationsHistory = computed(() => {
 const tableHeaders = computed(() => {
   return [
     t('ADS.LIST.TABLE_HEADER.NAME'),
+    t('ADS.LIST.TABLE_HEADER.SOURCE_CHANNEL'),
     t('ADS.LIST.TABLE_HEADER.CREATED_AT'),
     t('ADS.LIST.TABLE_HEADER.ACTIONS'),
   ];
 });
+
+const getSourceChannelName = adSourceId => {
+  if (!adSourceId) return '-';
+  const inbox = inboxes.value.find(i => i.id === adSourceId);
+  return inbox ? inbox.name : '-';
+};
 
 const formatDate = dateString => {
   if (!dateString) return '';
@@ -287,6 +296,9 @@ const formatDate = dateString => {
           >
             <td class="py-4 ltr:pr-4 rtl:pl-4">
               <span class="font-medium">{{ ad.name }}</span>
+            </td>
+            <td class="py-4 ltr:pr-4 rtl:pl-4">
+              {{ getSourceChannelName(ad.chatwootSourceId || ad.sourceId) }}
             </td>
             <td class="py-4 ltr:pr-4 rtl:pl-4">
               {{ formatDate(ad.createdAt) }}

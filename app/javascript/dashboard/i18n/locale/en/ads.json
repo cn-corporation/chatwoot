@@ -8,6 +8,7 @@
     "LIST": {
       "TABLE_HEADER": {
         "NAME": "Name",
+        "SOURCE_CHANNEL": "Source Channel",
         "CREATED_AT": "Created At",
         "STATUS": "Status",
         "ACTIONS": "Actions"
