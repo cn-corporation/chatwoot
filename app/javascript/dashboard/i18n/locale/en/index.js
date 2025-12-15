@@ -1,3 +1,4 @@
+import ads from './ads.json';
 import advancedFilters from './advancedFilters.json';
 import agentBots from './agentBots.json';
 import agentMgmt from './agentMgmt.json';
@@ -39,6 +40,7 @@ import todo from './todo.json';
 import whatsappTemplates from './whatsappTemplates.json';
 
 export default {
+  ...ads,
   ...advancedFilters,
   ...agentBots,
   ...agentMgmt,

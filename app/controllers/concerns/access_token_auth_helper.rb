@@ -7,6 +7,13 @@ module AccessTokenAuthHelper
 
   def ensure_access_token
     token = request.headers[:api_access_token] || request.headers[:HTTP_API_ACCESS_TOKEN]
+
+    # Also check Authorization: Bearer header
+    if token.blank? && request.headers[:Authorization].present?
+      auth_header = request.headers[:Authorization]
+      token = auth_header.sub(/^Bearer\s+/, '') if auth_header.start_with?('Bearer ')
+    end
+
     @access_token = AccessToken.find_by(token: token) if token.present?
   end
 

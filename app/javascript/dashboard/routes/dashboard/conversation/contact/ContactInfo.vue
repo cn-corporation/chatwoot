@@ -10,6 +10,7 @@ import EditContact from './EditContact.vue';
 import ContactMergeModal from 'dashboard/modules/contact/ContactMergeModal.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import VoiceCallButton from 'dashboard/components-next/Contacts/VoiceCallButton.vue';
+import AdsLogsModal from './AdsLogsModal.vue';
 
 import {
   isAConversationRoute,
@@ -26,6 +27,7 @@ export default {
     // SocialIcons, // Removed for poker UI
     ContactMergeModal,
     VoiceCallButton,
+    AdsLogsModal,
   },
   props: {
     contact: {
@@ -51,6 +53,7 @@ export default {
       showEditModal: false,
       showMergeModal: false,
       showDeleteModal: false,
+      showAdsLogsModal: false,
     };
   },
   computed: {
@@ -104,10 +107,14 @@ export default {
       };
     },
     telegramId() {
-      return this.additionalAttributes.social_telegram_user_id || null;
+      const id = this.additionalAttributes.social_telegram_user_id;
+      return id ? Number(id) : null;
     },
     telegramUsername() {
       return this.additionalAttributes.social_telegram_user_name || null;
+    },
+    chatwootChannelId() {
+      return this.currentChat?.inbox_id || null;
     },
     // Delete Modal
     confirmDeleteMessage() {
@@ -216,6 +223,9 @@ export default {
     openMergeModal() {
       this.showMergeModal = true;
     },
+    toggleAdsLogsModal() {
+      this.showAdsLogsModal = !this.showAdsLogsModal;
+    },
   },
 };
 </script>
@@ -309,6 +319,18 @@ export default {
           />
         </div>
 
+        <!-- Ads Logs Button -->
+        <div v-if="telegramId" class="mt-2">
+          <NextButton
+            v-tooltip.left="'View ads history'"
+            icon="i-ph-list-bullets"
+            slate
+            faded
+            xs
+            @click="toggleAdsLogsModal"
+          />
+        </div>
+
         <p v-if="additionalAttributes.description" class="break-words mb-0.5">
           {{ additionalAttributes.description }}
         </p>
@@ -362,6 +384,13 @@ export default {
         :primary-contact="contact"
         :show="showMergeModal"
         @close="closeMergeModal"
+      />
+      <AdsLogsModal
+        v-if="showAdsLogsModal"
+        :show="showAdsLogsModal"
+        :telegram-id="telegramId"
+        :chatwoot-channel-id="chatwootChannelId"
+        @close="toggleAdsLogsModal"
       />
     </div>
     <woot-delete-modal
