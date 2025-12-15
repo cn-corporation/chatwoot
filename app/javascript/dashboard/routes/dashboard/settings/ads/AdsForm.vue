@@ -8,6 +8,8 @@ import { BUS_EVENTS } from 'shared/constants/busEvents';
 import InboxesAPI from 'dashboard/api/inboxes';
 import { encrypt } from 'dashboard/helper/encryption';
 
+const showPreview = ref(false);
+
 const props = defineProps({
   adData: {
     type: Object,
@@ -144,6 +146,16 @@ const formatFileSize = bytes => {
   const mb = kb / 1024;
   return `${mb.toFixed(2)} MB`;
 };
+
+const sanitizedHtml = computed(() => {
+  if (!htmlText.value) return '';
+  const allowedTags = ['b', 'i', 'code', 'u', 'strike', 'pre', 'a', 'br'];
+  let sanitized = htmlText.value;
+
+  sanitized = sanitized.replace(/<(?!\/?(b|i|code|u|strike|pre|a|br)\b)[^>]*>/gi, '');
+
+  return sanitized;
+});
 </script>
 
 <template>
@@ -183,16 +195,81 @@ const formatFileSize = bytes => {
     </div>
 
     <div class="flex flex-col gap-2">
-      <label class="text-sm font-medium text-n-slate-12">
-        {{ $t('ADS.FORM.HTML_TEXT.LABEL') }}
-      </label>
+      <div class="flex items-center justify-between">
+        <label class="text-sm font-medium text-n-slate-12">
+          {{ $t('ADS.FORM.HTML_TEXT.LABEL') }}
+        </label>
+        <div class="flex gap-2">
+          <Button
+            variant="ghost"
+            size="small"
+            :label="$t('ADS.FORM.HTML_TEXT.CODE')"
+            :color-scheme="!showPreview ? 'primary' : 'secondary'"
+            type="button"
+            @click="showPreview = false"
+          />
+          <Button
+            variant="ghost"
+            size="small"
+            :label="$t('ADS.FORM.HTML_TEXT.PREVIEW')"
+            :color-scheme="showPreview ? 'primary' : 'secondary'"
+            type="button"
+            @click="showPreview = true"
+          />
+        </div>
+      </div>
+
+      <div
+        v-if="!showPreview"
+        class="flex flex-col gap-2 p-3 bg-n-slate-2 rounded-lg border border-n-slate-6"
+      >
+        <div class="text-xs text-n-slate-10 space-y-1">
+          <p class="font-medium text-n-slate-11">
+            {{ $t('ADS.FORM.HTML_TEXT.SUPPORTED_TAGS') }}
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <code
+              v-for="tag in [
+                '<b>',
+                '<i>',
+                '<code>',
+                '<u>',
+                '<strike>',
+                '<pre>',
+                '<a>',
+                '<br>',
+              ]"
+              :key="tag"
+              class="px-2 py-1 bg-n-slate-4 rounded text-n-slate-12"
+            >
+              {{ tag }}
+            </code>
+          </div>
+        </div>
+      </div>
+
       <textarea
+        v-if="!showPreview"
         v-model="htmlText"
         rows="10"
         class="px-3 py-2 border border-n-slate-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-woot-500 font-mono text-sm"
         :placeholder="$t('ADS.FORM.HTML_TEXT.PLACEHOLDER')"
         required
       />
+
+      <div
+        v-else
+        class="px-4 py-3 border border-n-slate-6 rounded-lg min-h-[240px] bg-white"
+      >
+        <div
+          v-if="htmlText"
+          class="html-preview text-base whitespace-pre-wrap break-words"
+          v-html="sanitizedHtml"
+        />
+        <p v-else class="text-sm text-n-slate-10 italic">
+          {{ $t('ADS.FORM.HTML_TEXT.PREVIEW_EMPTY') }}
+        </p>
+      </div>
     </div>
 
     <div class="flex flex-col gap-2">
@@ -253,3 +330,78 @@ const formatFileSize = bytes => {
     </div>
   </form>
 </template>
+
+<style scoped>
+.html-preview {
+  color: #0f172a;
+  line-height: 1.6;
+}
+
+.html-preview :deep(b),
+.html-preview :deep(strong) {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.html-preview :deep(i),
+.html-preview :deep(em) {
+  font-style: italic;
+  color: #0f172a;
+}
+
+.html-preview :deep(u) {
+  text-decoration: underline;
+  color: #0f172a;
+}
+
+.html-preview :deep(strike),
+.html-preview :deep(s) {
+  text-decoration: line-through;
+  color: #0f172a;
+}
+
+.html-preview :deep(code) {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  background-color: #e2e8f0;
+  color: #1e293b;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.html-preview :deep(pre) {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  background-color: #e2e8f0;
+  color: #1e293b;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.html-preview :deep(pre code) {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: 1em;
+}
+
+.html-preview :deep(a) {
+  color: #1066eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.html-preview :deep(a:hover) {
+  color: #0d4fb6;
+}
+
+.html-preview :deep(br) {
+  display: block;
+  content: '';
+  margin: 0.25rem 0;
+}
+</style>

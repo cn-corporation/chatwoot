@@ -52,7 +52,11 @@
       },
       "HTML_TEXT": {
         "LABEL": "HTML Content",
-        "PLACEHOLDER": "Enter HTML content for your ad"
+        "PLACEHOLDER": "Enter HTML content for your ad",
+        "CODE": "Code",
+        "PREVIEW": "Preview",
+        "SUPPORTED_TAGS": "Supported Telegram HTML tags:",
+        "PREVIEW_EMPTY": "Enter HTML content to see preview"
       },
       "MEDIA": {
         "LABEL": "Media Attachment"
