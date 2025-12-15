@@ -306,12 +306,14 @@ const formatDate = dateString => {
             <td class="py-4 ltr:pr-4 rtl:pl-4">
               <div class="flex gap-2 flex-wrap">
                 <Button
+                  v-tooltip.top="$t('ADS.ACTIONS.VIEW_STATUS')"
                   variant="ghost"
                   size="small"
                   icon="i-lucide-eye"
                   @click="openStatusDialog(ad)"
                 />
                 <Button
+                  v-tooltip.top="$t('ADS.ACTIONS.START_SEND')"
                   variant="ghost"
                   size="small"
                   icon="i-lucide-send"
@@ -320,6 +322,7 @@ const formatDate = dateString => {
                   @click="startSendAd(ad)"
                 />
                 <Button
+                  v-tooltip.top="$t('ADS.ACTIONS.STOP_SEND')"
                   variant="ghost"
                   size="small"
                   icon="i-lucide-square"
@@ -328,12 +331,14 @@ const formatDate = dateString => {
                   @click="stopSendAd(ad)"
                 />
                 <Button
+                  v-tooltip.top="$t('ADS.ACTIONS.TEST_AD')"
                   variant="ghost"
                   size="small"
                   icon="i-lucide-flask-conical"
                   @click="openTestAdDialog(ad)"
                 />
                 <Button
+                  v-tooltip.top="$t('ADS.ACTIONS.DELETE_SENT')"
                   variant="ghost"
                   size="small"
                   icon="i-lucide-mail-x"
@@ -341,12 +346,14 @@ const formatDate = dateString => {
                   @click="openDeleteSentMessagesDialog(ad)"
                 />
                 <Button
+                  v-tooltip.top="$t('ADS.ACTIONS.EDIT')"
                   variant="ghost"
                   size="small"
                   icon="i-lucide-pencil"
                   @click="editAd(ad.id)"
                 />
                 <Button
+                  v-tooltip.top="$t('ADS.ACTIONS.DELETE')"
                   variant="ghost"
                   size="small"
                   icon="i-lucide-trash-2"

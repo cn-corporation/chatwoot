@@ -57,7 +57,17 @@
         "CODE": "Code",
         "PREVIEW": "Preview",
         "SUPPORTED_TAGS": "Supported Telegram HTML tags:",
-        "PREVIEW_EMPTY": "Enter HTML content to see preview"
+        "PREVIEW_EMPTY": "Enter HTML content to see preview",
+        "TAG_DESCRIPTIONS": {
+          "B": "Bold text",
+          "I": "Italic text",
+          "U": "Underlined text",
+          "STRIKE": "Strikethrough text",
+          "CODE": "Inline code (monospace)",
+          "PRE": "Code block (monospace, preserves formatting)",
+          "A": "Link (use href attribute: <a href=\"url\">text</a>)",
+          "BR": "Line break"
+        }
       },
       "MEDIA": {
         "LABEL": "Media Attachment"
@@ -130,6 +140,15 @@
       "LOADING": "Loading operations history...",
       "EMPTY": "No send operations found for this ad",
       "CLOSE": "Close"
+    },
+    "ACTIONS": {
+      "VIEW_STATUS": "View sending status",
+      "START_SEND": "Start sending ad",
+      "STOP_SEND": "Stop sending ad",
+      "TEST_AD": "Send test ad",
+      "DELETE_SENT": "Delete sent messages",
+      "EDIT": "Edit ad",
+      "DELETE": "Delete ad"
     }
   }
 }

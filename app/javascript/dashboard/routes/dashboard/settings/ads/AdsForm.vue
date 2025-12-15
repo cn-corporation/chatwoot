@@ -8,8 +8,6 @@ import { BUS_EVENTS } from 'shared/constants/busEvents';
 import InboxesAPI from 'dashboard/api/inboxes';
 import { encrypt } from 'dashboard/helper/encryption';
 
-const showPreview = ref(false);
-
 const props = defineProps({
   adData: {
     type: Object,
@@ -22,6 +20,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['submit', 'cancel']);
+
+const showPreview = ref(false);
 
 const { t } = useI18n();
 const getters = useStoreGetters();
@@ -152,7 +152,10 @@ const sanitizedHtml = computed(() => {
   const allowedTags = ['b', 'i', 'code', 'u', 'strike', 'pre', 'a', 'br'];
   let sanitized = htmlText.value;
 
-  sanitized = sanitized.replace(/<(?!\/?(b|i|code|u|strike|pre|a|br)\b)[^>]*>/gi, '');
+  sanitized = sanitized.replace(
+    /<(?!\/?(b|i|code|u|strike|pre|a|br)\b)[^>]*>/gi,
+    ''
+  );
 
   return sanitized;
 });
@@ -171,6 +174,7 @@ const sanitizedHtml = computed(() => {
           class="px-3 py-2 border border-n-slate-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-woot-500"
           :placeholder="$t('ADS.FORM.NAME.PLACEHOLDER')"
           required
+          @keydown.enter.prevent
         />
       </div>
 
@@ -180,7 +184,7 @@ const sanitizedHtml = computed(() => {
         </label>
         <select
           v-model="sourceId"
-          class="px-3 py-2 border border-n-slate-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-woot-500"
+          class="px-3 py-2 pr-2 border border-n-slate-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-woot-500 appearance-none custom-select"
           required
         >
           <option value="">{{ $t('ADS.FORM.SOURCE.PLACEHOLDER') }}</option>
@@ -221,29 +225,75 @@ const sanitizedHtml = computed(() => {
 
       <div
         v-if="!showPreview"
-        class="flex flex-col gap-2 p-3 bg-n-slate-2 rounded-lg border border-n-slate-6"
+        class="flex flex-col gap-3 p-4 bg-n-slate-2 rounded-lg border border-n-slate-6"
       >
-        <div class="text-xs text-n-slate-10 space-y-1">
-          <p class="font-medium text-n-slate-11">
-            {{ $t('ADS.FORM.HTML_TEXT.SUPPORTED_TAGS') }}
-          </p>
-          <div class="flex flex-wrap gap-2">
+        <p class="text-xs font-medium text-n-slate-11">
+          {{ $t('ADS.FORM.HTML_TEXT.SUPPORTED_TAGS') }}
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div class="flex items-start gap-2">
             <code
-              v-for="tag in [
-                '<b>',
-                '<i>',
-                '<code>',
-                '<u>',
-                '<strike>',
-                '<pre>',
-                '<a>',
-                '<br>',
-              ]"
-              :key="tag"
-              class="px-2 py-1 bg-n-slate-4 rounded text-n-slate-12"
-            >
-              {{ tag }}
-            </code>
+              class="px-2 py-1 bg-n-slate-4 rounded text-n-slate-12 shrink-0"
+              >&lt;b&gt;</code>
+            <span class="text-n-slate-10 leading-6">{{
+              $t('ADS.FORM.HTML_TEXT.TAG_DESCRIPTIONS.B')
+            }}</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <code
+              class="px-2 py-1 bg-n-slate-4 rounded text-n-slate-12 shrink-0"
+              >&lt;i&gt;</code>
+            <span class="text-n-slate-10 leading-6">{{
+              $t('ADS.FORM.HTML_TEXT.TAG_DESCRIPTIONS.I')
+            }}</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <code
+              class="px-2 py-1 bg-n-slate-4 rounded text-n-slate-12 shrink-0"
+              >&lt;u&gt;</code>
+            <span class="text-n-slate-10 leading-6">{{
+              $t('ADS.FORM.HTML_TEXT.TAG_DESCRIPTIONS.U')
+            }}</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <code
+              class="px-2 py-1 bg-n-slate-4 rounded text-n-slate-12 shrink-0"
+              >&lt;strike&gt;</code>
+            <span class="text-n-slate-10 leading-6">{{
+              $t('ADS.FORM.HTML_TEXT.TAG_DESCRIPTIONS.STRIKE')
+            }}</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <code
+              class="px-2 py-1 bg-n-slate-4 rounded text-n-slate-12 shrink-0"
+              >&lt;code&gt;</code>
+            <span class="text-n-slate-10 leading-6">{{
+              $t('ADS.FORM.HTML_TEXT.TAG_DESCRIPTIONS.CODE')
+            }}</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <code
+              class="px-2 py-1 bg-n-slate-4 rounded text-n-slate-12 shrink-0"
+              >&lt;pre&gt;</code>
+            <span class="text-n-slate-10 leading-6">{{
+              $t('ADS.FORM.HTML_TEXT.TAG_DESCRIPTIONS.PRE')
+            }}</span>
+          </div>
+          <div class="flex items-start gap-2 sm:col-span-2">
+            <code
+              class="px-2 py-1 bg-n-slate-4 rounded text-n-slate-12 shrink-0"
+              >&lt;a&gt;</code>
+            <span class="text-n-slate-10 leading-6">{{
+              $t('ADS.FORM.HTML_TEXT.TAG_DESCRIPTIONS.A')
+            }}</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <code
+              class="px-2 py-1 bg-n-slate-4 rounded text-n-slate-12 shrink-0"
+              >&lt;br&gt;</code>
+            <span class="text-n-slate-10 leading-6">{{
+              $t('ADS.FORM.HTML_TEXT.TAG_DESCRIPTIONS.BR')
+            }}</span>
           </div>
         </div>
       </div>
@@ -332,6 +382,13 @@ const sanitizedHtml = computed(() => {
 </template>
 
 <style scoped>
+.custom-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
 .html-preview {
   color: #0f172a;
   line-height: 1.6;
