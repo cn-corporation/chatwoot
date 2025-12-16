@@ -42,7 +42,39 @@ const props = defineProps({
 const emit = defineEmits(['retry']);
 
 const allMessages = computed(() => {
-  return useCamelCase(props.messages, { deep: true });
+  const camelCasedMessages = useCamelCase(props.messages, { deep: true });
+
+  const privateNotesWithLinks = [];
+  const otherMessages = [];
+
+  camelCasedMessages.forEach(message => {
+    if (message.private && message.additionalAttributes?.originalMessageId) {
+      privateNotesWithLinks.push(message);
+    } else {
+      otherMessages.push(message);
+    }
+  });
+
+  const result = [];
+
+  otherMessages.forEach(message => {
+    const relatedNotes = privateNotesWithLinks.filter(
+      note => note.additionalAttributes.originalMessageId === message.id
+    );
+
+    relatedNotes.forEach(note => result.push(note));
+    result.push(message);
+  });
+
+  const unlinkedNotes = privateNotesWithLinks.filter(
+    note =>
+      !otherMessages.some(
+        msg => msg.id === note.additionalAttributes.originalMessageId
+      )
+  );
+  unlinkedNotes.forEach(note => result.push(note));
+
+  return result;
 });
 
 const currentChat = useMapGetter('getSelectedChat');

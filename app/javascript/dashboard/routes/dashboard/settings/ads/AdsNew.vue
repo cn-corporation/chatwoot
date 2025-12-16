@@ -15,7 +15,7 @@ onMounted(async () => {
   await store.dispatch('inboxes/get');
 });
 
-const handleSubmit = async (formData) => {
+const handleSubmit = async formData => {
   try {
     const ad = await store.dispatch('ads/create', formData);
     if (ad) {
