@@ -149,11 +149,10 @@ const formatFileSize = bytes => {
 
 const sanitizedHtml = computed(() => {
   if (!htmlText.value) return '';
-  const allowedTags = ['b', 'i', 'code', 'u', 'strike', 'pre', 'a', 'br'];
   let sanitized = htmlText.value;
 
   sanitized = sanitized.replace(
-    /<(?!\/?(b|i|code|u|strike|pre|a|br)\b)[^>]*>/gi,
+    /<(?!\/?(b|i|code|u|strike|pre|a)\b)[^>]*>/gi,
     ''
   );
 
@@ -287,15 +286,10 @@ const sanitizedHtml = computed(() => {
               $t('ADS.FORM.HTML_TEXT.TAG_DESCRIPTIONS.A')
             }}</span>
           </div>
-          <div class="flex items-start gap-2">
-            <code
-              class="px-2 py-1 bg-n-slate-4 rounded text-n-slate-12 shrink-0"
-              >&lt;br&gt;</code>
-            <span class="text-n-slate-10 leading-6">{{
-              $t('ADS.FORM.HTML_TEXT.TAG_DESCRIPTIONS.BR')
-            }}</span>
-          </div>
         </div>
+        <p class="text-xs text-n-slate-10 mt-2">
+          {{ $t('ADS.FORM.HTML_TEXT.TAGS_CLOSURE_NOTE') }}
+        </p>
       </div>
 
       <textarea
@@ -454,11 +448,5 @@ const sanitizedHtml = computed(() => {
 
 .html-preview :deep(a:hover) {
   color: #0d4fb6;
-}
-
-.html-preview :deep(br) {
-  display: block;
-  content: '';
-  margin: 0.25rem 0;
 }
 </style>
