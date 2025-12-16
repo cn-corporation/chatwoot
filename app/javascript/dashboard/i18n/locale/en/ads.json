@@ -57,6 +57,7 @@
         "CODE": "Code",
         "PREVIEW": "Preview",
         "SUPPORTED_TAGS": "Supported Telegram HTML tags:",
+        "TAGS_CLOSURE_NOTE": "Note: All tags must be properly closed like <tag>text</tag>",
         "PREVIEW_EMPTY": "Enter HTML content to see preview",
         "TAG_DESCRIPTIONS": {
           "B": "Bold text",
@@ -65,8 +66,7 @@
           "STRIKE": "Strikethrough text",
           "CODE": "Inline code (monospace)",
           "PRE": "Code block (monospace, preserves formatting)",
-          "A": "Link (use href attribute: <a href=\"url\">text</a>)",
-          "BR": "Line break"
+          "A": "Link (use href attribute: <a href=\"url\">text</a>)"
         }
       },
       "MEDIA": {
