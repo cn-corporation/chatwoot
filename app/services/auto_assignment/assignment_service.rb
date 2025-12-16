@@ -56,6 +56,24 @@ class AutoAssignment::AssignmentService
   end
 
   def assign_conversation(conversation, agent)
+    assignee_before = conversation.assignee
+
+    conversation.log_agent_assignment(
+      source: 'AutoAssignment::AssignmentService#assign_conversation',
+      assignee_before: assignee_before,
+      assignee_after: agent,
+      context: {
+        inbox_id: inbox.id,
+        inbox_name: inbox.name,
+        auto_assignment_v2_enabled: inbox.auto_assignment_v2_enabled?,
+        assignment_config: assignment_config,
+        agent_id: agent.id,
+        agent_name: agent.name,
+        agent_email: agent.email,
+        agent_availability: agent.availability_status
+      }
+    )
+
     conversation.update!(assignee: agent)
 
     rate_limiter = build_rate_limiter(agent)

@@ -27,6 +27,7 @@ services:
       - packs:/app/public/packs
       - cache:/app/tmp/cache
       - bundle:/usr/local/bundle
+      - agent_assignment_logs:/app/log/agent_assignment
     depends_on:
       - postgres
       - redis
@@ -52,6 +53,7 @@ services:
       - packs:/app/public/packs
       - cache:/app/tmp/cache
       - bundle:/usr/local/bundle
+      - agent_assignment_logs:/app/log/agent_assignment
     depends_on:
       - postgres
       - redis
@@ -117,3 +119,4 @@ volumes:
   node_modules:
   cache:
   bundle:
+  agent_assignment_logs:

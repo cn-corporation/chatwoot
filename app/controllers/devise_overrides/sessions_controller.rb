@@ -52,7 +52,35 @@ class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController
 
   def destroy
     # Unassign all conversations when user logs out
-    current_user.assigned_conversations.open.update_all(assignee_id: nil) if current_user
+    if current_user
+      conversations_to_unassign = current_user.assigned_conversations.open
+      conversation_ids = conversations_to_unassign.pluck(:id)
+
+      if conversation_ids.any? && defined?(AGENT_ASSIGNMENT_LOGGER)
+        log_data = {
+          timestamp: Time.current.iso8601,
+          source: 'DeviseOverrides::SessionsController#destroy',
+          triggered_by: {
+            user_id: current_user.id,
+            user_name: current_user.name,
+            user_email: current_user.email
+          },
+          operation: 'bulk_unassignment',
+          trigger: 'user_logout_via_controller',
+          logout_user_id: current_user.id,
+          logout_user_name: current_user.name,
+          logout_user_email: current_user.email,
+          conversation_ids: conversation_ids,
+          conversation_count: conversation_ids.size,
+          assignee_before: { id: current_user.id, name: current_user.name, email: current_user.email },
+          assignee_after: nil,
+          backtrace: caller(2, 15)
+        }
+        AGENT_ASSIGNMENT_LOGGER.info(JSON.pretty_generate(log_data))
+      end
+
+      conversations_to_unassign.update_all(assignee_id: nil)
+    end
     super
   end
 

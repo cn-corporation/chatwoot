@@ -10,7 +10,25 @@ class AutoAssignment::AgentAssignmentService
 
   def perform
     new_assignee = find_assignee
-    conversation.update(assignee: new_assignee) if new_assignee
+    return unless new_assignee
+
+    assignee_before = conversation.assignee
+
+    conversation.log_agent_assignment(
+      source: 'AutoAssignment::AgentAssignmentService#perform',
+      assignee_before: assignee_before,
+      assignee_after: new_assignee,
+      context: {
+        inbox_id: conversation.inbox_id,
+        allowed_agent_ids: allowed_agent_ids,
+        allowed_online_agent_ids: allowed_online_agent_ids,
+        new_assignee_id: new_assignee.id,
+        new_assignee_name: new_assignee.name,
+        new_assignee_email: new_assignee.email
+      }
+    )
+
+    conversation.update(assignee: new_assignee)
   end
 
   private
