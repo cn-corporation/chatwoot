@@ -19,6 +19,7 @@ services:
 
     volumes:
       - ..:/workspace:cached
+      - agent_assignment_logs:/workspace/log/agent_assignment
 
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
@@ -51,3 +52,4 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  agent_assignment_logs:

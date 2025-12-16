@@ -21,6 +21,8 @@ services:
       - redis
     ports:
       - 3000:3000
+    volumes:
+      - agent_assignment_logs:/app/log/agent_assignment
     environment:
       - NODE_ENV=production
       - RAILS_ENV=production
@@ -33,6 +35,8 @@ services:
     depends_on:
       - postgres
       - redis
+    volumes:
+      - agent_assignment_logs:/app/log/agent_assignment
     environment:
       - NODE_ENV=production
       - RAILS_ENV=production
@@ -64,3 +68,4 @@ volumes:
   bundle:
   packs:
   node_modules_rails:
+  agent_assignment_logs:

@@ -87,6 +87,7 @@ services:
     volumes:
       - rails-data:/app/storage
       - rails-assets:/app/public/packs
+      - agent_assignment_logs:/app/log/agent_assignment
     healthcheck:
       test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:3000']
       interval: 10s
@@ -116,6 +117,7 @@ services:
     volumes:
       - rails-data:/app/storage
       - rails-assets:/app/public/packs
+      - agent_assignment_logs:/app/log/agent_assignment
     healthcheck:
       test:
         [
@@ -131,3 +133,4 @@ volumes:
   rails-assets:
   postgres-db:
   redis-data:
+  agent_assignment_logs:

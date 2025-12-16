@@ -27,12 +27,14 @@ services:
       - '3000:3000'
     volumes:
       - ./storage:/app/storage
+      - agent_assignment_logs:/app/log/agent_assignment
 
   sidekiq:
     <<: *base
     command: bundle exec sidekiq -C config/sidekiq.yml
     volumes:
       - ./storage:/app/storage
+      - agent_assignment_logs:/app/log/agent_assignment
 
   postgres:
     image: postgres:12
@@ -54,3 +56,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  agent_assignment_logs:
