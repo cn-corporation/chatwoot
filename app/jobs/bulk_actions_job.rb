@@ -26,7 +26,26 @@ class BulkActionsJob < ApplicationJob
     records.each do |conversation|
       bulk_add_labels(conversation)
       bulk_snoozed_until(conversation)
-      conversation.update(params) if params
+      next unless params
+
+      if params.key?('assignee_id')
+        assignee_before = conversation.assignee
+        assignee_after = params['assignee_id'].present? ? @account.users.find_by(id: params['assignee_id']) : nil
+
+        conversation.log_agent_assignment(
+          source: 'BulkActionsJob#bulk_conversation_update',
+          assignee_before: assignee_before,
+          assignee_after: assignee_after,
+          context: {
+            action: 'bulk_update',
+            params: params,
+            current_user_id: Current.user&.id,
+            current_user_name: Current.user&.name
+          }
+        )
+      end
+
+      conversation.update(params)
     end
   end
 

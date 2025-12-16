@@ -14,7 +14,25 @@ class ConversationBuilder
   end
 
   def create_new_conversation
-    ::Conversation.create!(conversation_params)
+    conversation = ::Conversation.create!(conversation_params)
+
+    if conversation.assignee_id.present?
+      conversation.log_agent_assignment(
+        source: 'ConversationBuilder#create_new_conversation',
+        assignee_before: nil,
+        assignee_after: conversation.assignee,
+        context: {
+          action: 'conversation_creation',
+          assignee_id: params[:assignee_id],
+          team_id: params[:team_id],
+          inbox_id: @contact_inbox.inbox_id,
+          contact_id: @contact_inbox.contact_id,
+          initial_status: conversation.status
+        }
+      )
+    end
+
+    conversation
   end
 
   def conversation_params

@@ -158,6 +158,21 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   end
 
   def assign_conversation
+    assignee_before = @conversation.assignee
+
+    @conversation.log_agent_assignment(
+      source: 'Api::V1::Accounts::ConversationsController#assign_conversation',
+      assignee_before: assignee_before,
+      assignee_after: current_user,
+      context: {
+        action: 'self_assignment',
+        current_user_id: current_user.id,
+        current_user_name: current_user.name,
+        current_user_email: current_user.email,
+        trigger: 'status_toggle'
+      }
+    )
+
     @conversation.assignee = current_user
     @conversation.save!
   end

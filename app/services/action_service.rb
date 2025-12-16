@@ -37,13 +37,43 @@ class ActionService
   end
 
   def assign_agent(agent_ids = [])
-    return @conversation.update!(assignee_id: nil) if agent_ids[0] == 'nil'
+    assignee_before = @conversation.assignee
+
+    if agent_ids[0] == 'nil'
+      @conversation.log_agent_assignment(
+        source: 'ActionService#assign_agent',
+        assignee_before: assignee_before,
+        assignee_after: nil,
+        context: {
+          action: 'unassign',
+          agent_ids_param: agent_ids,
+          trigger: 'automation_or_macro'
+        }
+      )
+      return @conversation.update!(assignee_id: nil)
+    end
 
     return unless agent_belongs_to_inbox?(agent_ids)
 
     @agent = @account.users.find_by(id: agent_ids)
 
-    @conversation.update!(assignee_id: @agent.id) if @agent.present?
+    return unless @agent.present?
+
+    @conversation.log_agent_assignment(
+      source: 'ActionService#assign_agent',
+      assignee_before: assignee_before,
+      assignee_after: @agent,
+      context: {
+        action: 'assign',
+        agent_ids_param: agent_ids,
+        agent_id: @agent.id,
+        agent_name: @agent.name,
+        agent_email: @agent.email,
+        trigger: 'automation_or_macro',
+        inbox_members: @conversation.inbox.members.pluck(:user_id)
+      }
+    )
+    @conversation.update!(assignee_id: @agent.id)
   end
 
   def remove_label(labels)
