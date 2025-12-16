@@ -81,14 +81,11 @@ const handleClose = () => {
 </script>
 
 <template>
-  <woot-modal
-    :show="show"
-    :on-close="handleClose"
-  >
+  <woot-modal :show="show" :on-close="handleClose">
     <div class="flex flex-col max-h-[80vh]">
       <woot-modal-header
         :header-title="`Ads History for Telegram ID: ${telegramId}`"
-        :header-content="'List of all ads sent to this user'"
+        header-content="List of all ads sent to this user"
       />
 
       <div class="flex-1 overflow-y-auto p-4">
@@ -96,7 +93,10 @@ const handleClose = () => {
           <span class="text-n-slate-11">Loading...</span>
         </div>
 
-        <div v-else-if="!adsLogs.length" class="flex items-center justify-center h-32">
+        <div
+          v-else-if="!adsLogs.length"
+          class="flex items-center justify-center h-32"
+        >
           <span class="text-n-slate-11">No ads logs found for this user</span>
         </div>
 
@@ -111,7 +111,8 @@ const handleClose = () => {
                 {{ log.adName }}
               </h4>
               <span
-                :class="['text-sm font-medium', getDeliveryStatus(log).class]"
+                class="text-sm font-medium"
+                :class="[getDeliveryStatus(log).class]"
               >
                 {{ getDeliveryStatus(log).text }}
               </span>
@@ -120,7 +121,9 @@ const handleClose = () => {
             <div class="space-y-1 text-sm text-n-slate-11">
               <div class="flex justify-between">
                 <span>Delivery Date:</span>
-                <span class="text-n-slate-12">{{ formatDate(log.createdAt) }}</span>
+                <span class="text-n-slate-12">{{
+                  formatDate(log.createdAt)
+                }}</span>
               </div>
 
               <div v-if="log.messageId" class="flex justify-between">
@@ -130,7 +133,9 @@ const handleClose = () => {
 
               <div v-if="log.tgErrorText" class="flex flex-col mt-2">
                 <span class="text-red-600 font-medium">Error:</span>
-                <span class="text-red-600 text-xs mt-1">{{ log.tgErrorText }}</span>
+                <span class="text-red-600 text-xs mt-1">{{
+                  log.tgErrorText
+                }}</span>
               </div>
             </div>
           </div>
@@ -138,11 +143,7 @@ const handleClose = () => {
       </div>
 
       <div class="flex justify-end gap-2 p-4 border-t border-n-slate-6">
-        <NextButton
-          @click="handleClose"
-        >
-          Close
-        </NextButton>
+        <NextButton @click="handleClose"> Close </NextButton>
       </div>
     </div>
   </woot-modal>

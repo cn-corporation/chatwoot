@@ -32,7 +32,8 @@ export function useAISuggestions() {
       // Extract error message from response
       const errorData = error.response?.data;
       suggestionError.value = {
-        message: errorData?.error || error.message || 'Failed to load AI suggestion',
+        message:
+          errorData?.error || error.message || 'Failed to load AI suggestion',
         success: errorData?.success || false,
       };
       aiSuggestion.value = null;

@@ -40,7 +40,7 @@ onMounted(async () => {
   }
 });
 
-const handleSubmit = async (formData) => {
+const handleSubmit = async formData => {
   const adId = route.params.adId;
   try {
     const ad = await store.dispatch('ads/update', { id: adId, ...formData });
@@ -72,7 +72,10 @@ const handleCancel = () => {
       <h2 class="text-2xl font-semibold text-n-slate-12 mb-6">
         {{ $t('ADS.EDIT.TITLE') }}
       </h2>
-      <div v-if="isLoading || uiFlags.isFetchingItem" class="flex justify-center py-8">
+      <div
+        v-if="isLoading || uiFlags.isFetchingItem"
+        class="flex justify-center py-8"
+      >
         <p class="text-n-slate-10">{{ $t('ADS.LOADING') }}</p>
       </div>
       <AdsForm

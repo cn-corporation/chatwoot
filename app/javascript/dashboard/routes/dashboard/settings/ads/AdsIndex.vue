@@ -53,9 +53,7 @@ onMounted(async () => {
   await store.dispatch('ads/get');
 
   if (records.value && records.value.length > 0) {
-    await Promise.all(
-      records.value.map(ad => loadLatestOperationForAd(ad.id))
-    );
+    await Promise.all(records.value.map(ad => loadLatestOperationForAd(ad.id)));
   }
 });
 
@@ -272,7 +270,10 @@ const formatDate = dateString => {
       >
         <template #actions>
           <router-link :to="{ name: 'ads_new' }">
-            <Button icon="i-lucide-circle-plus" :label="$t('ADS.HEADER_BTN_TXT')" />
+            <Button
+              icon="i-lucide-circle-plus"
+              :label="$t('ADS.HEADER_BTN_TXT')"
+            />
           </router-link>
         </template>
       </BaseSettingsHeader>
@@ -289,11 +290,7 @@ const formatDate = dateString => {
           </th>
         </thead>
         <tbody class="divide-y divide-n-weak text-n-slate-11">
-          <tr
-            v-for="ad in records"
-            :key="ad.id"
-            class="hover:bg-n-slate-2"
-          >
+          <tr v-for="ad in records" :key="ad.id" class="hover:bg-n-slate-2">
             <td class="py-4 ltr:pr-4 rtl:pl-4">
               <span class="font-medium">{{ ad.name }}</span>
             </td>
@@ -375,10 +372,7 @@ const formatDate = dateString => {
         :confirm-text="$t('ADS.DELETE.CONFIRM.YES')"
         :reject-text="$t('ADS.DELETE.CONFIRM.NO')"
       />
-      <woot-modal
-        v-model:show="showTestAdDialog"
-        :on-close="closeTestAdDialog"
-      >
+      <woot-modal v-model:show="showTestAdDialog" :on-close="closeTestAdDialog">
         <div class="flex flex-col gap-4 p-6">
           <h2 class="text-lg font-semibold">
             {{ $t('ADS.SEND.TEST.TITLE') }}
@@ -415,10 +409,7 @@ const formatDate = dateString => {
         :confirm-text="$t('ADS.DELETE_SENT.CONFIRM.YES')"
         :reject-text="$t('ADS.DELETE_SENT.CONFIRM.NO')"
       />
-      <woot-modal
-        v-model:show="showStatusDialog"
-        :on-close="closeStatusDialog"
-      >
+      <woot-modal v-model:show="showStatusDialog" :on-close="closeStatusDialog">
         <div
           v-if="getSendOperation(selectedAd.id)"
           class="flex flex-col gap-4 p-6"
@@ -484,7 +475,9 @@ const formatDate = dateString => {
                 :class="{
                   'text-green-600': getSendOperation(selectedAd.id).isRunning,
                   'text-orange-600': getSendOperation(selectedAd.id).cancelled,
-                  'text-gray-600': !getSendOperation(selectedAd.id).isRunning && !getSendOperation(selectedAd.id).cancelled,
+                  'text-gray-600':
+                    !getSendOperation(selectedAd.id).isRunning &&
+                    !getSendOperation(selectedAd.id).cancelled,
                 }"
               >
                 {{
@@ -527,11 +520,21 @@ const formatDate = dateString => {
           <h2 class="text-lg font-semibold">
             {{ $t('ADS.OPERATIONS_HISTORY.TITLE') }}
           </h2>
-          <div v-if="uiFlags.isFetchingOperations" class="flex justify-center py-8">
-            <p class="text-sm text-n-slate-11">{{ $t('ADS.OPERATIONS_HISTORY.LOADING') }}</p>
+          <div
+            v-if="uiFlags.isFetchingOperations"
+            class="flex justify-center py-8"
+          >
+            <p class="text-sm text-n-slate-11">
+              {{ $t('ADS.OPERATIONS_HISTORY.LOADING') }}
+            </p>
           </div>
-          <div v-else-if="!getSendOperationsHistory.length" class="flex justify-center py-8">
-            <p class="text-sm text-n-slate-11">{{ $t('ADS.OPERATIONS_HISTORY.EMPTY') }}</p>
+          <div
+            v-else-if="!getSendOperationsHistory.length"
+            class="flex justify-center py-8"
+          >
+            <p class="text-sm text-n-slate-11">
+              {{ $t('ADS.OPERATIONS_HISTORY.EMPTY') }}
+            </p>
           </div>
           <div v-else class="max-h-96 overflow-y-auto space-y-4">
             <div
@@ -549,7 +552,8 @@ const formatDate = dateString => {
                     :class="{
                       'text-green-600': operation.isRunning,
                       'text-orange-600': operation.cancelled,
-                      'text-gray-600': !operation.isRunning && !operation.cancelled,
+                      'text-gray-600':
+                        !operation.isRunning && !operation.cancelled,
                     }"
                   >
                     {{
@@ -564,27 +568,47 @@ const formatDate = dateString => {
               </div>
               <div class="grid grid-cols-3 gap-3">
                 <div>
-                  <p class="text-xs text-n-slate-11">{{ $t('ADS.STATUS.TOTAL') }}</p>
-                  <p class="text-sm font-semibold">{{ operation.totalCount }}</p>
+                  <p class="text-xs text-n-slate-11">
+                    {{ $t('ADS.STATUS.TOTAL') }}
+                  </p>
+                  <p class="text-sm font-semibold">
+                    {{ operation.totalCount }}
+                  </p>
                 </div>
                 <div>
-                  <p class="text-xs text-n-slate-11">{{ $t('ADS.STATUS.SENT') }}</p>
+                  <p class="text-xs text-n-slate-11">
+                    {{ $t('ADS.STATUS.SENT') }}
+                  </p>
                   <p class="text-sm font-semibold">{{ operation.sentCount }}</p>
                 </div>
                 <div>
-                  <p class="text-xs text-n-slate-11">{{ $t('ADS.STATUS.SUCCESS') }}</p>
-                  <p class="text-sm font-semibold text-green-600">{{ operation.successCount }}</p>
+                  <p class="text-xs text-n-slate-11">
+                    {{ $t('ADS.STATUS.SUCCESS') }}
+                  </p>
+                  <p class="text-sm font-semibold text-green-600">
+                    {{ operation.successCount }}
+                  </p>
                 </div>
                 <div>
-                  <p class="text-xs text-n-slate-11">{{ $t('ADS.STATUS.FAILED') }}</p>
-                  <p class="text-sm font-semibold text-red-600">{{ operation.failedCount }}</p>
+                  <p class="text-xs text-n-slate-11">
+                    {{ $t('ADS.STATUS.FAILED') }}
+                  </p>
+                  <p class="text-sm font-semibold text-red-600">
+                    {{ operation.failedCount }}
+                  </p>
                 </div>
                 <div>
-                  <p class="text-xs text-n-slate-11">{{ $t('ADS.STATUS.DELETED') }}</p>
-                  <p class="text-sm font-semibold text-orange-600">{{ operation.deletedCount }}</p>
+                  <p class="text-xs text-n-slate-11">
+                    {{ $t('ADS.STATUS.DELETED') }}
+                  </p>
+                  <p class="text-sm font-semibold text-orange-600">
+                    {{ operation.deletedCount }}
+                  </p>
                 </div>
                 <div>
-                  <p class="text-xs text-n-slate-11">{{ $t('ADS.STATUS.LEFT') }}</p>
+                  <p class="text-xs text-n-slate-11">
+                    {{ $t('ADS.STATUS.LEFT') }}
+                  </p>
                   <p class="text-sm font-semibold">{{ operation.leftCount }}</p>
                 </div>
               </div>

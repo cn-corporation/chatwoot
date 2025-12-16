@@ -116,11 +116,19 @@ class Messages::MessageBuilder
   end
 
   def campaign_id
-    @params[:campaign_id].present? ? { additional_attributes: { campaign_id: @params[:campaign_id] } } : {}
+    @params[:campaign_id].present? ? { campaign_id: @params[:campaign_id] } : {}
   end
 
   def template_params
-    @params[:template_params].present? ? { additional_attributes: { template_params: JSON.parse(@params[:template_params].to_json) } } : {}
+    @params[:template_params].present? ? { template_params: JSON.parse(@params[:template_params].to_json) } : {}
+  end
+
+  def additional_attributes
+    attrs = {}
+    attrs.merge!(campaign_id)
+    attrs.merge!(template_params)
+    attrs.merge!(@params[:additional_attributes]) if @params[:additional_attributes].present?
+    attrs.present? ? { additional_attributes: attrs } : {}
   end
 
   def message_sender
@@ -142,7 +150,7 @@ class Messages::MessageBuilder
       in_reply_to: @in_reply_to,
       echo_id: @params[:echo_id],
       source_id: @params[:source_id]
-    }.merge(external_created_at).merge(automation_rule_id).merge(campaign_id).merge(template_params)
+    }.merge(external_created_at).merge(automation_rule_id).merge(additional_attributes)
   end
 
   def email_inbox?

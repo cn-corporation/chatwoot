@@ -160,7 +160,7 @@ watch(
       <CopilotEmptyState
         v-else
         :has-assistants="hasAssistants"
-        @useSuggestion="sendMessage"
+        @use-suggestion="sendMessage"
       />
     </div>
 
