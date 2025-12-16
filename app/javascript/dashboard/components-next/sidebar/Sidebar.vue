@@ -181,6 +181,12 @@ const menuItems = computed(() => {
       to: accountScopedRoute('macros_wrapper'),
     });
     settingsChildren.push({
+      name: 'Settings Ads',
+      label: t('SIDEBAR.ADS'),
+      icon: 'i-lucide-megaphone',
+      to: accountScopedRoute('ads_wrapper'),
+    });
+    settingsChildren.push({
       name: 'Settings Canned Responses',
       label: t('SIDEBAR.CANNED_RESPONSES'),
       icon: 'i-lucide-message-square-quote',

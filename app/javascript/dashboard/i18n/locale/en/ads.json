@@ -1,0 +1,154 @@
+{
+  "ADS": {
+    "HEADER": "Ads",
+    "DESCRIPTION": "Manage advertisements that can be sent to your customers through various channels. Create, edit, and organize your ad campaigns with HTML content and media attachments.",
+    "LEARN_MORE": "Learn more about ads",
+    "HEADER_BTN_TXT": "Add a new ad",
+    "LOADING": "Fetching ads",
+    "LIST": {
+      "TABLE_HEADER": {
+        "NAME": "Name",
+        "SOURCE_CHANNEL": "Source Channel",
+        "CREATED_AT": "Created At",
+        "STATUS": "Status",
+        "ACTIONS": "Actions"
+      },
+      "404": "No ads found"
+    },
+    "CREATE": {
+      "TITLE": "Create New Ad",
+      "API": {
+        "SUCCESS_MESSAGE": "Ad created successfully",
+        "ERROR_MESSAGE": "Unable to create ad. Please try again later"
+      }
+    },
+    "EDIT": {
+      "TITLE": "Edit Ad",
+      "API": {
+        "SUCCESS_MESSAGE": "Ad updated successfully",
+        "ERROR_MESSAGE": "Unable to update ad. Please try again later"
+      }
+    },
+    "DELETE": {
+      "CONFIRM": {
+        "TITLE": "Confirm Deletion",
+        "MESSAGE": "Are you sure you want to delete",
+        "YES": "Yes, Delete",
+        "NO": "No"
+      },
+      "API": {
+        "SUCCESS_MESSAGE": "Ad deleted successfully",
+        "ERROR_MESSAGE": "Unable to delete ad. Please try again later"
+      }
+    },
+    "FORM": {
+      "NAME": {
+        "LABEL": "Ad Name",
+        "PLACEHOLDER": "Enter a name for your ad"
+      },
+      "SOURCE": {
+        "LABEL": "Source Channel",
+        "PLACEHOLDER": "Select a channel",
+        "HELP_TEXT": "The bot token from the selected Telegram channel will be automatically encrypted and stored securely"
+      },
+      "HTML_TEXT": {
+        "LABEL": "HTML Content",
+        "PLACEHOLDER": "Enter HTML content for your ad",
+        "CODE": "Code",
+        "PREVIEW": "Preview",
+        "SUPPORTED_TAGS": "Supported Telegram HTML tags:",
+        "TAGS_CLOSURE_NOTE": "Note: All tags must be properly closed like <tag>text</tag>",
+        "PREVIEW_EMPTY": "Enter HTML content to see preview",
+        "TAG_DESCRIPTIONS": {
+          "B": "Bold text",
+          "I": "Italic text",
+          "U": "Underlined text",
+          "STRIKE": "Strikethrough text",
+          "CODE": "Inline code (monospace)",
+          "PRE": "Code block (monospace, preserves formatting)",
+          "A": "Link (use href attribute: <a href=\"url\">text</a>)"
+        }
+      },
+      "MEDIA": {
+        "LABEL": "Media Attachment"
+      },
+      "BOT_TOKEN_ERROR": "Failed to retrieve or encrypt bot token. Please ensure you selected a valid Telegram channel.",
+      "CREATE": "Create Ad",
+      "UPDATE": "Update Ad",
+      "CANCEL": "Cancel"
+    },
+    "MEDIA": {
+      "UPLOAD_SUCCESS": "Media uploaded successfully",
+      "UPLOAD_ERROR": "Failed to upload media. Please try again",
+      "REMOVE_SUCCESS": "Media removed successfully",
+      "REMOVE_ERROR": "Failed to remove media. Please try again",
+      "UPLOADING": "Uploading media..."
+    },
+    "SEND": {
+      "START": {
+        "SUCCESS_MESSAGE": "Ad sending started successfully",
+        "ERROR_MESSAGE": "Failed to start ad sending. Please try again"
+      },
+      "STOP": {
+        "SUCCESS_MESSAGE": "Ad sending stopped successfully",
+        "ERROR_MESSAGE": "Failed to stop ad sending. Please try again"
+      },
+      "TEST": {
+        "TITLE": "Test Ad",
+        "DESCRIPTION": "Send this ad to a specific Telegram user ID for testing purposes",
+        "TELEGRAM_ID_PLACEHOLDER": "Enter Telegram user ID",
+        "INVALID_TELEGRAM_ID": "Please enter a valid Telegram user ID",
+        "SUCCESS_MESSAGE": "Test ad sent successfully",
+        "ERROR_MESSAGE": "Failed to send test ad. Please try again",
+        "SEND": "Send Test",
+        "CANCEL": "Cancel"
+      }
+    },
+    "DELETE_SENT": {
+      "SUCCESS_MESSAGE": "Deletion job started successfully. Check logs for progress",
+      "ERROR_MESSAGE": "Failed to start deletion job. Please try again",
+      "CONFIRM": {
+        "TITLE": "Delete Sent Messages",
+        "MESSAGE": "Are you sure you want to delete all sent messages for this ad? This action cannot be undone and will run in the background.",
+        "YES": "Yes, Delete All",
+        "NO": "Cancel"
+      }
+    },
+    "STATUS": {
+      "TITLE": "Ad Send Status",
+      "SENDING": "Sending",
+      "IDLE": "Idle",
+      "NOT_SENT": "Not sent yet",
+      "VIEW_DETAILS": "View details",
+      "LOAD_STATUS": "Load status",
+      "TOTAL": "Total",
+      "SENT": "Sent",
+      "SUCCESS": "Success",
+      "FAILED": "Failed",
+      "DELETED": "Deleted",
+      "LEFT": "Remaining",
+      "STATE": "State",
+      "RUNNING": "Running",
+      "CANCELLED": "Cancelled",
+      "COMPLETED": "Completed",
+      "REFRESH": "Refresh Stats",
+      "VIEW_HISTORY": "View History",
+      "CLOSE": "Close"
+    },
+    "OPERATIONS_HISTORY": {
+      "TITLE": "Send Operations History",
+      "LOADING": "Loading operations history...",
+      "EMPTY": "No send operations found for this ad",
+      "CLOSE": "Close"
+    },
+    "ACTIONS": {
+      "VIEW_STATUS": "View sending status",
+      "START_SEND": "Start sending ad",
+      "STOP_SEND": "Stop sending ad",
+      "TEST_AD": "Send test ad",
+      "DELETE_SENT": "Delete sent messages",
+      "EDIT": "Edit ad",
+      "DELETE": "Delete ad"
+    }
+  }
+}

@@ -65,4 +65,8 @@ class InboxPolicy < ApplicationPolicy
   def health?
     @account_user.administrator?
   end
+
+  def telegram_users?
+    @account_user.administrator? || Current.user.assigned_inboxes.include?(record)
+  end
 end

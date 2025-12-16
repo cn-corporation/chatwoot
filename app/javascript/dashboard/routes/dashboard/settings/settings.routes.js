@@ -5,6 +5,7 @@ import {
 } from 'dashboard/constants/permissions.js';
 
 import account from './account/account.routes';
+import ads from './ads/ads.routes';
 import agent from './agents/agent.routes';
 import assignmentPolicy from './assignmentPolicy/assignmentPolicy.routes';
 import agentBot from './agentBots/agentBot.routes';
@@ -45,6 +46,7 @@ export default {
       },
     },
     ...account.routes,
+    ...ads.routes,
     ...agent.routes,
     ...assignmentPolicy.routes,
     ...agentBot.routes,
