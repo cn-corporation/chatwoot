@@ -1,3 +1,4 @@
+<!-- eslint-disable no-continue -->
 <script>
 import { ref, provide } from 'vue';
 // composable
@@ -346,6 +347,13 @@ export default {
         let newMessageCount = 0;
         for (let i = messages.length - 1; i >= 0; i -= 1) {
           if (messages[i].id > this.lastMessageId) {
+            if (
+              messages[i].private &&
+              (messages[i].additional_attributes?.original_message_id ||
+                messages[i].content_attributes?.original_message_id)
+            ) {
+              continue;
+            }
             newMessageCount += 1;
           } else {
             break;
