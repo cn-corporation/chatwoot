@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed, ref, toRefs } from 'vue';
+import { onMounted, computed, ref, toRefs, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import { useTimeoutFn } from '@vueuse/core';
 import { provideMessageContext } from './provider.js';
@@ -140,6 +140,9 @@ const showBackgroundHighlight = ref(false);
 const showContextMenu = ref(false);
 const isEditing = ref(false);
 const editedContent = ref('');
+const editContainer = ref(null);
+const editButtons = ref(null);
+const editTextarea = ref(null);
 const { t } = useI18n();
 const route = useRoute();
 
@@ -431,9 +434,24 @@ function handleReplyTo() {
   emitter.emit(BUS_EVENTS.TOGGLE_REPLY_TO_MESSAGE, props);
 }
 
-function handleEdit() {
+async function handleEdit() {
   isEditing.value = true;
   editedContent.value = props.content;
+
+  await nextTick();
+
+  if (editTextarea.value) {
+    editTextarea.value.focus();
+  }
+
+  await nextTick();
+
+  if (editButtons.value) {
+    editButtons.value.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+    });
+  }
 }
 
 function cancelEdit() {
@@ -456,6 +474,13 @@ async function saveEdit() {
     editedContent.value = '';
   } catch (error) {
     // Silently fail - error already handled by store action
+  }
+}
+
+function handleEnterKey(event) {
+  if (!event.shiftKey) {
+    event.preventDefault();
+    saveEdit();
   }
 }
 
@@ -539,7 +564,7 @@ provideMessageContext({
         gridClass,
         {
           'gap-y-2': contentAttributes.externalError,
-          'w-full': variant === MESSAGE_VARIANTS.EMAIL,
+          'w-full': variant === MESSAGE_VARIANTS.EMAIL || isEditing,
         },
       ]"
       class="gap-x-2"
@@ -557,21 +582,27 @@ provideMessageContext({
       <div
         class="[grid-area:bubble] flex"
         :class="{
-          'ltr:ml-8 rtl:mr-8 justify-end': orientation === ORIENTATION.RIGHT,
-          'ltr:mr-8 rtl:ml-8': orientation === ORIENTATION.LEFT,
-          'min-w-0': variant === MESSAGE_VARIANTS.EMAIL,
+          'ltr:ml-8 rtl:mr-8 justify-end':
+            orientation === ORIENTATION.RIGHT && !isEditing,
+          'ltr:mr-8 rtl:ml-8': orientation === ORIENTATION.LEFT && !isEditing,
+          'min-w-0': variant === MESSAGE_VARIANTS.EMAIL || isEditing,
+          'justify-end': orientation === ORIENTATION.RIGHT && isEditing,
         }"
         @contextmenu="openContextMenu($event)"
       >
-        <div v-if="isEditing" class="flex flex-col gap-2 w-full max-w-2xl">
+        <div
+          v-if="isEditing"
+          ref="editContainer"
+          class="flex flex-col gap-2 w-full max-w-[500px] pr-4"
+        >
           <textarea
+            ref="editTextarea"
             v-model="editedContent"
-            class="w-full p-3 border rounded-md resize-y min-h-[100px] bg-n-slate-1 border-n-slate-7 text-n-slate-12 focus:border-n-iris-9 focus:outline-none"
+            class="w-full p-3 border rounded-md resize-y min-h-[200px] bg-n-slate-1 border-n-slate-7 text-n-slate-12 focus:border-n-iris-9 focus:outline-none"
             @keydown.esc="cancelEdit"
-            @keydown.meta.enter="saveEdit"
-            @keydown.ctrl.enter="saveEdit"
+            @keydown.enter="handleEnterKey"
           />
-          <div class="flex gap-2 justify-end">
+          <div ref="editButtons" class="flex gap-2 justify-end">
             <button
               class="px-4 py-2 text-sm rounded-md bg-n-slate-3 hover:bg-n-slate-4 text-n-slate-12 border border-n-slate-7"
               @click="cancelEdit"
