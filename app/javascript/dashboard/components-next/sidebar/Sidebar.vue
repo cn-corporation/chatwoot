@@ -171,15 +171,15 @@ const menuItems = computed(() => {
       icon: 'i-lucide-bot',
       to: accountScopedRoute('agent_bots'),
     },
-  ];
-
-  if (isAdmin.value) {
-    settingsChildren.push({
+    {
       name: 'Settings Macros',
       label: t('SIDEBAR.MACROS'),
       icon: 'i-lucide-toy-brick',
       to: accountScopedRoute('macros_wrapper'),
-    });
+    },
+  ];
+
+  if (isAdmin.value) {
     settingsChildren.push({
       name: 'Settings Ads',
       label: t('SIDEBAR.ADS'),

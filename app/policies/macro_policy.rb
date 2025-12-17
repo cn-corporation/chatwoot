@@ -8,15 +8,15 @@ class MacroPolicy < ApplicationPolicy
   end
 
   def show?
-    @record.global? || author?
+    @record.global? || author? || @account_user.administrator?
   end
 
   def update?
-    author? || (@account_user.administrator? && @record.global?)
+    author? || @account_user.administrator?
   end
 
   def destroy?
-    author? || orphan_record?
+    author? || orphan_record? || @account_user.administrator?
   end
 
   def execute?
