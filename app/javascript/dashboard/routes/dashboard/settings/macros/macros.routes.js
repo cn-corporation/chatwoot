@@ -1,5 +1,6 @@
 import { FEATURE_FLAGS } from '../../../../featureFlags';
 import { frontendURL } from 'dashboard/helper/URLHelper';
+import { ROLES } from 'dashboard/constants/permissions.js';
 
 import SettingsContent from '../Wrapper.vue';
 import SettingsWrapper from '../SettingsWrapper.vue';
@@ -18,7 +19,7 @@ export default {
           component: Macros,
           meta: {
             featureFlag: FEATURE_FLAGS.MACROS,
-            permissions: ['administrator'],
+            permissions: [...ROLES],
           },
         },
       ],
@@ -40,7 +41,7 @@ export default {
           component: MacroEditor,
           meta: {
             featureFlag: FEATURE_FLAGS.MACROS,
-            permissions: ['administrator'],
+            permissions: [...ROLES],
           },
         },
         {
@@ -49,7 +50,7 @@ export default {
           component: MacroEditor,
           meta: {
             featureFlag: FEATURE_FLAGS.MACROS,
-            permissions: ['administrator'],
+            permissions: [...ROLES],
           },
         },
       ],

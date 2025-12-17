@@ -162,7 +162,9 @@ watch(inboxes, (newInboxes, oldInboxes) => {
   }
 });
 
-onMounted(() => {
+onMounted(async () => {
+  // Reload macros for conversation context (global + own personal only)
+  await store.dispatch('macros/get');
   // Load available macros immediately (will use cached data if available)
   loadAvailableMacros();
 });

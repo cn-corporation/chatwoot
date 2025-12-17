@@ -104,6 +104,9 @@ const fetchMacro = () => {
 
 const initNewMacro = () => {
   mode.value = 'CREATE';
+  const currentUser = getters.getCurrentUser.value;
+  const isAdmin = currentUser?.role === 'administrator';
+
   macro.value = {
     name: '',
     actions: [
@@ -112,7 +115,7 @@ const initNewMacro = () => {
         action_params: [],
       },
     ],
-    visibility: 'global',
+    visibility: isAdmin ? 'global' : 'personal',
   };
 };
 

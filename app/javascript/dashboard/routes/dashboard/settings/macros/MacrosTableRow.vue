@@ -25,11 +25,20 @@ const updatedByName = computed(() => {
 });
 
 const visibilityLabel = computed(() => {
-  const i18nKey =
-    props.macro.visibility === 'global'
-      ? 'MACROS.EDITOR.VISIBILITY.GLOBAL.LABEL'
-      : 'MACROS.EDITOR.VISIBILITY.PERSONAL.LABEL';
-  return t(i18nKey);
+  if (props.macro.visibility === 'global') {
+    return t('MACROS.EDITOR.VISIBILITY.GLOBAL.LABEL');
+  }
+
+  const personalLabel = t('MACROS.EDITOR.VISIBILITY.PERSONAL.LABEL');
+  if (props.macro.created_by) {
+    const ownerName =
+      props.macro.created_by.available_name ??
+      props.macro.created_by.email ??
+      '';
+    return `${personalLabel} (${ownerName})`;
+  }
+
+  return personalLabel;
 });
 </script>
 

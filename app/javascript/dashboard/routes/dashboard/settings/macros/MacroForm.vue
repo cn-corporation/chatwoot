@@ -1,5 +1,6 @@
 <script>
 import { provide } from 'vue';
+import { mapGetters } from 'vuex';
 import MacroNodes from './MacroNodes.vue';
 import MacroProperties from './MacroProperties.vue';
 import { required } from '@vuelidate/validators';
@@ -32,9 +33,18 @@ export default {
     };
   },
   computed: {
+    ...mapGetters({
+      currentUser: 'getCurrentUser',
+    }),
     files() {
       if (this.macro && this.macro.files) return this.macro.files;
       return [];
+    },
+    canChangeVisibility() {
+      if (!this.macro?.created_by) return true;
+      if (this.macro.created_by.id === this.currentUser.id) return true;
+      if (this.macro.visibility === 'global') return true;
+      return false;
     },
   },
   watch: {
@@ -135,6 +145,7 @@ export default {
         :macro-name="macro.name"
         :macro-visibility="macro.visibility"
         :source-channels="sourceChannels"
+        :can-change-visibility="canChangeVisibility"
         @update:name="updateName"
         @update:visibility="updateVisibility"
         @update:source-channels="updateSourceChannels"

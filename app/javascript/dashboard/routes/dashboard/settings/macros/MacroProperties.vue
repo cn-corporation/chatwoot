@@ -20,6 +20,10 @@ export default {
       type: Array,
       default: () => [],
     },
+    canChangeVisibility: {
+      type: Boolean,
+      default: true,
+    },
   },
   emits: [
     'update:name',
@@ -30,12 +34,19 @@ export default {
   computed: {
     ...mapGetters({
       inboxes: 'inboxes/getInboxes',
+      currentUser: 'getCurrentUser',
     }),
     inboxOptions() {
       return this.inboxes.map(inbox => ({
         id: inbox.channel_id,
         name: inbox.name,
       }));
+    },
+    isAdmin() {
+      return this.currentUser?.role === 'administrator';
+    },
+    showGlobalOption() {
+      return this.isAdmin && this.canChangeVisibility;
     },
   },
   methods: {
@@ -77,6 +88,7 @@ export default {
       </p>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <button
+          v-if="showGlobalOption"
           class="p-2 relative rounded-md border border-solid text-left cursor-default"
           :class="isActive('global')"
           @click="onUpdateVisibility('global')"
@@ -97,9 +109,14 @@ export default {
           </p>
         </button>
         <button
-          class="p-2 relative rounded-md border border-solid text-left cursor-default"
-          :class="isActive('personal')"
-          @click="onUpdateVisibility('personal')"
+          class="p-2 relative rounded-md border border-solid text-left"
+          :class="[
+            isActive('personal'),
+            { 'lg:col-span-2': !showGlobalOption },
+            isAdmin ? 'cursor-default' : 'cursor-not-allowed opacity-75',
+          ]"
+          :disabled="!isAdmin"
+          @click="isAdmin ? onUpdateVisibility('personal') : null"
         >
           <fluent-icon
             v-if="macroVisibility === 'personal'"
