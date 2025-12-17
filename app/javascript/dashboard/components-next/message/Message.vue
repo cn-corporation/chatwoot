@@ -464,6 +464,11 @@ async function saveEdit() {
     return;
   }
 
+  if (editedContent.value.trim() === props.content.trim()) {
+    cancelEdit();
+    return;
+  }
+
   try {
     await store.dispatch('editMessage', {
       conversationId: props.conversationId,
