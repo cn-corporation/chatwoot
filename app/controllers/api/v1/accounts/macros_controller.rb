@@ -3,7 +3,10 @@ class Api::V1::Accounts::MacrosController < Api::V1::Accounts::BaseController
   before_action :check_authorization, only: [:show, :update, :destroy, :execute]
 
   def index
-    @macros = Macro.with_visibility(current_user, params)
+    @macros = Macro.with_visibility(current_user, {
+                                      include_all_personal: params[:include_all_personal],
+                                      settings_context: params[:settings_context]
+                                    })
   end
 
   def show
@@ -25,7 +28,7 @@ class Api::V1::Accounts::MacrosController < Api::V1::Accounts::BaseController
   def update
     ActiveRecord::Base.transaction do
       @macro.update!(macros_with_user)
-      @macro.set_visibility(current_user, permitted_params)
+      @macro.set_visibility(current_user, permitted_params) if can_change_visibility?
       process_attachments
       @macro.save!
     rescue StandardError => e
@@ -75,5 +78,12 @@ class Api::V1::Accounts::MacrosController < Api::V1::Accounts::BaseController
 
   def check_authorization
     authorize(@macro) if @macro.present?
+  end
+
+  def can_change_visibility?
+    return true if @macro.created_by == current_user
+    return true if @macro.global?
+
+    false
   end
 end

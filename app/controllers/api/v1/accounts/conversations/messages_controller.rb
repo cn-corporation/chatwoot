@@ -92,7 +92,7 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
       return
     end
 
-    unless message.source_id.present?
+    if message.source_id.blank?
       render json: { error: 'Cannot edit messages without source_id' }, status: :forbidden
       return
     end
@@ -119,18 +119,24 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
     render json: { error: 'Message status update is only allowed for API inboxes' }, status: :forbidden unless @conversation.inbox.api?
   end
 
-  def create_edit_tracking_note(sender_name, old_content, new_content)
-    note_content = "#{sender_name} edited message from \"#{old_content}\" to \"#{new_content}\""
-    create_private_note(note_content)
+  def create_edit_tracking_note(sender_name, old_content, _new_content)
+    note_content = "#{sender_name} edited message: \"#{old_content}\""
+    create_private_note(note_content, message.id)
   end
 
   def create_deletion_tracking_note(sender_name, deleted_content)
-    note_content = "#{sender_name} deleted message \"#{deleted_content}\""
-    create_private_note(note_content)
+    note_content = "#{sender_name} deleted message: \"#{deleted_content}\""
+    create_private_note(note_content, message.id)
   end
 
-  def create_private_note(content)
-    params = { content: content, private: true }
+  def create_private_note(content, original_message_id)
+    original_message = @conversation.messages.find(original_message_id)
+    params = {
+      content: content,
+      private: true,
+      additional_attributes: { original_message_id: original_message_id },
+      external_created_at: (original_message.created_at - 1.second)
+    }
     Messages::MessageBuilder.new(Current.user, @conversation, params).perform
   end
 end

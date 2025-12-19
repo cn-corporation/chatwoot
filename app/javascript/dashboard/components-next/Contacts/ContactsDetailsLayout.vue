@@ -8,6 +8,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Breadcrumb from 'dashboard/components-next/breadcrumb/Breadcrumb.vue';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import VoiceCallButton from 'dashboard/components-next/Contacts/VoiceCallButton.vue';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 
 const props = defineProps({
   selectedContact: {
@@ -25,6 +26,7 @@ const emit = defineEmits(['goToContactsList', 'toggleBlock']);
 const { t } = useI18n();
 const slots = useSlots();
 const route = useRoute();
+const { isAdmin } = useAdmin();
 
 const isContactSidebarOpen = ref(false);
 
@@ -89,6 +91,7 @@ const closeMobileSidebar = () => {
             />
             <div class="flex items-center gap-2">
               <Button
+                v-if="isAdmin"
                 :label="
                   !isContactBlocked
                     ? $t('CONTACTS_LAYOUT.HEADER.BLOCK_CONTACT')

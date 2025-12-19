@@ -39,9 +39,16 @@ class Macro < ApplicationRecord
     self.visibility = :personal if user.agent?
   end
 
-  def self.with_visibility(user, _params)
-    records = Current.account.macros.global
-    records = records.or(personal.where(created_by_id: user.id, account_id: Current.account.id))
+  def self.with_visibility(user, params = {})
+    if params[:settings_context] && !Current.account_user&.administrator?
+      records = personal.where(created_by_id: user.id, account_id: Current.account.id)
+    elsif params[:include_all_personal] && Current.account_user&.administrator?
+      records = Current.account.macros.global
+      records = records.or(personal.where(account_id: Current.account.id))
+    else
+      records = Current.account.macros.global
+      records = records.or(personal.where(created_by_id: user.id, account_id: Current.account.id))
+    end
     records.order(:id)
   end
 

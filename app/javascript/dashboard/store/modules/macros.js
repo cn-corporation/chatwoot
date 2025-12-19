@@ -63,10 +63,10 @@ export const getters = {
 };
 
 export const actions = {
-  get: async function getMacros({ commit, dispatch }) {
+  get: async function getMacros({ commit, dispatch }, params = {}) {
     commit(types.SET_MACROS_UI_FLAG, { isFetching: true });
     try {
-      const response = await MacrosAPI.get();
+      const response = await MacrosAPI.get(params);
       commit(types.SET_MACROS, response.data.payload);
       // Also fetch source mappings from chatwoot-extra
       await dispatch('fetchMacroSources');

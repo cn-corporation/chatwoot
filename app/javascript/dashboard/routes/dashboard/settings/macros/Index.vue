@@ -3,15 +3,24 @@ import { useAlert } from 'dashboard/composables';
 import MacrosTableRow from './MacrosTableRow.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStoreGetters, useStore } from 'dashboard/composables/store';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 import Button from 'dashboard/components-next/button/Button.vue';
 import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 
 const getters = useStoreGetters();
 const store = useStore();
 const { t } = useI18n();
+const { isAdmin } = useAdmin();
+
+onMounted(() => {
+  const params = isAdmin.value
+    ? { include_all_personal: true, settings_context: true }
+    : { settings_context: true };
+  store.dispatch('macros/get', params);
+});
 
 const showDeleteConfirmationPopup = ref(false);
 const selectedMacro = ref({});
