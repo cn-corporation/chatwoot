@@ -53,9 +53,9 @@ class ConversationFinder
     # Base query includes all filters except status and assignee_type
     base_conversations = @conversations
 
-    # Count open conversations for main tabs (include pending in all_count)
-    mine_count = base_conversations.open.assigned_to(current_user).count
-    unassigned_count = base_conversations.open.unassigned.count
+    # Count open conversations for main tabs (include pending where open lists include pending)
+    mine_count = base_conversations.where(status: [:open, :pending]).assigned_to(current_user).count
+    unassigned_count = base_conversations.where(status: [:open, :pending]).unassigned.count
     all_count = base_conversations.where(status: [:open, :pending]).count
 
     # Count resolved conversations
@@ -67,8 +67,8 @@ class ConversationFinder
     filter_by_assignee_type # filter by assignee
 
     # Apply status filter for conversation list (but not for resolved/pending tabs which already filter by status)
-    # For 'all' assignee type, include both open and pending
-    if @assignee_type == 'all' && params[:status] == 'open'
+    # Include both open and pending for open lists
+    if params[:status] == 'open' && @assignee_type != 'resolved' && @assignee_type != 'pending'
       @conversations = @conversations.where(status: [:open, :pending])
     elsif @assignee_type != 'resolved' && @assignee_type != 'pending'
       filter_by_status

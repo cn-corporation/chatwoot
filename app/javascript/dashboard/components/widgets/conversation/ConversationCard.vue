@@ -84,7 +84,8 @@ const isActiveChat = computed(() => {
   return currentChat.value.id === props.chat.id;
 });
 
-const unreadCount = computed(() => props.chat.unread_count);
+const getOperatorUnreadCount = useMapGetter('getOperatorUnreadCount');
+const unreadCount = computed(() => getOperatorUnreadCount.value(props.chat.id));
 
 const hasUnread = computed(() => unreadCount.value > 0);
 
@@ -382,7 +383,7 @@ const deleteConversation = () => {
           {{ formattedTimestamp }}
         </span>
         <span
-          class="shadow-lg rounded-full text-xxs font-semibold h-4 leading-4 mt-0.5 min-w-[1rem] px-1 py-0 text-center text-white bg-n-teal-9"
+          class="shadow-lg rounded-full text-xxs font-semibold h-4 leading-4 mt-0.5 min-w-[1rem] px-1 py-0 text-center text-white bg-n-ruby-9"
           :class="hasUnread ? 'block' : 'hidden'"
         >
           {{ unreadCount > 9 ? '9+' : unreadCount }}

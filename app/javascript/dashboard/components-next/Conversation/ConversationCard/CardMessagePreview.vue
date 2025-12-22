@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
+import { useMapGetter } from 'dashboard/composables/store';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 
@@ -15,6 +16,7 @@ const props = defineProps({
 const { t } = useI18n();
 
 const { getPlainText } = useMessageFormatter();
+const getOperatorUnreadCount = useMapGetter('getOperatorUnreadCount');
 
 const lastNonActivityMessageContent = computed(() => {
   const { lastNonActivityMessage = {}, customAttributes = {} } =
@@ -35,8 +37,7 @@ const assignee = computed(() => {
 });
 
 const unreadMessagesCount = computed(() => {
-  const { unreadCount } = props.conversation;
-  return unreadCount;
+  return getOperatorUnreadCount.value(props.conversation.id);
 });
 </script>
 
@@ -56,7 +57,7 @@ const unreadMessagesCount = computed(() => {
       />
       <div
         v-if="unreadMessagesCount > 0"
-        class="inline-flex items-center justify-center rounded-full size-5 bg-n-brand"
+        class="inline-flex items-center justify-center rounded-full size-5 bg-n-ruby-9"
       >
         <span class="text-xs font-semibold text-white">
           {{ unreadMessagesCount }}

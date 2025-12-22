@@ -19,7 +19,7 @@ const props = defineProps({
   },
 });
 
-const getUnreadCountForInbox = useMapGetter('getUnreadCountForInbox');
+const getUnreadCountForInbox = useMapGetter('getOperatorUnreadCountForInbox');
 
 const reauthorizationRequired = computed(() => {
   return props.inbox.reauthorization_required;
@@ -41,7 +41,7 @@ const unreadCount = computed(() => {
   <div class="flex items-center gap-1">
     <span
       v-if="unreadCount > 0"
-      class="ml-auto text-xs font-semibold px-1.5 py-0.5 rounded bg-red-500 text-white"
+      class="ml-auto text-xs font-semibold px-1.5 py-0.5 rounded bg-n-ruby-9 text-white"
     >
       {{ unreadCount > 99 ? '99+' : unreadCount }}
     </span>

@@ -169,6 +169,32 @@ class ChatwootExtraAPI {
     return `${this.baseURL}/api/operator-presence/conversations/${conversationId}/stream?operatorId=${operatorId}&apiKey=${apiKey}`;
   }
 
+  // Operator Notifications API
+  async getOperatorNotifications(operatorId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/operator-notifications/operator/${operatorId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  getOperatorNotificationStreamURL(operatorId) {
+    const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
+    return `${this.baseURL}/api/operator-notifications/stream/${operatorId}?apiKey=${apiKey}`;
+  }
+
+  async markConversationAsRead(conversationId, operatorId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-notifications/mark-read`,
+      {
+        conversationId: String(conversationId),
+        operatorId: String(operatorId),
+      },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   // Ads API
   async createAd(data) {
     const response = await axios.post(`${this.baseURL}/api/ads`, data, {

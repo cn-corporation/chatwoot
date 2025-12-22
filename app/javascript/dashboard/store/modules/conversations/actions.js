@@ -1,6 +1,7 @@
 import types from '../../mutation-types';
 import ConversationApi from '../../../api/inbox/conversation';
 import MessageApi from '../../../api/inbox/message';
+import ChatwootExtraAPI from '../../../api/chatwootExtra';
 import { MESSAGE_STATUS, MESSAGE_TYPE } from 'shared/constants/messages';
 import { createPendingMessage } from 'dashboard/helper/commons';
 import {
@@ -50,6 +51,7 @@ const actions = {
         params.assigneeType
       );
     } catch (error) {
+      commit(types.CLEAR_LIST_LOADING_STATUS);
       // Handle error
     }
   },
@@ -97,6 +99,7 @@ const actions = {
         'appliedFilters'
       );
     } catch (error) {
+      commit(types.CLEAR_LIST_LOADING_STATUS);
       // Handle error
     }
   },
@@ -592,6 +595,26 @@ const actions = {
       commit(types.SET_INBOX_CAPTAIN_ASSISTANT, response.data);
     } catch (error) {
       // Handle error
+    }
+  },
+
+  markConversationAsReadForOperator: async (
+    { commit, rootGetters },
+    conversationId
+  ) => {
+    const operatorId = rootGetters.getCurrentUser?.id;
+    if (!operatorId) return;
+
+    try {
+      commit(types.SET_OPERATOR_NOTIFICATION_COUNT, {
+        conversationId,
+        unreadCount: 0,
+      });
+
+      await ChatwootExtraAPI.markConversationAsRead(conversationId, operatorId);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('[OperatorNotifications] Failed to mark as read', error);
     }
   },
 
