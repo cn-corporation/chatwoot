@@ -251,6 +251,17 @@ describe('getActiveDateRange', () => {
     expect(range.end).toEqual(expectedEnd);
   });
 
+  it('returns the correct range for "last14days"', () => {
+    const range = getActiveDateRange('last14days', new Date());
+    const expectedStart = new Date(2020, 5, 2);
+    expectedStart.setHours(0, 0, 0, 0);
+    const expectedEnd = new Date();
+    expectedEnd.setHours(23, 59, 59, 999);
+
+    expect(range.start).toEqual(expectedStart);
+    expect(range.end).toEqual(expectedEnd);
+  });
+
   it('returns the correct range for "last30days"', () => {
     const range = getActiveDateRange('last30days', new Date());
     const expectedStart = new Date(2020, 4, 17);
