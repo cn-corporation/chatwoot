@@ -13,6 +13,7 @@ import WootUiKit from 'dashboard/components';
 import App from 'dashboard/App.vue';
 import i18nMessages from 'dashboard/i18n';
 import createAxios from 'dashboard/helper/APIHelper';
+import { initializeOperatorNotifications } from 'dashboard/helper/operatorNotifications';
 
 import commonHelpers, { isJSONValid } from 'dashboard/helper/commons';
 import { sync } from 'vuex-router-sync';
@@ -120,6 +121,7 @@ window.axios = createAxios(axios);
 initializeChatwootEvents();
 initializeAnalyticsEvents();
 initalizeRouter();
+initializeOperatorNotifications(store);
 
 window.onload = () => {
   app.mount('#app');

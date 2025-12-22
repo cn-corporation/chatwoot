@@ -1,5 +1,5 @@
 <script setup>
-import { h, computed, onMounted, onUnmounted } from 'vue';
+import { h, computed, onMounted, onUnmounted, watch } from 'vue';
 import { provideSidebarContext } from './provider';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useKbd } from 'dashboard/composables/utils/useKbd';
@@ -76,10 +76,22 @@ provideSidebarContext({
 const inboxes = useMapGetter('inboxes/getInboxes');
 const labels = useMapGetter('labels/getLabelsOnSidebar');
 const teams = useMapGetter('teams/getMyTeams');
-const totalUnreadCount = useMapGetter('getTotalUnreadCount');
-const getUnreadCountForLabel = useMapGetter('getUnreadCountForLabel');
-const getUnreadCountForTeam = useMapGetter('getUnreadCountForTeam');
+const totalUnreadCount = useMapGetter('getTotalOperatorUnreadCount');
+const getUnreadCountForLabel = useMapGetter('getOperatorUnreadCountForLabel');
+const getUnreadCountForTeam = useMapGetter('getOperatorUnreadCountForTeam');
 // Removed unused custom views - simplified for poker operator UI
+watch(
+  () => totalUnreadCount.value,
+  (next, prev) => {
+    if (next === prev) return;
+    // eslint-disable-next-line no-console
+    console.log('[OperatorNotifications] sidebar total unread', {
+      prev,
+      next,
+    });
+  },
+  { immediate: true }
+);
 const refreshCounts = async () => {
   await store.dispatch('fetchAllConversationsForCounts');
 };
@@ -397,7 +409,7 @@ const menuItems = computed(() => {
                         'span',
                         {
                           class:
-                            'ml-auto text-xs font-semibold px-1.5 py-0.5 rounded bg-red-500 text-white',
+                            'ml-auto text-xs font-semibold px-1.5 py-0.5 rounded bg-n-ruby-9 text-white',
                         },
                         leafProps.count > 99 ? '99+' : leafProps.count
                       )

@@ -836,6 +836,7 @@ async function markAsRead(conversationId) {
     await store.dispatch('markMessagesRead', {
       id: conversationId,
     });
+    await store.dispatch('markConversationAsReadForOperator', conversationId);
   } catch (error) {
     // Ignore error
   }

@@ -55,9 +55,9 @@ export const applyPageFilters = (conversation, filters) => {
   const team = meta.team || {};
   const { id: chatTeamId } = team;
 
-  // For 'all' assignee type with 'open' status, include both open and pending conversations
+  // For open lists, include both open and pending conversations
   let shouldFilter;
-  if (assigneeType === 'all' && status === 'open') {
+  if (status === 'open') {
     shouldFilter = chatStatus === 'open' || chatStatus === 'pending';
   } else {
     shouldFilter = filterByStatus(chatStatus, status);
