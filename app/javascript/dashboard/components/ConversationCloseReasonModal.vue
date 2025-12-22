@@ -88,6 +88,8 @@ const submitReason = async () => {
       conversationId: props.conversationId,
       status: 'resolved',
       resolutionReason: reasonValue === 'custom' ? null : reasonValue,
+      customResolutionReason:
+        reasonValue === 'custom' ? customReasonText : null,
     });
 
     // If custom reason, save it to custom_attributes

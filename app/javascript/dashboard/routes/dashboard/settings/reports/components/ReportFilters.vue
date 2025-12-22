@@ -8,7 +8,7 @@ import WootDateRangePicker from 'dashboard/components/ui/DateRangePicker.vue';
 import ToggleSwitch from 'dashboard/components-next/switch/Switch.vue';
 
 import { GROUP_BY_FILTER } from '../constants';
-const CUSTOM_DATE_RANGE_ID = 5;
+const CUSTOM_DATE_RANGE_ID = 6;
 
 export default {
   components: {
@@ -60,11 +60,12 @@ export default {
     dateRange() {
       return [
         { id: 0, name: this.$t('REPORT.DATE_RANGE_OPTIONS.LAST_7_DAYS') },
-        { id: 1, name: this.$t('REPORT.DATE_RANGE_OPTIONS.LAST_30_DAYS') },
-        { id: 2, name: this.$t('REPORT.DATE_RANGE_OPTIONS.LAST_3_MONTHS') },
-        { id: 3, name: this.$t('REPORT.DATE_RANGE_OPTIONS.LAST_6_MONTHS') },
-        { id: 4, name: this.$t('REPORT.DATE_RANGE_OPTIONS.LAST_YEAR') },
-        { id: 5, name: this.$t('REPORT.DATE_RANGE_OPTIONS.CUSTOM_DATE_RANGE') },
+        { id: 1, name: this.$t('REPORT.DATE_RANGE_OPTIONS.LAST_14_DAYS') },
+        { id: 2, name: this.$t('REPORT.DATE_RANGE_OPTIONS.LAST_30_DAYS') },
+        { id: 3, name: this.$t('REPORT.DATE_RANGE_OPTIONS.LAST_3_MONTHS') },
+        { id: 4, name: this.$t('REPORT.DATE_RANGE_OPTIONS.LAST_6_MONTHS') },
+        { id: 5, name: this.$t('REPORT.DATE_RANGE_OPTIONS.LAST_YEAR') },
+        { id: 6, name: this.$t('REPORT.DATE_RANGE_OPTIONS.CUSTOM_DATE_RANGE') },
       ];
     },
     isDateRangeSelected() {
@@ -82,10 +83,11 @@ export default {
       }
       const dateRange = {
         0: 6,
-        1: 29,
-        2: 89,
-        3: 179,
-        4: 364,
+        1: 13,
+        2: 29,
+        3: 89,
+        4: 179,
+        5: 364,
       };
       const diff = dateRange[this.currentDateRangeSelection.id];
       const fromDate = subDays(new Date(), diff);
@@ -107,9 +109,10 @@ export default {
       const groupRange = {
         0: GROUP_BY_FILTER[1].period,
         1: GROUP_BY_FILTER[2].period,
-        2: GROUP_BY_FILTER[3].period,
+        2: GROUP_BY_FILTER[2].period,
         3: GROUP_BY_FILTER[3].period,
-        4: GROUP_BY_FILTER[4].period,
+        4: GROUP_BY_FILTER[3].period,
+        5: GROUP_BY_FILTER[4].period,
       };
       return groupRange[this.currentDateRangeSelection.id];
     },

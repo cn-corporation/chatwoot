@@ -272,7 +272,13 @@ const actions = {
 
   toggleStatus: async (
     { commit, dispatch },
-    { conversationId, status, snoozedUntil = null, resolutionReason = null }
+    {
+      conversationId,
+      status,
+      snoozedUntil = null,
+      resolutionReason = null,
+      customResolutionReason = null,
+    }
   ) => {
     try {
       const {
@@ -288,6 +294,7 @@ const actions = {
         status,
         snoozedUntil,
         resolutionReason,
+        customResolutionReason,
       });
       commit(types.CHANGE_CONVERSATION_STATUS, {
         conversationId,

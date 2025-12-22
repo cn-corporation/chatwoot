@@ -68,9 +68,15 @@ module ActivityMessageHandler
 
   def user_status_change_activity_content(user_name)
     if user_name
-      if resolved? && resolution_reason.present?
-        reason_text = I18n.t("close_reason.#{resolution_reason}", default: resolution_reason.humanize)
-        I18n.t('conversations.activity.status.resolved_with_reason', user_name: user_name, reason: reason_text)
+      if resolved?
+        if resolution_reason.present?
+          reason_text = I18n.t("close_reason.#{resolution_reason}", default: resolution_reason.humanize)
+          I18n.t('conversations.activity.status.resolved_with_reason', user_name: user_name, reason: reason_text)
+        elsif custom_resolution_reason.present?
+          I18n.t('conversations.activity.status.resolved_with_reason', user_name: user_name, reason: custom_resolution_reason)
+        else
+          I18n.t("conversations.activity.status.#{status}", user_name: user_name)
+        end
       else
         I18n.t("conversations.activity.status.#{status}", user_name: user_name)
       end
@@ -93,6 +99,10 @@ module ActivityMessageHandler
 
   def activity_message_params(content)
     { account_id: account_id, inbox_id: inbox_id, message_type: :activity, content: content }
+  end
+
+  def custom_resolution_reason
+    custom_attributes&.fetch('custom_resolution_reason', nil).presence
   end
 
   def create_muted_message
