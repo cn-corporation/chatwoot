@@ -6,6 +6,8 @@ class Telegram::SendOnTelegramService < Base::SendOnChannelService
   end
 
   def perform_reply
+    return if message.content_attributes['deleted'] == true
+
     ## send reply to telegram message api
     # https://core.telegram.org/bots/api#sendmessage
     message_id = channel.send_message_on_telegram(message)
