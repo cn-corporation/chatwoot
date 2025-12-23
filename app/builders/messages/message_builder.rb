@@ -21,6 +21,11 @@ class Messages::MessageBuilder
   end
 
   def perform
+    if should_split_telegram_media_group?
+      @message = build_telegram_attachment_messages
+      return @message
+    end
+
     @message = @conversation.messages.build(message_params)
     process_attachments
     process_emails
@@ -51,18 +56,7 @@ class Messages::MessageBuilder
     return if @attachments.blank?
 
     @attachments.each do |uploaded_attachment|
-      attachment = @message.attachments.build(
-        account_id: @message.account_id,
-        file: uploaded_attachment
-      )
-
-      attachment.file_type = if uploaded_attachment.is_a?(String)
-                               file_type_by_signed_id(
-                                 uploaded_attachment
-                               )
-                             else
-                               file_type(uploaded_attachment&.content_type)
-                             end
+      attach_file_to_message(@message, uploaded_attachment)
     end
   end
 
@@ -151,6 +145,48 @@ class Messages::MessageBuilder
       echo_id: @params[:echo_id],
       source_id: @params[:source_id]
     }.merge(external_created_at).merge(automation_rule_id).merge(additional_attributes)
+  end
+
+  def should_split_telegram_media_group?
+    return false if @attachments.blank? || @attachments.size <= 1
+    return false if @private
+    return false unless message_type == 'outgoing'
+
+    @conversation.inbox.channel_type == 'Channel::Telegram'
+  end
+
+  def build_telegram_attachment_messages
+    messages = []
+
+    @attachments.each_with_index do |uploaded_attachment, index|
+      message = @conversation.messages.build(message_params_for_telegram_attachment(index))
+      attach_file_to_message(message, uploaded_attachment)
+      message.save!
+      messages << message
+    end
+
+    messages.first
+  end
+
+  def message_params_for_telegram_attachment(index)
+    params = message_params
+    params.merge(
+      content: index.zero? ? @params[:content] : nil,
+      echo_id: index.zero? ? @params[:echo_id] : nil
+    )
+  end
+
+  def attach_file_to_message(message, uploaded_attachment)
+    attachment = message.attachments.build(
+      account_id: message.account_id,
+      file: uploaded_attachment
+    )
+
+    attachment.file_type = if uploaded_attachment.is_a?(String)
+                             file_type_by_signed_id(uploaded_attachment)
+                           else
+                             file_type(uploaded_attachment&.content_type)
+                           end
   end
 
   def email_inbox?
