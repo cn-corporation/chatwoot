@@ -66,14 +66,6 @@ const allMessages = computed(() => {
     result.push(message);
   });
 
-  const unlinkedNotes = privateNotesWithLinks.filter(
-    note =>
-      !otherMessages.some(
-        msg => msg.id === note.additionalAttributes.originalMessageId
-      )
-  );
-  unlinkedNotes.forEach(note => result.push(note));
-
   return result;
 });
 
