@@ -118,8 +118,14 @@ export default {
     },
   },
   watch: {
-    conversationId() {
-      this.fetchConversationIfUnavailable();
+    conversationId: {
+      immediate: true,
+      handler(newId) {
+        this.fetchConversationIfUnavailable();
+        if (newId) {
+          this.markCurrentConversationAsRead();
+        }
+      },
     },
   },
 
@@ -151,6 +157,14 @@ export default {
     initialize() {
       this.$store.dispatch('setActiveInbox', this.inboxId);
       this.setActiveChat();
+    },
+    markCurrentConversationAsRead() {
+      if (this.conversationId) {
+        this.$store.dispatch(
+          'markConversationAsReadForOperator',
+          this.conversationId
+        );
+      }
     },
     toggleConversationLayout() {
       const { LAYOUT_TYPES } = wootConstants;

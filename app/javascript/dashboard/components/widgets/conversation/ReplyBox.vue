@@ -801,11 +801,15 @@ export default {
           this.isATwilioWhatsAppChannel ||
           this.isAWhatsAppCloudChannel ||
           this.is360DialogWhatsAppChannel;
+        const isOnTelegram = this.isATelegramChannel;
         // When users send messages containing both text and attachments on Instagram, Instagram treats them as separate messages.
         // Although Chatwoot combines these into a single message, Instagram sends separate echo events for each component.
         // This can create duplicate messages in Chatwoot. To prevent this issue, we'll handle text and attachments as separate messages.
         const isOnInstagram = this.isAnInstagramChannel;
-        if ((isOnWhatsApp || isOnInstagram) && !this.isPrivate) {
+        if (
+          (isOnWhatsApp || isOnInstagram || isOnTelegram) &&
+          !this.isPrivate
+        ) {
           this.sendMessageAsMultipleMessages(this.message);
         } else {
           const messagePayload = this.getMessagePayload(this.message);
@@ -1037,11 +1041,6 @@ export default {
       });
     },
     attachFile({ blob, file }) {
-      if (this.isATelegramChannel && this.attachedFiles.length >= 1) {
-        useAlert(this.$t('CONVERSATION.TELEGRAM_MAX_ATTACHMENTS_REACHED'));
-        return;
-      }
-
       const reader = new FileReader();
       reader.readAsDataURL(file.file);
       reader.onloadend = () => {
@@ -1090,7 +1089,7 @@ export default {
 
           attachmentPayload = this.setReplyToInPayload(attachmentPayload);
           multipleMessagePayload.push(attachmentPayload);
-          // For WhatsApp, only the first attachment gets a caption
+          // For WhatsApp and Telegram, only the first attachment gets a caption
           if (!this.isAnInstagramChannel) caption = '';
         });
       }

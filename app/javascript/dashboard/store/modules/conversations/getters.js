@@ -14,6 +14,33 @@ export const getSelectedChatConversation = ({
 }) =>
   allConversations.filter(conversation => conversation.id === selectedChatId);
 
+const isOpenOrPending = conversation =>
+  conversation?.status === 'open' || conversation?.status === 'pending';
+
+const getAssigneeId = conversation =>
+  conversation?.assignee_id ?? conversation?.meta?.assignee?.id;
+
+const isAssignedToCurrentUser = (conversation, currentUserId) => {
+  const assigneeId = getAssigneeId(conversation);
+  if (!assigneeId) return true;
+  if (!currentUserId) return false;
+  return String(assigneeId) === String(currentUserId);
+};
+
+const isOperatorUnreadEligible = (conversation, currentUserId) => {
+  if (!conversation) return false;
+  if (!isOpenOrPending(conversation)) return false;
+  return isAssignedToCurrentUser(conversation, currentUserId);
+};
+
+const findConversation = (state, conversationId) => {
+  const normalizedId = Number(conversationId);
+  return (
+    state.allConversations.find(conv => conv.id === normalizedId) ||
+    state.sidebarCountsData.find(conv => conv.id === normalizedId)
+  );
+};
+
 const getters = {
   getAllConversations: ({ allConversations, chatSortFilter: sortKey }) => {
     return allConversations.sort((a, b) => sortComparator(a, b, sortKey));
@@ -284,6 +311,89 @@ const getters = {
       return convTeamId === Number(teamId);
     });
   },
+
+  // Operator Notifications (chatwoot-extra integration)
+  getOperatorUnreadCount:
+    (_state, _getters, _rootState, rootGetters) => conversationId => {
+      const currentUserId = rootGetters.getCurrentUser?.id;
+      const conversation = findConversation(_state, conversationId);
+      if (!isOperatorUnreadEligible(conversation, currentUserId)) return 0;
+      return _state.operatorNotifications.get(String(conversationId)) || 0;
+    },
+
+  getTotalOperatorUnreadCount: (_state, _getters, _rootState, rootGetters) => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+    const currentUserId = rootGetters.getCurrentUser?.id;
+
+    return source.reduce((total, conv) => {
+      if (!isOperatorUnreadEligible(conv, currentUserId)) return total;
+      return total + (_state.operatorNotifications.get(String(conv.id)) || 0);
+    }, 0);
+  },
+
+  getOperatorUnreadCountForInbox:
+    (_state, getters, _rootState, rootGetters) => inboxId => {
+      const source =
+        _state.sidebarCountsData.length > 0
+          ? _state.sidebarCountsData
+          : _state.allConversations;
+      const currentUserId = rootGetters.getCurrentUser?.id;
+
+      return source
+        .filter(conv => {
+          if (conv.inbox_id !== inboxId) return false;
+          return isOperatorUnreadEligible(conv, currentUserId);
+        })
+        .reduce((total, conv) => {
+          return total + getters.getOperatorUnreadCount(conv.id);
+        }, 0);
+    },
+
+  getOperatorUnreadCountForTeam:
+    (_state, getters, _rootState, rootGetters) => teamId => {
+      const source =
+        _state.sidebarCountsData.length > 0
+          ? _state.sidebarCountsData
+          : _state.allConversations;
+      const currentUserId = rootGetters.getCurrentUser?.id;
+
+      return source
+        .filter(conv => {
+          const convTeamId = conv.team_id || conv.meta?.team?.id;
+          if (convTeamId !== teamId) return false;
+          return isOperatorUnreadEligible(conv, currentUserId);
+        })
+        .reduce((total, conv) => {
+          return total + getters.getOperatorUnreadCount(conv.id);
+        }, 0);
+    },
+
+  getOperatorUnreadCountForLabel:
+    (_state, getters, _rootState, rootGetters) => labelTitle => {
+      const source =
+        _state.sidebarCountsData.length > 0
+          ? _state.sidebarCountsData
+          : _state.allConversations;
+      const currentUserId = rootGetters.getCurrentUser?.id;
+
+      return source
+        .filter(conv => {
+          if (!conv.labels || !Array.isArray(conv.labels)) return false;
+          if (!isOperatorUnreadEligible(conv, currentUserId)) return false;
+
+          return conv.labels.some(label =>
+            typeof label === 'string'
+              ? label === labelTitle
+              : label.title === labelTitle
+          );
+        })
+        .reduce((total, conv) => {
+          return total + getters.getOperatorUnreadCount(conv.id);
+        }, 0);
+    },
 };
 
 export default getters;

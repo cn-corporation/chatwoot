@@ -24,6 +24,8 @@ const state = {
   copilotAssistant: {},
   // Separate storage for sidebar counts
   sidebarCountsData: [],
+  operatorNotifications: new Map(),
+  operatorNotificationsReady: false,
 };
 
 // mutations
@@ -410,6 +412,23 @@ export const mutations = {
   },
   [types.SET_INBOX_CAPTAIN_ASSISTANT](_state, data) {
     _state.copilotAssistant = data.assistant;
+  },
+  [types.SET_OPERATOR_NOTIFICATION_COUNT](
+    _state,
+    { conversationId, unreadCount }
+  ) {
+    if (unreadCount > 0) {
+      _state.operatorNotifications.set(String(conversationId), unreadCount);
+    } else {
+      _state.operatorNotifications.delete(String(conversationId));
+    }
+  },
+  [types.SET_OPERATOR_NOTIFICATIONS_READY](_state, ready) {
+    _state.operatorNotificationsReady = ready;
+  },
+  [types.CLEAR_OPERATOR_NOTIFICATIONS](_state) {
+    _state.operatorNotifications.clear();
+    _state.operatorNotificationsReady = false;
   },
 };
 

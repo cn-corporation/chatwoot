@@ -152,9 +152,29 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     @conversation.status = params[:status]
     @conversation.snoozed_until = parse_date_time(params[:snoozed_until].to_s) if params[:snoozed_until]
     # Set resolution reason when closing conversation
-    @conversation.resolution_reason = params[:resolution_reason] if params[:resolution_reason].present?
+    if params[:resolution_reason].present?
+      @conversation.resolution_reason = params[:resolution_reason]
+      remove_custom_resolution_reason
+    elsif params[:status] == 'resolved' && params[:custom_resolution_reason].present?
+      set_custom_resolution_reason(params[:custom_resolution_reason])
+    elsif params[:status] == 'resolved'
+      remove_custom_resolution_reason
+    end
     # Clear resolution reason when reopening conversation
-    @conversation.resolution_reason = nil if params[:status] == 'open'
+    return unless params[:status] == 'open'
+
+    @conversation.resolution_reason = nil
+    remove_custom_resolution_reason
+  end
+
+  def set_custom_resolution_reason(reason)
+    @conversation.custom_attributes = @conversation.custom_attributes.merge('custom_resolution_reason' => reason)
+  end
+
+  def remove_custom_resolution_reason
+    return if @conversation.custom_attributes.blank?
+
+    @conversation.custom_attributes = @conversation.custom_attributes.except('custom_resolution_reason')
   end
 
   def assign_conversation

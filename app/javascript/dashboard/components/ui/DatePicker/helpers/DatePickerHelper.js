@@ -30,6 +30,10 @@ export const calendarWeeks = [
 
 export const dateRanges = [
   { label: 'DATE_PICKER.DATE_RANGE_OPTIONS.LAST_7_DAYS', value: 'last7days' },
+  {
+    label: 'DATE_PICKER.DATE_RANGE_OPTIONS.LAST_14_DAYS',
+    value: 'last14days',
+  },
   { label: 'DATE_PICKER.DATE_RANGE_OPTIONS.LAST_30_DAYS', value: 'last30days' },
   {
     label: 'DATE_PICKER.DATE_RANGE_OPTIONS.LAST_3_MONTHS',
@@ -45,6 +49,7 @@ export const dateRanges = [
 
 export const DATE_RANGE_TYPES = {
   LAST_7_DAYS: 'last7days',
+  LAST_14_DAYS: 'last14days',
   LAST_30_DAYS: 'last30days',
   LAST_3_MONTHS: 'last3months',
   LAST_6_MONTHS: 'last6months',
@@ -192,6 +197,10 @@ export const getActiveDateRange = (range, currentDate) => {
   const ranges = {
     last7days: () => ({
       start: startOfDay(subDays(currentDate, 6)),
+      end: endOfDay(currentDate),
+    }),
+    last14days: () => ({
+      start: startOfDay(subDays(currentDate, 13)),
       end: endOfDay(currentDate),
     }),
     last30days: () => ({

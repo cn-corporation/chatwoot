@@ -1,10 +1,17 @@
+require 'active_support/core_ext/hash/indifferent_access'
+
 class Webhooks::Trigger
   SUPPORTED_ERROR_HANDLE_EVENTS = %w[message_created message_updated].freeze
+  SUPPORTED_CHATWOOT_EXTRA_EVENTS = %w[
+    message_created
+    message_created_with_context
+    inbound_message_created_with_context
+  ].freeze
   HEADER_PARAM_PREFIX = 'header_'
 
   def initialize(url, payload, webhook_type)
     @original_url = url
-    @payload = payload
+    @payload = payload.with_indifferent_access
     @webhook_type = webhook_type
     parse_url_and_headers
   end
@@ -49,7 +56,7 @@ class Webhooks::Trigger
       method: :post,
       url: @url,
       payload: @payload.to_json,
-      headers: { content_type: :json, accept: :json }.merge(@custom_headers),
+      headers: request_headers,
       timeout: webhook_timeout
     )
   end
@@ -96,6 +103,47 @@ class Webhooks::Trigger
 
   def message_id
     @payload[:id]
+  end
+
+  def request_headers
+    headers = { content_type: :json, accept: :json }.merge(@custom_headers)
+    token = webhook_bearer_token
+    if token.present?
+      headers['X-Chatwoot-Bearer-Token'] = token
+      headers[:'X-Chatwoot-Bearer-Token'] = token
+    end
+    headers
+  end
+
+  def webhook_bearer_token
+    return unless should_attach_chatwoot_token?
+
+    token = ChatwootExtra::BearerTokenService.encrypted_token_for_account(account_id)
+    if token.present?
+      Rails.logger.debug(
+        "[Webhooks::Trigger] Attached Chatwoot Extra bearer token for account #{account_id}"
+      )
+      return token
+    else
+      Rails.logger.warn(
+        "[Webhooks::Trigger] Unable to attach Chatwoot Extra bearer token for account #{account_id}"
+      )
+    end
+    nil
+  rescue StandardError => e
+    Rails.logger.warn "[Webhooks::Trigger] Failed to attach bearer token for account #{account_id}: #{e.message}"
+    nil
+  end
+
+  def should_attach_chatwoot_token?
+    SUPPORTED_CHATWOOT_EXTRA_EVENTS.include?(@payload[:event]) && account_id.present?
+  end
+
+  def account_id
+    account_details = @payload[:account]
+    return if account_details.blank?
+
+    account_details[:id] || account_details['id']
   end
 
   def webhook_timeout

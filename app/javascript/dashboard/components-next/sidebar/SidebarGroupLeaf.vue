@@ -51,7 +51,7 @@ const shouldRenderComponent = computed(() => {
         <div class="flex-1 truncate min-w-0">{{ label }}</div>
         <span
           v-if="count > 0"
-          class="ml-auto text-xs font-semibold px-1.5 py-0.5 rounded bg-red-500 text-white"
+          class="ml-auto text-xs font-semibold px-1.5 py-0.5 rounded bg-n-ruby-9 text-white"
         >
           {{ count }}
         </span>

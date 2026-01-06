@@ -58,6 +58,12 @@ export const DATE_RANGE_OPTIONS = {
     offset: 6,
     groupByOptions: [GROUP_BY_OPTIONS.DAY],
   },
+  LAST_14_DAYS: {
+    id: 'LAST_14_DAYS',
+    translationKey: 'REPORT.DATE_RANGE_OPTIONS.LAST_14_DAYS',
+    offset: 13,
+    groupByOptions: [GROUP_BY_OPTIONS.DAY, GROUP_BY_OPTIONS.WEEK],
+  },
   LAST_30_DAYS: {
     id: 'LAST_30_DAYS',
     translationKey: 'REPORT.DATE_RANGE_OPTIONS.LAST_30_DAYS',
