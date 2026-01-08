@@ -2,16 +2,26 @@ class WebhookListener < BaseListener
   def conversation_status_changed(event)
     conversation = extract_conversation_and_account(event)[0]
     changed_attributes = extract_changed_attributes(event)
+    performed_by = event.data[:performed_by]
     inbox = conversation.inbox
-    payload = conversation.webhook_data.merge(event: __method__.to_s, changed_attributes: changed_attributes)
+    payload = conversation.webhook_data.merge(
+      event: __method__.to_s,
+      changed_attributes: changed_attributes,
+      performed_by: performed_by&.push_event_data
+    )
     deliver_webhook_payloads(payload, inbox)
   end
 
   def conversation_updated(event)
     conversation = extract_conversation_and_account(event)[0]
     changed_attributes = extract_changed_attributes(event)
+    performed_by = event.data[:performed_by]
     inbox = conversation.inbox
-    payload = conversation.webhook_data.merge(event: __method__.to_s, changed_attributes: changed_attributes)
+    payload = conversation.webhook_data.merge(
+      event: __method__.to_s,
+      changed_attributes: changed_attributes,
+      performed_by: performed_by&.push_event_data
+    )
     deliver_webhook_payloads(payload, inbox)
   end
 

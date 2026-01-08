@@ -587,5 +587,51 @@
     "OPERATOR_CHART": "Operator Performance (Top 10)",
     "DISTRIBUTION_CHART": "Response Time Distribution",
     "DAILY_TABLE": "Daily Statistics"
+  },
+  "RESOLUTION_STATISTICS": {
+    "HEADER": "Resolution Statistics",
+    "DESCRIPTION": "Analyze resolution reasons, operators, and volumes over time",
+    "FILTERS": {
+      "HEADER": "Filters",
+      "START_DATE": "Start Date",
+      "END_DATE": "End Date",
+      "OPERATORS": "Operators (optional)",
+      "OPERATORS_PLACEHOLDER": "Select operators...",
+      "OPERATORS_SELECTED": "{count} operator(s) selected",
+      "REASON": "Resolution reason (optional)",
+      "REASON_PLACEHOLDER": "All reasons",
+      "CONVERSATION": "Conversation ID (optional)",
+      "CONVERSATION_PLACEHOLDER": "Enter conversation ID",
+      "APPLY": "Apply Filters"
+    },
+    "METRICS": {
+      "TOTAL": "Total Resolutions",
+      "UNIQUE_CONVERSATIONS": "Unique Conversations",
+      "UNIQUE_OPERATORS": "Unique Operators",
+      "TOP_REASON": "Top Reason"
+    },
+    "CHARTS": {
+      "REASONS": "Resolutions by Reason",
+      "REASONS_LABEL": "Resolutions",
+      "TREND": "Resolution Trend",
+      "TREND_LABEL": "Resolutions per Day",
+      "OPERATORS": "Operator Resolutions (Top 10)",
+      "OPERATORS_LABEL": "Resolutions"
+    },
+    "TABLE": {
+      "HEADER": "Resolution Records",
+      "COLUMNS": {
+        "CONVERSATION": "Conversation",
+        "OPERATOR": "Operator",
+        "REASON": "Reason",
+        "DETAILS": "Details",
+        "DATE": "Resolved At"
+      }
+    },
+    "EMPTY_STATE": "No data available",
+    "UNKNOWN": "Unknown",
+    "NO_TOP_REASON": "No data",
+    "EMPTY_VALUE": "--",
+    "OPERATOR_ID": "Operator {id}"
   }
 }

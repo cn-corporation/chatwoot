@@ -59,6 +59,7 @@ class Api::V1::Widget::ConversationsController < Api::V1::Widget::BaseController
     return head :forbidden unless @web_widget.end_conversation?
 
     unless conversation.resolved?
+      Current.executed_by = @contact
       conversation.status = :resolved
       conversation.save!
     end
