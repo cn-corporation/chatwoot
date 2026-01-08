@@ -147,8 +147,21 @@
       "STOP_SEND": "Stop sending ad",
       "TEST_AD": "Send test ad",
       "DELETE_SENT": "Delete sent messages",
+      "VIEW_ERRORS": "View error logs",
       "EDIT": "Edit ad",
       "DELETE": "Delete ad"
+    },
+    "ERROR_LOGS": {
+      "TITLE": "Error Logs",
+      "LOADING": "Loading error logs...",
+      "EMPTY": "No errors found for this ad",
+      "CLOSE": "Close",
+      "EXPORT_EXCEL": "Export to Excel",
+      "TABLE_HEADER": {
+        "TELEGRAM_ID": "Telegram ID",
+        "ERROR_TEXT": "Error Message",
+        "TIMESTAMP": "Timestamp"
+      }
     }
   }
 }

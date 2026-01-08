@@ -9,6 +9,7 @@ export const state = {
   records: [],
   sendOperations: {},
   sendOperationsHistory: {},
+  errorLogs: {},
   uiFlags: {
     isFetchingItem: false,
     isFetching: false,
@@ -23,6 +24,7 @@ export const state = {
     isFetchingStatus: false,
     isFetchingOperations: false,
     isDeletingSentMessages: false,
+    isFetchingErrorLogs: false,
   },
 };
 
@@ -38,6 +40,9 @@ export const getters = {
   },
   getSendOperationsHistory: $state => adId => {
     return $state.sendOperationsHistory[adId] || [];
+  },
+  getErrorLogs: $state => adId => {
+    return $state.errorLogs[adId] || [];
   },
   getUIFlags($state) {
     return $state.uiFlags;
@@ -266,6 +271,22 @@ export const actions = {
       commit(types.SET_ADS_UI_FLAG, { isDeletingSentMessages: false });
     }
   },
+  getErrorLogs: async ({ commit }, adId) => {
+    commit(types.SET_ADS_UI_FLAG, { isFetchingErrorLogs: true });
+    try {
+      const response = await ChatwootExtraAPI.getAdErrorLogs(adId);
+      if (response.success && response.data) {
+        commit(types.SET_ERROR_LOGS, { adId, errorLogs: response.data });
+        return response.data;
+      }
+      return [];
+    } catch (error) {
+      throwErrorMessage(error);
+      return [];
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isFetchingErrorLogs: false });
+    }
+  },
 };
 
 export const mutations = {
@@ -285,6 +306,12 @@ export const mutations = {
     $state.sendOperationsHistory = {
       ...$state.sendOperationsHistory,
       [adId]: operations,
+    };
+  },
+  [types.SET_ERROR_LOGS]($state, { adId, errorLogs }) {
+    $state.errorLogs = {
+      ...$state.errorLogs,
+      [adId]: errorLogs,
     };
   },
   [types.ADD_AD]: MutationHelpers.setSingleRecord,

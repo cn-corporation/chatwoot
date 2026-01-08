@@ -338,6 +338,14 @@ class ChatwootExtraAPI {
     });
     return response.data;
   }
+
+  async getAdErrorLogs(adId) {
+    const response = await axios.get(`${this.baseURL}/api/ads-log/errors`, {
+      params: { adId },
+      headers: this.headers,
+    });
+    return response.data;
+  }
 }
 
 export default new ChatwootExtraAPI();
