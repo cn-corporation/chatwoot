@@ -1,0 +1,78 @@
+<script setup>
+import MetricCard from './overview/MetricCard.vue';
+
+defineProps({
+  rows: {
+    type: Array,
+    default: () => [],
+  },
+  isLoading: {
+    type: Boolean,
+    default: false,
+  },
+  t: {
+    type: Function,
+    required: true,
+  },
+});
+</script>
+
+<template>
+  <MetricCard
+    :header="t('RESOLUTION_STATISTICS.TABLE.HEADER')"
+    :is-loading="isLoading"
+  >
+    <div v-if="rows.length" class="overflow-x-auto w-full">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-n-slate-6">
+            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
+              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.CONVERSATION') }}
+            </th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
+              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.OPERATOR') }}
+            </th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
+              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.REASON') }}
+            </th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
+              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.DETAILS') }}
+            </th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
+              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.DATE') }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="row in rows"
+            :key="row.id"
+            class="border-b border-n-slate-6 hover:bg-n-solid-2"
+          >
+            <td class="py-3 px-4 text-sm text-n-slate-12">
+              {{ row.conversationId }}
+            </td>
+            <td class="py-3 px-4 text-sm text-n-slate-12">
+              {{ row.operator }}
+            </td>
+            <td class="py-3 px-4 text-sm text-n-slate-12">
+              {{ row.reason }}
+            </td>
+            <td class="py-3 px-4 text-sm text-n-slate-12">
+              {{ row.details }}
+            </td>
+            <td class="py-3 px-4 text-sm text-n-slate-12">
+              {{ row.createdAt }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div
+      v-else
+      class="flex items-center justify-center h-[200px] text-n-slate-11"
+    >
+      {{ t('RESOLUTION_STATISTICS.EMPTY_STATE') }}
+    </div>
+  </MetricCard>
+</template>

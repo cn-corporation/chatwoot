@@ -587,5 +587,51 @@
     "OPERATOR_CHART": "Производительность операторов (Топ 10)",
     "DISTRIBUTION_CHART": "Распределение времени ответа",
     "DAILY_TABLE": "Ежедневная статистика"
+  },
+  "RESOLUTION_STATISTICS": {
+    "HEADER": "Статистика решений",
+    "DESCRIPTION": "Анализ причин завершения, операторов и динамики",
+    "FILTERS": {
+      "HEADER": "Фильтры",
+      "START_DATE": "Дата начала",
+      "END_DATE": "Дата окончания",
+      "OPERATORS": "Операторы (необязательно)",
+      "OPERATORS_PLACEHOLDER": "Выберите операторов...",
+      "OPERATORS_SELECTED": "Выбрано операторов: {count}",
+      "REASON": "Причина завершения (необязательно)",
+      "REASON_PLACEHOLDER": "Все причины",
+      "CONVERSATION": "ID диалога (необязательно)",
+      "CONVERSATION_PLACEHOLDER": "Введите ID диалога",
+      "APPLY": "Применить фильтры"
+    },
+    "METRICS": {
+      "TOTAL": "Всего завершений",
+      "UNIQUE_CONVERSATIONS": "Уникальные диалоги",
+      "UNIQUE_OPERATORS": "Уникальные операторы",
+      "TOP_REASON": "Топ причина"
+    },
+    "CHARTS": {
+      "REASONS": "Завершения по причинам",
+      "REASONS_LABEL": "Завершения",
+      "TREND": "Тренд завершений",
+      "TREND_LABEL": "Завершения в день",
+      "OPERATORS": "Завершения операторов (Топ 10)",
+      "OPERATORS_LABEL": "Завершения"
+    },
+    "TABLE": {
+      "HEADER": "Записи завершений",
+      "COLUMNS": {
+        "CONVERSATION": "Диалог",
+        "OPERATOR": "Оператор",
+        "REASON": "Причина",
+        "DETAILS": "Детали",
+        "DATE": "Дата завершения"
+      }
+    },
+    "EMPTY_STATE": "Нет данных",
+    "UNKNOWN": "Неизвестно",
+    "NO_TOP_REASON": "Нет данных",
+    "EMPTY_VALUE": "--",
+    "OPERATOR_ID": "Оператор {id}"
   }
 }

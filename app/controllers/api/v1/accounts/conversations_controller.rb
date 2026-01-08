@@ -77,6 +77,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def toggle_status
     # FIXME: move this logic into a service object
+    Current.executed_by = Current.user
     if pending_to_open_by_bot?
       @conversation.bot_handoff!
     elsif params[:status].present?
