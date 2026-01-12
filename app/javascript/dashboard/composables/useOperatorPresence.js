@@ -12,11 +12,12 @@ export const useOperatorPresence = (conversationId, operatorId) => {
   const hasJoined = ref(false);
   const currentConversationId = ref(null);
   let debounceTimer = null;
-  let lastSwitchTime = 0;
+  let reconnectTimeout = null;
   const isTabVisible = ref(true);
   let focusHandler = null;
   let beforeUnloadHandler = null;
   let isUnmounted = false;
+  let isTransitionInProgress = false;
 
   const sendHeartbeat = async () => {
     if (hasJoined.value && conversationId.value) {
@@ -39,8 +40,27 @@ export const useOperatorPresence = (conversationId, operatorId) => {
     heartbeatInterval = setInterval(sendHeartbeat, interval);
   };
 
+  const cleanupConnections = () => {
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
+    }
+
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+  };
+
   const connectSSE = () => {
-    if (!conversationId.value || !operatorId.value) return;
+    if (!conversationId.value || !operatorId.value || isUnmounted) return;
+
+    cleanupConnections();
 
     try {
       const streamUrl = ChatwootExtraAPI.getOperatorPresenceStreamURL(
@@ -76,17 +96,20 @@ export const useOperatorPresence = (conversationId, operatorId) => {
       });
 
       eventSource.onerror = () => {
-        isConnected.value = false;
-        error.value = 'Connection lost. Reconnecting...';
-        isTransitioning.value = true;
-
-        if (eventSource) {
-          eventSource.close();
-          eventSource = null;
+        if (isUnmounted || isTransitionInProgress) {
+          cleanupConnections();
+          return;
         }
 
-        setTimeout(() => {
-          if (hasJoined.value && !isUnmounted) connectSSE();
+        isConnected.value = false;
+        error.value = 'Connection lost';
+
+        cleanupConnections();
+
+        reconnectTimeout = setTimeout(() => {
+          if (hasJoined.value && !isUnmounted && !isTransitionInProgress) {
+            connectSSE();
+          }
         }, 3000);
       };
     } catch {
@@ -118,6 +141,7 @@ export const useOperatorPresence = (conversationId, operatorId) => {
       currentConversationId.value = conversationId.value;
       connectSSE();
       startHeartbeat();
+      isTransitioning.value = false;
     } catch {
       if (!isUnmounted) {
         error.value = 'Failed to join';
@@ -130,15 +154,7 @@ export const useOperatorPresence = (conversationId, operatorId) => {
     if (!currentConversationId.value || !operatorId.value || !hasJoined.value)
       return;
 
-    if (heartbeatInterval) {
-      clearInterval(heartbeatInterval);
-      heartbeatInterval = null;
-    }
-
-    if (eventSource) {
-      eventSource.close();
-      eventSource = null;
-    }
+    cleanupConnections();
 
     const convId = currentConversationId.value;
     const opId = operatorId.value;
@@ -148,7 +164,6 @@ export const useOperatorPresence = (conversationId, operatorId) => {
     isConnected.value = false;
     operators.value = [];
 
-    // Make API call last (can fail or take time)
     try {
       await ChatwootExtraAPI.leaveConversation(convId, opId);
     } catch {
@@ -172,24 +187,34 @@ export const useOperatorPresence = (conversationId, operatorId) => {
         return;
       }
 
-      isTransitioning.value = true;
-      if (debounceTimer) clearTimeout(debounceTimer);
-
-      const now = Date.now();
-      const diff = now - lastSwitchTime;
-      lastSwitchTime = now;
-
-      if (diff > 500) {
-        (async () => {
-          if (oldId && oldId !== newId) await leaveConversation();
-          if (newId) await joinConversation();
-        })();
-      } else {
-        debounceTimer = setTimeout(async () => {
-          if (oldId && oldId !== newId) await leaveConversation();
-          if (newId) await joinConversation();
-        }, 500);
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
       }
+
+      if (isTransitionInProgress) {
+        return;
+      }
+
+      isTransitioning.value = true;
+
+      debounceTimer = setTimeout(async () => {
+        if (isUnmounted || isTransitionInProgress) return;
+
+        isTransitionInProgress = true;
+
+        try {
+          if (oldId && oldId !== newId) {
+            await leaveConversation();
+          }
+
+          if (newId && !isUnmounted) {
+            await joinConversation();
+          }
+        } finally {
+          isTransitionInProgress = false;
+        }
+      }, 300);
     },
     { immediate: true }
   );
@@ -221,15 +246,7 @@ export const useOperatorPresence = (conversationId, operatorId) => {
       debounceTimer = null;
     }
 
-    if (heartbeatInterval) {
-      clearInterval(heartbeatInterval);
-      heartbeatInterval = null;
-    }
-
-    if (eventSource) {
-      eventSource.close();
-      eventSource = null;
-    }
+    cleanupConnections();
 
     if (typeof window !== 'undefined') {
       if (focusHandler) {
