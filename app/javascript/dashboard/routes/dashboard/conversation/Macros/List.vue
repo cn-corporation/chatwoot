@@ -33,7 +33,26 @@ const uiFlags = useMapGetter('macros/getUIFlags');
 const sourceMappings = computed(() => store.state.macros.sourceMappings);
 const inboxes = useMapGetter('inboxes/getInboxes');
 
-const MACROS_ORDER_KEY = 'macros_display_order';
+const MACROS_ORDER_KEY_PREFIX = 'macros_display_order';
+
+const currentChannelId = computed(() => {
+  const conversation = getters.getConversationById.value(props.conversationId);
+  if (!conversation || !conversation.inbox_id) {
+    return null;
+  }
+
+  const allInboxes = getters['inboxes/getInboxes'].value;
+  const inbox = allInboxes.find(i => i.id === conversation.inbox_id);
+
+  return inbox?.channel_id || null;
+});
+
+const macrosOrderKey = computed(() => {
+  if (currentChannelId.value) {
+    return `${MACROS_ORDER_KEY_PREFIX}_channel_${currentChannelId.value}`;
+  }
+  return MACROS_ORDER_KEY_PREFIX;
+});
 
 // Combined loading state - show loading only if store is fetching
 const isLoading = computed(
@@ -62,29 +81,27 @@ const macros = computed(() => {
 
 const orderedMacros = computed({
   get: () => {
-    // Get saved order array and current macros
-    const savedOrder = uiSettings.value?.[MACROS_ORDER_KEY] ?? [];
     const currentMacros = macros.value ?? [];
+    const orderKey = macrosOrderKey.value;
 
-    // Return unmodified macros if not present or macro is not available
+    const savedOrder = uiSettings.value?.[orderKey] ?? [];
+
     if (!savedOrder.length || !currentMacros.length) {
       return currentMacros;
     }
 
-    // Create a Map of id -> position for faster lookups
     const orderMap = new Map(savedOrder.map((id, index) => [id, index]));
 
     return [...currentMacros].sort((a, b) => {
-      // Use Infinity for items not in saved order (pushes them to end)
       const aPos = orderMap.get(a.id) ?? Infinity;
       const bPos = orderMap.get(b.id) ?? Infinity;
       return aPos - bPos;
     });
   },
   set: newOrder => {
-    // Update settings with array of ids from new order
+    const orderKey = macrosOrderKey.value;
     updateUISettings({
-      [MACROS_ORDER_KEY]: newOrder.map(({ id }) => id),
+      [orderKey]: newOrder.map(({ id }) => id),
     });
   },
 });

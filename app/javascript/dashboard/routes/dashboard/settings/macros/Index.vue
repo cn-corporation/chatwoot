@@ -24,9 +24,25 @@ onMounted(() => {
 
 const showDeleteConfirmationPopup = ref(false);
 const selectedMacro = ref({});
+const searchQuery = ref('');
 
 const records = computed(() => getters['macros/getMacros'].value);
 const uiFlags = computed(() => getters['macros/getUIFlags'].value);
+
+const filteredAndSortedMacros = computed(() => {
+  let macros = [...records.value];
+
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase();
+    macros = macros.filter(macro => macro.name?.toLowerCase().includes(query));
+  }
+
+  return macros.sort((a, b) => {
+    const nameA = (a.name || '').toLowerCase();
+    const nameB = (b.name || '').toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+});
 
 const deleteMessage = computed(() => ` ${selectedMacro.value.name}?`);
 
@@ -103,6 +119,14 @@ const tableHeaders = computed(() => {
       </BaseSettingsHeader>
     </template>
     <template #body>
+      <div class="mb-4">
+        <input
+          v-model="searchQuery"
+          type="text"
+          :placeholder="$t('MACROS.SEARCH_PLACEHOLDER')"
+          class="w-full max-w-md px-4 py-2 border border-n-border rounded-md text-n-slate-12 bg-n-white focus:outline-none focus:ring-2 focus:ring-n-woot-500 focus:border-transparent"
+        />
+      </div>
       <table class="min-w-full divide-y divide-n-weak">
         <thead>
           <th
@@ -115,7 +139,7 @@ const tableHeaders = computed(() => {
         </thead>
         <tbody class="divide-y divide-n-weak text-n-slate-11">
           <MacrosTableRow
-            v-for="(macro, index) in records"
+            v-for="(macro, index) in filteredAndSortedMacros"
             :key="index"
             :macro="macro"
             @delete="openDeletePopup(macro)"

@@ -24,6 +24,7 @@ import BotReports from './BotReports.vue';
 import LiveReports from './LiveReports.vue';
 import SLAReports from './SLAReports.vue';
 import ResponseStatistics from './ResponseStatistics.vue';
+import ResolutionStatistics from './ResolutionStatistics.vue';
 
 const meta = {
   featureFlag: FEATURE_FLAGS.REPORTS,
@@ -174,6 +175,12 @@ export default {
           name: 'response_statistics',
           meta,
           component: ResponseStatistics,
+        },
+        {
+          path: 'resolution_statistics',
+          name: 'resolution_statistics',
+          meta,
+          component: ResolutionStatistics,
         },
       ],
     },

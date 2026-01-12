@@ -19,7 +19,7 @@ class Public::Api::V1::Inboxes::ConversationsController < Public::Api::V1::Inbox
     # Assign the conversation's contact as the resolver
     # This step attributes the resolution action to the contact involved in the conversation
     # If this assignment is not made, the system implicitly becomes the resolver by default
-    Current.contact = @conversation.contact
+    Current.executed_by = @conversation.contact
 
     # Update the conversation's status to 'resolved' to reflect its closure
     @conversation.status = :resolved

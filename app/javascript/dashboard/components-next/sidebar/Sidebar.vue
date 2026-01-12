@@ -309,6 +309,12 @@ const menuItems = computed(() => {
       icon: 'i-lucide-timer',
       to: accountScopedRoute('response_statistics'),
     });
+    reportsChildren.push({
+      name: 'Reports Resolution Statistics',
+      label: t('SIDEBAR.RESOLUTION_STATISTICS'),
+      icon: 'i-lucide-check-circle',
+      to: accountScopedRoute('resolution_statistics'),
+    });
   }
 
   return [

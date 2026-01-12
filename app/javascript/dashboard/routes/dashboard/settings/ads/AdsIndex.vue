@@ -20,6 +20,7 @@ const showTestAdDialog = ref(false);
 const showDeleteSentMessagesDialog = ref(false);
 const showStatusDialog = ref(false);
 const showOperationsHistoryDialog = ref(false);
+const showErrorLogsDialog = ref(false);
 const selectedAd = ref({});
 const testTelegramId = ref('');
 
@@ -231,6 +232,11 @@ const getSendOperationsHistory = computed(() => {
   return getters['ads/getSendOperationsHistory'].value(selectedAd.value.id);
 });
 
+const getErrorLogs = computed(() => {
+  if (!selectedAd.value.id) return [];
+  return getters['ads/getErrorLogs'].value(selectedAd.value.id);
+});
+
 const tableHeaders = computed(() => {
   return [
     t('ADS.LIST.TABLE_HEADER.NAME'),
@@ -250,6 +256,56 @@ const formatDate = dateString => {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toLocaleDateString();
+};
+
+const formatDateTime = dateString => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleString();
+};
+
+const openErrorLogsDialog = async ad => {
+  selectedAd.value = ad;
+  await store.dispatch('ads/getErrorLogs', ad.id);
+  showErrorLogsDialog.value = true;
+};
+
+const closeErrorLogsDialog = () => {
+  showErrorLogsDialog.value = false;
+};
+
+const exportErrorLogsToExcel = () => {
+  const errorLogs = getErrorLogs.value;
+  if (!errorLogs || errorLogs.length === 0) {
+    emitter.emit(BUS_EVENTS.SHOW_TOAST, {
+      message: t('ADS.ERROR_LOGS.EMPTY'),
+    });
+    return;
+  }
+
+  const csvContent = [
+    ['Telegram ID', 'Error Message', 'Timestamp'].join(','),
+    ...errorLogs.map(log =>
+      [
+        log.tgid,
+        `"${(log.tgErrorText || '').replace(/"/g, '""')}"`,
+        formatDateTime(log.createdAt),
+      ].join(',')
+    ),
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute(
+    'download',
+    `ad-errors-${selectedAd.value.name}-${Date.now()}.csv`
+  );
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };
 </script>
 
@@ -341,6 +397,14 @@ const formatDate = dateString => {
                   icon="i-lucide-mail-x"
                   color-scheme="warning"
                   @click="openDeleteSentMessagesDialog(ad)"
+                />
+                <Button
+                  v-tooltip.top="$t('ADS.ACTIONS.VIEW_ERRORS')"
+                  variant="ghost"
+                  size="small"
+                  icon="i-lucide-alert-circle"
+                  color-scheme="alert"
+                  @click="openErrorLogsDialog(ad)"
                 />
                 <Button
                   v-tooltip.top="$t('ADS.ACTIONS.EDIT')"
@@ -618,6 +682,86 @@ const formatDate = dateString => {
             <Button
               :label="$t('ADS.OPERATIONS_HISTORY.CLOSE')"
               @click="closeOperationsHistoryDialog"
+            />
+          </div>
+        </div>
+      </woot-modal>
+      <woot-modal
+        v-model:show="showErrorLogsDialog"
+        :on-close="closeErrorLogsDialog"
+        size="large"
+      >
+        <div class="flex flex-col gap-4 p-6">
+          <h2 class="text-lg font-semibold">
+            {{ $t('ADS.ERROR_LOGS.TITLE') }}
+          </h2>
+          <div
+            v-if="uiFlags.isFetchingErrorLogs"
+            class="flex justify-center py-8"
+          >
+            <p class="text-sm text-n-slate-11">
+              {{ $t('ADS.ERROR_LOGS.LOADING') }}
+            </p>
+          </div>
+          <div
+            v-else-if="!getErrorLogs.length"
+            class="flex justify-center py-8"
+          >
+            <p class="text-sm text-n-slate-11">
+              {{ $t('ADS.ERROR_LOGS.EMPTY') }}
+            </p>
+          </div>
+          <div v-else class="max-h-96 overflow-y-auto">
+            <table class="min-w-full divide-y divide-n-weak">
+              <thead class="sticky top-0 bg-white">
+                <tr>
+                  <th
+                    class="py-3 px-4 text-left text-xs font-semibold text-n-slate-11 bg-n-slate-2"
+                  >
+                    {{ $t('ADS.ERROR_LOGS.TABLE_HEADER.TELEGRAM_ID') }}
+                  </th>
+                  <th
+                    class="py-3 px-4 text-left text-xs font-semibold text-n-slate-11 bg-n-slate-2"
+                  >
+                    {{ $t('ADS.ERROR_LOGS.TABLE_HEADER.ERROR_TEXT') }}
+                  </th>
+                  <th
+                    class="py-3 px-4 text-left text-xs font-semibold text-n-slate-11 bg-n-slate-2"
+                  >
+                    {{ $t('ADS.ERROR_LOGS.TABLE_HEADER.TIMESTAMP') }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-n-weak">
+                <tr
+                  v-for="log in getErrorLogs"
+                  :key="`${log.tgid}-${log.createdAt}`"
+                  class="hover:bg-n-slate-2"
+                >
+                  <td class="py-3 px-4 text-sm">
+                    {{ log.tgid }}
+                  </td>
+                  <td class="py-3 px-4 text-sm">
+                    {{ log.tgErrorText }}
+                  </td>
+                  <td class="py-3 px-4 text-sm">
+                    {{ formatDateTime(log.createdAt) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flex gap-2 justify-end">
+            <Button
+              v-if="getErrorLogs.length > 0"
+              variant="ghost"
+              icon="i-lucide-download"
+              :label="$t('ADS.ERROR_LOGS.EXPORT_EXCEL')"
+              @click="exportErrorLogsToExcel"
+            />
+            <Button
+              :label="$t('ADS.ERROR_LOGS.CLOSE')"
+              @click="closeErrorLogsDialog"
             />
           </div>
         </div>
