@@ -191,6 +191,13 @@ const menuItems = computed(() => {
     },
   ];
 
+  settingsChildren.push({
+    name: 'Settings Personal Canned Responses',
+    label: t('SIDEBAR.PERSONAL_CANNED_RESPONSES'),
+    icon: 'i-lucide-user-pen',
+    to: accountScopedRoute('personal_canned_list'),
+  });
+
   if (isAdmin.value) {
     settingsChildren.push({
       name: 'Settings Ads',
