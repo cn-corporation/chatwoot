@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, inject } from 'vue';
+import { computed, ref, onMounted, inject, toValue } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { getLastMessage } from 'dashboard/helper/conversationHelper';
@@ -91,6 +91,13 @@ const hasUnread = computed(() => unreadCount.value > 0);
 
 // Inject the reactive timer trigger from ChatList
 const timerTick = inject('conversationTimerTick', ref(Date.now()));
+
+// Inject bulk message mode state
+const isBulkMessageMode = inject('isBulkMessageMode', ref(false));
+const canSelectMore = inject(
+  'canSelectMore',
+  computed(() => true)
+);
 
 // Compute priority based on elapsed time (updates when timerTick changes)
 const computedPriority = computed(() => {
@@ -214,6 +221,16 @@ const onSelectConversation = checked => {
 };
 
 const openContextMenu = e => {
+  if (toValue(isBulkMessageMode)) {
+    e.preventDefault();
+    if (props.selected) {
+      emit('deSelectConversation', props.chat.id, inbox.value.id);
+    } else if (toValue(canSelectMore)) {
+      emit('selectConversation', props.chat.id, inbox.value.id);
+    }
+    return;
+  }
+
   if (!props.enableContextMenu) return;
   e.preventDefault();
   emit('contextMenuToggle', true);
@@ -277,6 +294,7 @@ const deleteConversation = () => {
       'active animate-card-select bg-n-alpha-1 dark:bg-n-alpha-3 border-n-weak border-l-4 !border-l-woot-500':
         isActiveChat,
       'bg-n-slate-2 dark:bg-n-slate-3': selected,
+      'ring-2 ring-n-brand ring-inset': selected && isBulkMessageMode,
       'px-0 border-l-0': compact,
       'px-3 border-l-0': !compact,
     }"

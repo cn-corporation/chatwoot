@@ -1,0 +1,79 @@
+{
+  "PERSONAL_CANNED_MGMT": {
+    "BADGE": "Personal",
+    "HEADER": "Personal Canned Responses",
+    "DESCRIPTION": "Personal canned responses are your own pre-written reply templates. They are only visible to you and appear on top when using the '/' shortcut.",
+    "HEADER_BTN_TXT": "Add personal canned response",
+    "LOADING": "Fetching personal canned responses...",
+    "SEARCH_404": "There are no items matching this query.",
+    "LIST": {
+      "404": "You don't have any personal canned responses yet.",
+      "TITLE": "Manage personal canned responses",
+      "DESC": "Personal canned responses are your private reply templates which can be used to quickly send out replies to conversations.",
+      "TABLE_HEADER": {
+        "SHORT_CODE": "Short code",
+        "CONTENT": "Content",
+        "ACTIONS": "Actions"
+      }
+    },
+    "ADD": {
+      "TITLE": "Add personal canned response",
+      "DESC": "Personal canned responses are your private reply templates which can be used to quickly send out replies to conversations.",
+      "CANCEL_BUTTON_TEXT": "Cancel",
+      "FORM": {
+        "SHORT_CODE": {
+          "LABEL": "Short code",
+          "PLACEHOLDER": "Please enter a short code.",
+          "ERROR": "Short code is required."
+        },
+        "CONTENT": {
+          "LABEL": "Message",
+          "PLACEHOLDER": "Please write the message you want to save as a template to use later.",
+          "ERROR": "Message is required.",
+          "FORMATTING_HINT": "Formatting: *italic*, **bold**, `code`, [link](url)"
+        },
+        "SUBMIT": "Submit"
+      },
+      "API": {
+        "SUCCESS_MESSAGE": "Personal canned response added successfully.",
+        "ERROR_MESSAGE": "Could not save personal canned response. Please try again."
+      }
+    },
+    "EDIT": {
+      "TITLE": "Edit personal canned response",
+      "CANCEL_BUTTON_TEXT": "Cancel",
+      "FORM": {
+        "SHORT_CODE": {
+          "LABEL": "Short code",
+          "PLACEHOLDER": "Please enter a short code.",
+          "ERROR": "Short code is required."
+        },
+        "CONTENT": {
+          "LABEL": "Message",
+          "PLACEHOLDER": "Please write the message you want to save as a template to use later.",
+          "ERROR": "Message is required.",
+          "FORMATTING_HINT": "Formatting: *italic*, **bold**, `code`, [link](url)"
+        },
+        "SUBMIT": "Submit"
+      },
+      "BUTTON_TEXT": "Edit",
+      "API": {
+        "SUCCESS_MESSAGE": "Personal canned response updated successfully.",
+        "ERROR_MESSAGE": "Could not update personal canned response. Please try again."
+      }
+    },
+    "DELETE": {
+      "BUTTON_TEXT": "Delete",
+      "API": {
+        "SUCCESS_MESSAGE": "Personal canned response deleted successfully.",
+        "ERROR_MESSAGE": "Could not delete personal canned response. Please try again."
+      },
+      "CONFIRM": {
+        "TITLE": "Confirm deletion",
+        "MESSAGE": "Are you sure you want to delete ",
+        "YES": "Yes, delete ",
+        "NO": "No, keep "
+      }
+    }
+  }
+}
