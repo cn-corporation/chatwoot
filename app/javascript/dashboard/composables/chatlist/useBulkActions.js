@@ -1,8 +1,10 @@
-import { ref, unref } from 'vue';
+import { ref, unref, computed } from 'vue';
 import { useStore } from 'vuex';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store.js';
+
+export const MAX_BULK_MESSAGE_SELECTIONS = 20;
 
 export function useBulkActions() {
   const store = useStore();
@@ -11,7 +13,12 @@ export function useBulkActions() {
   const selectedConversations = useMapGetter(
     'bulkActions/getSelectedConversationIds'
   );
+  const isBulkMessageMode = useMapGetter('bulkActions/getIsBulkMessageMode');
   const selectedInboxes = ref([]);
+
+  const canSelectMore = computed(() => {
+    return selectedConversations.value.length < MAX_BULK_MESSAGE_SELECTIONS;
+  });
 
   function selectConversation(conversationId, inboxId) {
     store.dispatch('bulkActions/setSelectedConversationIds', conversationId);
@@ -28,6 +35,13 @@ export function useBulkActions() {
   function resetBulkActions() {
     store.dispatch('bulkActions/clearSelectedConversationIds');
     selectedInboxes.value = [];
+  }
+
+  function toggleBulkMessageMode(value) {
+    store.dispatch('bulkActions/toggleBulkMessageMode', value);
+    if (!value) {
+      resetBulkActions();
+    }
   }
 
   function selectAllConversations(check, conversationList) {
@@ -135,11 +149,14 @@ export function useBulkActions() {
   return {
     selectedConversations,
     selectedInboxes,
+    isBulkMessageMode,
+    canSelectMore,
     selectConversation,
     deSelectConversation,
     selectAllConversations,
     resetBulkActions,
     isConversationSelected,
+    toggleBulkMessageMode,
     onAssignAgent,
     onAssignLabels,
     onAssignTeamsForBulk,

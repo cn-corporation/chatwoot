@@ -29,7 +29,8 @@
         "CONTENT": {
           "LABEL": "Message",
           "PLACEHOLDER": "Please write the message you want to save as a template to use later.",
-          "ERROR": "Message is required."
+          "ERROR": "Message is required.",
+          "FORMATTING_HINT": "Formatting: *italic*, **bold**, `code`, [link](url)"
         },
         "SUBMIT": "Submit"
       },
@@ -50,7 +51,8 @@
         "CONTENT": {
           "LABEL": "Message",
           "PLACEHOLDER": "Please write the message you want to save as a template to use later.",
-          "ERROR": "Message is required."
+          "ERROR": "Message is required.",
+          "FORMATTING_HINT": "Formatting: *italic*, **bold**, `code`, [link](url)"
         },
         "SUBMIT": "Submit"
       },

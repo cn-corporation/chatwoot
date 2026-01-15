@@ -1,6 +1,19 @@
 {
   "BULK_ACTION": {
     "CONVERSATIONS_SELECTED": "{conversationCount} бесед выбрано",
+    "BULK_MESSAGE_MODE": {
+      "TOGGLE_TOOLTIP": "Режим массовой рассылки",
+      "MAX_LIMIT": "макс. {max}",
+      "SEND_TOOLTIP": "Отправить сообщение выбранным",
+      "MODAL_TITLE": "Массовая отправка сообщений",
+      "MODAL_DESCRIPTION": "Отправить сообщение {count} диалогам",
+      "MESSAGE_PLACEHOLDER": "Введите сообщение...",
+      "ATTACH_FILE": "Прикрепить файл",
+      "SEND_BUTTON": "Отправить всем",
+      "SEND_PROGRESS": "Отправка {current} из {total}...",
+      "SEND_SUCCESS": "Сообщения успешно отправлены",
+      "SEND_PARTIAL_FAILURE": "Не удалось отправить {failCount} диалогам"
+    },
     "AGENT_SELECT_LABEL": "Выбрать Агента",
     "ASSIGN_CONFIRMATION_LABEL": "Вы уверены, что хотите назначить {conversationCount} {conversationLabel}",
     "UNASSIGN_CONFIRMATION_LABEL": "Вы уверены, что хотите отменить назначение {conversationCount} {conversationLabel}?",

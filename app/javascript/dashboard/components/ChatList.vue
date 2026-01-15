@@ -38,7 +38,11 @@ import TodoModal from './widgets/conversation/TodoModal.vue';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAlert } from 'dashboard/composables';
 import { useChatListKeyboardEvents } from 'dashboard/composables/chatlist/useChatListKeyboardEvents';
-import { useBulkActions } from 'dashboard/composables/chatlist/useBulkActions';
+import {
+  useBulkActions,
+  MAX_BULK_MESSAGE_SELECTIONS,
+} from 'dashboard/composables/chatlist/useBulkActions';
+import BulkMessageModal from './widgets/conversation/BulkMessageModal.vue';
 import { useFilter } from 'shared/composables/useFilter';
 import { useI18n } from 'vue-i18n';
 import {
@@ -155,16 +159,38 @@ useChatListKeyboardEvents(conversationListRef);
 const {
   selectedConversations,
   selectedInboxes,
+  isBulkMessageMode,
+  canSelectMore,
   selectConversation,
   deSelectConversation,
   selectAllConversations,
   resetBulkActions,
   isConversationSelected,
+  toggleBulkMessageMode,
   onAssignAgent,
   onAssignLabels,
   onAssignTeamsForBulk,
   onUpdateConversations,
 } = useBulkActions();
+
+const showBulkMessageModal = ref(false);
+
+function onToggleBulkMessageMode(value) {
+  toggleBulkMessageMode(value);
+}
+
+function openBulkMessageModal() {
+  showBulkMessageModal.value = true;
+}
+
+function closeBulkMessageModal() {
+  showBulkMessageModal.value = false;
+}
+
+function onBulkSendComplete() {
+  closeBulkMessageModal();
+  toggleBulkMessageMode(false);
+}
 
 const {
   initializeStatusAndAssigneeFilterToModal,
@@ -953,10 +979,12 @@ provide('updateConversationStatus', toggleConversationStatus);
 provide('toggleContextMenu', onContextMenuToggle);
 provide('markAsUnread', markAsUnread);
 provide('markAsRead', markAsRead);
-provide('assignPriority', assignPriority); // Used for automatic priority updates
+provide('assignPriority', assignPriority);
 provide('isConversationSelected', isConversationSelected);
 provide('createTask', handleCreateTask);
 provide('deleteConversation', handleDelete);
+provide('isBulkMessageMode', isBulkMessageMode);
+provide('canSelectMore', canSelectMore);
 
 watch(activeTeam, () => resetAndFetchData());
 
@@ -1011,6 +1039,7 @@ watch(chatLists, () => {
       @filters-modal="onToggleAdvanceFiltersModal"
       @reset-filters="resetAndFetchData"
       @basic-filter-change="onBasicFilterChange"
+      @toggle-bulk-message-mode="onToggleBulkMessageMode"
     />
 
     <TeleportWithDirection
@@ -1057,11 +1086,14 @@ watch(chatLists, () => {
       :show-open-action="allSelectedConversationsStatus('open')"
       :show-resolved-action="allSelectedConversationsStatus('resolved')"
       :show-snoozed-action="allSelectedConversationsStatus('snoozed')"
+      :is-bulk-message-mode="isBulkMessageMode"
+      :max-selections="MAX_BULK_MESSAGE_SELECTIONS"
       @select-all-conversations="toggleSelectAll"
       @assign-agent="onAssignAgent"
       @update-conversations="onUpdateConversations"
       @assign-labels="onAssignLabels"
       @assign-team="onAssignTeamsForBulk"
+      @bulk-send="openBulkMessageModal"
     />
     <div
       ref="conversationListRef"
@@ -1139,6 +1171,12 @@ watch(chatLists, () => {
       :show="showTodoModal"
       :current-chat="selectedChatForTask"
       @cancel="closeTodoModal"
+    />
+    <BulkMessageModal
+      v-if="showBulkMessageModal"
+      :selected-conversations="selectedConversations"
+      @close="closeBulkMessageModal"
+      @send-complete="onBulkSendComplete"
     />
     <TeleportWithDirection
       v-if="showAdvancedFilters"
