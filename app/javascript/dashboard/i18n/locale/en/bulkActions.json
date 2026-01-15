@@ -1,6 +1,19 @@
 {
   "BULK_ACTION": {
     "CONVERSATIONS_SELECTED": "{conversationCount} conversations selected",
+    "BULK_MESSAGE_MODE": {
+      "TOGGLE_TOOLTIP": "Bulk message mode",
+      "MAX_LIMIT": "max {max}",
+      "SEND_TOOLTIP": "Send message to selected",
+      "MODAL_TITLE": "Send Bulk Message",
+      "MODAL_DESCRIPTION": "Send a message to {count} conversations",
+      "MESSAGE_PLACEHOLDER": "Type your message...",
+      "ATTACH_FILE": "Attach file",
+      "SEND_BUTTON": "Send to all",
+      "SEND_PROGRESS": "Sending {current} of {total}...",
+      "SEND_SUCCESS": "Messages sent successfully",
+      "SEND_PARTIAL_FAILURE": "Failed to send to {failCount} conversations"
+    },
     "AGENT_SELECT_LABEL": "Select agent",
     "ASSIGN_CONFIRMATION_LABEL": "Are you sure to assign {conversationCount} {conversationLabel} to",
     "UNASSIGN_CONFIRMATION_LABEL": "Are you sure to unassign {conversationCount} {conversationLabel}?",

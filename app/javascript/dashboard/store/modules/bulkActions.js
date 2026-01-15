@@ -3,6 +3,7 @@ import BulkActionsAPI from '../../api/bulkActions';
 
 export const state = {
   selectedConversationIds: [],
+  isBulkMessageMode: false,
   uiFlags: {
     isUpdating: false,
   },
@@ -14,6 +15,9 @@ export const getters = {
   },
   getSelectedConversationIds(_state) {
     return _state.selectedConversationIds;
+  },
+  getIsBulkMessageMode(_state) {
+    return _state.isBulkMessageMode;
   },
 };
 
@@ -36,6 +40,9 @@ export const actions = {
   },
   clearSelectedConversationIds({ commit }) {
     commit(types.CLEAR_SELECTED_CONVERSATION_IDS);
+  },
+  toggleBulkMessageMode({ commit }, value) {
+    commit(types.SET_BULK_MESSAGE_MODE, value);
   },
 };
 
@@ -62,6 +69,9 @@ export const mutations = {
   },
   [types.CLEAR_SELECTED_CONVERSATION_IDS](_state) {
     _state.selectedConversationIds = [];
+  },
+  [types.SET_BULK_MESSAGE_MODE](_state, value) {
+    _state.isBulkMessageMode = value;
   },
 };
 
