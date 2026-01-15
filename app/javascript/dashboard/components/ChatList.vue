@@ -34,6 +34,7 @@ import IntersectionObserver from './IntersectionObserver.vue';
 import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import TodoModal from './widgets/conversation/TodoModal.vue';
+import ConversationCloseReasonModal from './ConversationCloseReasonModal.vue';
 
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAlert } from 'dashboard/composables';
@@ -163,8 +164,31 @@ const {
   onAssignAgent,
   onAssignLabels,
   onAssignTeamsForBulk,
-  onUpdateConversations,
+  onUpdateConversations: onUpdateConversationsOriginal,
 } = useBulkActions();
+
+// Define modal refs before using them
+const showCloseReasonModal = ref(false);
+const closeConversationId = ref(null);
+const pendingBulkAction = ref(null);
+
+// Wrapper for bulk actions to show modal when resolving
+const onUpdateConversations = (status, snoozedUntil) => {
+  // Show close reason modal first when resolving
+  if (status === wootConstants.STATUS_TYPE.RESOLVED) {
+    // For bulk actions, open modal for first selected conversation
+    if (selectedConversations.value.length > 0) {
+      closeConversationId.value = selectedConversations.value[0];
+      showCloseReasonModal.value = true;
+      // Store the bulk action to continue after modal closes
+      pendingBulkAction.value = { status, snoozedUntil };
+      return;
+    }
+  }
+
+  // For other status changes, proceed normally
+  onUpdateConversationsOriginal(status, snoozedUntil);
+};
 
 const {
   initializeStatusAndAssigneeFilterToModal,
@@ -860,6 +884,14 @@ async function onAssignTeam(team, conversationId = null) {
 }
 
 function toggleConversationStatus(conversationId, status, snoozedUntil) {
+  // Show close reason modal first when resolving
+  if (status === wootConstants.STATUS_TYPE.RESOLVED) {
+    closeConversationId.value = conversationId;
+    showCloseReasonModal.value = true;
+    return;
+  }
+
+  // For other status changes, proceed normally
   store
     .dispatch('toggleStatus', {
       conversationId,
@@ -869,6 +901,37 @@ function toggleConversationStatus(conversationId, status, snoozedUntil) {
     .then(() => {
       useAlert(t('CONVERSATION.CHANGE_STATUS'));
     });
+}
+
+function closeCloseReasonModal() {
+  showCloseReasonModal.value = false;
+  closeConversationId.value = null;
+}
+
+function onCloseReasonSuccess() {
+  showCloseReasonModal.value = false;
+  const conversationId = closeConversationId.value;
+  closeConversationId.value = null;
+
+  // If there was a pending bulk action, continue with remaining conversations
+  if (pendingBulkAction.value && selectedConversations.value.length > 1) {
+    // Remove the first conversation from the list and continue
+    const remainingIds = selectedConversations.value.filter(
+      id => id !== conversationId
+    );
+    // Update selected conversations to remaining ones
+    store.dispatch('bulkActions/setSelectedConversationIds', remainingIds);
+    // Continue with bulk action for remaining conversations
+    onUpdateConversationsOriginal(
+      pendingBulkAction.value.status,
+      pendingBulkAction.value.snoozedUntil
+    );
+    pendingBulkAction.value = null;
+  } else {
+    pendingBulkAction.value = null;
+  }
+
+  useAlert(t('CONVERSATION.CHANGE_STATUS'));
 }
 
 function allSelectedConversationsStatus(status) {
@@ -1139,6 +1202,13 @@ watch(chatLists, () => {
       :show="showTodoModal"
       :current-chat="selectedChatForTask"
       @cancel="closeTodoModal"
+    />
+    <ConversationCloseReasonModal
+      v-if="showCloseReasonModal && closeConversationId"
+      :show="showCloseReasonModal"
+      :conversation-id="closeConversationId"
+      @close="closeCloseReasonModal"
+      @success="onCloseReasonSuccess"
     />
     <TeleportWithDirection
       v-if="showAdvancedFilters"
