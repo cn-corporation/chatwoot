@@ -9,11 +9,17 @@
       "TABLE_HEADER": {
         "NAME": "Name",
         "SOURCE_CHANNEL": "Source Channel",
+        "FILTER": "Filter",
         "CREATED_AT": "Created At",
         "STATUS": "Status",
         "ACTIONS": "Actions"
       },
       "404": "No ads found"
+    },
+    "FILTER_SUMMARY": {
+      "LABELS": "label(s)",
+      "ATTRIBUTES": "attribute(s)",
+      "ALL_CONTACTS": "All contacts"
     },
     "CREATE": {
       "TITLE": "Create New Ad",
@@ -50,6 +56,24 @@
         "LABEL": "Source Channel",
         "PLACEHOLDER": "Select a channel",
         "HELP_TEXT": "The bot token from the selected Telegram channel will be automatically encrypted and stored securely"
+      },
+      "FILTER": {
+        "LABEL": "Target Audience Filter",
+        "DESCRIPTION": "Optionally exclude which contacts will receive this ad. Leave empty to send to all contacts.",
+        "LABELS": {
+          "LABEL": "Conversation Labels",
+          "PLACEHOLDER": "Select labels to filter by",
+          "HELP_TEXT": "Contacts who have conversations with any of the selected labels will not receive this ad"
+        },
+        "ATTRIBUTES": {
+          "LABEL": "Contact Attributes",
+          "PLACEHOLDER": "Select values",
+          "HELP_TEXT": "Exclude by contact attribute values (multiselect attributes only)"
+        },
+        "NO_LABELS": "No labels available",
+        "NO_ATTRIBUTES": "No multiselect attributes available",
+        "CLEAR_ALL": "Clear all filters",
+        "ACTIVE_FILTERS": "Active filters"
       },
       "HTML_TEXT": {
         "LABEL": "HTML Content",

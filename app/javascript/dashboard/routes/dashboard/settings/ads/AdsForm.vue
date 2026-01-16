@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStoreGetters, useStore } from 'dashboard/composables/store';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -35,8 +35,35 @@ const uploadedMediaId = ref(props.adData.mediaId || undefined);
 const mediaInfo = ref(props.adData.media || null);
 const fileInputKey = ref(0);
 
+const selectedLabels = ref([]);
+const selectedAttributes = ref({});
+
 const inboxes = computed(() => getters['inboxes/getInboxes'].value);
 const uiFlags = computed(() => getters['ads/getUIFlags'].value);
+
+const allLabels = computed(() => getters['labels/getLabels'].value || []);
+const contactAttributes = computed(
+  () => getters['attributes/getContactAttributes'].value || []
+);
+
+const listTypeAttributes = computed(() =>
+  contactAttributes.value.filter(attr => attr.attributeDisplayType === 'list')
+);
+
+const hasActiveFilters = computed(() => {
+  const hasLabels = selectedLabels.value.length > 0;
+  const hasAttributes = Object.values(selectedAttributes.value).some(
+    values => values && values.length > 0
+  );
+  return hasLabels || hasAttributes;
+});
+
+onMounted(async () => {
+  await Promise.all([
+    store.dispatch('labels/get'),
+    store.dispatch('attributes/get'),
+  ]);
+});
 
 const isSubmitDisabled = computed(() => {
   if (props.isEdit) {
@@ -54,10 +81,68 @@ watch(
       sourceId.value = newData.sourceId || '';
       uploadedMediaId.value = newData.mediaId || null;
       mediaInfo.value = newData.media || null;
+
+      if (newData.jsonFilter) {
+        selectedLabels.value = newData.jsonFilter.categories || [];
+        selectedAttributes.value = newData.jsonFilter.contact_attributes || {};
+      } else {
+        selectedLabels.value = [];
+        selectedAttributes.value = {};
+      }
     }
   },
   { deep: true, immediate: true }
 );
+
+const toggleLabel = label => {
+  const index = selectedLabels.value.indexOf(label);
+  if (index === -1) {
+    selectedLabels.value.push(label);
+  } else {
+    selectedLabels.value.splice(index, 1);
+  }
+};
+
+const toggleAttributeValue = (attrKey, value) => {
+  if (!selectedAttributes.value[attrKey]) {
+    selectedAttributes.value[attrKey] = [];
+  }
+  const index = selectedAttributes.value[attrKey].indexOf(value);
+  if (index === -1) {
+    selectedAttributes.value[attrKey].push(value);
+  } else {
+    selectedAttributes.value[attrKey].splice(index, 1);
+  }
+};
+
+const clearAllFilters = () => {
+  selectedLabels.value = [];
+  selectedAttributes.value = {};
+};
+
+const buildJsonFilter = () => {
+  const hasLabels = selectedLabels.value.length > 0;
+  const hasAttributes = Object.entries(selectedAttributes.value).some(
+    ([, values]) => values && values.length > 0
+  );
+
+  if (!hasLabels && !hasAttributes) {
+    return null;
+  }
+
+  const filter = {
+    categories: selectedLabels.value,
+    contact_attributes: {},
+  };
+
+  Object.entries(selectedAttributes.value).forEach(([key, values]) => {
+    if (values && values.length > 0) {
+      filter.contact_attributes[key] = values;
+    }
+  });
+
+  return filter;
+};
 
 const handleFileChange = async event => {
   const file = event.target.files[0];
@@ -112,16 +197,17 @@ const handleSubmit = async () => {
     formData.mediaId = uploadedMediaId.value;
   }
 
+  const jsonFilter = buildJsonFilter();
+  formData.jsonFilter = jsonFilter;
+
   if (!props.isEdit) {
     formData.name = name.value;
     formData.chatwootSourceId = parseInt(sourceId.value, 10);
 
     try {
-      // Fetch the bot token from the selected inbox
       const response = await InboxesAPI.getBotToken(sourceId.value);
       const botToken = response.data.bot_token;
 
-      // Encrypt the bot token
       const encryptedBotToken = await encrypt(botToken);
       formData.encryptedBotToken = encryptedBotToken;
     } catch (error) {
@@ -356,6 +442,134 @@ const sanitizedHtml = computed(() => {
         <p v-if="uiFlags.isUploadingMedia" class="text-sm text-n-slate-10">
           {{ $t('ADS.MEDIA.UPLOADING') }}
         </p>
+      </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <label class="text-sm font-medium text-n-slate-12">
+            {{ $t('ADS.FORM.FILTER.LABEL') }}
+          </label>
+          <p class="text-xs text-n-slate-10 mt-1">
+            {{ $t('ADS.FORM.FILTER.DESCRIPTION') }}
+          </p>
+        </div>
+        <Button
+          v-if="hasActiveFilters"
+          variant="ghost"
+          size="small"
+          :label="$t('ADS.FORM.FILTER.CLEAR_ALL')"
+          color-scheme="secondary"
+          type="button"
+          @click="clearAllFilters"
+        />
+      </div>
+
+      <!-- Labels Filter -->
+      <div class="flex flex-col gap-2">
+        <label class="text-xs font-medium text-n-slate-11">
+          {{ $t('ADS.FORM.FILTER.LABELS.LABEL') }}
+        </label>
+        <div
+          v-if="allLabels.length > 0"
+          class="flex flex-wrap gap-2 p-3 border border-n-slate-6 rounded-lg bg-n-slate-1"
+        >
+          <button
+            v-for="label in allLabels"
+            :key="label.id"
+            type="button"
+            class="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors"
+            :class="
+              selectedLabels.includes(label.title)
+                ? 'bg-woot-500 text-white border-woot-500'
+                : 'bg-white text-n-slate-11 border-n-slate-6 hover:border-n-slate-8'
+            "
+            @click="toggleLabel(label.title)"
+          >
+            {{ label.title }}
+          </button>
+        </div>
+        <p v-else class="text-xs text-n-slate-10 italic">
+          {{ $t('ADS.FORM.FILTER.NO_LABELS') }}
+        </p>
+        <p class="text-xs text-n-slate-10">
+          {{ $t('ADS.FORM.FILTER.LABELS.HELP_TEXT') }}
+        </p>
+      </div>
+
+      <!-- Multiselect Attributes Filter -->
+      <div class="flex flex-col gap-3">
+        <label class="text-xs font-medium text-n-slate-11">
+          {{ $t('ADS.FORM.FILTER.ATTRIBUTES.LABEL') }}
+        </label>
+        <div v-if="listTypeAttributes.length > 0" class="flex flex-col gap-4">
+          <div
+            v-for="attr in listTypeAttributes"
+            :key="attr.id"
+            class="flex flex-col gap-2"
+          >
+            <span class="text-xs font-medium text-n-slate-12">
+              {{ attr.attributeDisplayName }}
+            </span>
+            <div
+              class="flex flex-wrap gap-2 p-3 border border-n-slate-6 rounded-lg bg-n-slate-1"
+            >
+              <button
+                v-for="value in attr.attributeValues"
+                :key="value"
+                type="button"
+                class="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors"
+                :class="
+                  (selectedAttributes[attr.attributeKey] || []).includes(value)
+                    ? 'bg-woot-500 text-white border-woot-500'
+                    : 'bg-white text-n-slate-11 border-n-slate-6 hover:border-n-slate-8'
+                "
+                @click="toggleAttributeValue(attr.attributeKey, value)"
+              >
+                {{ value }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <p v-else class="text-xs text-n-slate-10 italic">
+          {{ $t('ADS.FORM.FILTER.NO_ATTRIBUTES') }}
+        </p>
+        <p class="text-xs text-n-slate-10">
+          {{ $t('ADS.FORM.FILTER.ATTRIBUTES.HELP_TEXT') }}
+        </p>
+      </div>
+
+      <!-- Active Filters Summary -->
+      <div
+        v-if="hasActiveFilters"
+        class="p-3 bg-woot-25 border border-woot-100 rounded-lg"
+      >
+        <p class="text-xs font-medium text-woot-600 mb-2">
+          {{ $t('ADS.FORM.FILTER.ACTIVE_FILTERS') }}:
+        </p>
+        <div class="flex flex-wrap gap-1">
+          <span
+            v-for="label in selectedLabels"
+            :key="`label-${label}`"
+            class="px-2 py-1 text-xs bg-woot-100 text-woot-700 rounded"
+          >
+            {{ label }}
+          </span>
+          <template
+            v-for="(values, attrKey) in selectedAttributes"
+            :key="attrKey"
+          >
+            <span
+              v-for="value in values"
+              :key="`${attrKey}-${value}`"
+              class="px-2 py-1 text-xs bg-woot-100 text-woot-700 rounded"
+            >
+              {{ attrKey }}: {{ value }}
+            </span>
+          </template>
+        </div>
       </div>
     </div>
 
