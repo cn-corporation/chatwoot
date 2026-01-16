@@ -70,6 +70,10 @@
           "PLACEHOLDER": "Select values",
           "HELP_TEXT": "Exclude by contact attribute values (multiselect attributes only)"
         },
+        "CHECKBOX_ATTRIBUTES": {
+          "LABEL": "Flag Attributes",
+          "HELP_TEXT": "Exclude contacts where the selected flag attributes are true"
+        },
         "NO_LABELS": "No labels available",
         "NO_ATTRIBUTES": "No multiselect attributes available",
         "CLEAR_ALL": "Clear all filters",

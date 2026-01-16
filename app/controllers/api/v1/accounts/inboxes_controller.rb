@@ -245,8 +245,12 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
 
     if filter[:contact_attributes].present?
       permitted[:contact_attributes] = {}
-      filter[:contact_attributes].each do |key, values|
-        permitted[:contact_attributes][key] = Array(values)
+      filter[:contact_attributes].each do |key, value|
+        permitted[:contact_attributes][key] = if value == true || value == 'true'
+                                                true
+                                              else
+                                                Array(value)
+                                              end
       end
     end
 
@@ -264,11 +268,13 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
 
     contact_attributes = filter_params[:contact_attributes]
     if contact_attributes.present? && contact_attributes.is_a?(ActionController::Parameters)
-      contact_attributes.each do |attr_key, attr_values|
-        next unless attr_values.is_a?(Array) && attr_values.any?
-
-        sql = build_custom_attribute_filter_sql(attr_key, attr_values)
-        excluded_contact_ids += contacts.where(sql).pluck(:id)
+      contact_attributes.each do |attr_key, attr_value|
+        sql = if attr_value == true
+                build_checkbox_attribute_filter_sql(attr_key)
+              elsif attr_value.is_a?(Array) && attr_value.any?
+                build_custom_attribute_filter_sql(attr_key, attr_value)
+              end
+        excluded_contact_ids += contacts.where(sql).pluck(:id) if sql
       end
     end
 
@@ -290,6 +296,11 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
     pg_array_literal = "ARRAY[#{values_list}]"
 
     "(custom_attributes ->> #{quoted_key} IN (#{values_list}) OR custom_attributes -> #{quoted_key} ?| #{pg_array_literal})"
+  end
+
+  def build_checkbox_attribute_filter_sql(attr_key)
+    quoted_key = ActiveRecord::Base.connection.quote(attr_key)
+    "(custom_attributes -> #{quoted_key} = 'true'::jsonb)"
   end
 end
 

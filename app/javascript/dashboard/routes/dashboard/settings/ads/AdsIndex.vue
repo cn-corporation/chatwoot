@@ -259,7 +259,7 @@ const getFilterSummary = ad => {
 
   if (contact_attributes) {
     const attrCount = Object.values(contact_attributes).filter(
-      v => v && v.length > 0
+      v => (Array.isArray(v) && v.length > 0) || v === true
     ).length;
     if (attrCount > 0) {
       parts.push(`${attrCount} ${t('ADS.FILTER_SUMMARY.ATTRIBUTES')}`);

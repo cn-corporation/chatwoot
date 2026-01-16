@@ -50,10 +50,18 @@ const listTypeAttributes = computed(() =>
   contactAttributes.value.filter(attr => attr.attributeDisplayType === 'list')
 );
 
+const checkboxTypeAttributes = computed(() =>
+  contactAttributes.value.filter(
+    attr => attr.attributeDisplayType === 'checkbox'
+  )
+);
+
 const hasActiveFilters = computed(() => {
   const hasLabels = selectedLabels.value.length > 0;
   const hasAttributes = Object.values(selectedAttributes.value).some(
-    values => values && values.length > 0
+    value =>
+      (Array.isArray(value) && value.length > 0) ||
+      (typeof value === 'boolean' && value === true)
   );
   return hasLabels || hasAttributes;
 });
@@ -115,6 +123,15 @@ const toggleAttributeValue = (attrKey, value) => {
   }
 };
 
+const toggleCheckboxAttribute = attrKey => {
+  const current = selectedAttributes.value[attrKey];
+  if (current === true) {
+    delete selectedAttributes.value[attrKey];
+  } else {
+    selectedAttributes.value[attrKey] = true;
+  }
+};
+
 const clearAllFilters = () => {
   selectedLabels.value = [];
   selectedAttributes.value = {};
@@ -123,7 +140,9 @@ const clearAllFilters = () => {
 const buildJsonFilter = () => {
   const hasLabels = selectedLabels.value.length > 0;
   const hasAttributes = Object.entries(selectedAttributes.value).some(
-    ([, values]) => values && values.length > 0
+    ([, value]) =>
+      (Array.isArray(value) && value.length > 0) ||
+      (typeof value === 'boolean' && value === true)
   );
 
   if (!hasLabels && !hasAttributes) {
@@ -135,9 +154,11 @@ const buildJsonFilter = () => {
     contact_attributes: {},
   };
 
-  Object.entries(selectedAttributes.value).forEach(([key, values]) => {
-    if (values && values.length > 0) {
-      filter.contact_attributes[key] = values;
+  Object.entries(selectedAttributes.value).forEach(([key, value]) => {
+    if (Array.isArray(value) && value.length > 0) {
+      filter.contact_attributes[key] = value;
+    } else if (typeof value === 'boolean' && value === true) {
+      filter.contact_attributes[key] = true;
     }
   });
 
@@ -541,6 +562,34 @@ const sanitizedHtml = computed(() => {
         </p>
       </div>
 
+      <!-- Checkbox/Flag Attributes Filter -->
+      <div v-if="checkboxTypeAttributes.length > 0" class="flex flex-col gap-3">
+        <label class="text-xs font-medium text-n-slate-11">
+          {{ $t('ADS.FORM.FILTER.CHECKBOX_ATTRIBUTES.LABEL') }}
+        </label>
+        <div
+          class="flex flex-wrap gap-2 p-3 border border-n-slate-6 rounded-lg bg-n-slate-1"
+        >
+          <button
+            v-for="attr in checkboxTypeAttributes"
+            :key="attr.id"
+            type="button"
+            class="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors"
+            :class="
+              selectedAttributes[attr.attributeKey] === true
+                ? 'bg-woot-500 text-white border-woot-500'
+                : 'bg-white text-n-slate-11 border-n-slate-6 hover:border-n-slate-8'
+            "
+            @click="toggleCheckboxAttribute(attr.attributeKey)"
+          >
+            {{ attr.attributeDisplayName }}
+          </button>
+        </div>
+        <p class="text-xs text-n-slate-10">
+          {{ $t('ADS.FORM.FILTER.CHECKBOX_ATTRIBUTES.HELP_TEXT') }}
+        </p>
+      </div>
+
       <!-- Active Filters Summary -->
       <div
         v-if="hasActiveFilters"
@@ -558,15 +607,23 @@ const sanitizedHtml = computed(() => {
             {{ label }}
           </span>
           <template
-            v-for="(values, attrKey) in selectedAttributes"
+            v-for="(value, attrKey) in selectedAttributes"
             :key="attrKey"
           >
+            <template v-if="Array.isArray(value)">
+              <span
+                v-for="item in value"
+                :key="`${attrKey}-${item}`"
+                class="px-2 py-1 text-xs bg-woot-100 text-woot-700 rounded"
+              >
+                {{ attrKey }}: {{ item }}
+              </span>
+            </template>
             <span
-              v-for="value in values"
-              :key="`${attrKey}-${value}`"
+              v-else-if="value === true"
               class="px-2 py-1 text-xs bg-woot-100 text-woot-700 rounded"
             >
-              {{ attrKey }}: {{ value }}
+              {{ attrKey }}: ✓
             </span>
           </template>
         </div>
