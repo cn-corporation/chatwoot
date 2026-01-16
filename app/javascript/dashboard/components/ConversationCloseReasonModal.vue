@@ -117,25 +117,13 @@ const submitReason = async () => {
   isSubmitting.value = true;
 
   try {
-    // Prepare the reason value
     let reasonValue = selectedReason.value;
     let customReasonText = null;
 
-    // If custom reason is selected, save the text to custom_attributes
     if (selectedReason.value === 'custom') {
       customReasonText = customReason.value;
     }
 
-    // Update conversation with resolution reason
-    await store.dispatch('toggleStatus', {
-      conversationId: props.conversationId,
-      status: 'resolved',
-      resolutionReason: reasonValue === 'custom' ? null : reasonValue,
-      customResolutionReason:
-        reasonValue === 'custom' ? customReasonText : null,
-    });
-
-    // Save custom attributes including topics
     const customAttributes = {
       resolved_at: new Date().toISOString(),
     };
@@ -148,8 +136,12 @@ const submitReason = async () => {
       customAttributes.close_topics = selectedTopics.value;
     }
 
-    await store.dispatch('updateCustomAttributes', {
+    await store.dispatch('toggleStatus', {
       conversationId: props.conversationId,
+      status: 'resolved',
+      resolutionReason: reasonValue === 'custom' ? null : reasonValue,
+      customResolutionReason:
+        reasonValue === 'custom' ? customReasonText : null,
       customAttributes,
     });
 

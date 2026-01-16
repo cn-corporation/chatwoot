@@ -7,4 +7,5 @@ json.payload do
   json.current_status @conversation.status
   json.snoozed_until @conversation.snoozed_until
   json.resolution_reason @conversation.resolution_reason
+  json.custom_attributes @conversation.custom_attributes
 end

@@ -76,13 +76,13 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   end
 
   def toggle_status
-    # FIXME: move this logic into a service object
     Current.executed_by = Current.user
     previous_status = @conversation.status
     if pending_to_open_by_bot?
       @conversation.bot_handoff!
     elsif params[:status].present?
       set_conversation_status
+      set_custom_attributes_from_params
       @status = @conversation.save!
     else
       @status = @conversation.toggle_status
@@ -179,6 +179,12 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     return if @conversation.custom_attributes.blank?
 
     @conversation.custom_attributes = @conversation.custom_attributes.except('custom_resolution_reason')
+  end
+
+  def set_custom_attributes_from_params
+    return if params[:custom_attributes].blank?
+
+    @conversation.custom_attributes = (@conversation.custom_attributes || {}).merge(params[:custom_attributes].to_unsafe_h)
   end
 
   def assign_conversation

@@ -278,6 +278,7 @@ const actions = {
       snoozedUntil = null,
       resolutionReason = null,
       customResolutionReason = null,
+      customAttributes = null,
     }
   ) => {
     try {
@@ -287,6 +288,7 @@ const actions = {
             current_status: updatedStatus,
             snoozed_until: updatedSnoozedUntil,
             resolution_reason: updatedResolutionReason,
+            custom_attributes: updatedCustomAttributes,
           } = {},
         } = {},
       } = await ConversationApi.toggleStatus({
@@ -295,6 +297,7 @@ const actions = {
         snoozedUntil,
         resolutionReason,
         customResolutionReason,
+        customAttributes,
       });
       commit(types.CHANGE_CONVERSATION_STATUS, {
         conversationId,
@@ -303,7 +306,13 @@ const actions = {
         resolutionReason: updatedResolutionReason,
       });
 
-      // Automatically unassign agent when conversation is resolved
+      if (updatedCustomAttributes) {
+        commit(
+          types.UPDATE_CONVERSATION_CUSTOM_ATTRIBUTES,
+          updatedCustomAttributes
+        );
+      }
+
       if (updatedStatus === 'resolved') {
         await dispatch('assignAgent', { conversationId, agentId: 0 });
       }
