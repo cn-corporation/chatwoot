@@ -99,7 +99,9 @@ const isTopicSelected = topicValue => {
 };
 
 const canSubmit = computed(() => {
-  // Need a reason to submit
+  if (selectedTopics.value.length === 0) {
+    return false;
+  }
   if (selectedReason.value === 'custom') {
     return customReason.value.trim().length > 0;
   }
