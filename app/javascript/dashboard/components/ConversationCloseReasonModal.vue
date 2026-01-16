@@ -126,31 +126,15 @@ const submitReason = async () => {
       customReasonText = customReason.value;
     }
 
-    // Update conversation with resolution reason
+    // Update conversation with resolution reason and topics in one request
     await store.dispatch('toggleStatus', {
       conversationId: props.conversationId,
       status: 'resolved',
       resolutionReason: reasonValue === 'custom' ? null : reasonValue,
       customResolutionReason:
         reasonValue === 'custom' ? customReasonText : null,
-    });
-
-    // Save custom attributes including topics
-    const customAttributes = {
-      resolved_at: new Date().toISOString(),
-    };
-
-    if (customReasonText) {
-      customAttributes.custom_resolution_reason = customReasonText;
-    }
-
-    if (selectedTopics.value.length > 0) {
-      customAttributes.close_topics = selectedTopics.value;
-    }
-
-    await store.dispatch('updateCustomAttributes', {
-      conversationId: props.conversationId,
-      customAttributes,
+      closeTopics:
+        selectedTopics.value.length > 0 ? selectedTopics.value : null,
     });
 
     useAlert(t('CLOSE_REASON.SUCCESS_MESSAGE'));
