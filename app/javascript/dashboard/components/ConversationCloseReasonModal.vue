@@ -25,6 +25,7 @@ const store = useStore();
 const isOpen = ref(props.show);
 const selectedReason = ref('');
 const customReason = ref('');
+const selectedTopics = ref([]);
 const isSubmitting = ref(false);
 
 // Watch for prop changes
@@ -37,9 +38,38 @@ watch(
     if (newVal) {
       selectedReason.value = '';
       customReason.value = '';
+      selectedTopics.value = [];
     }
   }
 );
+
+// Close topics
+const closeTopics = computed(() => [
+  {
+    value: 'registration_funnel',
+    label: t('CLOSE_REASON.TOPIC_REGISTRATION_FUNNEL'),
+  },
+  {
+    value: 'deposits_withdrawals',
+    label: t('CLOSE_REASON.TOPIC_DEPOSITS_WITHDRAWALS'),
+  },
+  {
+    value: 'statistics_rake_rakeback',
+    label: t('CLOSE_REASON.TOPIC_STATISTICS_RAKE_RAKEBACK'),
+  },
+  {
+    value: 'bonuses_promotions',
+    label: t('CLOSE_REASON.TOPIC_BONUSES_PROMOTIONS'),
+  },
+  {
+    value: 'lobby_game',
+    label: t('CLOSE_REASON.TOPIC_LOBBY_GAME'),
+  },
+  {
+    value: 'clubgg',
+    label: t('CLOSE_REASON.TOPIC_CLUBGG'),
+  },
+]);
 
 // Predefined close reasons
 const closeReasons = computed(() => [
@@ -54,6 +84,19 @@ const closeReasons = computed(() => [
   { value: 'conflict', label: t('CLOSE_REASON.CONFLICT') },
   { value: 'custom', label: t('CLOSE_REASON.CUSTOM') },
 ]);
+
+const toggleTopic = topicValue => {
+  const index = selectedTopics.value.indexOf(topicValue);
+  if (index > -1) {
+    selectedTopics.value.splice(index, 1);
+  } else {
+    selectedTopics.value.push(topicValue);
+  }
+};
+
+const isTopicSelected = topicValue => {
+  return selectedTopics.value.includes(topicValue);
+};
 
 const canSubmit = computed(() => {
   // Need a reason to submit
@@ -92,19 +135,30 @@ const submitReason = async () => {
         reasonValue === 'custom' ? customReasonText : null,
     });
 
-    // If custom reason, save it to custom_attributes
+    // Save custom attributes including topics
+    const customAttributes = {
+      resolved_at: new Date().toISOString(),
+    };
+
     if (customReasonText) {
-      await store.dispatch('updateCustomAttributes', {
-        conversationId: props.conversationId,
-        customAttributes: {
-          custom_resolution_reason: customReasonText,
-          resolved_at: new Date().toISOString(),
-        },
-      });
+      customAttributes.custom_resolution_reason = customReasonText;
     }
 
+    if (selectedTopics.value.length > 0) {
+      customAttributes.close_topics = selectedTopics.value;
+    }
+
+    await store.dispatch('updateCustomAttributes', {
+      conversationId: props.conversationId,
+      customAttributes,
+    });
+
     useAlert(t('CLOSE_REASON.SUCCESS_MESSAGE'));
-    emit('success', { reason: reasonValue, customReason: customReasonText });
+    emit('success', {
+      reason: reasonValue,
+      customReason: customReasonText,
+      topics: selectedTopics.value,
+    });
     closeModal();
   } catch (error) {
     useAlert(t('CLOSE_REASON.ERROR_MESSAGE'));
@@ -125,9 +179,35 @@ const submitReason = async () => {
       </div>
 
       <!-- Body -->
-      <div class="flex flex-col gap-4 p-4">
-        <!-- Reason selector -->
-        <div class="flex flex-col gap-2">
+      <div class="flex gap-4 p-4">
+        <!-- Left column: Close topics -->
+        <div class="flex flex-col gap-2 w-1/2 border-r border-n-slate-5 pr-4">
+          <h2 class="text-n-slate-12 text-base font-medium mb-2">
+            {{ $t('CLOSE_REASON.TOPICS_TITLE') }}
+          </h2>
+          <div class="flex flex-col gap-2 max-h-64 overflow-y-auto">
+            <label
+              v-for="topic in closeTopics"
+              :key="topic.value"
+              class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-n-slate-3 transition-colors"
+              :class="{ 'bg-n-slate-3': isTopicSelected(topic.value) }"
+            >
+              <input
+                type="checkbox"
+                class="text-blue-600"
+                :checked="isTopicSelected(topic.value)"
+                @change="toggleTopic(topic.value)"
+              />
+              <span class="text-sm">{{ topic.label }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Right column: Status selector -->
+        <div class="flex flex-col gap-2 w-1/2 pl-4">
+          <h2 class="text-n-slate-12 text-base font-medium mb-2">
+            {{ $t('CLOSE_REASON.STATUS_TITLE') }}
+          </h2>
           <!-- Predefined reasons -->
           <div class="flex flex-col gap-2 max-h-64 overflow-y-auto">
             <label

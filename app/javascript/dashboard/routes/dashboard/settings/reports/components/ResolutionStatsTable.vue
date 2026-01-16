@@ -39,6 +39,9 @@ defineProps({
               {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.DETAILS') }}
             </th>
             <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
+              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.TOPICS') }}
+            </th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
               {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.DATE') }}
             </th>
           </tr>
@@ -60,6 +63,9 @@ defineProps({
             </td>
             <td class="py-3 px-4 text-sm text-n-slate-12">
               {{ row.details }}
+            </td>
+            <td class="py-3 px-4 text-sm text-n-slate-12">
+              {{ row.topics }}
             </td>
             <td class="py-3 px-4 text-sm text-n-slate-12">
               {{ row.createdAt }}
