@@ -47,13 +47,17 @@ module ActivityMessageHandler
   end
 
   def status_change_activity(user_name)
-    content = if Current.executed_by.present?
+    content = if automation_executed?
                 automation_status_change_activity_content
               else
                 user_status_change_activity_content(user_name)
               end
 
     ::Conversations::ActivityMessageJob.perform_later(self, activity_message_params(content)) if content
+  end
+
+  def automation_executed?
+    Current.executed_by.present? && !Current.executed_by.is_a?(User)
   end
 
   def auto_resolve_message_key(minutes)
