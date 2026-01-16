@@ -278,6 +278,7 @@ const actions = {
       snoozedUntil = null,
       resolutionReason = null,
       customResolutionReason = null,
+      closeTopics = null,
     }
   ) => {
     try {
@@ -295,6 +296,7 @@ const actions = {
         snoozedUntil,
         resolutionReason,
         customResolutionReason,
+        closeTopics,
       });
       commit(types.CHANGE_CONVERSATION_STATUS, {
         conversationId,

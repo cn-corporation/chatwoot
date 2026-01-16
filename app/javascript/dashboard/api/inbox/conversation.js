@@ -55,12 +55,14 @@ class ConversationApi extends ApiClient {
     snoozedUntil = null,
     resolutionReason = null,
     customResolutionReason = null,
+    closeTopics = null,
   }) {
     return axios.post(`${this.url}/${conversationId}/toggle_status`, {
       status,
       snoozed_until: snoozedUntil,
       resolution_reason: resolutionReason,
       custom_resolution_reason: customResolutionReason,
+      close_topics: closeTopics,
     });
   }
 

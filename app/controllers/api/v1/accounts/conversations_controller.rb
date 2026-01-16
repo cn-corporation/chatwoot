@@ -164,6 +164,9 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     elsif params[:status] == 'resolved'
       remove_custom_resolution_reason
     end
+
+    set_resolution_custom_attributes if params[:status] == 'resolved'
+
     # Clear resolution reason when reopening conversation
     return unless params[:status] == 'open'
 
@@ -173,6 +176,13 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def set_custom_resolution_reason(reason)
     @conversation.custom_attributes = @conversation.custom_attributes.merge('custom_resolution_reason' => reason)
+  end
+
+  def set_resolution_custom_attributes
+    attrs = {}
+    attrs['close_topics'] = params[:close_topics] if params[:close_topics].present?
+    attrs['resolved_at'] = Time.current.iso8601 if attrs.any? || params[:resolution_reason].present? || params[:custom_resolution_reason].present?
+    @conversation.custom_attributes = @conversation.custom_attributes.merge(attrs) if attrs.any?
   end
 
   def remove_custom_resolution_reason
