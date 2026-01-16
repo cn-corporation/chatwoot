@@ -241,10 +241,33 @@ const tableHeaders = computed(() => {
   return [
     t('ADS.LIST.TABLE_HEADER.NAME'),
     t('ADS.LIST.TABLE_HEADER.SOURCE_CHANNEL'),
+    t('ADS.LIST.TABLE_HEADER.FILTER'),
     t('ADS.LIST.TABLE_HEADER.CREATED_AT'),
     t('ADS.LIST.TABLE_HEADER.ACTIONS'),
   ];
 });
+
+const getFilterSummary = ad => {
+  if (!ad.jsonFilter) return null;
+
+  const parts = [];
+  const { categories, contact_attributes } = ad.jsonFilter;
+
+  if (categories && categories.length > 0) {
+    parts.push(`${categories.length} ${t('ADS.FILTER_SUMMARY.LABELS')}`);
+  }
+
+  if (contact_attributes) {
+    const attrCount = Object.values(contact_attributes).filter(
+      v => v && v.length > 0
+    ).length;
+    if (attrCount > 0) {
+      parts.push(`${attrCount} ${t('ADS.FILTER_SUMMARY.ATTRIBUTES')}`);
+    }
+  }
+
+  return parts.length > 0 ? parts.join(', ') : null;
+};
 
 const getSourceChannelName = adSourceId => {
   if (!adSourceId) return '-';
@@ -352,6 +375,17 @@ const exportErrorLogsToExcel = () => {
             </td>
             <td class="py-4 ltr:pr-4 rtl:pl-4">
               {{ getSourceChannelName(ad.chatwootSourceId || ad.sourceId) }}
+            </td>
+            <td class="py-4 ltr:pr-4 rtl:pl-4">
+              <span
+                v-if="getFilterSummary(ad)"
+                class="px-2 py-1 text-xs bg-woot-50 text-woot-600 rounded"
+              >
+                {{ getFilterSummary(ad) }}
+              </span>
+              <span v-else class="text-xs text-n-slate-10">
+                {{ $t('ADS.FILTER_SUMMARY.ALL_CONTACTS') }}
+              </span>
             </td>
             <td class="py-4 ltr:pr-4 rtl:pl-4">
               {{ formatDate(ad.createdAt) }}
