@@ -75,6 +75,10 @@ const actions = {
 
       if (allConversations.length > 0) {
         commit(types.UPDATE_CONVERSATIONS_FOR_COUNTS, allConversations);
+        commit(types.SET_ALL_CONVERSATION, {
+          conversations: allConversations,
+          replace: false,
+        });
       }
     } catch (error) {
       // Handle error silently - counts are not critical
