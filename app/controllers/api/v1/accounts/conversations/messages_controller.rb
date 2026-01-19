@@ -87,6 +87,25 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def update_message_content
+    if message.private?
+      update_private_note_content
+    else
+      update_outgoing_message_content
+    end
+  end
+
+  def update_private_note_content
+    if message.additional_attributes&.dig('original_message_id').present?
+      render json: { error: 'Cannot edit message history notes' }, status: :forbidden
+      return
+    end
+
+    new_content = permitted_params[:content]
+    message.update!(content: new_content)
+    @message = message
+  end
+
+  def update_outgoing_message_content
     unless message.outgoing?
       render json: { error: 'Only outgoing messages can be edited' }, status: :forbidden
       return
