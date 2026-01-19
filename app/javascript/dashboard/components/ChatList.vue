@@ -352,22 +352,22 @@ const assigneeTabItems = computed(() => {
       const inboxConversations =
         getConversationsForInboxTabs.value(props.conversationInbox) || [];
 
+      const matchesOpenStatus = c =>
+        c.status === 'open' || c.status === 'pending';
+
       switch (key) {
         case 'me':
           count = inboxConversations.filter(
-            c =>
-              c.status !== 'resolved' && c.assignee_id === currentUser.value?.id
+            c => matchesOpenStatus(c) && c.assignee_id === currentUser.value?.id
           ).length;
           break;
         case 'unassigned':
           count = inboxConversations.filter(
-            c => c.status !== 'resolved' && !c.assignee_id
+            c => matchesOpenStatus(c) && !c.assignee_id
           ).length;
           break;
         case 'all':
-          count = inboxConversations.filter(
-            c => c.status !== 'resolved'
-          ).length;
+          count = inboxConversations.filter(matchesOpenStatus).length;
           break;
         case 'pending':
           count = inboxConversations.filter(c => c.status === 'pending').length;
