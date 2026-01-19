@@ -1,7 +1,9 @@
 class InstallationWebhookListener < BaseListener
   def account_created(event)
-    payload = account(event).webhook_data.merge(
+    acct = account(event)
+    payload = acct.webhook_data.merge(
       event: __method__.to_s,
+      account_id: acct.id,
       users: users(event)
     )
     deliver_webhook_payloads(payload)

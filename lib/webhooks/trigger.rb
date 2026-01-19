@@ -2,11 +2,6 @@ require 'active_support/core_ext/hash/indifferent_access'
 
 class Webhooks::Trigger
   SUPPORTED_ERROR_HANDLE_EVENTS = %w[message_created message_updated].freeze
-  SUPPORTED_CHATWOOT_EXTRA_EVENTS = %w[
-    message_created
-    message_created_with_context
-    inbound_message_created_with_context
-  ].freeze
   HEADER_PARAM_PREFIX = 'header_'
 
   def initialize(url, payload, webhook_type)
@@ -120,9 +115,7 @@ class Webhooks::Trigger
 
     token = ChatwootExtra::BearerTokenService.encrypted_token_for_account(account_id)
     if token.present?
-      Rails.logger.debug(
-        "[Webhooks::Trigger] Attached Chatwoot Extra bearer token for account #{account_id}"
-      )
+      Rails.logger.debug { "[Webhooks::Trigger] Attached Chatwoot Extra bearer token for account #{account_id}" }
       return token
     else
       Rails.logger.warn(
@@ -136,10 +129,12 @@ class Webhooks::Trigger
   end
 
   def should_attach_chatwoot_token?
-    SUPPORTED_CHATWOOT_EXTRA_EVENTS.include?(@payload[:event]) && account_id.present?
+    true
   end
 
   def account_id
+    return @payload[:account_id] if @payload[:account_id].present?
+
     account_details = @payload[:account]
     return if account_details.blank?
 
