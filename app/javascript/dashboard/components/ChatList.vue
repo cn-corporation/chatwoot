@@ -267,119 +267,35 @@ const userPermissions = computed(() => {
   return getUserPermissions(currentUser.value, currentAccountId.value);
 });
 
-const getConversationsForLabelTabs = useMapGetter(
-  'getConversationsForLabelTabs'
-);
-const getConversationsForTeamTabs = useMapGetter('getConversationsForTeamTabs');
-const getConversationsForInboxTabs = useMapGetter(
-  'getConversationsForInboxTabs'
-);
-
 const assigneeTabItems = computed(() => {
-  const isLabelView = props.label && props.label !== '';
-  const isTeamView = props.teamId && props.teamId !== 0;
+  const stats = conversationStats.value;
 
   return filterItemsByPermission(
     ASSIGNEE_TYPE_TAB_PERMISSIONS,
     userPermissions.value,
     item => item.permissions
-  ).map(({ key, count: countKey }) => {
+  ).map(({ key }) => {
     let count = 0;
 
-    if (isLabelView) {
-      // Use the store getter that has access to sidebarCountsData
-      const labelConversations =
-        getConversationsForLabelTabs.value(props.label) || [];
-
-      switch (key) {
-        case 'me':
-          count = labelConversations.filter(
-            c =>
-              c.status !== 'resolved' && c.assignee_id === currentUser.value?.id
-          ).length;
-          break;
-        case 'unassigned':
-          count = labelConversations.filter(
-            c => c.status !== 'resolved' && !c.assignee_id
-          ).length;
-          break;
-        case 'all':
-          count = labelConversations.filter(
-            c => c.status !== 'resolved'
-          ).length;
-          break;
-        case 'pending':
-          count = labelConversations.filter(c => c.status === 'pending').length;
-          break;
-        case 'resolved':
-          count = labelConversations.filter(
-            c => c.status === 'resolved'
-          ).length;
-          break;
-        default:
-          count = 0;
-      }
-    } else if (isTeamView) {
-      // Use the store getter that has access to sidebarCountsData
-      const teamConversations =
-        getConversationsForTeamTabs.value(props.teamId) || [];
-
-      switch (key) {
-        case 'me':
-          count = teamConversations.filter(
-            c =>
-              c.status !== 'resolved' && c.assignee_id === currentUser.value?.id
-          ).length;
-          break;
-        case 'unassigned':
-          count = teamConversations.filter(
-            c => c.status !== 'resolved' && !c.assignee_id
-          ).length;
-          break;
-        case 'all':
-          count = teamConversations.filter(c => c.status !== 'resolved').length;
-          break;
-        case 'pending':
-          count = teamConversations.filter(c => c.status === 'pending').length;
-          break;
-        case 'resolved':
-          count = teamConversations.filter(c => c.status === 'resolved').length;
-          break;
-        default:
-          count = 0;
-      }
-    } else {
-      const inboxConversations =
-        getConversationsForInboxTabs.value(props.conversationInbox) || [];
-
-      const matchesOpenStatus = c =>
-        c.status === 'open' || c.status === 'pending';
-
-      switch (key) {
-        case 'me':
-          count = inboxConversations.filter(
-            c => matchesOpenStatus(c) && c.assignee_id === currentUser.value?.id
-          ).length;
-          break;
-        case 'unassigned':
-          count = inboxConversations.filter(
-            c => matchesOpenStatus(c) && !c.assignee_id
-          ).length;
-          break;
-        case 'all':
-          count = inboxConversations.filter(matchesOpenStatus).length;
-          break;
-        case 'pending':
-          count = inboxConversations.filter(c => c.status === 'pending').length;
-          break;
-        case 'resolved':
-          count = inboxConversations.filter(
-            c => c.status === 'resolved'
-          ).length;
-          break;
-        default:
-          count = 0;
-      }
+    switch (key) {
+      case 'me':
+        count = stats.mineCount || 0;
+        break;
+      case 'unassigned':
+        count = stats.unAssignedCount || 0;
+        break;
+      case 'all':
+      case 'all-operators':
+        count = stats.allCount || 0;
+        break;
+      case 'pending':
+        count = stats.pendingCount || 0;
+        break;
+      case 'resolved':
+        count = stats.resolvedCount || 0;
+        break;
+      default:
+        count = 0;
     }
 
     return {
@@ -792,6 +708,7 @@ function resetAndFetchData() {
     return;
   }
   fetchConversations();
+  store.dispatch('conversationStats/get', conversationFilters.value);
 }
 
 function loadMoreConversations() {
@@ -1010,6 +927,7 @@ function toggleSelectAll(check) {
 useEmitter('fetch_conversation_stats', () => {
   if (hasAppliedFiltersOrActiveFolders.value) return;
   fetchConversations();
+  store.dispatch('conversationStats/get', conversationFilters.value);
 });
 
 onMounted(() => {
