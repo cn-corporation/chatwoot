@@ -312,6 +312,21 @@ const getters = {
     });
   },
 
+  getConversationsForInboxTabs: _state => inboxId => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    if (!inboxId) {
+      return source;
+    }
+
+    return source.filter(conversation => {
+      return conversation.inbox_id === Number(inboxId);
+    });
+  },
+
   // Operator Notifications (chatwoot-extra integration)
   getOperatorUnreadCount:
     (_state, _getters, _rootState, rootGetters) => conversationId => {

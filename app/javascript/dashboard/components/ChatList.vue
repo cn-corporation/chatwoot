@@ -271,6 +271,9 @@ const getConversationsForLabelTabs = useMapGetter(
   'getConversationsForLabelTabs'
 );
 const getConversationsForTeamTabs = useMapGetter('getConversationsForTeamTabs');
+const getConversationsForInboxTabs = useMapGetter(
+  'getConversationsForInboxTabs'
+);
 
 const assigneeTabItems = computed(() => {
   const isLabelView = props.label && props.label !== '';
@@ -346,7 +349,37 @@ const assigneeTabItems = computed(() => {
           count = 0;
       }
     } else {
-      count = conversationStats.value[countKey] || 0;
+      const inboxConversations =
+        getConversationsForInboxTabs.value(props.conversationInbox) || [];
+
+      switch (key) {
+        case 'me':
+          count = inboxConversations.filter(
+            c =>
+              c.status !== 'resolved' && c.assignee_id === currentUser.value?.id
+          ).length;
+          break;
+        case 'unassigned':
+          count = inboxConversations.filter(
+            c => c.status !== 'resolved' && !c.assignee_id
+          ).length;
+          break;
+        case 'all':
+          count = inboxConversations.filter(
+            c => c.status !== 'resolved'
+          ).length;
+          break;
+        case 'pending':
+          count = inboxConversations.filter(c => c.status === 'pending').length;
+          break;
+        case 'resolved':
+          count = inboxConversations.filter(
+            c => c.status === 'resolved'
+          ).length;
+          break;
+        default:
+          count = 0;
+      }
     }
 
     return {
