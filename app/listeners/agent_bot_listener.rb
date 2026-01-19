@@ -3,7 +3,7 @@ class AgentBotListener < BaseListener
     conversation = extract_conversation_and_account(event)[0]
     inbox = conversation.inbox
     event_name = __method__.to_s
-    payload = conversation.webhook_data.merge(event: event_name)
+    payload = conversation.webhook_data.merge(event: event_name, account_id: conversation.account_id)
     agent_bots_for(inbox, conversation).each { |agent_bot| process_webhook_bot_event(agent_bot, payload) }
   end
 
@@ -11,7 +11,7 @@ class AgentBotListener < BaseListener
     conversation = extract_conversation_and_account(event)[0]
     inbox = conversation.inbox
     event_name = __method__.to_s
-    payload = conversation.webhook_data.merge(event: event_name)
+    payload = conversation.webhook_data.merge(event: event_name, account_id: conversation.account_id)
     agent_bots_for(inbox, conversation).each { |agent_bot| process_webhook_bot_event(agent_bot, payload) }
   end
 
@@ -37,7 +37,7 @@ class AgentBotListener < BaseListener
     contact_inbox = event.data[:contact_inbox]
     inbox = contact_inbox.inbox
     event_name = __method__.to_s
-    payload = contact_inbox.webhook_data.merge(event: event_name)
+    payload = contact_inbox.webhook_data.merge(event: event_name, account_id: inbox.account_id)
     payload[:event_info] = event.data[:event_info]
     agent_bots_for(inbox).each { |agent_bot| process_webhook_bot_event(agent_bot, payload) }
   end
@@ -59,8 +59,7 @@ class AgentBotListener < BaseListener
   end
 
   def process_message_event(method_name, agent_bot, message, _event)
-    # Only webhook bots are supported
-    payload = message.webhook_data.merge(event: method_name)
+    payload = message.webhook_data.merge(event: method_name, account_id: message.account_id)
     process_webhook_bot_event(agent_bot, payload)
   end
 
