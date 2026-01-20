@@ -15,7 +15,6 @@ import {
 } from '@tanstack/vue-table';
 import { computed, onMounted, ref, h } from 'vue';
 import { useI18n } from 'vue-i18n';
-import SummaryReportLink from './SummaryReportLink.vue';
 
 const store = useStore();
 
@@ -44,7 +43,7 @@ const columns = computed(() => [
   columnHelper.accessor('name', {
     header: t('SUMMARY_REPORTS.AGENT'),
     width: 300,
-    cell: cellProps => h(SummaryReportLink, cellProps),
+    cell: defaulSpanRender,
   }),
   columnHelper.accessor('conversationsCount', {
     header: t('SUMMARY_REPORTS.CONVERSATIONS'),
