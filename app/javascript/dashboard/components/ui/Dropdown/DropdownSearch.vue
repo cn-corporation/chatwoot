@@ -43,7 +43,7 @@ const value = defineModel({
       v-if="!modelValue && showClearFilter"
       faded
       xs
-      class="flex-shrink-0"
+      class="flex-shrink-0 whitespace-nowrap"
       :label="$t('REPORT.FILTER_ACTIONS.CLEAR_FILTER')"
       @click="emit('remove')"
     />
