@@ -696,6 +696,11 @@
         "LABEL": "Source Background Color",
         "HELP_TEXT": "Set a custom background color for this source to help visually identify conversations from different channels."
       },
+      "SOURCE_CLUB_ID": {
+        "LABEL": "Club ID",
+        "PLACEHOLDER": "Enter Club ID",
+        "HELP_TEXT": "Associate this inbox with a specific club ID for analytics purposes."
+      },
       "AUTO_ASSIGNMENT": "Enable auto assignment",
       "SENDER_NAME_SECTION": "Enable Agent Name in Email",
       "SENDER_NAME_SECTION_TEXT": "Enable/Disable showing Agent's name in email, if disabled it will show business name",

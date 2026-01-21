@@ -8,7 +8,8 @@ class WebhookListener < BaseListener
       event: __method__.to_s,
       account_id: conversation.account_id,
       changed_attributes: changed_attributes,
-      performed_by: performed_by&.push_event_data
+      performed_by: performed_by&.push_event_data,
+      inbox: inbox.webhook_data
     )
     deliver_webhook_payloads(payload, inbox)
   end
@@ -22,7 +23,8 @@ class WebhookListener < BaseListener
       event: __method__.to_s,
       account_id: conversation.account_id,
       changed_attributes: changed_attributes,
-      performed_by: performed_by&.push_event_data
+      performed_by: performed_by&.push_event_data,
+      inbox: inbox.webhook_data
     )
     deliver_webhook_payloads(payload, inbox)
   end
@@ -30,7 +32,7 @@ class WebhookListener < BaseListener
   def conversation_created(event)
     conversation = extract_conversation_and_account(event)[0]
     inbox = conversation.inbox
-    payload = conversation.webhook_data.merge(event: __method__.to_s, account_id: conversation.account_id)
+    payload = conversation.webhook_data.merge(event: __method__.to_s, account_id: conversation.account_id, inbox: inbox.webhook_data)
     deliver_webhook_payloads(payload, inbox)
   end
 
@@ -80,7 +82,7 @@ class WebhookListener < BaseListener
     contact_inbox = event.data[:contact_inbox]
     inbox = contact_inbox.inbox
 
-    payload = contact_inbox.webhook_data.merge(event: __method__.to_s, account_id: inbox.account_id)
+    payload = contact_inbox.webhook_data.merge(event: __method__.to_s, account_id: inbox.account_id, inbox: inbox.webhook_data)
     payload[:event_info] = event.data[:event_info]
     deliver_webhook_payloads(payload, inbox)
   end
@@ -137,6 +139,7 @@ class WebhookListener < BaseListener
       account_id: conversation.account_id,
       user: user.webhook_data,
       conversation: conversation.webhook_data,
+      inbox: inbox.webhook_data,
       is_private: event.data[:is_private] || false
     }
     deliver_webhook_payloads(payload, inbox)

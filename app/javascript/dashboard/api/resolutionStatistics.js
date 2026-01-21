@@ -50,6 +50,16 @@ class ResolutionStatisticsAPI {
     );
     return response.data;
   }
+
+  async getResolutionTopics() {
+    const response = await axios.get(
+      `${this.baseURL}/api/resolution-statistics/topics`,
+      {
+        headers: this.headers,
+      }
+    );
+    return response.data;
+  }
 }
 
 export default new ResolutionStatisticsAPI();
