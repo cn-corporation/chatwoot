@@ -124,7 +124,6 @@ const operatorOptions = computed(() => {
       t('RESOLUTION_STATISTICS.OPERATOR_ID', { id: agent.id }),
   }));
 });
-
 const reasonOptions = computed(() =>
   reasons.value.map(reason => ({
     value: reason,
@@ -324,10 +323,17 @@ const handleDateRangeChange = ({ field, value }) => {
 const fetchReasons = async () => {
   try {
     const response = await resolutionStatisticsAPI.getResolutionReasons();
-    reasons.value = response?.data?.reasons || [];
-    topics.value = response?.data?.topics || [];
+    reasons.value = response?.data || [];
   } catch (error) {
     reasons.value = [];
+  }
+};
+
+const fetchTopics = async () => {
+  try {
+    const response = await resolutionStatisticsAPI.getResolutionTopics();
+    topics.value = response?.data || [];
+  } catch (error) {
     topics.value = [];
   }
 };
@@ -383,6 +389,7 @@ const updateConversationId = value => {
 onMounted(() => {
   store.dispatch('agents/get');
   fetchReasons();
+  fetchTopics();
   fetchData();
 });
 </script>

@@ -91,6 +91,8 @@ export default {
       sourceBgColor: '#000000',
       enableSourceBgColor: false,
       originalSourceBgColor: null,
+      sourceClubId: '',
+      originalSourceClubId: null,
       healthData: null,
       isLoadingHealth: false,
       healthError: null,
@@ -435,19 +437,31 @@ export default {
         const response = await chatwootExtraAPI.getSourceChannel(
           this.currentInboxId
         );
-        if (response.success && response.data && response.data.bgColor) {
-          this.sourceBgColor = response.data.bgColor;
-          this.enableSourceBgColor = true;
-          this.originalSourceBgColor = response.data.bgColor;
+        if (response.success && response.data) {
+          if (response.data.bgColor) {
+            this.sourceBgColor = response.data.bgColor;
+            this.enableSourceBgColor = true;
+            this.originalSourceBgColor = response.data.bgColor;
+          } else {
+            this.sourceBgColor = '#000000';
+            this.enableSourceBgColor = false;
+            this.originalSourceBgColor = null;
+          }
+          this.sourceClubId = response.data.clubId || '';
+          this.originalSourceClubId = response.data.clubId || null;
         } else {
           this.sourceBgColor = '#000000';
           this.enableSourceBgColor = false;
           this.originalSourceBgColor = null;
+          this.sourceClubId = '';
+          this.originalSourceClubId = null;
         }
       } catch (error) {
         this.sourceBgColor = '#000000';
         this.enableSourceBgColor = false;
         this.originalSourceBgColor = null;
+        this.sourceClubId = '';
+        this.originalSourceClubId = null;
       }
     },
     async updateInbox() {
@@ -483,20 +497,40 @@ export default {
         }
         await this.$store.dispatch('inboxes/updateInbox', payload);
 
+        const sourceChannelUpdate = {};
+        let needsSourceChannelUpdate = false;
+
         if (this.enableSourceBgColor) {
           if (this.sourceBgColor !== this.originalSourceBgColor) {
-            await chatwootExtraAPI.updateSourceChannel(this.currentInboxId, {
-              bgColor: this.sourceBgColor,
-            });
-            this.originalSourceBgColor = this.sourceBgColor;
-            this.setSourceBgColor(this.currentInboxId, this.sourceBgColor);
+            sourceChannelUpdate.bgColor = this.sourceBgColor;
+            needsSourceChannelUpdate = true;
           }
         } else if (this.originalSourceBgColor !== null) {
-          await chatwootExtraAPI.updateSourceChannel(this.currentInboxId, {
-            bgColor: null,
-          });
-          this.originalSourceBgColor = null;
-          this.setSourceBgColor(this.currentInboxId, null);
+          sourceChannelUpdate.bgColor = null;
+          needsSourceChannelUpdate = true;
+        }
+
+        const normalizedClubId = this.sourceClubId.trim() || null;
+        if (normalizedClubId !== this.originalSourceClubId) {
+          sourceChannelUpdate.clubId = normalizedClubId;
+          needsSourceChannelUpdate = true;
+        }
+
+        if (needsSourceChannelUpdate) {
+          await chatwootExtraAPI.updateSourceChannel(
+            this.currentInboxId,
+            sourceChannelUpdate
+          );
+          if (sourceChannelUpdate.bgColor !== undefined) {
+            this.originalSourceBgColor = sourceChannelUpdate.bgColor;
+            this.setSourceBgColor(
+              this.currentInboxId,
+              sourceChannelUpdate.bgColor
+            );
+          }
+          if (sourceChannelUpdate.clubId !== undefined) {
+            this.originalSourceClubId = normalizedClubId;
+          }
         }
 
         useAlert(this.$t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
@@ -705,6 +739,18 @@ export default {
               {{ $t('INBOX_MGMT.SETTINGS_POPUP.SOURCE_BG_COLOR.HELP_TEXT') }}
             </p>
           </div>
+
+          <woot-input
+            v-model="sourceClubId"
+            class="pb-4"
+            :label="$t('INBOX_MGMT.SETTINGS_POPUP.SOURCE_CLUB_ID.LABEL')"
+            :placeholder="
+              $t('INBOX_MGMT.SETTINGS_POPUP.SOURCE_CLUB_ID.PLACEHOLDER')
+            "
+            :help-text="
+              $t('INBOX_MGMT.SETTINGS_POPUP.SOURCE_CLUB_ID.HELP_TEXT')
+            "
+          />
 
           <label v-if="isAWhatsAppChannel" class="pb-4">
             {{ $t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.LABEL') }}
