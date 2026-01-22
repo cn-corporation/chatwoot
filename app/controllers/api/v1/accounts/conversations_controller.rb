@@ -170,8 +170,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     # Clear resolution reason when reopening conversation
     return unless params[:status] == 'open'
 
-    @conversation.resolution_reason = nil
-    remove_custom_resolution_reason
+    @conversation.clear_resolution_attributes
   end
 
   def set_custom_resolution_reason(reason)

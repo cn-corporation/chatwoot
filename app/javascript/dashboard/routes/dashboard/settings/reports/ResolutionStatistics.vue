@@ -87,6 +87,7 @@ const resolutionTopicLabels = {
   bonuses_promotions: () => t('CLOSE_REASON.TOPIC_BONUSES_PROMOTIONS'),
   lobby_game: () => t('CLOSE_REASON.TOPIC_LOBBY_GAME'),
   clubgg: () => t('CLOSE_REASON.TOPIC_CLUBGG'),
+  other: () => t('CLOSE_REASON.TOPIC_OTHER'),
 };
 
 const getTopicLabel = topic => {
