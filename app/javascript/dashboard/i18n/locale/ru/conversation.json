@@ -452,6 +452,7 @@
     "TOPIC_BONUSES_PROMOTIONS": "Бонусы/акции",
     "TOPIC_LOBBY_GAME": "Лобби/игра",
     "TOPIC_CLUBGG": "ClubGG",
+    "TOPIC_OTHER": "Иное",
     "SUCCESS_INFO": "Тикет будет отмечен как успешно решенный.",
     "SUCCESS_MESSAGE": "Статус завершения сохранен",
     "ERROR_MESSAGE": "Ошибка при сохранении статуса",
