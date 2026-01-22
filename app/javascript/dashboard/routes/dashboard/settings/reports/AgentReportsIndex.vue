@@ -1,13 +1,13 @@
 <script setup>
 import { ref } from 'vue';
 import ReportHeader from './components/ReportHeader.vue';
-import SummaryReports from './components/SummaryReports.vue';
+import AgentOverviewReport from './components/AgentOverviewReport.vue';
 import V4Button from 'dashboard/components-next/button/Button.vue';
 
-const summarReportsRef = ref(null);
+const agentOverviewRef = ref(null);
 
 const onDownloadClick = () => {
-  summarReportsRef.value.downloadReports();
+  agentOverviewRef.value.downloadReports();
 };
 </script>
 
@@ -24,12 +24,5 @@ const onDownloadClick = () => {
     />
   </ReportHeader>
 
-  <SummaryReports
-    ref="summarReportsRef"
-    action-key="summaryReports/fetchAgentSummaryReports"
-    getter-key="agents/getAgents"
-    fetch-items-key="agents/get"
-    summary-key="summaryReports/getAgentSummaryReports"
-    type="agent"
-  />
+  <AgentOverviewReport ref="agentOverviewRef" />
 </template>

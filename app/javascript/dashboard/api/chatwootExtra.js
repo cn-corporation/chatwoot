@@ -271,6 +271,44 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async createPersonalCannedResponse({ chatwootUserId, command, text }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/canned-responses`,
+      { chatwootUserId, command, text },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getPersonalCannedResponses(chatwootUserId) {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/api/canned-responses/user/${chatwootUserId}`,
+        { headers: this.headers }
+      );
+      return response.data?.data || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async updatePersonalCannedResponse(id, { command, text }) {
+    const response = await axios.patch(
+      `${this.baseURL}/api/canned-responses/${id}`,
+      { command, text },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async deletePersonalCannedResponse(id) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/canned-responses/${id}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   // Ads Send Operations API
   async startAdSend(adId, bearerTokenHash, chatwootApiUrl) {
     const response = await axios.post(

@@ -41,6 +41,7 @@ const store = useStore();
 const isLoading = ref(false);
 const statistics = ref([]);
 const reasons = ref([]);
+const topics = ref([]);
 const selectedOperators = ref([]);
 const selectedReason = ref(null);
 const conversationId = ref('');
@@ -78,12 +79,38 @@ const getResolutionReasonLabel = reason => {
   return resolver ? resolver() : reason;
 };
 
+const resolutionTopicLabels = {
+  registration_funnel: () => t('CLOSE_REASON.TOPIC_REGISTRATION_FUNNEL'),
+  deposits_withdrawals: () => t('CLOSE_REASON.TOPIC_DEPOSITS_WITHDRAWALS'),
+  statistics_rake_rakeback: () =>
+    t('CLOSE_REASON.TOPIC_STATISTICS_RAKE_RAKEBACK'),
+  bonuses_promotions: () => t('CLOSE_REASON.TOPIC_BONUSES_PROMOTIONS'),
+  lobby_game: () => t('CLOSE_REASON.TOPIC_LOBBY_GAME'),
+  clubgg: () => t('CLOSE_REASON.TOPIC_CLUBGG'),
+};
+
+const getTopicLabel = topic => {
+  const resolver = resolutionTopicLabels[topic];
+  return resolver ? resolver() : topic;
+};
+
+const formatTopics = topicsArray => {
+  if (!topicsArray || !Array.isArray(topicsArray) || topicsArray.length === 0) {
+    return t('RESOLUTION_STATISTICS.EMPTY_VALUE');
+  }
+  return topicsArray.map(getTopicLabel).join(', ');
+};
+
 const getAgentName = operatorId => {
   const agent = agentsMap.value.get(String(operatorId));
   if (agent) {
-    return agent.name || agent.email || t('RESOLUTION_STATISTICS.OPERATOR_ID', {
-      id: operatorId,
-    });
+    return (
+      agent.name ||
+      agent.email ||
+      t('RESOLUTION_STATISTICS.OPERATOR_ID', {
+        id: operatorId,
+      })
+    );
   }
   return t('RESOLUTION_STATISTICS.OPERATOR_ID', { id: operatorId });
 };
@@ -97,7 +124,6 @@ const operatorOptions = computed(() => {
       t('RESOLUTION_STATISTICS.OPERATOR_ID', { id: agent.id }),
   }));
 });
-
 const reasonOptions = computed(() =>
   reasons.value.map(reason => ({
     value: reason,
@@ -248,14 +274,46 @@ const formatDateTime = value => {
 };
 
 const tableRows = computed(() =>
-  statistics.value.map(stat => ({
-    id: stat.id,
-    conversationId: stat.conversationId,
-    operator: getAgentName(stat.operatorChatwootId ?? stat.operatorId),
-    reason: getResolutionReasonLabel(stat.resolutionReason),
-    details: stat.resolutionDetails || t('RESOLUTION_STATISTICS.EMPTY_VALUE'),
-    createdAt: formatDateTime(stat.createdAt),
-  }))
+  statistics.value.map(stat => {
+    // Topics can be in different places depending on API response format
+    // Check camelCase, snake_case, and direct properties
+    let topicsArray = [];
+
+    if (stat.customAttributes?.close_topics) {
+      topicsArray = stat.customAttributes.close_topics;
+    } else if (stat.custom_attributes?.close_topics) {
+      topicsArray = stat.custom_attributes.close_topics;
+    } else if (stat.closeTopics) {
+      topicsArray = stat.closeTopics;
+    } else if (stat.topics) {
+      topicsArray = stat.topics;
+    } else if (
+      stat.customAttributes &&
+      Array.isArray(stat.customAttributes.close_topics)
+    ) {
+      topicsArray = stat.customAttributes.close_topics;
+    } else if (
+      stat.custom_attributes &&
+      Array.isArray(stat.custom_attributes.close_topics)
+    ) {
+      topicsArray = stat.custom_attributes.close_topics;
+    }
+
+    // Ensure it's an array
+    if (!Array.isArray(topicsArray)) {
+      topicsArray = [];
+    }
+
+    return {
+      id: stat.id,
+      conversationId: stat.conversationId,
+      operator: getAgentName(stat.operatorChatwootId ?? stat.operatorId),
+      reason: getResolutionReasonLabel(stat.resolutionReason),
+      details: stat.resolutionDetails || t('RESOLUTION_STATISTICS.EMPTY_VALUE'),
+      topics: formatTopics(topicsArray),
+      createdAt: formatDateTime(stat.createdAt),
+    };
+  })
 );
 
 const handleDateRangeChange = ({ field, value }) => {
@@ -268,6 +326,15 @@ const fetchReasons = async () => {
     reasons.value = response?.data || [];
   } catch (error) {
     reasons.value = [];
+  }
+};
+
+const fetchTopics = async () => {
+  try {
+    const response = await resolutionStatisticsAPI.getResolutionTopics();
+    topics.value = response?.data || [];
+  } catch (error) {
+    topics.value = [];
   }
 };
 
@@ -322,6 +389,7 @@ const updateConversationId = value => {
 onMounted(() => {
   store.dispatch('agents/get');
   fetchReasons();
+  fetchTopics();
   fetchData();
 });
 </script>
@@ -363,10 +431,6 @@ onMounted(() => {
       :t="t"
     />
 
-    <ResolutionStatsTable
-      :rows="tableRows"
-      :is-loading="isLoading"
-      :t="t"
-    />
+    <ResolutionStatsTable :rows="tableRows" :is-loading="isLoading" :t="t" />
   </div>
 </template>

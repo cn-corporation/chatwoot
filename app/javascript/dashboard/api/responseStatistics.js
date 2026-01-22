@@ -66,6 +66,17 @@ class ResponseStatisticsAPI {
     );
     return response.data;
   }
+
+  async getAgentsOverview(params = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/response-statistics/statistics/agents-overview`,
+      {
+        params,
+        headers: this.headers,
+      }
+    );
+    return response.data;
+  }
 }
 
 export default new ResponseStatisticsAPI();

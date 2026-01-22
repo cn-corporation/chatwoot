@@ -97,11 +97,18 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
   def telegram_users
     return render json: { error: 'Not a Telegram channel' }, status: :unprocessable_entity unless @inbox.telegram?
 
-    telegram_ids = @inbox.contact_inboxes
-                         .where.not(source_id: [nil, ''])
-                         .pluck(:source_id)
-                         .map(&:to_i)
-                         .uniq
+    contact_inboxes = @inbox.contact_inboxes.where.not(source_id: [nil, ''])
+
+    filter = telegram_users_filter_params
+    if filter.present?
+      excluded_contact_ids = excluded_contact_ids_for_telegram_users(filter)
+      contact_inboxes = contact_inboxes.where.not(contact_id: excluded_contact_ids) if excluded_contact_ids.any?
+    end
+
+    telegram_ids = contact_inboxes
+                   .pluck(:source_id)
+                   .map(&:to_i)
+                   .uniq
 
     render json: { telegram_ids: telegram_ids, count: telegram_ids.length }
   end
@@ -228,6 +235,72 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
     elsif @inbox.twilio? && @inbox.channel.whatsapp?
       Channels::Twilio::TemplatesSyncJob.perform_later(@inbox.channel)
     end
+  end
+
+  def telegram_users_filter_params
+    return nil unless params[:filter].present?
+
+    filter = params.require(:filter)
+    permitted = { categories: filter[:categories] || [] }
+
+    if filter[:contact_attributes].present?
+      permitted[:contact_attributes] = {}
+      filter[:contact_attributes].each do |key, value|
+        permitted[:contact_attributes][key] = if value == true || value == 'true'
+                                                true
+                                              else
+                                                Array(value)
+                                              end
+      end
+    end
+
+    ActionController::Parameters.new(permitted).permit!
+  end
+
+  def excluded_contact_ids_for_telegram_users(filter_params)
+    contacts = Current.account.contacts
+    excluded_contact_ids = []
+
+    categories = filter_params[:categories]
+    if categories.present? && categories.is_a?(Array) && categories.any?
+      excluded_contact_ids += contacts_with_labeled_conversations(categories)
+    end
+
+    contact_attributes = filter_params[:contact_attributes]
+    if contact_attributes.present? && contact_attributes.is_a?(ActionController::Parameters)
+      contact_attributes.each do |attr_key, attr_value|
+        sql = if attr_value == true
+                build_checkbox_attribute_filter_sql(attr_key)
+              elsif attr_value.is_a?(Array) && attr_value.any?
+                build_custom_attribute_filter_sql(attr_key, attr_value)
+              end
+        excluded_contact_ids += contacts.where(sql).pluck(:id) if sql
+      end
+    end
+
+    excluded_contact_ids.uniq
+  end
+
+  def contacts_with_labeled_conversations(label_names)
+    Current.account.conversations
+           .where(inbox_id: @inbox.id)
+           .tagged_with(label_names, any: true)
+           .pluck(:contact_id)
+           .uniq
+  end
+
+  def build_custom_attribute_filter_sql(attr_key, attr_values)
+    quoted_key = ActiveRecord::Base.connection.quote(attr_key)
+    quoted_values = attr_values.map { |v| ActiveRecord::Base.connection.quote(v) }
+    values_list = quoted_values.join(', ')
+    pg_array_literal = "ARRAY[#{values_list}]"
+
+    "(custom_attributes ->> #{quoted_key} IN (#{values_list}) OR custom_attributes -> #{quoted_key} ?| #{pg_array_literal})"
+  end
+
+  def build_checkbox_attribute_filter_sql(attr_key)
+    quoted_key = ActiveRecord::Base.connection.quote(attr_key)
+    "(custom_attributes -> #{quoted_key} = 'true'::jsonb)"
   end
 end
 

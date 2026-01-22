@@ -49,6 +49,14 @@ export default {
       type: Boolean,
       default: false,
     },
+    isBulkMessageMode: {
+      type: Boolean,
+      default: false,
+    },
+    maxSelections: {
+      type: Number,
+      default: 20,
+    },
   },
   emits: [
     'selectAllConversations',
@@ -57,6 +65,7 @@ export default {
     'assignLabels',
     'assignTeam',
     'resolveConversations',
+    'bulkSend',
   ],
   data() {
     return {
@@ -158,6 +167,7 @@ export default {
     <div class="flex items-center justify-between">
       <label class="flex items-center justify-between bulk-action__panel">
         <input
+          v-if="!isBulkMessageMode"
           type="checkbox"
           class="checkbox"
           :checked="allConversationsSelected"
@@ -170,41 +180,58 @@ export default {
               conversationCount: conversations.length,
             })
           }}
+          <span v-if="isBulkMessageMode" class="text-n-slate-11">
+            ({{
+              $t('BULK_ACTION.BULK_MESSAGE_MODE.MAX_LIMIT', {
+                max: maxSelections,
+              })
+            }})
+          </span>
         </span>
       </label>
       <div class="flex items-center gap-1 bulk-action__actions">
         <NextButton
-          v-tooltip="$t('BULK_ACTION.LABELS.ASSIGN_LABELS')"
-          icon="i-lucide-tags"
-          slate
+          v-if="isBulkMessageMode"
+          v-tooltip="$t('BULK_ACTION.BULK_MESSAGE_MODE.SEND_TOOLTIP')"
+          icon="i-lucide-send"
+          blue
           xs
-          faded
-          @click="toggleLabelActions"
+          @click="$emit('bulkSend')"
         />
-        <NextButton
-          v-tooltip="$t('BULK_ACTION.UPDATE.CHANGE_STATUS')"
-          icon="i-lucide-repeat"
-          slate
-          xs
-          faded
-          @click="toggleUpdateActions"
-        />
-        <NextButton
-          v-tooltip="$t('BULK_ACTION.ASSIGN_AGENT_TOOLTIP')"
-          icon="i-lucide-user-round-plus"
-          slate
-          xs
-          faded
-          @click="toggleAgentList"
-        />
-        <NextButton
-          v-tooltip="$t('BULK_ACTION.ASSIGN_TEAM_TOOLTIP')"
-          icon="i-lucide-users-round"
-          slate
-          xs
-          faded
-          @click="toggleTeamsList"
-        />
+        <template v-if="!isBulkMessageMode">
+          <NextButton
+            v-tooltip="$t('BULK_ACTION.LABELS.ASSIGN_LABELS')"
+            icon="i-lucide-tags"
+            slate
+            xs
+            faded
+            @click="toggleLabelActions"
+          />
+          <NextButton
+            v-tooltip="$t('BULK_ACTION.UPDATE.CHANGE_STATUS')"
+            icon="i-lucide-repeat"
+            slate
+            xs
+            faded
+            @click="toggleUpdateActions"
+          />
+          <NextButton
+            v-tooltip="$t('BULK_ACTION.ASSIGN_AGENT_TOOLTIP')"
+            icon="i-lucide-user-round-plus"
+            slate
+            xs
+            faded
+            @click="toggleAgentList"
+          />
+          <NextButton
+            v-tooltip="$t('BULK_ACTION.ASSIGN_TEAM_TOOLTIP')"
+            icon="i-lucide-users-round"
+            slate
+            xs
+            faded
+            @click="toggleTeamsList"
+          />
+        </template>
       </div>
       <transition name="popover-animation">
         <LabelActions

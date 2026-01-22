@@ -576,6 +576,8 @@
     "AVG_RESOLUTION_TIME": "Avg. Resolution Time",
     "AVG_FIRST_RESPONSE_TIME": "Avg. First Response Time",
     "AVG_REPLY_TIME": "Avg. Customer Waiting Time",
+    "AVG_RESPONSE_TIME": "Avg. Response Time",
+    "MAX_RESPONSE_TIME": "Longest Response Time",
     "RESOLUTION_COUNT": "Resolution Count",
     "CONVERSATIONS": "No. of conversations"
   },

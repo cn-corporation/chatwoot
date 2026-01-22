@@ -124,7 +124,8 @@ const getters = {
   },
   getUnAssignedChats: _state => activeFilters => {
     return _state.allConversations.filter(conversation => {
-      const isUnAssigned = !conversation.meta.assignee;
+      const { assignee } = conversation.meta;
+      const isUnAssigned = !assignee || !assignee.id;
       const shouldFilter = applyPageFilters(conversation, activeFilters);
       return isUnAssigned && shouldFilter;
     });
@@ -309,6 +310,21 @@ const getters = {
     return source.filter(conversation => {
       const convTeamId = conversation.team_id || conversation.meta?.team?.id;
       return convTeamId === Number(teamId);
+    });
+  },
+
+  getConversationsForInboxTabs: _state => inboxId => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    if (!inboxId) {
+      return source;
+    }
+
+    return source.filter(conversation => {
+      return conversation.inbox_id === Number(inboxId);
     });
   },
 

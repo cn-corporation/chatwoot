@@ -130,6 +130,7 @@ const props = defineProps({
   senderId: { type: Number, default: null },
   senderType: { type: String, default: null },
   sourceId: { type: String, default: '' }, // eslint-disable-line vue/no-unused-properties
+  additionalAttributes: { type: Object, default: () => ({}) },
 });
 
 const emit = defineEmits(['retry']);
@@ -138,6 +139,7 @@ const store = useStore();
 const contextMenuPosition = ref({});
 const showBackgroundHighlight = ref(false);
 const showContextMenu = ref(false);
+
 const isEditing = ref(false);
 const editedContent = ref('');
 const editContainer = ref(null);
@@ -361,6 +363,20 @@ const contextMenuEnabledOptions = computed(() => {
   const inbox = store.getters['inboxes/getInbox'](props.inboxId);
   const isTelegramInbox = inbox?.channel_type === 'Channel::Telegram';
 
+  const isEditablePrivateNote =
+    props.private &&
+    !props.additionalAttributes?.originalMessageId &&
+    hasText &&
+    !isFailedOrProcessing;
+
+  const isEditableOutgoingMessage =
+    isOutgoing &&
+    hasText &&
+    (!hasAttachments || isTelegramInbox) &&
+    !!props.sourceId &&
+    !isFailedOrProcessing &&
+    !isMessageDeleted.value;
+
   return {
     copy: hasText,
     delete:
@@ -376,13 +392,7 @@ const contextMenuEnabledOptions = computed(() => {
       !props.private &&
       props.inboxSupportsReplyTo.outgoing &&
       !isFailedOrProcessing,
-    edit:
-      isOutgoing &&
-      hasText &&
-      (!hasAttachments || isTelegramInbox) &&
-      !!props.sourceId &&
-      !isFailedOrProcessing &&
-      !isMessageDeleted.value,
+    edit: isEditablePrivateNote || isEditableOutgoingMessage,
   };
 });
 

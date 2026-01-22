@@ -3,9 +3,8 @@ import { computed } from 'vue';
 import { formatNumber } from '@chatwoot/utils';
 
 import ConversationBasicFilter from './widgets/conversation/ConversationBasicFilter.vue';
-// Block 2: SwitchLayout removed for operators
-// import SwitchLayout from 'dashboard/routes/dashboard/conversation/search/SwitchLayout.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
+import { useMapGetter } from 'dashboard/composables/store.js';
 
 const props = defineProps({
   pageTitle: { type: String, required: true },
@@ -23,7 +22,10 @@ const emit = defineEmits([
   'resetFilters',
   'basicFilterChange',
   'filtersModal',
+  'toggleBulkMessageMode',
 ]);
+
+const isBulkMessageMode = useMapGetter('bulkActions/getIsBulkMessageMode');
 
 const onBasicFilterChange = (value, type) => {
   emit('basicFilterChange', value, type);
@@ -141,11 +143,15 @@ const formattedAllCount = computed(() => formatNumber(allCount.value));
         :is-on-expanded-layout="isOnExpandedLayout"
         @change-filter="onBasicFilterChange"
       />
-      <!-- Block 2: Hide view switch button for operators -->
-      <!-- <SwitchLayout
-        :is-on-expanded-layout="isOnExpandedLayout"
-        @toggle="toggleConversationLayout"
-      /> -->
+      <NextButton
+        v-tooltip.top-end="$t('BULK_ACTION.BULK_MESSAGE_MODE.TOGGLE_TOOLTIP')"
+        :icon="isBulkMessageMode ? 'i-lucide-mail-check' : 'i-lucide-mail-plus'"
+        :class="isBulkMessageMode ? 'bg-n-brand text-white' : ''"
+        slate
+        xs
+        faded
+        @click="emit('toggleBulkMessageMode', !isBulkMessageMode)"
+      />
     </div>
   </div>
 </template>

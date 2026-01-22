@@ -34,11 +34,16 @@ import IntersectionObserver from './IntersectionObserver.vue';
 import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import TodoModal from './widgets/conversation/TodoModal.vue';
+import ConversationCloseReasonModal from './ConversationCloseReasonModal.vue';
 
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAlert } from 'dashboard/composables';
 import { useChatListKeyboardEvents } from 'dashboard/composables/chatlist/useChatListKeyboardEvents';
-import { useBulkActions } from 'dashboard/composables/chatlist/useBulkActions';
+import {
+  useBulkActions,
+  MAX_BULK_MESSAGE_SELECTIONS,
+} from 'dashboard/composables/chatlist/useBulkActions';
+import BulkMessageModal from './widgets/conversation/BulkMessageModal.vue';
 import { useFilter } from 'shared/composables/useFilter';
 import { useI18n } from 'vue-i18n';
 import {
@@ -155,16 +160,60 @@ useChatListKeyboardEvents(conversationListRef);
 const {
   selectedConversations,
   selectedInboxes,
+  isBulkMessageMode,
+  canSelectMore,
   selectConversation,
   deSelectConversation,
   selectAllConversations,
   resetBulkActions,
   isConversationSelected,
+  toggleBulkMessageMode,
   onAssignAgent,
   onAssignLabels,
   onAssignTeamsForBulk,
-  onUpdateConversations,
+  onUpdateConversations: onUpdateConversationsOriginal,
 } = useBulkActions();
+
+// Define modal refs before using them
+const showCloseReasonModal = ref(false);
+const closeConversationId = ref(null);
+const pendingBulkAction = ref(null);
+
+// Wrapper for bulk actions to show modal when resolving
+const onUpdateConversations = (status, snoozedUntil) => {
+  // Show close reason modal first when resolving
+  if (status === wootConstants.STATUS_TYPE.RESOLVED) {
+    // For bulk actions, open modal for first selected conversation
+    if (selectedConversations.value.length > 0) {
+      closeConversationId.value = selectedConversations.value[0];
+      showCloseReasonModal.value = true;
+      // Store the bulk action to continue after modal closes
+      pendingBulkAction.value = { status, snoozedUntil };
+      return;
+    }
+  }
+
+  // For other status changes, proceed normally
+  onUpdateConversationsOriginal(status, snoozedUntil);
+};
+const showBulkMessageModal = ref(false);
+
+function onToggleBulkMessageMode(value) {
+  toggleBulkMessageMode(value);
+}
+
+function openBulkMessageModal() {
+  showBulkMessageModal.value = true;
+}
+
+function closeBulkMessageModal() {
+  showBulkMessageModal.value = false;
+}
+
+function onBulkSendComplete() {
+  closeBulkMessageModal();
+  toggleBulkMessageMode(false);
+}
 
 const {
   initializeStatusAndAssigneeFilterToModal,
@@ -218,86 +267,35 @@ const userPermissions = computed(() => {
   return getUserPermissions(currentUser.value, currentAccountId.value);
 });
 
-const getConversationsForLabelTabs = useMapGetter(
-  'getConversationsForLabelTabs'
-);
-const getConversationsForTeamTabs = useMapGetter('getConversationsForTeamTabs');
-
 const assigneeTabItems = computed(() => {
-  const isLabelView = props.label && props.label !== '';
-  const isTeamView = props.teamId && props.teamId !== 0;
+  const stats = conversationStats.value;
 
   return filterItemsByPermission(
     ASSIGNEE_TYPE_TAB_PERMISSIONS,
     userPermissions.value,
     item => item.permissions
-  ).map(({ key, count: countKey }) => {
+  ).map(({ key }) => {
     let count = 0;
 
-    if (isLabelView) {
-      // Use the store getter that has access to sidebarCountsData
-      const labelConversations =
-        getConversationsForLabelTabs.value(props.label) || [];
-
-      switch (key) {
-        case 'me':
-          count = labelConversations.filter(
-            c =>
-              c.status !== 'resolved' && c.assignee_id === currentUser.value?.id
-          ).length;
-          break;
-        case 'unassigned':
-          count = labelConversations.filter(
-            c => c.status !== 'resolved' && !c.assignee_id
-          ).length;
-          break;
-        case 'all':
-          count = labelConversations.filter(
-            c => c.status !== 'resolved'
-          ).length;
-          break;
-        case 'pending':
-          count = labelConversations.filter(c => c.status === 'pending').length;
-          break;
-        case 'resolved':
-          count = labelConversations.filter(
-            c => c.status === 'resolved'
-          ).length;
-          break;
-        default:
-          count = 0;
-      }
-    } else if (isTeamView) {
-      // Use the store getter that has access to sidebarCountsData
-      const teamConversations =
-        getConversationsForTeamTabs.value(props.teamId) || [];
-
-      switch (key) {
-        case 'me':
-          count = teamConversations.filter(
-            c =>
-              c.status !== 'resolved' && c.assignee_id === currentUser.value?.id
-          ).length;
-          break;
-        case 'unassigned':
-          count = teamConversations.filter(
-            c => c.status !== 'resolved' && !c.assignee_id
-          ).length;
-          break;
-        case 'all':
-          count = teamConversations.filter(c => c.status !== 'resolved').length;
-          break;
-        case 'pending':
-          count = teamConversations.filter(c => c.status === 'pending').length;
-          break;
-        case 'resolved':
-          count = teamConversations.filter(c => c.status === 'resolved').length;
-          break;
-        default:
-          count = 0;
-      }
-    } else {
-      count = conversationStats.value[countKey] || 0;
+    switch (key) {
+      case 'me':
+        count = stats.mineCount || 0;
+        break;
+      case 'unassigned':
+        count = stats.unAssignedCount || 0;
+        break;
+      case 'all':
+      case 'all-operators':
+        count = stats.allCount || 0;
+        break;
+      case 'pending':
+        count = stats.pendingCount || 0;
+        break;
+      case 'resolved':
+        count = stats.resolvedCount || 0;
+        break;
+      default:
+        count = 0;
     }
 
     return {
@@ -710,6 +708,7 @@ function resetAndFetchData() {
     return;
   }
   fetchConversations();
+  store.dispatch('conversationStats/get', conversationFilters.value);
 }
 
 function loadMoreConversations() {
@@ -860,6 +859,14 @@ async function onAssignTeam(team, conversationId = null) {
 }
 
 function toggleConversationStatus(conversationId, status, snoozedUntil) {
+  // Show close reason modal first when resolving
+  if (status === wootConstants.STATUS_TYPE.RESOLVED) {
+    closeConversationId.value = conversationId;
+    showCloseReasonModal.value = true;
+    return;
+  }
+
+  // For other status changes, proceed normally
   store
     .dispatch('toggleStatus', {
       conversationId,
@@ -869,6 +876,37 @@ function toggleConversationStatus(conversationId, status, snoozedUntil) {
     .then(() => {
       useAlert(t('CONVERSATION.CHANGE_STATUS'));
     });
+}
+
+function closeCloseReasonModal() {
+  showCloseReasonModal.value = false;
+  closeConversationId.value = null;
+}
+
+function onCloseReasonSuccess() {
+  showCloseReasonModal.value = false;
+  const conversationId = closeConversationId.value;
+  closeConversationId.value = null;
+
+  // If there was a pending bulk action, continue with remaining conversations
+  if (pendingBulkAction.value && selectedConversations.value.length > 1) {
+    // Remove the first conversation from the list and continue
+    const remainingIds = selectedConversations.value.filter(
+      id => id !== conversationId
+    );
+    // Update selected conversations to remaining ones
+    store.dispatch('bulkActions/setSelectedConversationIds', remainingIds);
+    // Continue with bulk action for remaining conversations
+    onUpdateConversationsOriginal(
+      pendingBulkAction.value.status,
+      pendingBulkAction.value.snoozedUntil
+    );
+    pendingBulkAction.value = null;
+  } else {
+    pendingBulkAction.value = null;
+  }
+
+  useAlert(t('CONVERSATION.CHANGE_STATUS'));
 }
 
 function allSelectedConversationsStatus(status) {
@@ -889,6 +927,7 @@ function toggleSelectAll(check) {
 useEmitter('fetch_conversation_stats', () => {
   if (hasAppliedFiltersOrActiveFolders.value) return;
   fetchConversations();
+  store.dispatch('conversationStats/get', conversationFilters.value);
 });
 
 onMounted(() => {
@@ -953,10 +992,12 @@ provide('updateConversationStatus', toggleConversationStatus);
 provide('toggleContextMenu', onContextMenuToggle);
 provide('markAsUnread', markAsUnread);
 provide('markAsRead', markAsRead);
-provide('assignPriority', assignPriority); // Used for automatic priority updates
+provide('assignPriority', assignPriority);
 provide('isConversationSelected', isConversationSelected);
 provide('createTask', handleCreateTask);
 provide('deleteConversation', handleDelete);
+provide('isBulkMessageMode', isBulkMessageMode);
+provide('canSelectMore', canSelectMore);
 
 watch(activeTeam, () => resetAndFetchData());
 
@@ -1011,6 +1052,7 @@ watch(chatLists, () => {
       @filters-modal="onToggleAdvanceFiltersModal"
       @reset-filters="resetAndFetchData"
       @basic-filter-change="onBasicFilterChange"
+      @toggle-bulk-message-mode="onToggleBulkMessageMode"
     />
 
     <TeleportWithDirection
@@ -1057,11 +1099,14 @@ watch(chatLists, () => {
       :show-open-action="allSelectedConversationsStatus('open')"
       :show-resolved-action="allSelectedConversationsStatus('resolved')"
       :show-snoozed-action="allSelectedConversationsStatus('snoozed')"
+      :is-bulk-message-mode="isBulkMessageMode"
+      :max-selections="MAX_BULK_MESSAGE_SELECTIONS"
       @select-all-conversations="toggleSelectAll"
       @assign-agent="onAssignAgent"
       @update-conversations="onUpdateConversations"
       @assign-labels="onAssignLabels"
       @assign-team="onAssignTeamsForBulk"
+      @bulk-send="openBulkMessageModal"
     />
     <div
       ref="conversationListRef"
@@ -1139,6 +1184,19 @@ watch(chatLists, () => {
       :show="showTodoModal"
       :current-chat="selectedChatForTask"
       @cancel="closeTodoModal"
+    />
+    <ConversationCloseReasonModal
+      v-if="showCloseReasonModal && closeConversationId"
+      :show="showCloseReasonModal"
+      :conversation-id="closeConversationId"
+      @close="closeCloseReasonModal"
+      @success="onCloseReasonSuccess"
+    />
+    <BulkMessageModal
+      v-if="showBulkMessageModal"
+      :selected-conversations="selectedConversations"
+      @close="closeBulkMessageModal"
+      @send-complete="onBulkSendComplete"
     />
     <TeleportWithDirection
       v-if="showAdvancedFilters"
