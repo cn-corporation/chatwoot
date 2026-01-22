@@ -162,10 +162,16 @@ class Conversation < ApplicationRecord
     self.status = open? ? :resolved : :open
     self.status = :open if pending? || snoozed?
 
-    # Clear resolution reason when opening conversation
-    self.resolution_reason = nil if status == 'open'
+    clear_resolution_attributes if status == 'open'
 
     save
+  end
+
+  def clear_resolution_attributes
+    resolution_reason_will_change!
+    self.resolution_reason = nil
+    custom_attributes_will_change!
+    self.custom_attributes = custom_attributes&.except('custom_resolution_reason', 'close_topics', 'resolved_at') || {}
   end
 
   def toggle_priority(priority = nil)
@@ -293,7 +299,7 @@ class Conversation < ApplicationRecord
 
   def list_of_keys
     %w[team_id assignee_id assignee_agent_bot_id status snoozed_until custom_attributes label_list waiting_since
-       first_reply_created_at priority]
+       first_reply_created_at priority resolution_reason]
   end
 
   def allowed_keys?
@@ -320,8 +326,15 @@ class Conversation < ApplicationRecord
       CONVERSATION_READ => -> { saved_change_to_contact_last_seen_at? },
       CONVERSATION_CONTACT_CHANGED => -> { saved_change_to_contact_id? }
     }.each do |event, condition|
-      condition.call && dispatcher_dispatch(event, status_change)
+      condition.call && dispatcher_dispatch(event, status_changed_attributes)
     end
+  end
+
+  def status_changed_attributes
+    attrs = { status: status_change }
+    attrs[:resolution_reason] = saved_change_to_resolution_reason if saved_change_to_resolution_reason?
+    attrs[:custom_attributes] = saved_change_to_custom_attributes if saved_change_to_custom_attributes?
+    attrs
   end
 
   def dispatcher_dispatch(event_name, changed_attributes = nil)

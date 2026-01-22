@@ -69,6 +69,10 @@ const closeTopics = computed(() => [
     value: 'clubgg',
     label: t('CLOSE_REASON.TOPIC_CLUBGG'),
   },
+  {
+    value: 'other',
+    label: t('CLOSE_REASON.TOPIC_OTHER'),
+  },
 ]);
 
 // Predefined close reasons
@@ -155,7 +159,12 @@ const submitReason = async () => {
 </script>
 
 <template>
-  <Modal v-model:show="isOpen" :on-close="closeModal" @close="closeModal">
+  <Modal
+    v-model:show="isOpen"
+    :on-close="closeModal"
+    size="medium"
+    @close="closeModal"
+  >
     <div class="flex flex-col">
       <!-- Header -->
       <div class="p-4 border-b border-n-slate-5">
@@ -171,7 +180,7 @@ const submitReason = async () => {
           <h2 class="text-n-slate-12 text-base font-medium mb-2">
             {{ $t('CLOSE_REASON.TOPICS_TITLE') }}
           </h2>
-          <div class="flex flex-col gap-2 max-h-64 overflow-y-auto">
+          <div class="flex flex-col gap-2 max-h-96 overflow-y-auto">
             <label
               v-for="topic in closeTopics"
               :key="topic.value"
@@ -195,7 +204,7 @@ const submitReason = async () => {
             {{ $t('CLOSE_REASON.STATUS_TITLE') }}
           </h2>
           <!-- Predefined reasons -->
-          <div class="flex flex-col gap-2 max-h-64 overflow-y-auto">
+          <div class="flex flex-col gap-2 max-h-96 overflow-y-auto">
             <label
               v-for="reason in closeReasons"
               :key="reason.value"
@@ -244,7 +253,7 @@ const submitReason = async () => {
 </template>
 
 <style scoped>
-.max-h-64 {
-  max-height: 16rem;
+.max-h-96 {
+  max-height: 24rem;
 }
 </style>
