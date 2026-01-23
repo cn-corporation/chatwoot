@@ -282,7 +282,8 @@
     "SIDEBAR": {
       "CONTACT": "Контакт",
       "COPILOT": "Copilot"
-    }
+    },
+    "MESSAGES_FROM_PREVIOUS_ACCOUNT": "Сообщения из предыдущего аккаунта ({name})"
   },
   "EMAIL_TRANSCRIPT": {
     "TITLE": "Отправить субтитры разговора",
@@ -485,5 +486,12 @@
     "DISMISS_BUTTON": "Отклонить",
     "RELOAD_TOOLTIP": "Перезагрузить предложение",
     "GET_BUTTON": "Получить предложение ИИ"
+  },
+  "OPERATOR_PRESENCE": {
+    "TITLE": "Операторы просматривают",
+    "NO_OPERATORS": "Никто из операторов сейчас не просматривает этот диалог",
+    "YOU": "Вы",
+    "VIEWING": "Сейчас просматривает",
+    "CONNECTING": "Подключение..."
   }
 }

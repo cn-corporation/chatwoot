@@ -62,6 +62,16 @@ export default {
       agents: 'agents/getAgents',
       currentChat: 'getSelectedChat',
     }),
+    linkedContactName() {
+      return this.$store.getters['linkedSourceChannels/getLinkedContactName'](
+        this.currentChat?.id
+      );
+    },
+    showLinkedContactName() {
+      return (
+        this.linkedContactName && this.linkedContactName !== this.contact.name
+      );
+    },
     contactProfileLink() {
       return `/app/accounts/${this.$route.params.accountId}/contacts/${this.contact.id}`;
     },
@@ -226,6 +236,17 @@ export default {
     toggleAdsLogsModal() {
       this.showAdsLogsModal = !this.showAdsLogsModal;
     },
+    async saveLinkedName() {
+      try {
+        await this.$store.dispatch('contacts/update', {
+          id: this.contact.id,
+          name: this.linkedContactName,
+        });
+        useAlert(this.$t('CONTACT_PANEL.LINKED_NAME_SAVED'));
+      } catch (error) {
+        useAlert(this.$t('CONTACT_PANEL.LINKED_NAME_SAVE_ERROR'));
+      }
+    },
   },
 };
 </script>
@@ -316,6 +337,28 @@ export default {
             v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_USERNAME')"
             class="i-lucide-copy text-xs text-n-slate-10 hover:text-n-slate-12 cursor-pointer"
             @click="copyTelegramUsername"
+          />
+        </div>
+
+        <!-- Previous Contact Name from Linked Source Channel -->
+        <div
+          v-if="showLinkedContactName"
+          class="flex items-center gap-2 p-2 mt-2 bg-n-alpha-1 dark:bg-n-alpha-2 rounded-lg"
+        >
+          <span class="text-xs text-n-slate-10">
+            {{
+              $t('CONTACT_PANEL.PREVIOUS_NAME_LABEL', {
+                name: linkedContactName,
+              })
+            }}
+          </span>
+          <NextButton
+            v-tooltip="$t('CONTACT_PANEL.SAVE_LINKED_NAME')"
+            icon="i-lucide-save"
+            slate
+            faded
+            xs
+            @click="saveLinkedName"
           />
         </div>
 
