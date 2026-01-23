@@ -287,7 +287,8 @@
     "SIDEBAR": {
       "CONTACT": "Contact",
       "COPILOT": "Copilot"
-    }
+    },
+    "MESSAGES_FROM_PREVIOUS_ACCOUNT": "Messages from previous account ({name})"
   },
   "EMAIL_TRANSCRIPT": {
     "TITLE": "Send conversation transcript",

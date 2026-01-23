@@ -193,6 +193,7 @@ uk:
         error_moved_to_open: 'Conversation was marked open by system due to an error with the agent bot.'
       status:
         resolved: 'Розмова була відмічена як вирішена %{user_name}'
+        resolved_with_reason: 'Розмова була відмічена як вирішена %{user_name} (%{reason})'
         contact_resolved: 'Діалог був закритий %{contact_name}'
         open: 'Розмову знову відкрито %{user_name}'
         pending: 'Бесіда була позначена як очікується %{user_name}'

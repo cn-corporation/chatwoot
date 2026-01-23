@@ -1,6 +1,7 @@
 <script setup>
 import { defineProps, computed, reactive, watch, onBeforeUnmount } from 'vue';
 import Message from './Message.vue';
+import LinkedConversationSeparator from './LinkedConversationSeparator.vue';
 import { MESSAGE_TYPES } from './constants.js';
 import { useCamelCase } from 'dashboard/composables/useTransformKeys';
 import { useMapGetter } from 'dashboard/composables/store.js';
@@ -221,7 +222,12 @@ const getInReplyToMessage = parentMessage => {
         v-if="firstUnreadId && message.id === firstUnreadId"
         name="unreadBadge"
       />
+      <LinkedConversationSeparator
+        v-if="message.isLinkedConversationSeparator"
+        :contact-name="message.content"
+      />
       <Message
+        v-else
         v-bind="message"
         :is-email-inbox="isAnEmailChannel"
         :in-reply-to="getInReplyToMessage(message)"
