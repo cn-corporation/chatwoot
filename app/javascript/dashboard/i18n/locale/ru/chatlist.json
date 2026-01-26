@@ -16,7 +16,7 @@
     "FILTER_ALL": "Все",
     "ASSIGNEE_TYPE_TABS": {
       "me": "Мои",
-      "unassigned": "Неназначен",
+      "unassigned": "Без назначения",
       "all": "Все",
       "all-operators": "Все",
       "pending": "В ожидании",

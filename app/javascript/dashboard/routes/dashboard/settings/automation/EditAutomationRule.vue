@@ -76,13 +76,22 @@ export default {
       allCustomAttributes: [],
       mode: 'edit',
       errors: {},
+      sourceChannels: [],
     };
   },
   computed: {
     ...mapGetters({
       accountId: 'getCurrentAccountId',
       isFeatureEnabledonAccount: 'accounts/isFeatureEnabledonAccount',
+      inboxes: 'inboxes/getInboxes',
+      getAutomationSourceChannels: 'automations/getAutomationSourceChannels',
     }),
+    inboxOptions() {
+      return this.inboxes.map(inbox => ({
+        id: inbox.channel_id,
+        name: inbox.name,
+      }));
+    },
     automationRuleEvents() {
       return AUTOMATION_RULE_EVENTS.map(event => ({
         ...event,
@@ -118,6 +127,17 @@ export default {
       this.automationTypes,
       this.automationActionTypes
     );
+
+    const sourceChannelIds = this.getAutomationSourceChannels(
+      this.selectedResponse.id
+    );
+    this.sourceChannels = sourceChannelIds.map(channelId => {
+      const inbox = this.inboxes.find(i => i.channel_id === channelId);
+      return {
+        id: channelId,
+        name: inbox?.name || `Channel ${channelId}`,
+      };
+    });
   },
   methods: {
     getFileName,
@@ -133,6 +153,7 @@ export default {
       this.errors = validateAutomation(this.automation);
       if (Object.keys(this.errors).length === 0) {
         const automation = generateAutomationPayload(this.automation);
+        automation.sourceChannels = this.sourceChannels;
         this.$emit('saveAutomation', automation, this.mode);
       }
     },
@@ -308,6 +329,34 @@ export default {
           </div>
         </section>
         <!-- // Actions End -->
+        <!-- // Source Channels Start -->
+        <section>
+          <label>
+            {{ $t('AUTOMATION.SOURCE_CHANNELS.LABEL') }}
+          </label>
+          <div
+            class="w-full p-4 mb-4 border border-solid rounded-lg bg-n-slate-2 dark:bg-n-solid-2 border-n-strong"
+          >
+            <multiselect
+              v-model="sourceChannels"
+              :options="inboxOptions"
+              track-by="id"
+              label="name"
+              multiple
+              :close-on-select="false"
+              :clear-on-select="false"
+              :hide-selected="false"
+              :placeholder="$t('AUTOMATION.SOURCE_CHANNELS.PLACEHOLDER')"
+              selected-label=""
+              :select-label="$t('FORMS.MULTISELECT.ENTER_TO_SELECT')"
+              :deselect-label="$t('FORMS.MULTISELECT.ENTER_TO_REMOVE')"
+            />
+            <p class="mt-2 text-xs text-n-slate-11">
+              {{ $t('AUTOMATION.SOURCE_CHANNELS.DESCRIPTION') }}
+            </p>
+          </div>
+        </section>
+        <!-- // Source Channels End -->
         <div class="w-full">
           <div class="flex flex-row justify-end w-full gap-2 px-0 py-2">
             <NextButton

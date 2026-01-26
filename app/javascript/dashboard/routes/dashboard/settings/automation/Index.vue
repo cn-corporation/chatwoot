@@ -9,6 +9,7 @@ import { useI18n } from 'vue-i18n';
 import { useStoreGetters, useStore } from 'dashboard/composables/store';
 import AutomationRuleRow from './AutomationRuleRow.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 
 const getters = useStoreGetters();
 const store = useStore();
@@ -82,6 +83,16 @@ const closeDeletePopup = () => {
 const deleteAutomation = async id => {
   try {
     await store.dispatch('automations/delete', id);
+
+    try {
+      const extraUUID = store.getters['automations/getAutomationExtraUUID'](id);
+      if (extraUUID) {
+        await ChatwootExtraAPI.deleteAutomation(extraUUID);
+      }
+    } catch (extraError) {
+      // Fail-open: ignore chatwoot-extra sync errors
+    }
+
     useAlert(t('AUTOMATION.DELETE.API.SUCCESS_MESSAGE'));
   } catch (error) {
     useAlert(t('AUTOMATION.DELETE.API.ERROR_MESSAGE'));
@@ -108,6 +119,9 @@ const cloneAutomation = async ({ id }) => {
 
 const submitAutomation = async (payload, mode) => {
   try {
+    const sourceChannels = payload.sourceChannels || [];
+    delete payload.sourceChannels;
+
     const action =
       mode === 'edit' ? 'automations/update' : 'automations/create';
     const successMessage =
@@ -115,6 +129,51 @@ const submitAutomation = async (payload, mode) => {
         ? t('AUTOMATION.EDIT.API.SUCCESS_MESSAGE')
         : t('AUTOMATION.ADD.API.SUCCESS_MESSAGE');
     await store.dispatch(action, payload);
+
+    const automationId = payload.id;
+    const sourceChannelIds = sourceChannels.map(channel => channel.id);
+
+    try {
+      let extraResponse;
+      if (mode === 'edit') {
+        extraResponse = await ChatwootExtraAPI.updateAutomationSources({
+          chatwootAutomationId: automationId,
+          sourceChannelIds,
+        });
+      } else {
+        const createdAutomation = store.getters[
+          'automations/getAutomations'
+        ].find(a => a.name === payload.name);
+        if (createdAutomation) {
+          extraResponse = await ChatwootExtraAPI.createAutomation({
+            chatwootAutomationId: createdAutomation.id,
+            sourceChannelIds:
+              sourceChannelIds.length > 0 ? sourceChannelIds : undefined,
+          });
+        }
+      }
+
+      const finalAutomationId =
+        mode === 'edit'
+          ? automationId
+          : store.getters['automations/getAutomations'].find(
+              a => a.name === payload.name
+            )?.id;
+      store.commit('automations/UPDATE_AUTOMATION_SOURCES', {
+        automationId: finalAutomationId,
+        sourceChannelIds,
+      });
+
+      if (extraResponse?.data?.id) {
+        store.commit('automations/UPDATE_AUTOMATION_EXTRA_UUID', {
+          automationId: finalAutomationId,
+          uuid: extraResponse.data.id,
+        });
+      }
+    } catch (extraError) {
+      // Fail-open: ignore chatwoot-extra sync errors
+    }
+
     useAlert(successMessage);
     hideAddPopup();
     hideEditPopup();
