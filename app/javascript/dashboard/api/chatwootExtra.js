@@ -250,6 +250,18 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async markConversationAsUnread(conversationId, operatorId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-notifications/mark-unread`,
+      {
+        conversationId: String(conversationId),
+        operatorId: String(operatorId),
+      },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   // Ads API
   async createAd(data) {
     const response = await axios.post(`${this.baseURL}/api/ads`, data, {

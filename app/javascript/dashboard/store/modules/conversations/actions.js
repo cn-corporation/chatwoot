@@ -631,6 +631,29 @@ const actions = {
     }
   },
 
+  markConversationAsUnreadForOperator: async (
+    { commit, rootGetters },
+    conversationId
+  ) => {
+    const operatorId = rootGetters.getCurrentUser?.id;
+    if (!operatorId) return;
+
+    try {
+      commit(types.SET_OPERATOR_NOTIFICATION_COUNT, {
+        conversationId,
+        unreadCount: 1,
+      });
+
+      await ChatwootExtraAPI.markConversationAsUnread(
+        conversationId,
+        operatorId
+      );
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('[OperatorNotifications] Failed to mark as unread', error);
+    }
+  },
+
   ...messageReadActions,
   ...messageTranslateActions,
 };
