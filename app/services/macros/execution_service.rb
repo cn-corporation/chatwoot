@@ -7,9 +7,13 @@ class Macros::ExecutionService < ActionService
     Current.user = user
   end
 
+  IGNORED_ACTIONS = %w[resolve_conversation].freeze
+
   def perform
     @macro.actions.each do |action|
       action = action.with_indifferent_access
+      next if IGNORED_ACTIONS.include?(action[:action_name])
+
       begin
         send(action[:action_name], action[:action_params])
       rescue StandardError => e
