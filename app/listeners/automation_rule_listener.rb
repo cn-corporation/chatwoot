@@ -28,6 +28,8 @@ class AutomationRuleListener < BaseListener
     rules = current_account_rules('message_created', account)
 
     rules.each do |rule|
+      next unless automation_sources_match?(rule, message.conversation)
+
       conditions_match = ::AutomationRules::ConditionsFilterService.new(rule, message.conversation,
                                                                         { message: message, changed_attributes: changed_attributes }).perform
       ::AutomationRules::ActionService.new(rule, account, message.conversation).perform if conditions_match.present?
@@ -51,6 +53,8 @@ class AutomationRuleListener < BaseListener
     rules = current_account_rules(event_name, account)
 
     rules.each do |rule|
+      next unless automation_sources_match?(rule, conversation)
+
       conditions_match = ::AutomationRules::ConditionsFilterService.new(rule, conversation, { changed_attributes: changed_attributes }).perform
       AutomationRules::ActionService.new(rule, account, conversation).perform if conditions_match.present?
     end
@@ -82,5 +86,15 @@ class AutomationRuleListener < BaseListener
   def ignore_message_created_event?(event)
     message = event.data[:message]
     performed_by_automation?(event) || message.activity? || message.auto_reply_email?
+  end
+
+  def automation_sources_match?(rule, conversation)
+    sources = ChatwootExtra::AutomationSourcesService.get_sources(rule.id)
+    return true if sources.blank?
+
+    sources.include?(conversation.inbox.channel_id)
+  rescue StandardError => e
+    Rails.logger.error "[AutomationSources] Error for rule #{rule.id}: #{e.message}"
+    true
   end
 end
