@@ -40,11 +40,6 @@ export const MACRO_ACTION_TYPES = [
     inputType: null,
   },
   {
-    key: 'resolve_conversation',
-    label: 'RESOLVE_CONVERSATION',
-    inputType: null,
-  },
-  {
     key: 'send_attachment',
     label: 'SEND_ATTACHMENT',
     inputType: 'attachment',

@@ -41,13 +41,20 @@ const fetchDropdownData = () => {
   store.dispatch('labels/get');
 };
 
+const IGNORED_MACRO_ACTIONS = ['resolve_conversation'];
+
 const formatMacro = macroData => {
-  const formattedActions = macroData.actions.map(action => {
+  const filteredActions = macroData.actions.filter(
+    action => !IGNORED_MACRO_ACTIONS.includes(action.action_name)
+  );
+
+  const formattedActions = filteredActions.map(action => {
     let actionParams = [];
     if (action.action_params.length) {
-      const inputType = macroActionTypes.value.find(
+      const actionType = macroActionTypes.value.find(
         item => item.key === action.action_name
-      ).inputType;
+      );
+      const inputType = actionType?.inputType;
       if (inputType === 'multi_select' || inputType === 'search_select') {
         actionParams = getMacroDropdownValues(action.action_name).filter(item =>
           [...action.action_params].includes(item.id)

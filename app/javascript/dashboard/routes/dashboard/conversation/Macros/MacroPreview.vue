@@ -41,11 +41,15 @@ const getActionValue = (key, params) => {
   return actionsMap[key] || '';
 };
 
+const IGNORED_MACRO_ACTIONS = ['resolve_conversation'];
+
 const resolvedMacro = computed(() => {
-  return props.macro.actions.map(action => ({
-    actionName: resolveActionName(action.action_name),
-    actionValue: getActionValue(action.action_name, action.action_params),
-  }));
+  return props.macro.actions
+    .filter(action => !IGNORED_MACRO_ACTIONS.includes(action.action_name))
+    .map(action => ({
+      actionName: resolveActionName(action.action_name),
+      actionValue: getActionValue(action.action_name, action.action_params),
+    }));
 });
 </script>
 
