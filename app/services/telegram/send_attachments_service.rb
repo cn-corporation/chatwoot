@@ -78,6 +78,7 @@ class Telegram::SendAttachmentsService
       'reply_to_message_id' => reply_to_message_id.to_s
     }
     body['caption'] = caption.to_s if caption.present?
+    body['parse_mode'] = 'HTML' if caption.present?
 
     business_connection_body.each do |key, value|
       body[key.to_s] = value.to_s
@@ -93,6 +94,7 @@ class Telegram::SendAttachmentsService
       'reply_to_message_id' => reply_to_message_id.to_s
     }
     body['caption'] = caption.to_s if caption.present?
+    body['parse_mode'] = 'HTML' if caption.present?
 
     business_connection_body.each do |key, value|
       body[key.to_s] = value.to_s
@@ -108,6 +110,7 @@ class Telegram::SendAttachmentsService
       'reply_to_message_id' => reply_to_message_id.to_s
     }
     body['caption'] = caption.to_s if caption.present?
+    body['parse_mode'] = 'HTML' if caption.present?
 
     business_connection_body.each do |key, value|
       body[key.to_s] = value.to_s
@@ -140,6 +143,7 @@ class Telegram::SendAttachmentsService
     end
 
     body['caption'] = caption.to_s if caption.present?
+    body['parse_mode'] = 'HTML' if caption.present?
 
     # Use UploadIO to properly handle binary file uploads with encoding
     filename = File.basename(file_path)
@@ -186,6 +190,6 @@ class Telegram::SendAttachmentsService
     return if index.positive?
     return if message.content.blank?
 
-    message.content
+    channel.convert_markdown_to_telegram_html(message.content)
   end
 end
