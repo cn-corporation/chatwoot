@@ -7,7 +7,12 @@ export const showBadgeOnFavicon = () => {
   });
 };
 
+let faviconSwitcherInitialized = false;
+
 export const initFaviconSwitcher = () => {
+  if (faviconSwitcherInitialized) return;
+  faviconSwitcherInitialized = true;
+
   const favicons = document.querySelectorAll('.favicon');
 
   document.addEventListener('visibilitychange', () => {
