@@ -67,6 +67,18 @@ class ResponseStatisticsAPI {
     return response.data;
   }
 
+  async getDistribution(params = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/response-statistics/statistics/distribution`,
+      {
+        params,
+        headers: this.headers,
+        paramsSerializer: serializeParams,
+      }
+    );
+    return response.data;
+  }
+
   async getAgentsOverview(params = {}) {
     const response = await axios.get(
       `${this.baseURL}/api/response-statistics/statistics/agents-overview`,

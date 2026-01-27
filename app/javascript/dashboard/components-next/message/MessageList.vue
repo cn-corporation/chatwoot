@@ -45,25 +45,29 @@ const emit = defineEmits(['retry']);
 const allMessages = computed(() => {
   const camelCasedMessages = useCamelCase(props.messages, { deep: true });
 
-  const privateNotesWithLinks = [];
+  const notesByOriginalId = new Map();
   const otherMessages = [];
 
   camelCasedMessages.forEach(message => {
     if (message.private && message.additionalAttributes?.originalMessageId) {
-      privateNotesWithLinks.push(message);
+      const origId = message.additionalAttributes.originalMessageId;
+      if (!notesByOriginalId.has(origId)) {
+        notesByOriginalId.set(origId, []);
+      }
+      notesByOriginalId.get(origId).push(message);
     } else {
       otherMessages.push(message);
     }
   });
 
+  if (notesByOriginalId.size === 0) return otherMessages;
+
   const result = [];
-
   otherMessages.forEach(message => {
-    const relatedNotes = privateNotesWithLinks.filter(
-      note => note.additionalAttributes.originalMessageId === message.id
-    );
-
-    relatedNotes.forEach(note => result.push(note));
+    const relatedNotes = notesByOriginalId.get(message.id);
+    if (relatedNotes) {
+      result.push(...relatedNotes);
+    }
     result.push(message);
   });
 

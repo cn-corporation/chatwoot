@@ -6,7 +6,12 @@ const toNumber = value => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+let initialized = false;
+
 export const initializeOperatorNotifications = store => {
+  if (initialized) return;
+  initialized = true;
+
   let eventSource = null;
   let currentOperatorId = null;
   let unreadCounts = new Map();
