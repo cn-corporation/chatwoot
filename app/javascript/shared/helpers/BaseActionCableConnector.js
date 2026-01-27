@@ -32,14 +32,9 @@ class BaseActionCableConnector {
     this.app = app;
     this.events = {};
     this.reconnectTimer = null;
+    this.presenceTimer = null;
     this.isAValidEvent = () => true;
-    this.triggerPresenceInterval = () => {
-      setTimeout(() => {
-        this.subscription.updatePresence();
-        this.triggerPresenceInterval();
-      }, PRESENCE_INTERVAL);
-    };
-    this.triggerPresenceInterval();
+    this.startPresenceInterval();
   }
 
   checkConnection() {
@@ -54,6 +49,20 @@ class BaseActionCableConnector {
       this.initReconnectTimer();
     }
   }
+
+  startPresenceInterval() {
+    this.clearPresenceInterval();
+    this.presenceTimer = setInterval(() => {
+      this.subscription.updatePresence();
+    }, PRESENCE_INTERVAL);
+  }
+
+  clearPresenceInterval = () => {
+    if (this.presenceTimer) {
+      clearInterval(this.presenceTimer);
+      this.presenceTimer = null;
+    }
+  };
 
   clearReconnectTimer = () => {
     if (this.reconnectTimer) {
@@ -76,6 +85,8 @@ class BaseActionCableConnector {
   onDisconnected = () => {};
 
   disconnect() {
+    this.clearPresenceInterval();
+    this.clearReconnectTimer();
     this.consumer.disconnect();
   }
 

@@ -56,10 +56,15 @@ export const mutations = {
     const updatedRecords = records.filter(
       record => record.id !== user.id || record.type !== user.type
     );
-    $state.records = {
-      ...$state.records,
-      [conversationId]: updatedRecords,
-    };
+    if (updatedRecords.length === 0) {
+      const { [conversationId]: _, ...rest } = $state.records;
+      $state.records = rest;
+    } else {
+      $state.records = {
+        ...$state.records,
+        [conversationId]: updatedRecords,
+      };
+    }
   },
 };
 

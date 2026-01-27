@@ -225,6 +225,11 @@ export const actions = {
       };
       commit(types.SET_CONTACT_ITEM, contact);
     } catch (error) {
+      if (error.response?.status === 404) {
+        const contact = { id: Number(id), contact_inboxes: [] };
+        commit(types.SET_CONTACT_ITEM, contact);
+        return;
+      }
       if (error.response?.data?.message) {
         throw new ExceptionWithMessage(error.response.data.message);
       } else {

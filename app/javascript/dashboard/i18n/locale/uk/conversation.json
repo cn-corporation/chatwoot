@@ -275,7 +275,8 @@
     "SIDEBAR": {
       "CONTACT": "Контакт",
       "COPILOT": "Copilot"
-    }
+    },
+    "MESSAGES_FROM_PREVIOUS_ACCOUNT": "Повідомлення з попереднього акаунту ({name})"
   },
   "EMAIL_TRANSCRIPT": {
     "TITLE": "Надіслати стенограму розмови",
@@ -425,5 +426,12 @@
   },
   "GALLERY_VIEW": {
     "ERROR_DOWNLOADING": "Unable to download attachment. Please try again"
+  },
+  "OPERATOR_PRESENCE": {
+    "TITLE": "Оператори переглядають",
+    "NO_OPERATORS": "Жоден оператор зараз не переглядає цю розмову",
+    "YOU": "Ви",
+    "VIEWING": "Зараз переглядає",
+    "CONNECTING": "Підключення..."
   }
 }

@@ -39,7 +39,7 @@ const { t } = useI18n();
 const store = useStore();
 
 const isLoading = ref(false);
-const statistics = ref([]);
+const aggregatedData = ref(null);
 const reasons = ref([]);
 const topics = ref([]);
 const selectedOperators = ref([]);
@@ -133,59 +133,30 @@ const reasonOptions = computed(() =>
 );
 
 const overviewMetrics = computed(() => {
-  if (statistics.value.length === 0) {
-    return null;
-  }
+  if (!aggregatedData.value) return null;
 
-  const uniqueConversations = new Set(
-    statistics.value.map(stat => stat.conversationId)
-  ).size;
-
-  const uniqueOperators = new Set(
-    statistics.value.map(stat =>
-      String(stat.operatorChatwootId ?? stat.operatorId)
-    )
-  ).size;
-
-  const reasonCounts = new Map();
-  statistics.value.forEach(stat => {
-    const reason = getResolutionReasonLabel(stat.resolutionReason);
-    reasonCounts.set(reason, (reasonCounts.get(reason) || 0) + 1);
-  });
-
-  const topReasonEntry = [...reasonCounts.entries()].sort(
-    (a, b) => b[1] - a[1]
-  )[0];
+  const { overview } = aggregatedData.value;
+  const topReasonLabel = getResolutionReasonLabel(overview.topReason);
 
   return {
-    totalResolutions: statistics.value.length,
-    uniqueConversations,
-    uniqueOperators,
-    topReason: topReasonEntry
-      ? `${topReasonEntry[0]} (${topReasonEntry[1]})`
+    totalResolutions: overview.totalResolutions,
+    uniqueConversations: overview.uniqueConversations,
+    uniqueOperators: overview.uniqueOperators,
+    topReason: overview.topReasonCount > 0
+      ? `${topReasonLabel} (${overview.topReasonCount})`
       : t('RESOLUTION_STATISTICS.NO_TOP_REASON'),
   };
 });
 
 const reasonChartData = computed(() => {
-  if (statistics.value.length === 0) return null;
-
-  const reasonCounts = new Map();
-  statistics.value.forEach(stat => {
-    const reason = getResolutionReasonLabel(stat.resolutionReason);
-    reasonCounts.set(reason, (reasonCounts.get(reason) || 0) + 1);
-  });
-
-  const sortedReasons = [...reasonCounts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10);
+  if (!aggregatedData.value?.reasonChart?.length) return null;
 
   return {
-    labels: sortedReasons.map(([reason]) => reason),
+    labels: aggregatedData.value.reasonChart.map(r => getResolutionReasonLabel(r.reason)),
     datasets: [
       {
         label: t('RESOLUTION_STATISTICS.CHARTS.REASONS_LABEL'),
-        data: sortedReasons.map(([, count]) => count),
+        data: aggregatedData.value.reasonChart.map(r => r.count),
         backgroundColor: 'rgba(59, 130, 246, 0.6)',
         borderColor: 'rgba(59, 130, 246, 1)',
         borderWidth: 1,
@@ -195,24 +166,14 @@ const reasonChartData = computed(() => {
 });
 
 const trendChartData = computed(() => {
-  if (statistics.value.length === 0) return null;
-
-  const countsByDate = new Map();
-  statistics.value.forEach(stat => {
-    const key = format(new Date(stat.createdAt), 'yyyy-MM-dd');
-    countsByDate.set(key, (countsByDate.get(key) || 0) + 1);
-  });
-
-  const sortedDates = [...countsByDate.entries()].sort(
-    (a, b) => new Date(a[0]) - new Date(b[0])
-  );
+  if (!aggregatedData.value?.trendChart?.length) return null;
 
   return {
-    labels: sortedDates.map(([date]) => format(new Date(date), 'MMM dd')),
+    labels: aggregatedData.value.trendChart.map(d => format(new Date(d.date), 'MMM dd')),
     datasets: [
       {
         label: t('RESOLUTION_STATISTICS.CHARTS.TREND_LABEL'),
-        data: sortedDates.map(([, count]) => count),
+        data: aggregatedData.value.trendChart.map(d => d.count),
         borderColor: 'rgba(16, 185, 129, 1)',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
         fill: true,
@@ -223,24 +184,14 @@ const trendChartData = computed(() => {
 });
 
 const operatorChartData = computed(() => {
-  if (statistics.value.length === 0) return null;
-
-  const operatorCounts = new Map();
-  statistics.value.forEach(stat => {
-    const operatorKey = String(stat.operatorChatwootId ?? stat.operatorId);
-    operatorCounts.set(operatorKey, (operatorCounts.get(operatorKey) || 0) + 1);
-  });
-
-  const sortedOperators = [...operatorCounts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10);
+  if (!aggregatedData.value?.operatorChart?.length) return null;
 
   return {
-    labels: sortedOperators.map(([operatorId]) => getAgentName(operatorId)),
+    labels: aggregatedData.value.operatorChart.map(o => getAgentName(o.operatorId)),
     datasets: [
       {
         label: t('RESOLUTION_STATISTICS.CHARTS.OPERATORS_LABEL'),
-        data: sortedOperators.map(([, count]) => count),
+        data: aggregatedData.value.operatorChart.map(o => o.count),
         backgroundColor: 'rgba(139, 92, 246, 0.6)',
         borderColor: 'rgba(139, 92, 246, 1)',
         borderWidth: 1,
@@ -274,48 +225,19 @@ const formatDateTime = value => {
   return format(new Date(value), 'MMM dd, yyyy HH:mm');
 };
 
-const tableRows = computed(() =>
-  statistics.value.map(stat => {
-    // Topics can be in different places depending on API response format
-    // Check camelCase, snake_case, and direct properties
-    let topicsArray = [];
+const tableRows = computed(() => {
+  if (!aggregatedData.value?.tableRows?.length) return [];
 
-    if (stat.customAttributes?.close_topics) {
-      topicsArray = stat.customAttributes.close_topics;
-    } else if (stat.custom_attributes?.close_topics) {
-      topicsArray = stat.custom_attributes.close_topics;
-    } else if (stat.closeTopics) {
-      topicsArray = stat.closeTopics;
-    } else if (stat.topics) {
-      topicsArray = stat.topics;
-    } else if (
-      stat.customAttributes &&
-      Array.isArray(stat.customAttributes.close_topics)
-    ) {
-      topicsArray = stat.customAttributes.close_topics;
-    } else if (
-      stat.custom_attributes &&
-      Array.isArray(stat.custom_attributes.close_topics)
-    ) {
-      topicsArray = stat.custom_attributes.close_topics;
-    }
-
-    // Ensure it's an array
-    if (!Array.isArray(topicsArray)) {
-      topicsArray = [];
-    }
-
-    return {
-      id: stat.id,
-      conversationId: stat.conversationId,
-      operator: getAgentName(stat.operatorChatwootId ?? stat.operatorId),
-      reason: getResolutionReasonLabel(stat.resolutionReason),
-      details: stat.resolutionDetails || t('RESOLUTION_STATISTICS.EMPTY_VALUE'),
-      topics: formatTopics(topicsArray),
-      createdAt: formatDateTime(stat.createdAt),
-    };
-  })
-);
+  return aggregatedData.value.tableRows.map(stat => ({
+    id: stat.id,
+    conversationId: stat.conversationId,
+    operator: getAgentName(stat.operatorChatwootId ?? stat.operatorId),
+    reason: getResolutionReasonLabel(stat.resolutionReason),
+    details: stat.resolutionDetails || t('RESOLUTION_STATISTICS.EMPTY_VALUE'),
+    topics: formatTopics(stat.topics),
+    createdAt: formatDateTime(stat.createdAt),
+  }));
+});
 
 const handleDateRangeChange = ({ field, value }) => {
   dateRange.value[field] = value;
@@ -362,10 +284,10 @@ const fetchData = async () => {
       params.conversationId = normalizedConversationId;
     }
 
-    const statsRes = await resolutionStatisticsAPI.getStatistics(params);
-    statistics.value = statsRes?.data || [];
+    const statsRes = await resolutionStatisticsAPI.getAggregatedStatistics(params);
+    aggregatedData.value = statsRes?.data || null;
   } catch (error) {
-    statistics.value = [];
+    aggregatedData.value = null;
   } finally {
     isLoading.value = false;
   }

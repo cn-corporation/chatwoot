@@ -11,7 +11,7 @@ class ActionCableConnector extends BaseActionCableConnector {
   constructor(app, pubsubToken) {
     const { websocketURL = '' } = window.chatwootConfig || {};
     super(app, pubsubToken, websocketURL);
-    this.CancelTyping = [];
+    this.CancelTyping = new Map();
     this.events = {
       'message.created': this.onMessageCreated,
       'message.updated': this.onMessageUpdated,
@@ -145,20 +145,21 @@ class ActionCableConnector extends BaseActionCableConnector {
   };
 
   clearTimer = conversationId => {
-    const timerEvent = this.CancelTyping[conversationId];
-
+    const timerEvent = this.CancelTyping.get(conversationId);
     if (timerEvent) {
       clearTimeout(timerEvent);
-      this.CancelTyping[conversationId] = null;
+      this.CancelTyping.delete(conversationId);
     }
   };
 
   initTimer = ({ conversation, user }) => {
     const conversationId = conversation.id;
-    // Turn off typing automatically after 30 seconds
-    this.CancelTyping[conversationId] = setTimeout(() => {
-      this.onTypingOff({ conversation, user });
-    }, 30000);
+    this.CancelTyping.set(
+      conversationId,
+      setTimeout(() => {
+        this.onTypingOff({ conversation, user });
+      }, 30000)
+    );
   };
 
   // eslint-disable-next-line class-methods-use-this

@@ -41,6 +41,18 @@ class ResolutionStatisticsAPI {
     return response.data;
   }
 
+  async getAggregatedStatistics(params = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/resolution-statistics/statistics/aggregated`,
+      {
+        params,
+        headers: this.headers,
+        paramsSerializer: serializeParams,
+      }
+    );
+    return response.data;
+  }
+
   async getResolutionReasons() {
     const response = await axios.get(
       `${this.baseURL}/api/resolution-statistics/reasons`,

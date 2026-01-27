@@ -101,6 +101,61 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async createAutomation({ chatwootAutomationId, sourceChannelIds }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/automations`,
+      {
+        chatwootAutomationId,
+        sourceChannelIds,
+      },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getAutomation(chatwootAutomationId) {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/api/automations/${chatwootAutomationId}`,
+        { headers: this.headers }
+      );
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async getAllAutomations() {
+    try {
+      const response = await axios.get(`${this.baseURL}/api/automations`, {
+        headers: this.headers,
+      });
+      return response.data?.data || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async updateAutomationSources({ chatwootAutomationId, sourceChannelIds }) {
+    const response = await axios.patch(
+      `${this.baseURL}/api/automations/sources`,
+      {
+        chatwootAutomationId,
+        sourceChannelIds,
+      },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async deleteAutomation(chatwootAutomationId) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/automations/${chatwootAutomationId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   async getSourceChannel(chatwootChannelId) {
     const response = await axios.get(
       `${this.baseURL}/api/source-channels/${chatwootChannelId}`,
@@ -186,6 +241,18 @@ class ChatwootExtraAPI {
   async markConversationAsRead(conversationId, operatorId) {
     const response = await axios.post(
       `${this.baseURL}/api/operator-notifications/mark-read`,
+      {
+        conversationId: String(conversationId),
+        operatorId: String(operatorId),
+      },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async markConversationAsUnread(conversationId, operatorId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-notifications/mark-unread`,
       {
         conversationId: String(conversationId),
         operatorId: String(operatorId),

@@ -43,7 +43,9 @@ const findConversation = (state, conversationId) => {
 
 const getters = {
   getAllConversations: ({ allConversations, chatSortFilter: sortKey }) => {
-    return allConversations.sort((a, b) => sortComparator(a, b, sortKey));
+    return allConversations
+      .slice()
+      .sort((a, b) => sortComparator(a, b, sortKey));
   },
   getFilteredConversations: (
     { allConversations, chatSortFilter, appliedFilters },
@@ -60,18 +62,15 @@ const getters = {
 
     return allConversations
       .filter(conversation => {
-        const matchesFilterResult = matchesFilters(
-          conversation,
-          appliedFilters
-        );
         const allowedForRole = applyRoleFilter(
           conversation,
           userRole,
           permissions,
           currentUserId
         );
+        if (!allowedForRole) return false;
 
-        return matchesFilterResult && allowedForRole;
+        return matchesFilters(conversation, appliedFilters);
       })
       .sort((a, b) => sortComparator(a, b, chatSortFilter));
   },

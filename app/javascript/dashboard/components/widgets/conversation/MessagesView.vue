@@ -122,6 +122,15 @@ export default {
       newMessagesWhileScrolledUp: 0,
       lastTrackedConversationId: null,
       lastMessageId: null,
+      linkedConversationPagination: {
+        active: false,
+        currentIndex: 0,
+        conversationId: null,
+        allMessagesLoaded: false,
+        separatorShown: false,
+      },
+      initialLoadComplete: false,
+      pendingLinkedCheck: false,
     };
   },
 
@@ -186,12 +195,26 @@ export default {
 
       return '';
     },
+    linkedChannels() {
+      return this.$store.getters['linkedSourceChannels/getLinkedChannels'](
+        this.currentChat?.id
+      );
+    },
+    linkedMessages() {
+      return this.$store.getters['linkedSourceChannels/getLinkedMessages'](
+        this.currentChat?.id
+      );
+    },
     getMessages() {
       const messages = this.currentChat.messages || [];
+      let filteredMessages = messages;
       if (this.isAWhatsAppChannel) {
-        return filterDuplicateSourceMessages(messages);
+        filteredMessages = filterDuplicateSourceMessages(messages);
       }
-      return messages;
+      if (this.linkedMessages.length > 0) {
+        return [...this.linkedMessages, ...filteredMessages];
+      }
+      return filteredMessages;
     },
     readMessages() {
       return getReadMessages(
@@ -316,6 +339,14 @@ export default {
       const messages = this.getMessages;
       this.lastMessageId =
         messages.length > 0 ? messages[messages.length - 1].id : null;
+      this.resetLinkedConversationPagination();
+      this.fetchLinkedSourceChannels();
+      this.initialLoadComplete = false;
+      this.pendingLinkedCheck = false;
+      setTimeout(() => {
+        this.initialLoadComplete = true;
+        this.checkAndTriggerLinkedLoading();
+      }, 300);
       // Always scroll to bottom when switching conversations
       this.$nextTick(() => {
         if (this.conversationPanel) {
@@ -372,6 +403,16 @@ export default {
         }
       },
     },
+    listLoadingStatus(allLoaded) {
+      if (allLoaded) {
+        this.$nextTick(() => this.checkAndTriggerLinkedLoading());
+      }
+    },
+    linkedChannels(channels) {
+      if (channels.length > 0) {
+        this.$nextTick(() => this.checkAndTriggerLinkedLoading());
+      }
+    },
   },
 
   created() {
@@ -397,6 +438,11 @@ export default {
     const messages = this.getMessages;
     this.lastMessageId =
       messages.length > 0 ? messages[messages.length - 1].id : null;
+    this.fetchLinkedSourceChannels();
+    setTimeout(() => {
+      this.initialLoadComplete = true;
+      this.checkAndTriggerLinkedLoading();
+    }, 300);
   },
 
   unmounted() {
@@ -528,11 +574,11 @@ export default {
       }
     },
     scrollToBottom() {
+      if (!this.conversationPanel) return;
+
       this.isProgrammaticScroll = true;
       let relevantMessages = [];
 
-      // label suggestions are not part of the messages list
-      // so we need to handle them separately
       let labelSuggestions =
         this.conversationPanel.querySelector('.label-suggestion');
 
@@ -568,15 +614,21 @@ export default {
     async fetchPreviousMessages(scrollTop = 0) {
       this.setScrollParams();
       const shouldLoadMoreMessages =
-        this.currentChat.dataFetched === true &&
-        !this.listLoadingStatus &&
-        !this.isLoadingPrevious;
+        this.currentChat.dataFetched === true && !this.isLoadingPrevious;
 
-      if (
-        scrollTop < 100 &&
-        !this.isLoadingPrevious &&
-        shouldLoadMoreMessages
-      ) {
+      const isNearTop = scrollTop < 150;
+
+      if (isNearTop && !this.isLoadingPrevious && shouldLoadMoreMessages) {
+        if (this.linkedConversationPagination.active) {
+          await this.fetchLinkedMessages();
+          return;
+        }
+
+        if (this.listLoadingStatus) {
+          this.checkAndTriggerLinkedLoading();
+          return;
+        }
+
         this.isLoadingPrevious = true;
         try {
           await this.$store.dispatch('fetchPreviousMessages', {
@@ -592,7 +644,68 @@ export default {
           // Ignore Error
         } finally {
           this.isLoadingPrevious = false;
+          this.$nextTick(() => this.checkAndTriggerLinkedLoading());
         }
+      }
+    },
+    checkAndTriggerLinkedLoading() {
+      if (!this.conversationPanel) return;
+      if (this.isLoadingPrevious) return;
+      if (this.linkedConversationPagination.allMessagesLoaded) return;
+
+      if (!this.initialLoadComplete) {
+        if (!this.pendingLinkedCheck) {
+          this.pendingLinkedCheck = true;
+          setTimeout(() => {
+            this.pendingLinkedCheck = false;
+            this.checkAndTriggerLinkedLoading();
+          }, 350);
+        }
+        return;
+      }
+
+      const hasNoScrollbar =
+        this.conversationPanel.scrollHeight <=
+        this.conversationPanel.clientHeight;
+      const isNearTop = this.conversationPanel.scrollTop < 150;
+      const shouldLoad = hasNoScrollbar || isNearTop;
+
+      if (!shouldLoad) return;
+
+      if (!this.listLoadingStatus) {
+        this.triggerCurrentConversationLoad();
+        return;
+      }
+
+      if (this.linkedChannels.length === 0) return;
+
+      if (!this.linkedConversationPagination.active) {
+        this.linkedConversationPagination = {
+          active: true,
+          currentIndex: 0,
+          conversationId: this.linkedChannels[0].conversation_id,
+          allMessagesLoaded: false,
+          separatorShown: false,
+        };
+      }
+
+      this.fetchLinkedMessages();
+    },
+    async triggerCurrentConversationLoad() {
+      if (this.isLoadingPrevious || this.listLoadingStatus) return;
+      if (!this.currentChat?.messages?.length) return;
+
+      this.isLoadingPrevious = true;
+      try {
+        await this.$store.dispatch('fetchPreviousMessages', {
+          conversationId: this.currentChat.id,
+          before: this.currentChat.messages[0].id,
+        });
+      } catch (error) {
+        // Ignore
+      } finally {
+        this.isLoadingPrevious = false;
+        this.$nextTick(() => this.checkAndTriggerLinkedLoading());
       }
     },
 
@@ -625,6 +738,102 @@ export default {
     onNewMessagesIndicatorClick() {
       this.newMessagesWhileScrolledUp = 0;
       this.scrollToBottom();
+    },
+    async fetchLinkedSourceChannels() {
+      if (!this.currentChat?.id) return;
+      await this.$store.dispatch(
+        'linkedSourceChannels/fetchLinkedSourceChannels',
+        { conversationId: this.currentChat.id }
+      );
+    },
+    resetLinkedConversationPagination() {
+      this.linkedConversationPagination = {
+        active: false,
+        currentIndex: 0,
+        conversationId: null,
+        allMessagesLoaded: false,
+        separatorShown: false,
+      };
+      if (this.currentChat?.id) {
+        this.$store.dispatch('linkedSourceChannels/clearLinkedMessages', {
+          conversationId: this.currentChat.id,
+        });
+      }
+    },
+    getEarliestLinkedMessageId() {
+      const linkedMessages = this.linkedMessages;
+      if (linkedMessages.length === 0) return null;
+      const realMessages = linkedMessages.filter(
+        msg => !msg.isLinkedConversationSeparator
+      );
+      if (realMessages.length === 0) return null;
+      return realMessages[0].id;
+    },
+    async fetchLinkedMessages() {
+      if (this.linkedConversationPagination.allMessagesLoaded) return;
+
+      this.isLoadingPrevious = true;
+      try {
+        if (!this.linkedConversationPagination.separatorShown) {
+          const currentLinked =
+            this.linkedChannels[this.linkedConversationPagination.currentIndex];
+          this.insertLinkedConversationSeparator(currentLinked.contact_name);
+          this.linkedConversationPagination.separatorShown = true;
+        }
+
+        const messages = await this.$store.dispatch(
+          'linkedSourceChannels/fetchLinkedConversationMessages',
+          {
+            conversationId: this.currentChat.id,
+            linkedConversationId:
+              this.linkedConversationPagination.conversationId,
+            before: this.getEarliestLinkedMessageId(),
+          }
+        );
+
+        if (messages.length === 0) {
+          const nextIndex = this.linkedConversationPagination.currentIndex + 1;
+          if (nextIndex < this.linkedChannels.length) {
+            this.linkedConversationPagination = {
+              active: true,
+              currentIndex: nextIndex,
+              conversationId: this.linkedChannels[nextIndex].conversation_id,
+              allMessagesLoaded: false,
+              separatorShown: false,
+            };
+          } else {
+            this.linkedConversationPagination.allMessagesLoaded = true;
+            this.linkedConversationPagination.active = false;
+          }
+        }
+
+        const heightDifference =
+          this.conversationPanel.scrollHeight - this.heightBeforeLoad;
+        this.conversationPanel.scrollTop =
+          this.scrollTopBeforeLoad + heightDifference;
+        this.setScrollParams();
+      } catch (error) {
+        // Ignore error
+      } finally {
+        this.isLoadingPrevious = false;
+        this.$nextTick(() => {
+          this.checkAndTriggerLinkedLoading();
+        });
+      }
+    },
+    insertLinkedConversationSeparator(contactName) {
+      const separatorMessage = {
+        id: `separator-${Date.now()}`,
+        message_type: 'separator',
+        content: contactName,
+        isLinkedConversationSeparator: true,
+        created_at: 0,
+      };
+      const existingMessages = this.linkedMessages;
+      this.$store.commit('linkedSourceChannels/SET_LINKED_MESSAGES', {
+        conversationId: this.currentChat.id,
+        messages: [separatorMessage, ...existingMessages],
+      });
     },
   },
 };

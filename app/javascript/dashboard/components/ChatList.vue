@@ -825,6 +825,7 @@ async function markAsUnread(conversationId) {
     await store.dispatch('markMessagesUnread', {
       id: conversationId,
     });
+    await store.dispatch('markConversationAsUnreadForOperator', conversationId);
     redirectToConversationList();
   } catch (error) {
     // Ignore error

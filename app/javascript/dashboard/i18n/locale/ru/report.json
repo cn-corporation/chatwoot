@@ -462,7 +462,7 @@
       "LOADING_MESSAGE": "Загрузка метрик диалогов...",
       "OPEN": "Открытых",
       "UNATTENDED": "Неотвеченные",
-      "UNASSIGNED": "Неназначен",
+      "UNASSIGNED": "Без назначения",
       "PENDING": "В ожидании"
     },
     "CONVERSATION_HEATMAP": {

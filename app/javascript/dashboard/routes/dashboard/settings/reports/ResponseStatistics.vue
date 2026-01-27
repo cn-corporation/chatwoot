@@ -1,4 +1,3 @@
-<!-- eslint-disable no-plusplus -->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -40,7 +39,7 @@ const store = useStore();
 
 // State
 const isLoading = ref(false);
-const statistics = ref([]);
+const distributionData = ref([]);
 const operatorStats = ref([]);
 const dateRangeStats = ref([]);
 const selectedOperators = ref([]);
@@ -151,32 +150,14 @@ const trendChartData = computed(() => {
 });
 
 const distributionChartData = computed(() => {
-  if (statistics.value.length === 0) return null;
-
-  // Create buckets: 0-5min, 5-15min, 15-30min, 30-60min, 60min+
-  const buckets = [
-    { label: '0-5 min', max: 5 * 60 * 1000, count: 0 },
-    { label: '5-15 min', max: 15 * 60 * 1000, count: 0 },
-    { label: '15-30 min', max: 30 * 60 * 1000, count: 0 },
-    { label: '30-60 min', max: 60 * 60 * 1000, count: 0 },
-    { label: '60+ min', max: Infinity, count: 0 },
-  ];
-
-  statistics.value.forEach(stat => {
-    for (let i = 0; i < buckets.length; i++) {
-      if (stat.responseTimeMs <= buckets[i].max) {
-        buckets[i].count++;
-        break;
-      }
-    }
-  });
+  if (distributionData.value.length === 0) return null;
 
   return {
-    labels: buckets.map(b => b.label),
+    labels: distributionData.value.map(b => b.label),
     datasets: [
       {
         label: 'Number of Responses',
-        data: buckets.map(b => b.count),
+        data: distributionData.value.map(b => b.count),
         backgroundColor: 'rgba(139, 92, 246, 0.6)',
         borderColor: 'rgba(139, 92, 246, 1)',
         borderWidth: 1,
@@ -236,20 +217,19 @@ const fetchData = async () => {
       );
     }
 
-    const [statsRes, operatorRes, dateRangeRes] = await Promise.all([
-      responseStatisticsAPI.getStatistics(params),
+    const [distributionRes, operatorRes, dateRangeRes] = await Promise.all([
+      responseStatisticsAPI.getDistribution(params),
       responseStatisticsAPI.getOperatorStatistics(params),
       responseStatisticsAPI.getDateRangeStatistics(params),
     ]);
 
-    // Backend returns { success: true, data: [...] }
-    statistics.value = statsRes?.data || [];
+    distributionData.value = distributionRes?.data || [];
     operatorStats.value = operatorRes?.data || [];
     dateRangeStats.value = dateRangeRes?.data || [];
   } catch (error) {
     console.error('Failed to fetch response statistics:', error);
     // Set empty arrays on error
-    statistics.value = [];
+    distributionData.value = [];
     operatorStats.value = [];
     dateRangeStats.value = [];
   } finally {

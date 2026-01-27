@@ -33,11 +33,18 @@ const isScrollable = computed(() => {
 
 const scrollEnd = ref(false);
 
-// set scrollEnd to true when the scroll reaches the end
 useEventListener(scrollableContainer, 'scroll', () => {
   const { scrollHeight, scrollTop, clientHeight } = scrollableContainer.value;
   scrollEnd.value = scrollHeight - scrollTop === clientHeight;
 });
+
+const scrollToBottom = () => {
+  if (!scrollableContainer.value) return;
+  scrollableContainer.value.scrollTo({
+    top: scrollableContainer.value.scrollHeight,
+    behavior: 'smooth',
+  });
+};
 </script>
 
 <template>
@@ -70,38 +77,44 @@ useEventListener(scrollableContainer, 'scroll', () => {
       v-show="!scrollEnd"
       class="absolute bg-gradient-to-t from-n-solid-2 w-full h-12 to-transparent -bottom-1 pointer-events-none flex items-end justify-end px-2 animate-fade-in-up"
     >
-      <svg
-        width="16"
-        height="24"
-        viewBox="0 0 16 24"
-        fill="none"
-        class="text-n-slate-9 opacity-50 group-hover:opacity-100"
-        xmlns="http://www.w3.org/2000/svg"
+      <button
+        type="button"
+        class="pointer-events-auto p-2 -mr-2 -mb-1 cursor-pointer hover:bg-n-alpha-1 rounded-md transition-colors"
+        @click.stop="scrollToBottom"
       >
-        <path
-          d="M4 4L8 8L12 4"
-          stroke="currentColor"
-          opacity="0.5"
-          stroke-width="1.33333"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-        <path
-          d="M4 10L8 14L12 10"
-          stroke="currentColor"
-          opacity="0.75"
-          stroke-width="1.33333"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-        <path
-          d="M4 16L8 20L12 16"
-          stroke="currentColor"
-          stroke-width="1.33333"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
+        <svg
+          width="16"
+          height="24"
+          viewBox="0 0 16 24"
+          fill="none"
+          class="text-n-slate-9 opacity-50 group-hover:opacity-100"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M4 4L8 8L12 4"
+            stroke="currentColor"
+            opacity="0.5"
+            stroke-width="1.33333"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M4 10L8 14L12 10"
+            stroke="currentColor"
+            opacity="0.75"
+            stroke-width="1.33333"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M4 16L8 20L12 16"
+            stroke="currentColor"
+            stroke-width="1.33333"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
     </div>
   </ul>
 </template>
