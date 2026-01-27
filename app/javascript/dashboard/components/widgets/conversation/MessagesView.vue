@@ -574,11 +574,11 @@ export default {
       }
     },
     scrollToBottom() {
+      if (!this.conversationPanel) return;
+
       this.isProgrammaticScroll = true;
       let relevantMessages = [];
 
-      // label suggestions are not part of the messages list
-      // so we need to handle them separately
       let labelSuggestions =
         this.conversationPanel.querySelector('.label-suggestion');
 
