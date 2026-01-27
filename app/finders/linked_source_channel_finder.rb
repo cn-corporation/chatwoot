@@ -38,7 +38,7 @@ class LinkedSourceChannelFinder
       source_id: contact_inbox.source_id,
       contact_id: contact_inbox.contact_id,
       contact_name: contact_inbox.contact.name,
-      conversation_id: latest_conversation.id,
+      conversation_id: latest_conversation.display_id,
       created_at: contact_inbox.created_at
     }
   end
