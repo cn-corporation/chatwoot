@@ -13,32 +13,13 @@ export const useOperatorPresence = (conversationId, operatorId) => {
   const currentConversationId = ref(null);
   let debounceTimer = null;
   let reconnectTimeout = null;
+  let heartbeatFailCount = 0;
+  const MAX_HEARTBEAT_FAILURES = 3;
   const isTabVisible = ref(true);
   let focusHandler = null;
   let beforeUnloadHandler = null;
   let isUnmounted = false;
   let isTransitionInProgress = false;
-
-  const sendHeartbeat = async () => {
-    if (hasJoined.value && conversationId.value) {
-      try {
-        await ChatwootExtraAPI.sendHeartbeat(
-          conversationId.value,
-          operatorId.value
-        );
-      } catch {
-        error.value = 'Connection unstable';
-      }
-    }
-  };
-
-  const startHeartbeat = (interval = 15000) => {
-    if (heartbeatInterval) clearInterval(heartbeatInterval);
-
-    sendHeartbeat();
-
-    heartbeatInterval = setInterval(sendHeartbeat, interval);
-  };
 
   const cleanupConnections = () => {
     if (reconnectTimeout) {
@@ -55,6 +36,33 @@ export const useOperatorPresence = (conversationId, operatorId) => {
       eventSource.close();
       eventSource = null;
     }
+  };
+
+  const sendHeartbeat = async () => {
+    if (hasJoined.value && conversationId.value) {
+      try {
+        await ChatwootExtraAPI.sendHeartbeat(
+          conversationId.value,
+          operatorId.value
+        );
+        heartbeatFailCount = 0;
+      } catch {
+        heartbeatFailCount += 1;
+        error.value = 'Connection unstable';
+        if (heartbeatFailCount >= MAX_HEARTBEAT_FAILURES) {
+          cleanupConnections();
+        }
+      }
+    }
+  };
+
+  const startHeartbeat = (interval = 15000) => {
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    heartbeatFailCount = 0;
+
+    sendHeartbeat();
+
+    heartbeatInterval = setInterval(sendHeartbeat, interval);
   };
 
   const connectSSE = () => {
