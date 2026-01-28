@@ -71,6 +71,7 @@ const handleSelect = value => {
         v-for="option in options"
         :key="option.value"
         :label="option.label"
+        :title="option.label"
         :icon="option.value === modelValue ? 'i-lucide-check' : ''"
         size="sm"
         variant="ghost"
