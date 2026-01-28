@@ -1,5 +1,5 @@
 <script setup>
-import { h, computed, onMounted, onUnmounted, watch } from 'vue';
+import { h, computed, onMounted, onUnmounted } from 'vue';
 import { provideSidebarContext } from './provider';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useKbd } from 'dashboard/composables/utils/useKbd';
@@ -80,18 +80,7 @@ const totalUnreadCount = useMapGetter('getTotalOperatorUnreadCount');
 const getUnreadCountForLabel = useMapGetter('getOperatorUnreadCountForLabel');
 const getUnreadCountForTeam = useMapGetter('getOperatorUnreadCountForTeam');
 // Removed unused custom views - simplified for poker operator UI
-watch(
-  () => totalUnreadCount.value,
-  (next, prev) => {
-    if (next === prev) return;
-    // eslint-disable-next-line no-console
-    console.log('[OperatorNotifications] sidebar total unread', {
-      prev,
-      next,
-    });
-  },
-  { immediate: true }
-);
+
 const refreshCounts = async () => {
   await store.dispatch('fetchAllConversationsForCounts');
 };
