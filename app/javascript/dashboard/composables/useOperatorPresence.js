@@ -59,9 +59,6 @@ export const useOperatorPresence = (conversationId, operatorId) => {
   const startHeartbeat = (interval = 15000) => {
     if (heartbeatInterval) clearInterval(heartbeatInterval);
     heartbeatFailCount = 0;
-
-    sendHeartbeat();
-
     heartbeatInterval = setInterval(sendHeartbeat, interval);
   };
 
