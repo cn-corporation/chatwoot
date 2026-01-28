@@ -104,6 +104,7 @@ export default {
   methods: {
     fetchParticipants() {
       const conversationId = this.conversationId;
+      if (!conversationId) return;
       this.$store.dispatch('conversationWatchers/show', { conversationId });
     },
     async updateParticipant(userIds) {
