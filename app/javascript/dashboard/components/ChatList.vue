@@ -519,7 +519,7 @@ function emitConversationLoaded() {
 function fetchFilteredConversations(payload) {
   payload = useSnakeCase(payload);
   let page = currentFiltersPage.value + 1;
-  store
+  const promise = store
     .dispatch('fetchFilteredConversations', {
       queryData: filterQueryGenerator(payload),
       page,
@@ -527,12 +527,13 @@ function fetchFilteredConversations(payload) {
     .then(emitConversationLoaded);
 
   showAdvancedFilters.value = false;
+  return promise;
 }
 
 function fetchSavedFilteredConversations(payload) {
   payload = useSnakeCase(payload);
   let page = currentFiltersPage.value + 1;
-  store
+  return store
     .dispatch('fetchFilteredConversations', {
       queryData: payload,
       page,
@@ -691,7 +692,7 @@ function onToggleAdvanceFiltersModal() {
 
 function fetchConversations() {
   store.dispatch('updateChatListFilters', conversationFilters.value);
-  store.dispatch('fetchAllConversations').then(emitConversationLoaded);
+  return store.dispatch('fetchAllConversations').then(emitConversationLoaded);
 }
 
 function resetAndFetchData() {
@@ -740,6 +741,11 @@ function loadMoreConversations() {
 
 function updateAssigneeTab(selectedTab) {
   if (activeAssigneeTab.value !== selectedTab) {
+    // Guard against switching while data is loading
+    if (chatListLoading.value || isLoadingMore.value) {
+      return;
+    }
+
     resetBulkActions();
     emitter.emit('clearSearchInput');
 
@@ -925,10 +931,14 @@ function toggleSelectAll(check) {
   selectAllConversations(check, conversationList);
 }
 
+let fetchStatsTimer = null;
 useEmitter('fetch_conversation_stats', () => {
   if (hasAppliedFiltersOrActiveFolders.value) return;
-  fetchConversations();
-  store.dispatch('conversationStats/get', conversationFilters.value);
+  if (fetchStatsTimer) clearTimeout(fetchStatsTimer);
+  fetchStatsTimer = setTimeout(() => {
+    fetchConversations();
+    store.dispatch('conversationStats/get', conversationFilters.value);
+  }, 2000);
 });
 
 onMounted(() => {
@@ -940,8 +950,6 @@ onMounted(() => {
   if (hasActiveFolders.value) {
     store.dispatch('campaigns/get');
   }
-  // Refresh conversation stats to get accurate counts
-  store.dispatch('conversationStats/get', conversationFilters.value);
   startPriorityTimer();
 });
 
