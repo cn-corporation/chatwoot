@@ -42,10 +42,20 @@ const findConversation = (state, conversationId) => {
 };
 
 const getters = {
-  getAllConversations: ({ allConversations, chatSortFilter: sortKey }) => {
-    return allConversations
+  getAllConversations: _state => {
+    const { allConversations, chatSortFilter: sortKey } = _state;
+    if (
+      _state.cachedSortKey === sortKey &&
+      _state.cachedSortedConversations.length === allConversations.length
+    ) {
+      return _state.cachedSortedConversations;
+    }
+    const sorted = allConversations
       .slice()
       .sort((a, b) => sortComparator(a, b, sortKey));
+    _state.cachedSortedConversations = sorted;
+    _state.cachedSortKey = sortKey;
+    return sorted;
   },
   getFilteredConversations: (
     { allConversations, chatSortFilter, appliedFilters },
@@ -196,92 +206,20 @@ const getters = {
     return _state.copilotAssistant;
   },
 
-  // Get total unread count across all conversations (uses separate counts data)
   getTotalUnreadCount: _state => {
-    // Use sidebar counts data if available, fallback to allConversations
-    const source =
-      _state.sidebarCountsData.length > 0
-        ? _state.sidebarCountsData
-        : _state.allConversations;
-
-    // Only count unread from open and pending conversations, not resolved
-    return source
-      .filter(
-        conversation =>
-          conversation.status === 'open' || conversation.status === 'pending'
-      )
-      .reduce((total, conversation) => {
-        return total + (conversation.unread_count || 0);
-      }, 0);
+    return _state.cachedUnreadCounts?.total || 0;
   },
 
-  // Get unread count for specific inbox (uses separate counts data)
   getUnreadCountForInbox: _state => inboxId => {
-    // Use sidebar counts data if available, fallback to allConversations
-    const source =
-      _state.sidebarCountsData.length > 0
-        ? _state.sidebarCountsData
-        : _state.allConversations;
-
-    // Only count unread from open and pending conversations, not resolved
-    return source
-      .filter(
-        conversation =>
-          conversation.inbox_id === inboxId &&
-          (conversation.status === 'open' || conversation.status === 'pending')
-      )
-      .reduce((total, conversation) => {
-        return total + (conversation.unread_count || 0);
-      }, 0);
+    return _state.cachedUnreadCounts?.byInbox?.[inboxId] || 0;
   },
 
-  // Get unread count for specific label (uses separate counts data)
   getUnreadCountForLabel: _state => labelTitle => {
-    // Use sidebar counts data if available, fallback to allConversations
-    const source =
-      _state.sidebarCountsData.length > 0
-        ? _state.sidebarCountsData
-        : _state.allConversations;
-
-    // Only count unread from open and pending conversations, not resolved
-    return source
-      .filter(conversation => {
-        if (!conversation.labels || !Array.isArray(conversation.labels))
-          return false;
-        if (conversation.status !== 'open' && conversation.status !== 'pending')
-          return false;
-        // Labels can be either strings or objects with title property
-        return conversation.labels.some(label =>
-          typeof label === 'string'
-            ? label === labelTitle
-            : label.title === labelTitle
-        );
-      })
-      .reduce((total, conversation) => {
-        return total + (conversation.unread_count || 0);
-      }, 0);
+    return _state.cachedUnreadCounts?.byLabel?.[labelTitle] || 0;
   },
 
-  // Get unread count for specific team (uses separate counts data)
   getUnreadCountForTeam: _state => teamId => {
-    // Use sidebar counts data if available, fallback to allConversations
-    const source =
-      _state.sidebarCountsData.length > 0
-        ? _state.sidebarCountsData
-        : _state.allConversations;
-
-    // Only count unread from open and pending conversations, not resolved
-    return source
-      .filter(conversation => {
-        const convTeamId = conversation.team_id || conversation.meta?.team?.id;
-        return (
-          convTeamId === teamId &&
-          (conversation.status === 'open' || conversation.status === 'pending')
-        );
-      })
-      .reduce((total, conversation) => {
-        return total + (conversation.unread_count || 0);
-      }, 0);
+    return _state.cachedUnreadCounts?.byTeam?.[teamId] || 0;
   },
 
   // Get conversations for tab counts in label views
@@ -350,7 +288,7 @@ const getters = {
   },
 
   getOperatorUnreadCountForInbox:
-    (_state, getters, _rootState, rootGetters) => inboxId => {
+    (_state, selfGetters, _rootState, rootGetters) => inboxId => {
       const source =
         _state.sidebarCountsData.length > 0
           ? _state.sidebarCountsData
@@ -363,12 +301,12 @@ const getters = {
           return isOperatorUnreadEligible(conv, currentUserId);
         })
         .reduce((total, conv) => {
-          return total + getters.getOperatorUnreadCount(conv.id);
+          return total + selfGetters.getOperatorUnreadCount(conv.id);
         }, 0);
     },
 
   getOperatorUnreadCountForTeam:
-    (_state, getters, _rootState, rootGetters) => teamId => {
+    (_state, selfGetters, _rootState, rootGetters) => teamId => {
       const source =
         _state.sidebarCountsData.length > 0
           ? _state.sidebarCountsData
@@ -382,12 +320,12 @@ const getters = {
           return isOperatorUnreadEligible(conv, currentUserId);
         })
         .reduce((total, conv) => {
-          return total + getters.getOperatorUnreadCount(conv.id);
+          return total + selfGetters.getOperatorUnreadCount(conv.id);
         }, 0);
     },
 
   getOperatorUnreadCountForLabel:
-    (_state, getters, _rootState, rootGetters) => labelTitle => {
+    (_state, selfGetters, _rootState, rootGetters) => labelTitle => {
       const source =
         _state.sidebarCountsData.length > 0
           ? _state.sidebarCountsData
@@ -406,7 +344,7 @@ const getters = {
           );
         })
         .reduce((total, conv) => {
-          return total + getters.getOperatorUnreadCount(conv.id);
+          return total + selfGetters.getOperatorUnreadCount(conv.id);
         }, 0);
     },
 };

@@ -7,6 +7,54 @@ import wootConstants from 'dashboard/constants/globals';
 import { BUS_EVENTS } from '../../../../shared/constants/busEvents';
 import { emitter } from 'shared/helpers/mitt';
 
+const recalculateUnreadCounts = _state => {
+  const source =
+    _state.sidebarCountsData.length > 0
+      ? _state.sidebarCountsData
+      : _state.allConversations;
+
+  const counts = {
+    total: 0,
+    byInbox: {},
+    byLabel: {},
+    byTeam: {},
+  };
+
+  source.forEach(conversation => {
+    const isOpenOrPending =
+      conversation.status === 'open' || conversation.status === 'pending';
+    if (!isOpenOrPending) return;
+
+    const unreadCount = conversation.unread_count || 0;
+    counts.total += unreadCount;
+
+    const inboxId = conversation.inbox_id;
+    if (inboxId) {
+      counts.byInbox[inboxId] = (counts.byInbox[inboxId] || 0) + unreadCount;
+    }
+
+    const teamId = conversation.team_id || conversation.meta?.team?.id;
+    if (teamId) {
+      counts.byTeam[teamId] = (counts.byTeam[teamId] || 0) + unreadCount;
+    }
+
+    const labels = conversation.labels || [];
+    labels.forEach(label => {
+      const labelTitle = typeof label === 'string' ? label : label.title;
+      if (labelTitle) {
+        counts.byLabel[labelTitle] =
+          (counts.byLabel[labelTitle] || 0) + unreadCount;
+      }
+    });
+  });
+
+  _state.cachedUnreadCounts = counts;
+};
+
+const invalidateSortCache = _state => {
+  _state.cachedConversationsVersion += 1;
+};
+
 const state = {
   allConversations: [],
   attachments: {},
@@ -26,6 +74,17 @@ const state = {
   sidebarCountsData: [],
   operatorNotifications: new Map(),
   operatorNotificationsReady: false,
+  // Cached computations to avoid expensive recalculations
+  cachedSortedConversations: [],
+  cachedSortKey: null,
+  cachedConversationsVersion: 0,
+  // Cached unread counts
+  cachedUnreadCounts: {
+    total: 0,
+    byInbox: {},
+    byLabel: {},
+    byTeam: {},
+  },
 };
 
 // mutations
@@ -69,14 +128,8 @@ export const mutations = {
         if (indexInCurrentList < 0) {
           newAllConversations.push(conversation);
         } else if (conversation.id !== _state.selectedChatId) {
-          // If the conversation is already in the list, replace it
-          // Added this to fix the issue of the conversation not being updated
-          // When reconnecting to the websocket. If the selectedChatId is not the same as
-          // the conversation.id in the store, replace the existing conversation with the new one
           newAllConversations[indexInCurrentList] = conversation;
         } else {
-          // If the conversation is already in the list and selectedChatId is the same,
-          // replace all data except the messages array, attachments, dataFetched, allMessagesLoaded
           const existingConversation = newAllConversations[indexInCurrentList];
           newAllConversations[indexInCurrentList] = {
             ...conversation,
@@ -88,6 +141,8 @@ export const mutations = {
       });
       _state.allConversations = newAllConversations;
     }
+    invalidateSortCache(_state);
+    recalculateUnreadCounts(_state);
   },
   [types.EMPTY_ALL_CONVERSATION](_state) {
     // Don't clear conversations immediately to avoid flickering
@@ -102,10 +157,11 @@ export const mutations = {
       unread_count: conv.unread_count || 0,
       labels: conv.labels || [],
       inbox_id: conv.inbox_id,
-      team_id: conv.meta?.team?.id,
+      team_id: conv.meta?.team?.id || conv.team_id,
       status: conv.status,
-      assignee_id: conv.meta?.assignee?.id,
+      assignee_id: conv.meta?.assignee?.id || conv.assignee_id,
     }));
+    recalculateUnreadCounts(_state);
   },
   [types.SET_ALL_MESSAGES_LOADED](_state) {
     const [chat] = getSelectedChatConversation(_state);
@@ -269,8 +325,7 @@ export const mutations = {
 
   [types.ADD_CONVERSATION](_state, conversation) {
     _state.allConversations.push(conversation);
-    // Don't add to sidebar counts - only fetchAllConversationsForCounts should populate that
-    // This prevents all-operators tab conversations from polluting sidebar counts
+    invalidateSortCache(_state);
   },
 
   [types.DELETE_CONVERSATION](_state, conversationId) {
@@ -298,8 +353,6 @@ export const mutations = {
       const { messages, ...updates } = conversation;
       allConversations[index] = { ...selectedConversation, ...updates };
 
-      // Update sidebar counts data only if conversation already exists there
-      // Don't add new conversations - only fetchAllConversationsForCounts should populate that
       const sidebarItem = _state.sidebarCountsData.find(
         c => c.id === conversation.id
       );
@@ -309,6 +362,7 @@ export const mutations = {
         sidebarItem.team_id = conversation.meta?.team?.id;
         sidebarItem.status = conversation.status;
         sidebarItem.assignee_id = conversation.meta?.assignee?.id;
+        recalculateUnreadCounts(_state);
       }
       if (_state.selectedChatId === conversation.id) {
         emitter.emit(BUS_EVENTS.FETCH_LABEL_SUGGESTIONS);
@@ -316,8 +370,8 @@ export const mutations = {
       }
     } else {
       _state.allConversations.push(conversation);
-      // Don't add to sidebar counts - only fetchAllConversationsForCounts should populate that
     }
+    invalidateSortCache(_state);
   },
 
   [types.SET_LIST_LOADING_STATUS](_state) {
@@ -340,10 +394,10 @@ export const mutations = {
         chat.unread_count_full = unreadCountFull;
       }
     }
-    // Also update sidebar counts
     const sidebarItem = _state.sidebarCountsData.find(c => c.id === id);
     if (sidebarItem) {
       sidebarItem.unread_count = unreadCount;
+      recalculateUnreadCounts(_state);
     }
   },
   [types.CHANGE_CHAT_STATUS_FILTER](_state, data) {
