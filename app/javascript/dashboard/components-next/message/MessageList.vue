@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, computed, reactive, watch, onBeforeUnmount } from 'vue';
+import { computed, reactive, watch, onBeforeUnmount } from 'vue';
 import Message from './Message.vue';
 import LinkedConversationSeparator from './LinkedConversationSeparator.vue';
 import { MESSAGE_TYPES } from './constants.js';
@@ -7,16 +7,6 @@ import { useCamelCase } from 'dashboard/composables/useTransformKeys';
 import { useMapGetter } from 'dashboard/composables/store.js';
 import MessageApi from 'dashboard/api/inbox/message.js';
 
-/**
- * Props definition for the component
- * @typedef {Object} Props
- * @property {Array} readMessages - Array of read messages
- * @property {Array} unReadMessages - Array of unread messages
- * @property {Number} currentUserId - ID of the current user
- * @property {Boolean} isAnEmailChannel - Whether this is an email channel
- * @property {Object} inboxSupportsReplyTo - Inbox reply support configuration
- * @property {Array} messages - Array of all messages [These are not in camelcase]
- */
 const props = defineProps({
   currentUserId: {
     type: Number,
