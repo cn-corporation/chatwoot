@@ -247,11 +247,12 @@ class Conversation < ApplicationRecord
   end
 
   def handle_resolved_status_change
-    # When conversation is resolved, clear waiting_since using update_column to avoid callbacks
+    # When conversation is resolved, clear waiting_since and team_id using update_column to avoid callbacks
     return unless saved_change_to_status? && status == 'resolved'
 
     # rubocop:disable Rails/SkipsModelValidations
     update_column(:waiting_since, nil)
+    update_column(:team_id, nil) if team_id.present?
     # rubocop:enable Rails/SkipsModelValidations
   end
 
