@@ -7,6 +7,9 @@ import { useImpersonation } from 'dashboard/composables/useImpersonation';
 
 const { isImpersonating } = useImpersonation();
 
+const STATS_DEBOUNCE_MS = 500;
+let statsDebounceTimer = null;
+
 class ActionCableConnector extends BaseActionCableConnector {
   constructor(app, pubsubToken) {
     const { websocketURL = '' } = window.chatwootConfig || {};
@@ -164,7 +167,13 @@ class ActionCableConnector extends BaseActionCableConnector {
 
   // eslint-disable-next-line class-methods-use-this
   fetchConversationStats = () => {
-    emitter.emit('fetch_conversation_stats');
+    if (statsDebounceTimer) {
+      clearTimeout(statsDebounceTimer);
+    }
+    statsDebounceTimer = setTimeout(() => {
+      emitter.emit('fetch_conversation_stats');
+      statsDebounceTimer = null;
+    }, STATS_DEBOUNCE_MS);
   };
 
   onContactDelete = data => {
