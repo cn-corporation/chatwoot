@@ -451,6 +451,58 @@ class ChatwootExtraAPI {
     });
     return response.data;
   }
+
+  // Tasks API
+  async createTask(data) {
+    const response = await axios.post(`${this.baseURL}/api/tasks`, data, {
+      headers: this.headers,
+    });
+    return response.data;
+  }
+
+  async updateTask(taskId, data) {
+    const response = await axios.patch(
+      `${this.baseURL}/api/tasks/${taskId}`,
+      data,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getTask(taskId) {
+    try {
+      const response = await axios.get(`${this.baseURL}/api/tasks/${taskId}`, {
+        headers: this.headers,
+      });
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async getTasks(conversationId) {
+    try {
+      const response = await axios.get(`${this.baseURL}/api/tasks`, {
+        params: { conversationId },
+        headers: this.headers,
+      });
+      return response.data?.data || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async getTasksReport(filters = {}) {
+    try {
+      const response = await axios.get(`${this.baseURL}/api/tasks/report`, {
+        params: filters,
+        headers: this.headers,
+      });
+      return response.data?.data || [];
+    } catch (error) {
+      return [];
+    }
+  }
 }
 
 export default new ChatwootExtraAPI();

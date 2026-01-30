@@ -636,5 +636,40 @@
     "NO_TOP_REASON": "Нет данных",
     "EMPTY_VALUE": "--",
     "OPERATOR_ID": "Оператор {id}"
+  },
+  "TASKS_REPORT": {
+    "HEADER": "Отчёт по задачам",
+    "LOADING": "Загрузка...",
+    "NO_DATA": "Нет задач по выбранным фильтрам.",
+    "STATUS_COMPLETED": "Выполнено",
+    "STATUS_OPEN": "Открыто",
+    "FILTERS": {
+      "START_DATE": "Дата начала",
+      "END_DATE": "Дата окончания",
+      "OPERATOR": "Оператор",
+      "OPERATORS": "Операторы (необязательно)",
+      "OPERATORS_PLACEHOLDER": "Выберите операторов...",
+      "OPERATOR_ID": "Оператор {id}",
+      "OPERATOR_ALL": "Все",
+      "COMPLETED": "Статус",
+      "COMPLETED_PLACEHOLDER": "Все статусы",
+      "COMPLETED_ALL": "Все",
+      "COMPLETED_YES": "Выполнено",
+      "COMPLETED_NO": "Открыто",
+      "CONVERSATION_ID": "ID диалога",
+      "CONVERSATION_ID_PLACEHOLDER": "ID",
+      "APPLY": "Применить"
+    },
+    "TABLE": {
+      "HEADER": "Записи задач",
+      "ID": "ID",
+      "CONVERSATION": "Диалог",
+      "MESSAGE": "Задача",
+      "CREATED_BY": "Создал",
+      "STATUS": "Статус",
+      "COMPLETED_BY": "Выполнил",
+      "COMPLETED_AT": "Выполнено",
+      "CREATED_AT": "Создано"
+    }
   }
 }

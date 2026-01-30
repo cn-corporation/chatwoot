@@ -33,12 +33,11 @@ export default {
     const handleNoteClick = () => {
       setReplyMode(REPLY_EDITOR_MODES.NOTE);
     };
-    const handleModeToggle = () => {
-      const newMode =
-        props.mode === REPLY_EDITOR_MODES.REPLY
-          ? REPLY_EDITOR_MODES.NOTE
-          : REPLY_EDITOR_MODES.REPLY;
-      setReplyMode(newMode);
+    const handleTaskClick = () => {
+      setReplyMode(REPLY_EDITOR_MODES.TASK);
+    };
+    const handleSelectMode = selectedMode => {
+      setReplyMode(selectedMode);
     };
     const keyboardEvents = {
       'Alt+KeyP': {
@@ -53,9 +52,10 @@ export default {
     useKeyboardEvents(keyboardEvents);
 
     return {
-      handleModeToggle,
+      handleSelectMode,
       handleReplyClick,
       handleNoteClick,
+      handleTaskClick,
       REPLY_EDITOR_MODES,
     };
   },
@@ -68,6 +68,11 @@ export default {
     noteButtonClass() {
       return {
         'is-active': this.mode === REPLY_EDITOR_MODES.NOTE,
+      };
+    },
+    taskButtonClass() {
+      return {
+        'is-active': this.mode === REPLY_EDITOR_MODES.TASK,
       };
     },
     charLengthClass() {
@@ -87,7 +92,7 @@ export default {
     <EditorModeToggle
       :mode="mode"
       class="mt-3"
-      @toggle-mode="handleModeToggle"
+      @select-mode="handleSelectMode"
     />
     <div class="flex items-center mx-4 my-0">
       <div v-if="isMessageLengthReachingThreshold" class="text-xs">

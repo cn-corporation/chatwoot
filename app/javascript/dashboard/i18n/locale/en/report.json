@@ -635,5 +635,40 @@
     "NO_TOP_REASON": "No data",
     "EMPTY_VALUE": "--",
     "OPERATOR_ID": "Operator {id}"
+  },
+  "TASKS_REPORT": {
+    "HEADER": "Tasks report",
+    "LOADING": "Loading...",
+    "NO_DATA": "No tasks found for the selected filters.",
+    "STATUS_COMPLETED": "Completed",
+    "STATUS_OPEN": "Open",
+    "FILTERS": {
+      "START_DATE": "Start date",
+      "END_DATE": "End date",
+      "OPERATOR": "Operator",
+      "OPERATORS": "Operators (optional)",
+      "OPERATORS_PLACEHOLDER": "Select operators...",
+      "OPERATOR_ID": "Operator {id}",
+      "OPERATOR_ALL": "All",
+      "COMPLETED": "Status",
+      "COMPLETED_PLACEHOLDER": "All statuses",
+      "COMPLETED_ALL": "All",
+      "COMPLETED_YES": "Completed",
+      "COMPLETED_NO": "Open",
+      "CONVERSATION_ID": "Conversation ID",
+      "CONVERSATION_ID_PLACEHOLDER": "ID",
+      "APPLY": "Apply"
+    },
+    "TABLE": {
+      "HEADER": "Task records",
+      "ID": "ID",
+      "CONVERSATION": "Conversation",
+      "MESSAGE": "Task",
+      "CREATED_BY": "Created by",
+      "STATUS": "Status",
+      "COMPLETED_BY": "Completed by",
+      "COMPLETED_AT": "Completed at",
+      "CREATED_AT": "Created at"
+    }
   }
 }

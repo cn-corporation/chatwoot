@@ -307,6 +307,12 @@ const menuItems = computed(() => {
       icon: 'i-lucide-clock-alert',
       to: accountScopedRoute('sla_reports'),
     },
+    {
+      name: 'Reports Tasks',
+      label: t('SIDEBAR.REPORTS_TASKS'),
+      icon: 'i-lucide-list-todo',
+      to: accountScopedRoute('tasks_reports'),
+    },
   ];
 
   if (isAdmin.value) {
