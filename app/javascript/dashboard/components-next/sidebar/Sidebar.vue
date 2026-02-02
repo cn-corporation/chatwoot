@@ -88,13 +88,11 @@ onMounted(async () => {
   await Promise.all([
     store.dispatch('labels/get'),
     store.dispatch('inboxes/get'),
-    store.dispatch('notifications/unReadCount'),
     store.dispatch('teams/get'),
     store.dispatch('attributes/get'),
     store.dispatch('customViews/get', 'conversation'),
     store.dispatch('customViews/get', 'contact'),
     store.dispatch('macros/get'),
-    // Load all conversations for sidebar counts
     store.dispatch('fetchAllConversationsForCounts'),
   ]);
   // Refresh counts when conversations are updated

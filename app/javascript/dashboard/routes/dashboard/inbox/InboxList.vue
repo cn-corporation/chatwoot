@@ -104,7 +104,6 @@ const markNotificationAsRead = async notificationItem => {
     });
 
     useAlert(t('INBOX.ALERTS.MARK_AS_READ'));
-    store.dispatch('notifications/unReadCount');
   } catch {
     // error
   }
@@ -119,7 +118,6 @@ const markNotificationAsUnRead = async notificationItem => {
   try {
     await store.dispatch('notifications/unread', { id });
     useAlert(t('INBOX.ALERTS.MARK_AS_UNREAD'));
-    store.dispatch('notifications/unReadCount');
   } catch {
     // error
   }
@@ -187,9 +185,6 @@ const openConversation = async notificationItem => {
       primaryActorType,
       unreadCount: meta.value.unreadCount,
     });
-
-    // to update the unread count in the store realtime
-    store.dispatch('notifications/unReadCount');
 
     router.push({
       name: 'inbox_view_conversation',

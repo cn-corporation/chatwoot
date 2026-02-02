@@ -13,10 +13,6 @@ import { setColorTheme } from './helper/themeHelper';
 import { isOnOnboardingView } from 'v3/helpers/RouteHelper';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useFontSize } from 'dashboard/composables/useFontSize';
-import {
-  registerSubscription,
-  verifyServiceWorkerExistence,
-} from './helper/pushHelper';
 import ReconnectService from 'dashboard/helper/ReconnectService';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 
@@ -114,14 +110,6 @@ export default {
       vueActionCable.init(this.store, pubsubToken);
       this.reconnectService = new ReconnectService(this.store, this.router);
       window.reconnectService = this.reconnectService;
-
-      verifyServiceWorkerExistence(registration =>
-        registration.pushManager.getSubscription().then(subscription => {
-          if (subscription) {
-            registerSubscription();
-          }
-        })
-      );
     },
   },
 };
