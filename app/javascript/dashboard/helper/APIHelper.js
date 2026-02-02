@@ -78,9 +78,13 @@ export default axios => {
     }
   );
 
-  const originalRequest = wootApi.request.bind(wootApi);
-  wootApi.request = config => {
-    const requestKey = getRequestKey(config);
+  const wrapWithDedup = (method, url, dataOrConfig, config) => {
+    const hasData = ['post', 'put', 'patch'].includes(method);
+    const finalConfig = hasData
+      ? { ...(config || {}), method, url, data: dataOrConfig }
+      : { ...(dataOrConfig || {}), method, url };
+
+    const requestKey = getRequestKey(finalConfig);
 
     const pending = pendingRequests.get(requestKey);
     if (pending) {
@@ -92,15 +96,35 @@ export default axios => {
       return Promise.resolve(cached.response);
     }
 
-    config.requestKey = requestKey;
+    finalConfig.requestKey = requestKey;
 
-    const promise = originalRequest(config).finally(() => {
+    const promise = wootApi.request(finalConfig).finally(() => {
       pendingRequests.delete(requestKey);
     });
 
     pendingRequests.set(requestKey, promise);
     return promise;
   };
+
+  const originalGet = wootApi.get.bind(wootApi);
+  const originalPost = wootApi.post.bind(wootApi);
+  const originalPut = wootApi.put.bind(wootApi);
+  const originalPatch = wootApi.patch.bind(wootApi);
+  const originalDelete = wootApi.delete.bind(wootApi);
+
+  wootApi.get = (url, config) => wrapWithDedup('get', url, config);
+  wootApi.delete = (url, config) => wrapWithDedup('delete', url, config);
+  wootApi.post = (url, data, config) =>
+    wrapWithDedup('post', url, data, config);
+  wootApi.put = (url, data, config) => wrapWithDedup('put', url, data, config);
+  wootApi.patch = (url, data, config) =>
+    wrapWithDedup('patch', url, data, config);
+
+  wootApi.originalGet = originalGet;
+  wootApi.originalPost = originalPost;
+  wootApi.originalPut = originalPut;
+  wootApi.originalPatch = originalPatch;
+  wootApi.originalDelete = originalDelete;
 
   return wootApi;
 };
