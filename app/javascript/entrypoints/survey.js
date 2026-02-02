@@ -11,7 +11,7 @@ Sentry.init({
   app,
   dsn: 'https://db65c8821fe1ce0f7315a1d36895cc5d@o4509088540262400.ingest.de.sentry.io/4510198682615888',
   sendDefaultPii: true,
-  tracesSampleRate: 0.2,
+  tracesSampleRate: 0.05,
   ignoreErrors: [
     'ResizeObserver loop completed with undelivered notifications',
   ],

@@ -1,11 +1,22 @@
 import Auth from '../api/auth';
 
+const REQUEST_TIMEOUT_MS = 20000;
+const CACHE_DURATION_MS = 3000;
+
+const pendingRequests = new Map();
+const responseCache = new Map();
+
+const getRequestKey = config => {
+  const { method = 'get', url = '', params, data } = config;
+  return JSON.stringify({ method: method.toLowerCase(), url, params, data });
+};
+
 const parseErrorCode = error => Promise.reject(error);
 
 export default axios => {
   const { apiHost = '' } = window.chatwootConfig || {};
   const wootApi = axios.create({ baseURL: `${apiHost}/` });
-  // Add Auth Headers to requests if logged in
+
   if (Auth.hasAuthCookie()) {
     const {
       'access-token': accessToken,
@@ -22,10 +33,74 @@ export default axios => {
       uid,
     });
   }
-  // Response parsing interceptor
+
+  wootApi.interceptors.request.use(config => {
+    if (!config.signal) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        REQUEST_TIMEOUT_MS
+      );
+      config.signal = controller.signal;
+      config.timeoutId = timeoutId;
+    }
+    return config;
+  });
+
   wootApi.interceptors.response.use(
-    response => response,
-    error => parseErrorCode(error)
+    response => {
+      if (response.config.timeoutId) {
+        clearTimeout(response.config.timeoutId);
+      }
+
+      const { requestKey } = response.config;
+      if (requestKey) {
+        responseCache.set(requestKey, {
+          response,
+          timestamp: Date.now(),
+        });
+        pendingRequests.delete(requestKey);
+      }
+
+      return response;
+    },
+    error => {
+      if (error.config?.timeoutId) {
+        clearTimeout(error.config.timeoutId);
+      }
+
+      const { requestKey } = error.config || {};
+      if (requestKey) {
+        pendingRequests.delete(requestKey);
+      }
+
+      return parseErrorCode(error);
+    }
   );
+
+  const originalRequest = wootApi.request.bind(wootApi);
+  wootApi.request = config => {
+    const requestKey = getRequestKey(config);
+
+    const pending = pendingRequests.get(requestKey);
+    if (pending) {
+      return pending;
+    }
+
+    const cached = responseCache.get(requestKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION_MS) {
+      return Promise.resolve(cached.response);
+    }
+
+    config.requestKey = requestKey;
+
+    const promise = originalRequest(config).finally(() => {
+      pendingRequests.delete(requestKey);
+    });
+
+    pendingRequests.set(requestKey, promise);
+    return promise;
+  };
+
   return wootApi;
 };
