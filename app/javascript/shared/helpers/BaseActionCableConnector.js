@@ -1,6 +1,6 @@
 import { createConsumer } from '@rails/actioncable';
 
-const PRESENCE_INTERVAL = 20000;
+const PRESENCE_INTERVAL = 120000;
 const RECONNECT_INTERVAL = 1000;
 
 class BaseActionCableConnector {
