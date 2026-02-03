@@ -51,6 +51,7 @@ import {
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { LocalStorage } from 'shared/helpers/localStorage';
 import { emitter } from 'shared/helpers/mitt';
+import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 const EmojiInput = defineAsyncComponent(
   () => import('shared/components/emoji/EmojiInput.vue')
 );
@@ -207,7 +208,7 @@ export default {
     },
     isPrivate() {
       if (this.currentChat.can_reply || this.isAWhatsAppChannel) {
-        return this.isOnPrivateNote;
+        return this.isOnPrivateNote || this.isOnTask;
       }
       return true;
     },
@@ -294,7 +295,9 @@ export default {
     },
     replyButtonLabel() {
       let sendMessageText = this.$t('CONVERSATION.REPLYBOX.SEND');
-      if (this.isPrivate) {
+      if (this.isOnTask) {
+        sendMessageText = this.$t('CONVERSATION.REPLYBOX.ADD_TASK');
+      } else if (this.isPrivate) {
         sendMessageText = this.$t('CONVERSATION.REPLYBOX.CREATE');
       }
       // Always show Enter as the send key for poker operator UI
@@ -321,6 +324,9 @@ export default {
     },
     isOnPrivateNote() {
       return this.replyType === REPLY_EDITOR_MODES.NOTE;
+    },
+    isOnTask() {
+      return this.replyType === REPLY_EDITOR_MODES.TASK;
     },
     isOnExpandedLayout() {
       const {
@@ -792,28 +798,33 @@ export default {
       };
       this.assignedAgent = selfAssign;
     },
-    confirmOnSendReply() {
+    async confirmOnSendReply() {
       if (this.isReplyButtonDisabled) {
         return;
       }
       if (!this.showMentions) {
-        const isOnWhatsApp =
-          this.isATwilioWhatsAppChannel ||
-          this.isAWhatsAppCloudChannel ||
-          this.is360DialogWhatsAppChannel;
-        const isOnTelegram = this.isATelegramChannel;
-        // When users send messages containing both text and attachments on Instagram, Instagram treats them as separate messages.
-        // Although Chatwoot combines these into a single message, Instagram sends separate echo events for each component.
-        // This can create duplicate messages in Chatwoot. To prevent this issue, we'll handle text and attachments as separate messages.
-        const isOnInstagram = this.isAnInstagramChannel;
-        if (
-          (isOnWhatsApp || isOnInstagram || isOnTelegram) &&
-          !this.isPrivate
-        ) {
-          this.sendMessageAsMultipleMessages(this.message);
+        // If it's a task, create the task first
+        if (this.isOnTask) {
+          await this.createTaskAndSendMessage();
         } else {
-          const messagePayload = this.getMessagePayload(this.message);
-          this.sendMessage(messagePayload);
+          const isOnWhatsApp =
+            this.isATwilioWhatsAppChannel ||
+            this.isAWhatsAppCloudChannel ||
+            this.is360DialogWhatsAppChannel;
+          const isOnTelegram = this.isATelegramChannel;
+          // When users send messages containing both text and attachments on Instagram, Instagram treats them as separate messages.
+          // Although Chatwoot combines these into a single message, Instagram sends separate echo events for each component.
+          // This can create duplicate messages in Chatwoot. To prevent this issue, we'll handle text and attachments as separate messages.
+          const isOnInstagram = this.isAnInstagramChannel;
+          if (
+            (isOnWhatsApp || isOnInstagram || isOnTelegram) &&
+            !this.isPrivate
+          ) {
+            this.sendMessageAsMultipleMessages(this.message);
+          } else {
+            const messagePayload = this.getMessagePayload(this.message);
+            this.sendMessage(messagePayload);
+          }
         }
 
         if (!this.isPrivate) {
@@ -1116,7 +1127,37 @@ export default {
 
       return multipleMessagePayload;
     },
-    getMessagePayload(message) {
+    async createTaskAndSendMessage() {
+      try {
+        const taskData = {
+          conversationId: this.currentChat.id,
+          message: this.message,
+          operatorId: this.currentUser.id,
+          operatorName:
+            this.currentUser.name || this.currentUser.available_name,
+        };
+
+        const taskResponse = await ChatwootExtraAPI.createTask(taskData);
+
+        if (taskResponse?.success && taskResponse?.data) {
+          const taskId = taskResponse.data.id;
+          const messagePayload = this.getMessagePayload(this.message, taskId);
+          await this.sendMessage(messagePayload);
+        } else {
+          useAlert(
+            this.$t('CONVERSATION.REPLYBOX.TASK_CREATE_ERROR') ||
+              'Ошибка создания задачи'
+          );
+        }
+      } catch (error) {
+        const errorMessage =
+          error?.response?.data?.error ||
+          this.$t('CONVERSATION.REPLYBOX.TASK_CREATE_ERROR') ||
+          'Ошибка создания задачи';
+        useAlert(errorMessage);
+      }
+    },
+    getMessagePayload(message, taskId = null) {
       const messageWithQuote = this.getMessageWithQuotedEmailText(message);
 
       let messagePayload = {
@@ -1125,6 +1166,14 @@ export default {
         private: this.isPrivate,
         sender: this.sender,
       };
+
+      // Add task ID to content_attributes if it's a task
+      if (taskId) {
+        messagePayload.content_attributes = {
+          task_id: taskId,
+        };
+      }
+
       messagePayload = this.setReplyToInPayload(messagePayload);
 
       if (this.attachedFiles && this.attachedFiles.length) {

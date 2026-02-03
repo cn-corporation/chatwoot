@@ -132,7 +132,7 @@ class Messages::MessageBuilder
   end
 
   def message_params
-    {
+    base_params = {
       account_id: @conversation.account_id,
       inbox_id: @conversation.inbox_id,
       message_type: message_type,
@@ -145,6 +145,9 @@ class Messages::MessageBuilder
       echo_id: @params[:echo_id],
       source_id: @params[:source_id]
     }.merge(external_created_at).merge(automation_rule_id).merge(additional_attributes)
+
+    base_params[:content_attributes] = content_attributes if content_attributes.present?
+    base_params
   end
 
   def should_split_telegram_media_group?
