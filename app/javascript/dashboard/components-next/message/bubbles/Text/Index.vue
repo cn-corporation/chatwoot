@@ -13,7 +13,7 @@ import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 import { useAlert } from 'dashboard/composables';
 import { useStore } from 'vuex';
 
-const { content, attachments, contentAttributes, messageType } =
+const { content, attachments, contentAttributes, messageType, conversationId } =
   useMessageContext();
 
 const { hasTranslations, translationContent } =
@@ -101,6 +101,10 @@ const handleTaskComplete = async checked => {
 
     if (response?.success && response?.data) {
       taskData.value = response.data;
+      store.dispatch('assignTeam', {
+        conversationId: conversationId.value,
+        teamId: 0,
+      });
       useAlert(t('CONVERSATION.REPLYBOX.TASK_COMPLETED'));
     } else {
       useAlert(t('CONVERSATION.REPLYBOX.TASK_COMPLETE_ERROR'));
