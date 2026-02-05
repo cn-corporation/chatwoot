@@ -503,6 +503,27 @@ class ChatwootExtraAPI {
       return [];
     }
   }
+
+  async searchMessages({
+    query,
+    userId,
+    dateFrom,
+    dateTo,
+    accountId,
+    limit = 20,
+    offset = 0,
+  }) {
+    const params = { query, accountId, limit, offset };
+    if (userId) params.userId = userId;
+    if (dateFrom) params.dateFrom = dateFrom;
+    if (dateTo) params.dateTo = dateTo;
+
+    const response = await axios.get(`${this.baseURL}/api/message-search`, {
+      params,
+      headers: this.headers,
+    });
+    return response.data;
+  }
 }
 
 export default new ChatwootExtraAPI();

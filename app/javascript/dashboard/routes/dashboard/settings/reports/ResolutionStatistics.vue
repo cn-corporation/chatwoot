@@ -142,9 +142,10 @@ const overviewMetrics = computed(() => {
     totalResolutions: overview.totalResolutions,
     uniqueConversations: overview.uniqueConversations,
     uniqueOperators: overview.uniqueOperators,
-    topReason: overview.topReasonCount > 0
-      ? `${topReasonLabel} (${overview.topReasonCount})`
-      : t('RESOLUTION_STATISTICS.NO_TOP_REASON'),
+    topReason:
+      overview.topReasonCount > 0
+        ? `${topReasonLabel} (${overview.topReasonCount})`
+        : t('RESOLUTION_STATISTICS.NO_TOP_REASON'),
   };
 });
 
@@ -152,7 +153,9 @@ const reasonChartData = computed(() => {
   if (!aggregatedData.value?.reasonChart?.length) return null;
 
   return {
-    labels: aggregatedData.value.reasonChart.map(r => getResolutionReasonLabel(r.reason)),
+    labels: aggregatedData.value.reasonChart.map(r =>
+      getResolutionReasonLabel(r.reason)
+    ),
     datasets: [
       {
         label: t('RESOLUTION_STATISTICS.CHARTS.REASONS_LABEL'),
@@ -169,7 +172,9 @@ const trendChartData = computed(() => {
   if (!aggregatedData.value?.trendChart?.length) return null;
 
   return {
-    labels: aggregatedData.value.trendChart.map(d => format(new Date(d.date), 'MMM dd')),
+    labels: aggregatedData.value.trendChart.map(d =>
+      format(new Date(d.date), 'MMM dd')
+    ),
     datasets: [
       {
         label: t('RESOLUTION_STATISTICS.CHARTS.TREND_LABEL'),
@@ -187,7 +192,9 @@ const operatorChartData = computed(() => {
   if (!aggregatedData.value?.operatorChart?.length) return null;
 
   return {
-    labels: aggregatedData.value.operatorChart.map(o => getAgentName(o.operatorId)),
+    labels: aggregatedData.value.operatorChart.map(o =>
+      getAgentName(o.operatorId)
+    ),
     datasets: [
       {
         label: t('RESOLUTION_STATISTICS.CHARTS.OPERATORS_LABEL'),
@@ -284,7 +291,8 @@ const fetchData = async () => {
       params.conversationId = normalizedConversationId;
     }
 
-    const statsRes = await resolutionStatisticsAPI.getAggregatedStatistics(params);
+    const statsRes =
+      await resolutionStatisticsAPI.getAggregatedStatistics(params);
     aggregatedData.value = statsRes?.data || null;
   } catch (error) {
     aggregatedData.value = null;

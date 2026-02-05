@@ -18,6 +18,7 @@ import Policy from 'dashboard/components/policy.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import SearchHeader from './SearchHeader.vue';
 import SearchTabs from './SearchTabs.vue';
+import SearchFilters from './SearchFilters.vue';
 import SearchResultConversationsList from './SearchResultConversationsList.vue';
 import SearchResultMessagesList from './SearchResultMessagesList.vue';
 import SearchResultContactsList from './SearchResultContactsList.vue';
@@ -45,6 +46,7 @@ const conversationRecords = useMapGetter(
 const messageRecords = useMapGetter('conversationSearch/getMessageRecords');
 const articleRecords = useMapGetter('conversationSearch/getArticleRecords');
 const uiFlags = useMapGetter('conversationSearch/getUIFlags');
+const hasMoreMessages = useMapGetter('conversationSearch/getHasMoreMessages');
 
 const addTypeToRecords = (records, type) =>
   records.value.map(item => ({ ...item, type }));
@@ -79,6 +81,17 @@ const filterContacts = filterByTab('contacts');
 const filterConversations = filterByTab('conversations');
 const filterMessages = filterByTab('messages');
 const filterArticles = filterByTab('articles');
+
+const showMessageFilters = true;
+
+const showLoadMoreMessages = computed(
+  () =>
+    query.value &&
+    !uiFlags.value.message.isFetching &&
+    mappedMessages.value.length > 0 &&
+    hasMoreMessages.value &&
+    !showViewMore.value.messages
+);
 
 const { shouldShow, isFeatureFlagEnabled } = usePolicy();
 
@@ -202,13 +215,17 @@ const showResultsSection = computed(
 );
 
 const showLoadMore = computed(() => {
-  if (!query.value || isFetchingAny.value || selectedTab.value === 'all')
+  if (
+    !query.value ||
+    isFetchingAny.value ||
+    selectedTab.value === 'all' ||
+    selectedTab.value === 'messages'
+  )
     return false;
 
   const records = {
     contacts: mappedContacts.value,
     conversations: mappedConversations.value,
-    messages: mappedMessages.value,
     articles: mappedArticles.value,
   }[selectedTab.value];
 
@@ -293,6 +310,25 @@ const onTabChange = tab => {
   updateURL();
 };
 
+const onFiltersChanged = () => {
+  if (!query.value) return;
+  store.dispatch('conversationSearch/clearMessageResults');
+  pages.value.messages = 1;
+  store.dispatch('conversationSearch/messageSearch', {
+    q: query.value,
+    page: 1,
+  });
+};
+
+const loadMoreMessages = () => {
+  if (uiFlags.value.message.isFetching) return;
+  pages.value.messages += 1;
+  store.dispatch('conversationSearch/messageSearch', {
+    q: query.value,
+    page: pages.value.messages,
+  });
+};
+
 onMounted(() => {
   store.dispatch('conversationSearch/clearSearchResults');
 
@@ -324,6 +360,10 @@ onUnmounted(() => {
       <div class="w-full max-w-4xl mx-auto">
         <div class="flex flex-col w-full px-4">
           <SearchHeader :initial-query="query" @search="onSearch" />
+          <SearchFilters
+            :visible="showMessageFilters"
+            @filters-changed="onFiltersChanged"
+          />
           <SearchTabs
             v-if="query"
             :tabs="tabs"
@@ -376,6 +416,15 @@ onUnmounted(() => {
                 sm
                 outline
                 @click="selectedTab = 'messages'"
+              />
+              <NextButton
+                v-if="showLoadMoreMessages"
+                :label="t(`SEARCH.LOAD_MORE`)"
+                icon="i-lucide-cloud-download"
+                slate
+                sm
+                faded
+                @click="loadMoreMessages"
               />
             </Policy>
 

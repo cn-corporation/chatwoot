@@ -13,6 +13,14 @@
       "MESSAGES": "Сообщения",
       "ARTICLES": "Статьи"
     },
+    "FILTERS": {
+      "AGENT_LABEL": "Оператор",
+      "AGENT_PLACEHOLDER": "Все",
+      "DATE_FROM_LABEL": "От",
+      "DATE_FROM_PLACEHOLDER": "Начало",
+      "DATE_TO_LABEL": "До",
+      "DATE_TO_PLACEHOLDER": "Конец"
+    },
     "VIEW_MORE": "Посмотреть больше",
     "LOAD_MORE": "Загрузить ещё",
     "SEARCHING_DATA": "Идёт поиск",
