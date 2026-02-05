@@ -1,20 +1,46 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BaseBubble from 'next/message/bubbles/Base.vue';
 import FormattedContent from './FormattedContent.vue';
 import AttachmentChips from 'next/message/chips/AttachmentChips.vue';
 import TranslationToggle from 'dashboard/components-next/message/TranslationToggle.vue';
+import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import { MESSAGE_TYPES } from '../../constants';
 import { useMessageContext } from '../../provider.js';
 import { useTranslations } from 'dashboard/composables/useTranslations';
+import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
+import { useAlert } from 'dashboard/composables';
+import { useStore } from 'vuex';
 
-const { content, attachments, contentAttributes, messageType } =
+const { content, attachments, contentAttributes, messageType, conversationId } =
   useMessageContext();
 
 const { hasTranslations, translationContent } =
   useTranslations(contentAttributes);
 
+const store = useStore();
+const { t } = useI18n();
 const renderOriginal = ref(false);
+const taskData = ref(null);
+const isLoadingTask = ref(false);
+const isCompletingTask = ref(false);
+
+const taskId = computed(() => {
+  return contentAttributes.value?.task_id || contentAttributes.value?.taskId;
+});
+
+const hasTask = computed(() => {
+  return !!taskId.value;
+});
+
+const isTaskCompleted = computed(() => {
+  return taskData.value?.completed || false;
+});
+
+const completedByName = computed(() => {
+  return taskData.value?.completedByName || null;
+});
 
 const renderContent = computed(() => {
   if (renderOriginal.value) {
@@ -39,6 +65,71 @@ const isEmpty = computed(() => {
 const handleSeeOriginal = () => {
   renderOriginal.value = !renderOriginal.value;
 };
+
+const loadTask = async () => {
+  if (!taskId.value || isLoadingTask.value) return;
+
+  isLoadingTask.value = true;
+  try {
+    const response = await ChatwootExtraAPI.getTask(taskId.value);
+    if (response?.success && response?.data) {
+      taskData.value = response.data;
+    }
+  } catch (error) {
+    // Silently fail if task not found
+  } finally {
+    isLoadingTask.value = false;
+  }
+};
+
+const handleTaskComplete = async checked => {
+  if (!checked || isTaskCompleted.value || isCompletingTask.value) return;
+
+  isCompletingTask.value = true;
+  try {
+    const currentUser = store.getters.getCurrentUser;
+    const updateData = {
+      completed: true,
+      completedBy: currentUser.id,
+      completedByName: currentUser.name || currentUser.available_name,
+    };
+
+    const response = await ChatwootExtraAPI.updateTask(
+      taskId.value,
+      updateData
+    );
+
+    if (response?.success && response?.data) {
+      taskData.value = response.data;
+      store.dispatch('assignTeam', {
+        conversationId: conversationId.value,
+        teamId: 0,
+      });
+      useAlert(t('CONVERSATION.REPLYBOX.TASK_COMPLETED'));
+    } else {
+      useAlert(t('CONVERSATION.REPLYBOX.TASK_COMPLETE_ERROR'));
+    }
+  } catch (error) {
+    const errorMessage =
+      error?.response?.data?.error ||
+      t('CONVERSATION.REPLYBOX.TASK_COMPLETE_ERROR');
+    useAlert(errorMessage);
+  } finally {
+    isCompletingTask.value = false;
+  }
+};
+
+onMounted(() => {
+  if (hasTask.value) {
+    loadTask();
+  }
+});
+
+watch(taskId, () => {
+  if (hasTask.value) {
+    loadTask();
+  }
+});
 </script>
 
 <template>
@@ -48,7 +139,30 @@ const handleSeeOriginal = () => {
         {{ $t('CONVERSATION.NO_CONTENT') }}
       </span>
       <AttachmentChips :attachments="attachments" class="gap-2" />
-      <FormattedContent v-if="renderContent" :content="renderContent" />
+      <div v-if="hasTask && renderContent" class="flex items-start gap-2">
+        <div class="flex-1">
+          <FormattedContent :content="renderContent" />
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0 pt-1">
+          <Checkbox
+            :model-value="isTaskCompleted"
+            :disabled="isTaskCompleted || isCompletingTask"
+            @change="e => handleTaskComplete(e.target.checked)"
+          />
+          <span
+            v-if="isTaskCompleted && completedByName"
+            class="text-xs text-n-slate-11"
+            :title="
+              $t('CONVERSATION.REPLYBOX.TASK_COMPLETED_BY', {
+                name: completedByName,
+              })
+            "
+          >
+            {{ completedByName }}
+          </span>
+        </div>
+      </div>
+      <FormattedContent v-else-if="renderContent" :content="renderContent" />
       <TranslationToggle
         v-if="hasTranslations"
         class="-mt-3"

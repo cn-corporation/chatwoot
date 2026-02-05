@@ -25,6 +25,7 @@ import LiveReports from './LiveReports.vue';
 import SLAReports from './SLAReports.vue';
 import ResponseStatistics from './ResponseStatistics.vue';
 import ResolutionStatistics from './ResolutionStatistics.vue';
+import TasksReports from './TasksReports.vue';
 
 const meta = {
   featureFlag: FEATURE_FLAGS.REPORTS,
@@ -181,6 +182,12 @@ export default {
           name: 'resolution_statistics',
           meta,
           component: ResolutionStatistics,
+        },
+        {
+          path: 'tasks',
+          name: 'tasks_reports',
+          meta,
+          component: TasksReports,
         },
       ],
     },

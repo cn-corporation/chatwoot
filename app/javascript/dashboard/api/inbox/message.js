@@ -53,18 +53,19 @@ class MessageApi extends ApiClient {
     super('conversations', { accountScoped: true });
   }
 
-  create({
-    conversationId,
-    message,
-    private: isPrivate,
-    contentAttributes,
-    echo_id: echoId,
-    files,
-    ccEmails = '',
-    bccEmails = '',
-    toEmails = '',
-    templateParams,
-  }) {
+  create(payload) {
+    const conversationId = payload.conversationId ?? payload.conversation_id;
+    const message = payload.message ?? payload.content;
+    const isPrivate = payload.private;
+    const contentAttributes =
+      payload.contentAttributes ?? payload.content_attributes;
+    const echoId = payload.echo_id;
+    const files = payload.files;
+    const ccEmails = payload.ccEmails ?? payload.cc_emails ?? '';
+    const bccEmails = payload.bccEmails ?? payload.bcc_emails ?? '';
+    const toEmails = payload.toEmails ?? payload.to_emails ?? '';
+    const templateParams = payload.templateParams ?? payload.template_params;
+
     return axios({
       method: 'post',
       url: `${this.url}/${conversationId}/messages`,

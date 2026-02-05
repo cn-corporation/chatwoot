@@ -112,7 +112,7 @@ export default {
   },
   data() {
     return {
-      isLoadingPrevious: true,
+      isLoadingPrevious: false,
       heightBeforeLoad: null,
       conversationPanel: null,
       hasUserScrolled: false,
@@ -229,9 +229,13 @@ export default {
       );
     },
     shouldShowSpinner() {
+      const dataFetchedUndefined =
+        this.currentChat && this.currentChat.dataFetched === undefined;
+      const hasMessagesAndAllLoaded =
+        (this.getMessages?.length ?? 0) > 0 && this.listLoadingStatus;
+      const secondCondition = !this.listLoadingStatus && this.isLoadingPrevious;
       return (
-        (this.currentChat && this.currentChat.dataFetched === undefined) ||
-        (!this.listLoadingStatus && this.isLoadingPrevious)
+        (dataFetchedUndefined && !hasMessagesAndAllLoaded) || secondCondition
       );
     },
     // Check there is a instagram inbox exists with the same instagram_id

@@ -352,6 +352,7 @@
     "ONGOING": "Повторяющиеся",
     "ONE_OFF": "Единоразовые",
     "REPORTS_SLA": "SLA",
+    "REPORTS_TASKS": "Задачи",
     "REPORTS_BOT": "Бот",
     "REPORTS_AGENT": "Операторы",
     "REPORTS_LABEL": "Категории",
