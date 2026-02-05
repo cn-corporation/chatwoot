@@ -13,6 +13,14 @@
       "MESSAGES": "Messages",
       "ARTICLES": "Articles"
     },
+    "FILTERS": {
+      "AGENT_LABEL": "Agent",
+      "AGENT_PLACEHOLDER": "All agents",
+      "DATE_FROM_LABEL": "From",
+      "DATE_FROM_PLACEHOLDER": "Start",
+      "DATE_TO_LABEL": "To",
+      "DATE_TO_PLACEHOLDER": "End"
+    },
     "VIEW_MORE": "View more",
     "LOAD_MORE": "Load more",
     "SEARCHING_DATA": "Searching",
