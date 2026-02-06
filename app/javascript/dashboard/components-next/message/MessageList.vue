@@ -28,6 +28,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  uncompletedTaskMessageIds: {
+    type: Set,
+    default: () => new Set(),
+  },
+  pendingTaskMessages: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['retry']);
@@ -50,18 +58,38 @@ const allMessages = computed(() => {
     }
   });
 
-  if (notesByOriginalId.size === 0) return otherMessages;
+  let ordered;
+  if (notesByOriginalId.size === 0) {
+    ordered = otherMessages;
+  } else {
+    ordered = [];
+    otherMessages.forEach(message => {
+      const relatedNotes = notesByOriginalId.get(message.id);
+      if (relatedNotes) {
+        ordered.push(...relatedNotes);
+      }
+      ordered.push(message);
+    });
+  }
 
-  const result = [];
-  otherMessages.forEach(message => {
-    const relatedNotes = notesByOriginalId.get(message.id);
-    if (relatedNotes) {
-      result.push(...relatedNotes);
+  const regularMessages = [];
+  const uncompletedTasks = [];
+
+  ordered.forEach(message => {
+    const taskId =
+      message.contentAttributes?.taskId || message.contentAttributes?.task_id;
+    if (taskId && props.uncompletedTaskMessageIds.has(message.id)) {
+      uncompletedTasks.push(message);
+    } else {
+      regularMessages.push(message);
     }
-    result.push(message);
   });
 
-  return result;
+  const camelCasedPending = useCamelCase(props.pendingTaskMessages, {
+    deep: true,
+  });
+
+  return [...regularMessages, ...uncompletedTasks, ...camelCasedPending];
 });
 
 const currentChat = useMapGetter('getSelectedChat');

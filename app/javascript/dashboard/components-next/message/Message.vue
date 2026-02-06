@@ -153,6 +153,12 @@ const route = useRoute();
  * @type {import('vue').ComputedRef<'user'|'agent'|'activity'|'private'|'bot'|'template'>}
  */
 const variant = computed(() => {
+  if (
+    props.private &&
+    (props.contentAttributes?.task_id || props.contentAttributes?.taskId)
+  ) {
+    return MESSAGE_VARIANTS.TASK;
+  }
   if (props.private) return MESSAGE_VARIANTS.PRIVATE;
 
   if (props.isEmailInbox) {

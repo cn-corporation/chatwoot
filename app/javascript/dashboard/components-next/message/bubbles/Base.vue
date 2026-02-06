@@ -30,6 +30,8 @@ const varaintBaseMap = {
   [MESSAGE_VARIANTS.EMAIL]: 'w-full',
   [MESSAGE_VARIANTS.UNSUPPORTED]:
     'bg-n-solid-amber/70 border border-dashed border-n-amber-12 text-n-amber-12',
+  [MESSAGE_VARIANTS.TASK]:
+    'bg-n-teal-3 text-n-teal-12 [&_.prosemirror-mention-node]:font-semibold',
 };
 
 const orientationMap = {
@@ -119,7 +121,9 @@ const replyToPreview = computed(() => {
         variant === MESSAGE_VARIANTS.EMAIL ? 'px-3 pb-3' : '',
         variant === MESSAGE_VARIANTS.PRIVATE
           ? 'text-n-amber-12/50'
-          : 'text-n-slate-11',
+          : variant === MESSAGE_VARIANTS.TASK
+            ? 'text-n-teal-12/50'
+            : 'text-n-slate-11',
       ]"
       class="mt-2"
     />

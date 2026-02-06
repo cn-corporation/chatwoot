@@ -12,9 +12,17 @@ import { useTranslations } from 'dashboard/composables/useTranslations';
 import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 import { useAlert } from 'dashboard/composables';
 import { useStore } from 'vuex';
+import { emitter } from 'shared/helpers/mitt';
+import { BUS_EVENTS } from 'shared/constants/busEvents';
 
-const { content, attachments, contentAttributes, messageType, conversationId } =
-  useMessageContext();
+const {
+  id,
+  content,
+  attachments,
+  contentAttributes,
+  messageType,
+  conversationId,
+} = useMessageContext();
 
 const { hasTranslations, translationContent } =
   useTranslations(contentAttributes);
@@ -74,6 +82,11 @@ const loadTask = async () => {
     const response = await ChatwootExtraAPI.getTask(taskId.value);
     if (response?.success && response?.data) {
       taskData.value = response.data;
+      emitter.emit(BUS_EVENTS.TASK_STATUS_LOADED, {
+        taskId: taskId.value,
+        messageId: id.value,
+        completed: response.data.completed ?? false,
+      });
     }
   } catch (error) {
     // Silently fail if task not found
@@ -104,6 +117,10 @@ const handleTaskComplete = async checked => {
       store.dispatch('assignTeam', {
         conversationId: conversationId.value,
         teamId: 0,
+      });
+      emitter.emit(BUS_EVENTS.TASK_COMPLETED, {
+        taskId: taskId.value,
+        messageId: id.value,
       });
       useAlert(t('CONVERSATION.REPLYBOX.TASK_COMPLETED'));
     } else {
