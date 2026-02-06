@@ -588,7 +588,12 @@
     "TREND_CHART": "Тренд времени ответа",
     "OPERATOR_CHART": "Производительность операторов (Топ 10)",
     "DISTRIBUTION_CHART": "Распределение времени ответа",
-    "DAILY_TABLE": "Ежедневная статистика"
+    "FIRST_RESPONSE_DISTRIBUTION_CHART": "Распределение времени первого ответа",
+    "DAILY_TABLE": "Ежедневная статистика",
+    "CUSTOM_BUCKETS": "Временные диапазоны (минуты)",
+    "CUSTOM_BUCKETS_PLACEHOLDER": "напр. 2, 5, 15, 30, 60",
+    "ADD_RANGE": "Добавить",
+    "REMOVE_RANGE": "Удалить"
   },
   "RESOLUTION_STATISTICS": {
     "HEADER": "Статистика решений",

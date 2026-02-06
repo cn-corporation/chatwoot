@@ -588,7 +588,12 @@
     "TREND_CHART": "Response Time Trend",
     "OPERATOR_CHART": "Operator Performance (Top 10)",
     "DISTRIBUTION_CHART": "Response Time Distribution",
-    "DAILY_TABLE": "Daily Statistics"
+    "FIRST_RESPONSE_DISTRIBUTION_CHART": "First Response Time Distribution",
+    "DAILY_TABLE": "Daily Statistics",
+    "CUSTOM_BUCKETS": "Time Ranges (minutes)",
+    "CUSTOM_BUCKETS_PLACEHOLDER": "e.g. 2, 5, 15, 30, 60",
+    "ADD_RANGE": "Add",
+    "REMOVE_RANGE": "Remove"
   },
   "RESOLUTION_STATISTICS": {
     "HEADER": "Resolution Statistics",

@@ -37,9 +37,9 @@ ChartJS.register(
 const { t } = useI18n();
 const store = useStore();
 
-// State
 const isLoading = ref(false);
 const distributionData = ref([]);
+const firstResponseDistributionData = ref([]);
 const operatorStats = ref([]);
 const dateRangeStats = ref([]);
 const selectedOperators = ref([]);
@@ -48,10 +48,11 @@ const dateRange = ref({
   end: format(new Date(), 'yyyy-MM-dd'),
 });
 
-// Get agents from store
+const customBucketsInput = ref('');
+const customBuckets = ref([2, 5, 15, 30, 60]);
+
 const agents = useMapGetter('agents/getAgents');
 
-// Create a map of agent ID to agent info for quick lookup
 const agentsMap = computed(() => {
   const map = new Map();
   agents.value.forEach(agent => {
@@ -60,9 +61,7 @@ const agentsMap = computed(() => {
   return map;
 });
 
-// Helper function to get agent name by ID
 const getAgentName = operatorId => {
-  // Convert to string for map lookup
   const agent = agentsMap.value.get(String(operatorId));
   if (agent) {
     return agent.name || agent.email || `Agent ${operatorId}`;
@@ -70,7 +69,6 @@ const getAgentName = operatorId => {
   return `Operator ${operatorId}`;
 };
 
-// Computed operator options for multiselect
 const operatorOptions = computed(() => {
   return agents.value.map(agent => ({
     value: agent.id,
@@ -78,7 +76,10 @@ const operatorOptions = computed(() => {
   }));
 });
 
-// Computed
+const bucketsAsMs = computed(() => {
+  return customBuckets.value.map(m => m * 60000).sort((a, b) => a - b);
+});
+
 const overviewMetrics = computed(() => {
   if (operatorStats.value.length === 0) return null;
 
@@ -166,6 +167,23 @@ const distributionChartData = computed(() => {
   };
 });
 
+const firstResponseDistributionChartData = computed(() => {
+  if (firstResponseDistributionData.value.length === 0) return null;
+
+  return {
+    labels: firstResponseDistributionData.value.map(b => b.label),
+    datasets: [
+      {
+        label: 'Number of First Responses',
+        data: firstResponseDistributionData.value.map(b => b.count),
+        backgroundColor: 'rgba(245, 158, 11, 0.6)',
+        borderColor: 'rgba(245, 158, 11, 1)',
+        borderWidth: 1,
+      },
+    ],
+  };
+});
+
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
@@ -186,7 +204,6 @@ const chartOptions = {
   },
 };
 
-// Methods
 const formatTime = ms => {
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
@@ -201,6 +218,27 @@ const formatTime = ms => {
   return `${seconds}s`;
 };
 
+const addBucketValue = () => {
+  const raw = customBucketsInput.value.trim();
+  if (!raw) return;
+
+  const values = raw
+    .split(/[,\s]+/)
+    .map(v => parseFloat(v.trim()))
+    .filter(v => !isNaN(v) && v > 0);
+
+  if (values.length === 0) return;
+
+  const existing = new Set(customBuckets.value);
+  values.forEach(v => existing.add(v));
+  customBuckets.value = [...existing].sort((a, b) => a - b);
+  customBucketsInput.value = '';
+};
+
+const removeBucket = index => {
+  customBuckets.value.splice(index, 1);
+};
+
 const fetchData = async () => {
   isLoading.value = true;
   try {
@@ -209,27 +247,33 @@ const fetchData = async () => {
       endDate: dateRange.value.end,
     };
 
-    // Add operatorIds array if operators are selected
     if (selectedOperators.value.length > 0) {
-      // Extract the value property from each selected option object
       params.operatorIds = selectedOperators.value.map(option =>
         String(option.value || option)
       );
     }
 
-    const [distributionRes, operatorRes, dateRangeRes] = await Promise.all([
-      responseStatisticsAPI.getDistribution(params),
-      responseStatisticsAPI.getOperatorStatistics(params),
-      responseStatisticsAPI.getDateRangeStatistics(params),
-    ]);
+    const distributionParams = {
+      ...params,
+      buckets: bucketsAsMs.value.map(String),
+    };
+
+    const [distributionRes, firstResponseRes, operatorRes, dateRangeRes] =
+      await Promise.all([
+        responseStatisticsAPI.getDistribution(distributionParams),
+        responseStatisticsAPI.getFirstResponseDistribution(distributionParams),
+        responseStatisticsAPI.getOperatorStatistics(params),
+        responseStatisticsAPI.getDateRangeStatistics(params),
+      ]);
 
     distributionData.value = distributionRes?.data || [];
+    firstResponseDistributionData.value = firstResponseRes?.data || [];
     operatorStats.value = operatorRes?.data || [];
     dateRangeStats.value = dateRangeRes?.data || [];
   } catch (error) {
     console.error('Failed to fetch response statistics:', error);
-    // Set empty arrays on error
     distributionData.value = [];
+    firstResponseDistributionData.value = [];
     operatorStats.value = [];
     dateRangeStats.value = [];
   } finally {
@@ -246,9 +290,7 @@ const applyFilters = () => {
 };
 
 onMounted(() => {
-  // Fetch agents list
   store.dispatch('agents/get');
-  // Fetch initial data
   fetchData();
 });
 </script>
@@ -262,57 +304,101 @@ onMounted(() => {
 
     <!-- Filters -->
     <MetricCard :header="t('RESPONSE_STATISTICS.FILTERS')" :is-loading="false">
-      <div class="flex flex-wrap gap-4 items-end">
-        <div class="flex flex-col gap-2">
-          <label class="text-sm font-medium text-n-slate-12">Start Date</label>
-          <input
-            type="date"
-            :value="dateRange.start"
-            class="px-3 py-2 border border-n-slate-7 rounded-lg bg-n-background text-n-slate-12"
-            @input="e => handleDateRangeChange('start', e.target.value)"
-          />
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-wrap gap-4 items-end">
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-n-slate-12">
+              Start Date
+            </label>
+            <input
+              type="date"
+              :value="dateRange.start"
+              class="px-3 py-2 border border-n-slate-7 rounded-lg bg-n-background text-n-slate-12"
+              @input="e => handleDateRangeChange('start', e.target.value)"
+            />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-n-slate-12">
+              End Date
+            </label>
+            <input
+              type="date"
+              :value="dateRange.end"
+              class="px-3 py-2 border border-n-slate-7 rounded-lg bg-n-background text-n-slate-12"
+              @input="e => handleDateRangeChange('end', e.target.value)"
+            />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-n-slate-12">
+              Operators (optional)
+            </label>
+            <div class="min-w-[250px]">
+              <Multiselect
+                v-model="selectedOperators"
+                :options="operatorOptions"
+                :multiple="true"
+                :close-on-select="false"
+                :clear-on-select="false"
+                :preserve-search="true"
+                placeholder="Select operators..."
+                label="label"
+                track-by="value"
+                :preselect-first="false"
+              >
+                <template #selection="{ values, isOpen }">
+                  <span
+                    v-if="values.length && !isOpen"
+                    class="multiselect__single"
+                  >
+                    {{ values.length }} operator(s) selected
+                  </span>
+                </template>
+              </Multiselect>
+            </div>
+          </div>
+
+          <Button variant="primary" size="md" @click="applyFilters">
+            Apply Filters
+          </Button>
         </div>
 
+        <!-- Custom Time Ranges -->
         <div class="flex flex-col gap-2">
-          <label class="text-sm font-medium text-n-slate-12">End Date</label>
-          <input
-            type="date"
-            :value="dateRange.end"
-            class="px-3 py-2 border border-n-slate-7 rounded-lg bg-n-background text-n-slate-12"
-            @input="e => handleDateRangeChange('end', e.target.value)"
-          />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label class="text-sm font-medium text-n-slate-12">Operators (optional)</label>
-          <div class="min-w-[250px]">
-            <Multiselect
-              v-model="selectedOperators"
-              :options="operatorOptions"
-              :multiple="true"
-              :close-on-select="false"
-              :clear-on-select="false"
-              :preserve-search="true"
-              placeholder="Select operators..."
-              label="label"
-              track-by="value"
-              :preselect-first="false"
+          <label class="text-sm font-medium text-n-slate-12">
+            {{ t('RESPONSE_STATISTICS.CUSTOM_BUCKETS') }}
+          </label>
+          <div class="flex flex-wrap items-center gap-2">
+            <span
+              v-for="(bucket, index) in customBuckets"
+              :key="index"
+              class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-n-alpha-2 text-sm text-n-slate-12 border border-n-slate-6"
             >
-              <template #selection="{ values, isOpen }">
-                <span
-                  v-if="values.length && !isOpen"
-                  class="multiselect__single"
-                >
-                  {{ values.length }} operator(s) selected
-                </span>
-              </template>
-            </Multiselect>
+              {{ bucket }} min
+              <button
+                class="ml-1 text-n-slate-10 hover:text-n-slate-12"
+                @click="removeBucket(index)"
+              >
+                &times;
+              </button>
+            </span>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="customBucketsInput"
+                type="text"
+                :placeholder="
+                  t('RESPONSE_STATISTICS.CUSTOM_BUCKETS_PLACEHOLDER')
+                "
+                class="px-3 py-1.5 border border-n-slate-7 rounded-lg bg-n-background text-n-slate-12 text-sm w-[180px]"
+                @keyup.enter="addBucketValue"
+              />
+              <Button variant="faded" size="sm" @click="addBucketValue">
+                {{ t('RESPONSE_STATISTICS.ADD_RANGE') }}
+              </Button>
+            </div>
           </div>
         </div>
-
-        <Button variant="primary" size="md" @click="applyFilters">
-          Apply Filters
-        </Button>
       </div>
     </MetricCard>
 
@@ -385,21 +471,43 @@ onMounted(() => {
       </MetricCard>
     </div>
 
-    <!-- Response Time Distribution -->
-    <MetricCard
-      :header="t('RESPONSE_STATISTICS.DISTRIBUTION_CHART')"
-      :is-loading="isLoading"
-    >
-      <div v-if="distributionChartData" class="h-[300px]">
-        <Bar :data="distributionChartData" :options="chartOptions" />
-      </div>
-      <div
-        v-else
-        class="flex items-center justify-center h-[300px] text-n-slate-11"
+    <!-- Distribution Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Response Time Distribution -->
+      <MetricCard
+        :header="t('RESPONSE_STATISTICS.DISTRIBUTION_CHART')"
+        :is-loading="isLoading"
       >
-        No data available
-      </div>
-    </MetricCard>
+        <div v-if="distributionChartData" class="h-[300px]">
+          <Bar :data="distributionChartData" :options="chartOptions" />
+        </div>
+        <div
+          v-else
+          class="flex items-center justify-center h-[300px] text-n-slate-11"
+        >
+          No data available
+        </div>
+      </MetricCard>
+
+      <!-- First Response Time Distribution -->
+      <MetricCard
+        :header="t('RESPONSE_STATISTICS.FIRST_RESPONSE_DISTRIBUTION_CHART')"
+        :is-loading="isLoading"
+      >
+        <div v-if="firstResponseDistributionChartData" class="h-[300px]">
+          <Bar
+            :data="firstResponseDistributionChartData"
+            :options="chartOptions"
+          />
+        </div>
+        <div
+          v-else
+          class="flex items-center justify-center h-[300px] text-n-slate-11"
+        >
+          No data available
+        </div>
+      </MetricCard>
+    </div>
 
     <!-- Daily Statistics Table -->
     <MetricCard
