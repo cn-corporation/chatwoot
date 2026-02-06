@@ -208,8 +208,24 @@ const mutations = {
   },
 
   [types.default.ADD_PERSONAL_CANNED]: MutationHelpers.create,
-  [types.default.EDIT_PERSONAL_CANNED]: MutationHelpers.update,
-  [types.default.DELETE_PERSONAL_CANNED]: MutationHelpers.destroy,
+
+  [types.default.EDIT_PERSONAL_CANNED](_state, data) {
+    _state.records.forEach((element, index) => {
+      if (element.id === data.id) {
+        _state.records[index] = data;
+      }
+    });
+    _state.allRecords.forEach((element, index) => {
+      if (element.id === data.id) {
+        _state.allRecords[index] = data;
+      }
+    });
+  },
+
+  [types.default.DELETE_PERSONAL_CANNED](_state, id) {
+    _state.records = _state.records.filter(record => record.id !== id);
+    _state.allRecords = _state.allRecords.filter(record => record.id !== id);
+  },
 };
 
 export default {
