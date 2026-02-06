@@ -46,7 +46,7 @@ const tailwindConfig = {
         bubble: {
           css: {
             color: 'rgb(var(--slate-12))',
-            lineHeight: '1.6',
+            lineHeight: '1.4',
             fontSize: '14px',
             '*': {
               '&:first-child': {
@@ -54,6 +54,11 @@ const tailwindConfig = {
               },
             },
             overflowWrap: 'anywhere',
+
+            p: {
+              marginTop: '0.5em',
+              marginBottom: '0.5em',
+            },
 
             strong: {
               color: 'rgb(var(--slate-12))',
