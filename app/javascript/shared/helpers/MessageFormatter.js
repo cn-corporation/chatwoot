@@ -50,7 +50,8 @@ const createMarkdownInstance = (linkify = true) => {
         rel: 'noreferrer noopener nofollow',
         target: '_blank',
       },
-    });
+    })
+    .disable('entity');
 };
 
 const TWITTER_USERNAME_REGEX = /(^|[^@\w])@(\w{1,15})\b/g;

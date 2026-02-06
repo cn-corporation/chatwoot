@@ -306,7 +306,8 @@ export default {
     },
     replyBoxClass() {
       return {
-        'is-private': this.isPrivate,
+        'is-private': this.isPrivate && !this.isOnTask,
+        'is-task': this.isOnTask,
         'is-focused': this.isFocused || this.hasAttachments,
       };
     },
@@ -1463,6 +1464,10 @@ export default {
 
   &.is-private {
     @apply bg-n-solid-amber dark:border-n-amber-3/10 border-n-amber-12/5;
+  }
+
+  &.is-task {
+    @apply bg-n-teal-3 dark:border-n-teal-3/10 border-n-teal-12/5;
   }
 }
 
