@@ -67,7 +67,7 @@ watch(
 </script>
 
 <template>
-  <div v-if="visible" class="flex flex-wrap gap-12 mt-3 mb-2 items-end">
+  <div v-if="visible" class="relative z-[60] flex flex-wrap gap-12 mt-3 mb-2 items-end">
     <div class="w-48">
       <p class="mb-1 text-xs font-medium text-n-slate-11">
         {{ t('SEARCH.FILTERS.AGENT_LABEL') }}
