@@ -5,13 +5,16 @@ import ChatwootExtraAPI from '../../api/chatwootExtra';
 
 const state = {
   records: [],
+  allRecords: [],
   uiFlags: {
     fetchingList: false,
+    fetchingAllList: false,
     creatingItem: false,
     updatingItem: false,
     deletingItem: false,
   },
   hasFetched: false,
+  hasAllFetched: false,
 };
 
 const getters = {
@@ -27,11 +30,26 @@ const getters = {
         return b.command.localeCompare(a.command);
       });
   },
+  getAllPersonalCannedResponses(_state) {
+    return _state.allRecords;
+  },
+  getSortedAllPersonalCannedResponses(_state) {
+    return sortOrder =>
+      [..._state.allRecords].sort((a, b) => {
+        if (sortOrder === 'asc') {
+          return a.command.localeCompare(b.command);
+        }
+        return b.command.localeCompare(a.command);
+      });
+  },
   getPersonalCannedUIFlags(_state) {
     return _state.uiFlags;
   },
   hasPersonalCannedFetched(_state) {
     return _state.hasFetched;
+  },
+  hasAllPersonalCannedFetched(_state) {
+    return _state.hasAllFetched;
   },
 };
 
@@ -65,6 +83,31 @@ const actions = {
     } catch (error) {
       commit(types.default.SET_PERSONAL_CANNED_UI_FLAG, {
         fetchingList: false,
+      });
+    }
+  },
+
+  getAllPersonalCannedResponses: async function getAllPersonalCannedResponses(
+    { commit },
+    { force = false } = {}
+  ) {
+    const hasFetched = state.hasAllFetched;
+    if (hasFetched && !force) {
+      return;
+    }
+
+    commit(types.default.SET_PERSONAL_CANNED_UI_FLAG, {
+      fetchingAllList: true,
+    });
+    try {
+      const responses = await ChatwootExtraAPI.getAllPersonalCannedResponses();
+      commit(types.default.SET_ALL_PERSONAL_CANNED, responses);
+      commit(types.default.SET_PERSONAL_CANNED_UI_FLAG, {
+        fetchingAllList: false,
+      });
+    } catch (error) {
+      commit(types.default.SET_PERSONAL_CANNED_UI_FLAG, {
+        fetchingAllList: false,
       });
     }
   },
@@ -157,6 +200,11 @@ const mutations = {
   [types.default.SET_PERSONAL_CANNED](_state, data) {
     _state.records = data;
     _state.hasFetched = true;
+  },
+
+  [types.default.SET_ALL_PERSONAL_CANNED](_state, data) {
+    _state.allRecords = data;
+    _state.hasAllFetched = true;
   },
 
   [types.default.ADD_PERSONAL_CANNED]: MutationHelpers.create,
