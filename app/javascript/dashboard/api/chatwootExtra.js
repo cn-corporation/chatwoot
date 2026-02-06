@@ -359,6 +359,18 @@ class ChatwootExtraAPI {
     }
   }
 
+  async getAllPersonalCannedResponses() {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/api/canned-responses/all`,
+        { headers: this.headers }
+      );
+      return response.data?.data || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
   async updatePersonalCannedResponse(id, { command, text }) {
     const response = await axios.patch(
       `${this.baseURL}/api/canned-responses/${id}`,

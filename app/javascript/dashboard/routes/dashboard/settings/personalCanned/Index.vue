@@ -1,5 +1,6 @@
 <script setup>
 import { useAlert } from 'dashboard/composables';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 import AddPersonalCanned from './AddPersonalCanned.vue';
 import EditPersonalCanned from './EditPersonalCanned.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
@@ -15,6 +16,7 @@ defineOptions({
 
 const store = useStore();
 const { t } = useI18n();
+const { isAdmin } = useAdmin();
 
 const showAddPopup = ref(false);
 const loading = ref({});
@@ -26,15 +28,26 @@ const cannedResponseAPI = ref({ message: '' });
 const sortOrder = ref('asc');
 
 const records = computed(() => {
-  const responses = store.getters[
+  if (isAdmin.value) {
+    return store.getters[
+      'personalCannedResponse/getSortedAllPersonalCannedResponses'
+    ](sortOrder.value);
+  }
+  return store.getters[
     'personalCannedResponse/getSortedPersonalCannedResponses'
   ](sortOrder.value);
-  return responses;
 });
 
 const uiFlags = computed(
   () => store.getters['personalCannedResponse/getPersonalCannedUIFlags']
 );
+
+const isLoading = computed(() => {
+  if (isAdmin.value) {
+    return uiFlags.value.fetchingAllList;
+  }
+  return uiFlags.value.fetchingList;
+});
 
 const deleteConfirmText = computed(
   () =>
@@ -56,9 +69,17 @@ const toggleSort = () => {
 
 const fetchPersonalCannedResponses = async () => {
   try {
-    await store.dispatch('personalCannedResponse/getPersonalCannedResponses', {
-      force: true,
-    });
+    if (isAdmin.value) {
+      await store.dispatch(
+        'personalCannedResponse/getAllPersonalCannedResponses',
+        { force: true }
+      );
+    } else {
+      await store.dispatch(
+        'personalCannedResponse/getPersonalCannedResponses',
+        { force: true }
+      );
+    }
   } catch (error) {
     // Ignore Error
   }
@@ -119,22 +140,47 @@ const confirmDeletion = () => {
   deletePersonalCannedResponse(activeResponse.value.id);
 };
 
+const headerTitle = computed(() => {
+  return isAdmin.value
+    ? t('PERSONAL_CANNED_MGMT.HEADER_ADMIN')
+    : t('PERSONAL_CANNED_MGMT.HEADER');
+});
+
+const headerDescription = computed(() => {
+  return isAdmin.value
+    ? t('PERSONAL_CANNED_MGMT.DESCRIPTION_ADMIN')
+    : t('PERSONAL_CANNED_MGMT.DESCRIPTION');
+});
+
+const loadingMessage = computed(() => {
+  return isAdmin.value
+    ? t('PERSONAL_CANNED_MGMT.LOADING_ADMIN')
+    : t('PERSONAL_CANNED_MGMT.LOADING');
+});
+
+const emptyMessage = computed(() => {
+  return isAdmin.value
+    ? t('PERSONAL_CANNED_MGMT.LIST.404_ADMIN')
+    : t('PERSONAL_CANNED_MGMT.LIST.404');
+});
+
 const tableHeaders = computed(() => {
-  return [
+  const headers = [
     t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.SHORT_CODE'),
     t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.CONTENT'),
-    t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.ACTIONS'),
   ];
+  if (isAdmin.value) {
+    headers.push(t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.OWNER'));
+  }
+  headers.push(t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.ACTIONS'));
+  return headers;
 });
 </script>
 
 <template>
   <div class="flex-1 overflow-auto">
-    <BaseSettingsHeader
-      :title="$t('PERSONAL_CANNED_MGMT.HEADER')"
-      :description="$t('PERSONAL_CANNED_MGMT.DESCRIPTION')"
-    >
-      <template #actions>
+    <BaseSettingsHeader :title="headerTitle" :description="headerDescription">
+      <template v-if="!isAdmin" #actions>
         <Button
           icon="i-lucide-circle-plus"
           :label="$t('PERSONAL_CANNED_MGMT.HEADER_BTN_TXT')"
@@ -144,15 +190,12 @@ const tableHeaders = computed(() => {
     </BaseSettingsHeader>
 
     <div class="mt-6 flex-1">
-      <woot-loading-state
-        v-if="uiFlags.fetchingList"
-        :message="$t('PERSONAL_CANNED_MGMT.LOADING')"
-      />
+      <woot-loading-state v-if="isLoading" :message="loadingMessage" />
       <p
         v-else-if="!records.length"
         class="flex flex-col items-center justify-center h-full text-base text-n-slate-11 py-8"
       >
-        {{ $t('PERSONAL_CANNED_MGMT.LIST.404') }}
+        {{ emptyMessage }}
       </p>
       <table v-else class="min-w-full overflow-x-auto divide-y divide-n-weak">
         <thead>
@@ -189,6 +232,13 @@ const tableHeaders = computed(() => {
             </td>
             <td class="py-4 ltr:pr-4 rtl:pl-4 md:break-all whitespace-normal">
               {{ cannedItem.text }}
+            </td>
+            <td
+              v-if="isAdmin"
+              class="py-4 ltr:pr-4 rtl:pl-4 truncate max-w-xs"
+              :title="cannedItem.ownerName"
+            >
+              {{ cannedItem.ownerName || '-' }}
             </td>
             <td class="py-4 flex justify-end gap-1">
               <Button
