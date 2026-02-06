@@ -525,8 +525,16 @@ export default {
         this.taskStatusMap.set(messageId, { taskId, completed });
       }
     },
-    handleTaskCompleted({ messageId }) {
+    handleTaskCompleted({ messageId, taskId }) {
       this.taskStatusMap.delete(messageId);
+      const task = this.conversationTasks.find(
+        t =>
+          String(t.id) === String(taskId) ||
+          (t.messageId ?? t.message_id) === messageId
+      );
+      if (task) {
+        task.completed = true;
+      }
       this.fetchConversationTasks();
     },
     async fetchConversationTasks() {
