@@ -18,6 +18,8 @@ export default {
     'isConversationSelected',
     'createTask',
     'deleteConversation',
+    'blockContact',
+    'unblockContact',
   ],
   props: {
     source: {
@@ -71,5 +73,7 @@ export default {
     @assign-priority="assignPriority"
     @create-task="createTask"
     @delete-conversation="deleteConversation"
+    @block-contact="blockContact"
+    @unblock-contact="unblockContact"
   />
 </template>

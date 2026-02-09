@@ -6,7 +6,7 @@
 #  data_type         :string           not null
 #  processed_records :integer
 #  processing_errors :text
-#  status            :integer          default(0), not null
+#  status            :integer          default("pending"), not null
 #  total_records     :integer
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null

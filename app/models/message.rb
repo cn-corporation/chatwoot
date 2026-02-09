@@ -67,6 +67,7 @@ class Message < ApplicationRecord
   before_validation :prevent_message_flooding
   before_save :ensure_processed_message_content
   before_save :ensure_in_reply_to
+  before_create :prevent_time_blocked_contact_messages
 
   validates :account_id, presence: true
   validates :inbox_id, presence: true
@@ -256,6 +257,10 @@ class Message < ApplicationRecord
   end
 
   private
+
+  def prevent_time_blocked_contact_messages
+    throw(:abort) if incoming? && conversation&.contact&.time_blocked?
+  end
 
   def prevent_message_flooding
     # Added this to cover the validation specs in messages

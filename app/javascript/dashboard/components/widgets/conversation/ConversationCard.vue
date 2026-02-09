@@ -47,6 +47,8 @@ const emit = defineEmits([
   'updateConversationStatus',
   'createTask',
   'deleteConversation',
+  'blockContact',
+  'unblockContact',
   'selectConversation',
   'deSelectConversation',
 ]);
@@ -84,6 +86,10 @@ const isActiveChat = computed(() => {
   return currentChat.value.id === props.chat.id;
 });
 
+const contactBlockedUntil = computed(() => {
+  return currentContact.value?.blocked_until || null;
+});
+
 const getOperatorUnreadCount = useMapGetter('getOperatorUnreadCount');
 const unreadCount = computed(() => getOperatorUnreadCount.value(props.chat.id));
 
@@ -91,6 +97,13 @@ const hasUnread = computed(() => unreadCount.value > 0);
 
 // Inject the reactive timer trigger from ChatList
 const timerTick = inject('conversationTimerTick', ref(Date.now()));
+
+const isContactTimeBlocked = computed(() => {
+  // eslint-disable-next-line no-unused-vars
+  const _ = timerTick.value;
+  if (!contactBlockedUntil.value) return false;
+  return new Date(contactBlockedUntil.value) > new Date();
+});
 
 // Inject bulk message mode state
 const isBulkMessageMode = inject('isBulkMessageMode', ref(false));
@@ -285,6 +298,16 @@ const deleteConversation = () => {
   emit('deleteConversation', props.chat.id);
   closeContextMenu();
 };
+
+const onBlockContact = duration => {
+  emit('blockContact', duration, props.chat.id);
+  closeContextMenu();
+};
+
+const onUnblockContact = () => {
+  emit('unblockContact', props.chat.id);
+  closeContextMenu();
+};
 </script>
 
 <template>
@@ -363,10 +386,16 @@ const deleteConversation = () => {
         </div>
       </div>
       <h4
-        class="conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-n-slate-12"
+        class="conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-n-slate-12 flex items-center gap-1"
         :class="hasUnread ? 'font-semibold' : 'font-medium'"
       >
         {{ currentContact.name }}
+        <fluent-icon
+          v-if="isContactTimeBlocked"
+          icon="dismiss-circle"
+          size="14"
+          class="text-n-ruby-9 flex-shrink-0"
+        />
       </h4>
       <MessagePreview
         v-if="lastMessageInChat"
@@ -430,6 +459,7 @@ const deleteConversation = () => {
         :has-unread-messages="hasUnread"
         :conversation-url="conversationPath"
         :allowed-options="allowedContextMenuOptions"
+        :contact-blocked-until="contactBlockedUntil"
         @update-conversation="onUpdateConversation"
         @assign-agent="onAssignAgent"
         @assign-label="onAssignLabel"
@@ -438,6 +468,8 @@ const deleteConversation = () => {
         @mark-as-read="markAsRead"
         @create-task="createTask"
         @delete-conversation="deleteConversation"
+        @block-contact="onBlockContact"
+        @unblock-contact="onUnblockContact"
         @close="closeContextMenu"
       />
     </ContextMenu>
