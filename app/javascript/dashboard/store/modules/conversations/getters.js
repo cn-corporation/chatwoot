@@ -281,6 +281,14 @@ const getters = {
         : _state.allConversations;
     const currentUserId = rootGetters.getCurrentUser?.id;
 
+    if (source.length === 0) {
+      let total = 0;
+      _state.operatorNotifications.forEach(count => {
+        total += count;
+      });
+      return total;
+    }
+
     return source.reduce((total, conv) => {
       if (!isOperatorUnreadEligible(conv, currentUserId)) return total;
       return total + (_state.operatorNotifications.get(String(conv.id)) || 0);
