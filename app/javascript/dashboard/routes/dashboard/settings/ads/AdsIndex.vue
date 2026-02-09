@@ -1,5 +1,4 @@
 <script setup>
-import { useAlert } from 'dashboard/composables';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import { computed, ref, onMounted } from 'vue';
@@ -34,28 +33,9 @@ const getSendOperation = adId => {
   return getters['ads/getSendOperation'].value(adId);
 };
 
-const loadLatestOperationForAd = async adId => {
-  try {
-    const operations = await store.dispatch('ads/getSendOperations', adId);
-    if (operations && operations.length > 0) {
-      const latestOperation = operations[0];
-      await store.commit('ads/SET_SEND_OPERATION', {
-        adId,
-        operation: latestOperation,
-      });
-    }
-  } catch (error) {
-    console.error(`Failed to load operation for ad ${adId}:`, error);
-  }
-};
-
 onMounted(async () => {
-  await store.dispatch('inboxes/get');
-  await store.dispatch('ads/get');
-
-  if (records.value && records.value.length > 0) {
-    await Promise.all(records.value.map(ad => loadLatestOperationForAd(ad.id)));
-  }
+  await Promise.all([store.dispatch('inboxes/get'), store.dispatch('ads/get')]);
+  await store.dispatch('ads/getLatestSendOperations');
 });
 
 const deleteAd = async id => {

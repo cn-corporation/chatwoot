@@ -172,7 +172,6 @@ export const initializeOperatorNotifications = store => {
         const data = JSON.parse(event.data);
         applyCounts('initial-state', data?.notifications || []);
         syncToVuex();
-        updateFavicon(store.getters.getTotalOperatorUnreadCount);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.warn('[OperatorNotifications] Failed to parse initial-state', {
@@ -191,7 +190,6 @@ export const initializeOperatorNotifications = store => {
           unreadCount: toNumber(payload.unreadCount),
         });
         playSound(audio);
-        updateFavicon(store.getters.getTotalOperatorUnreadCount);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.warn(
@@ -212,7 +210,6 @@ export const initializeOperatorNotifications = store => {
           conversationId: payload.conversationId,
           unreadCount: toNumber(payload.unreadCount),
         });
-        updateFavicon(store.getters.getTotalOperatorUnreadCount);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.warn('[OperatorNotifications] Failed to parse marked_read', {
@@ -242,6 +239,13 @@ export const initializeOperatorNotifications = store => {
       connectSSE(operatorId);
     },
     { immediate: true }
+  );
+
+  store.watch(
+    () => store.getters.getTotalOperatorUnreadCount,
+    count => {
+      updateFavicon(count);
+    }
   );
 
   if (typeof window !== 'undefined') {
