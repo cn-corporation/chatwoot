@@ -1,4 +1,6 @@
 <script setup>
+import { useMapGetter } from 'dashboard/composables/store';
+import { conversationUrl, frontendURL } from 'dashboard/helper/URLHelper';
 import MetricCard from './overview/MetricCard.vue';
 
 defineProps({
@@ -15,6 +17,13 @@ defineProps({
     required: true,
   },
 });
+
+const accountId = useMapGetter('getCurrentAccountId');
+
+const conversationLink = id => {
+  if (!accountId.value) return '#';
+  return frontendURL(conversationUrl({ accountId: accountId.value, id }));
+};
 </script>
 
 <template>
@@ -53,7 +62,12 @@ defineProps({
             class="border-b border-n-slate-6 hover:bg-n-solid-2"
           >
             <td class="py-3 px-4 text-sm text-n-slate-12">
-              {{ row.conversationId }}
+              <a
+                :href="conversationLink(row.conversationId)"
+                class="text-n-primary hover:underline"
+              >
+                {{ '#' + row.conversationId }}
+              </a>
             </td>
             <td class="py-3 px-4 text-sm text-n-slate-12">
               {{ row.operator }}
