@@ -20,6 +20,7 @@ const MENU = {
   AGENT: 'agent',
   TEAM: 'team',
   LABEL: 'label',
+  BLOCK_CONTACT: 'block-contact',
   CREATE_TASK: 'create-task',
   DELETE: 'delete',
   OPEN_NEW_TAB: 'open-new-tab',
@@ -61,6 +62,10 @@ export default {
       type: Array,
       default: () => [],
     },
+    contactBlockedUntil: {
+      type: String,
+      default: null,
+    },
   },
   emits: [
     'updateConversation',
@@ -72,6 +77,8 @@ export default {
     'assignLabel',
     'createTask',
     'deleteConversation',
+    'blockContact',
+    'unblockContact',
     'close',
   ],
   setup() {
@@ -120,8 +127,6 @@ export default {
             label: this.$t('CONVERSATION.PRIORITY.OPTIONS.NONE'),
             key: null,
           },
-          // Block 3: Hide URGENT option from UI but keep constant for compatibility
-          // Only show None, High, Medium, Low in the menu
           {
             label: this.$t('CONVERSATION.PRIORITY.OPTIONS.HIGH'),
             key: 'high',
@@ -208,6 +213,50 @@ export default {
         ...this.filteredAgentOnAvailability,
       ];
     },
+    isContactBlocked() {
+      if (!this.contactBlockedUntil) return false;
+      return new Date(this.contactBlockedUntil) > new Date();
+    },
+    blockRemainingMinutes() {
+      if (!this.isContactBlocked) return 0;
+      const diff = new Date(this.contactBlockedUntil) - new Date();
+      return Math.max(1, Math.ceil(diff / 60000));
+    },
+    blockMenuConfig() {
+      return {
+        key: MENU.BLOCK_CONTACT,
+        icon: 'dismiss-circle',
+        label: this.$t('CONVERSATION.CARD_CONTEXT_MENU.BLOCK_CONTACT'),
+      };
+    },
+    unblockOption() {
+      return {
+        icon: 'dismiss-circle',
+        label: this.$t('CONVERSATION.CARD_CONTEXT_MENU.UNBLOCK_CONTACT'),
+      };
+    },
+    unblockTooltip() {
+      const minutes = this.blockRemainingMinutes;
+      return this.$t('CONVERSATION.CARD_CONTEXT_MENU.REMAINING_TIME', {
+        minutes,
+      });
+    },
+    blockDurationOptions() {
+      return [
+        {
+          key: 10,
+          label: this.$t('CONVERSATION.CARD_CONTEXT_MENU.BLOCK_10_MIN'),
+        },
+        {
+          key: 20,
+          label: this.$t('CONVERSATION.CARD_CONTEXT_MENU.BLOCK_20_MIN'),
+        },
+        {
+          key: 30,
+          label: this.$t('CONVERSATION.CARD_CONTEXT_MENU.BLOCK_30_MIN'),
+        },
+      ];
+    },
   },
   mounted() {
     this.$store.dispatch('inboxAssignableAgents/fetch', [this.inboxId]);
@@ -229,6 +278,12 @@ export default {
     deleteConversation() {
       this.$emit('deleteConversation', this.chatId);
     },
+    blockContact(duration) {
+      this.$emit('blockContact', duration);
+    },
+    unblockContact() {
+      this.$emit('unblockContact');
+    },
     openInNewTab() {
       if (!this.conversationUrl) return;
 
@@ -248,8 +303,6 @@ export default {
       }
     },
     show(key) {
-      // If the conversation status is same as the action, then don't display the option
-      // i.e.: Don't show an option to resolve if the conversation is already resolved.
       return this.status !== key;
     },
     generateMenuLabelConfig(option, type = 'text') {
@@ -343,6 +396,24 @@ export default {
           :key="team.id"
           :option="generateMenuLabelConfig(team, 'team')"
           @click.stop="$emit('assignTeam', team)"
+        />
+      </MenuItemWithSubmenu>
+      <hr class="m-1 rounded border-b border-n-weak dark:border-n-weak" />
+    </template>
+    <template v-if="isAllowed([MENU.BLOCK_CONTACT])">
+      <div v-if="isContactBlocked" v-tooltip="unblockTooltip">
+        <MenuItem
+          :option="unblockOption"
+          variant="icon"
+          @click.stop="unblockContact"
+        />
+      </div>
+      <MenuItemWithSubmenu v-else :option="blockMenuConfig" sub-menu-available>
+        <MenuItem
+          v-for="opt in blockDurationOptions"
+          :key="opt.key"
+          :option="opt"
+          @click.stop="blockContact(opt.key)"
         />
       </MenuItemWithSubmenu>
       <hr class="m-1 rounded border-b border-n-weak dark:border-n-weak" />

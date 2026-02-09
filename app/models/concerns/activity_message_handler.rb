@@ -124,6 +124,20 @@ module ActivityMessageHandler
     ::Conversations::ActivityMessageJob.perform_later(self, activity_message_params(content)) if content
   end
 
+  def create_blocked_message(duration_minutes)
+    return unless Current.user
+
+    content = I18n.t('conversations.activity.blocked', user_name: Current.user.name, duration: duration_minutes)
+    ::Conversations::ActivityMessageJob.perform_later(self, activity_message_params(content)) if content
+  end
+
+  def create_unblocked_message
+    return unless Current.user
+
+    content = I18n.t('conversations.activity.unblocked', user_name: Current.user.name)
+    ::Conversations::ActivityMessageJob.perform_later(self, activity_message_params(content)) if content
+  end
+
   def generate_assignee_change_activity_content(user_name)
     params = { assignee_name: assignee&.name || '', user_name: user_name }
     key = assignee_id ? 'assigned' : 'removed'

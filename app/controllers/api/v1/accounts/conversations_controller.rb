@@ -68,6 +68,16 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     head :ok
   end
 
+  def block_contact
+    @conversation.block_for!(params[:duration].to_i)
+    head :ok
+  end
+
+  def unblock_contact
+    @conversation.unblock!
+    head :ok
+  end
+
   def transcript
     render json: { error: 'email param missing' }, status: :unprocessable_entity and return if params[:email].blank?
 

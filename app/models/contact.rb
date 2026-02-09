@@ -7,7 +7,8 @@
 #  id                    :integer          not null, primary key
 #  additional_attributes :jsonb
 #  blocked               :boolean          default(FALSE), not null
-#  contact_type          :integer          default(0)
+#  blocked_until         :datetime
+#  contact_type          :integer          default("visitor")
 #  country_code          :string           default("")
 #  custom_attributes     :jsonb
 #  email                 :string
@@ -147,6 +148,10 @@ class Contact < ApplicationRecord
     contact_inboxes.find_by!(inbox_id: inbox_id).source_id
   end
 
+  def time_blocked?
+    blocked_until.present? && blocked_until > Time.current
+  end
+
   def push_event_data
     {
       additional_attributes: additional_attributes,
@@ -158,6 +163,7 @@ class Contact < ApplicationRecord
       phone_number: phone_number,
       thumbnail: avatar_url,
       blocked: blocked,
+      blocked_until: blocked_until,
       type: 'contact'
     }
   end

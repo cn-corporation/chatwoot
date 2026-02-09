@@ -133,6 +133,8 @@ Rails.application.routes.draw do
             member do
               post :mute
               post :unmute
+              post :block_contact
+              post :unblock_contact
               post :transcript
               post :toggle_status
               post :toggle_priority
