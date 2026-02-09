@@ -432,6 +432,14 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async getLatestSendOperations() {
+    const response = await axios.get(
+      `${this.baseURL}/api/ads-send-operations/latest`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   // Ads Log API
   async deleteSentAds(adId) {
     const response = await axios.delete(
