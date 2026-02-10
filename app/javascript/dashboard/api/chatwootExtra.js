@@ -524,6 +524,48 @@ class ChatwootExtraAPI {
     }
   }
 
+  async getKBFiles(limit) {
+    const params = {};
+    if (limit) params.limit = limit;
+    const response = await axios.get(`${this.baseURL}/api/knowledge-base`, {
+      params,
+      headers: this.headers,
+    });
+    return response.data;
+  }
+
+  async uploadKBFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axios.post(
+      `${this.baseURL}/api/knowledge-base/upload`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'X-API-Key': CHATWOOT_EXTRA_API_KEY,
+        },
+      }
+    );
+    return response.data;
+  }
+
+  async getKBFile(fileId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/knowledge-base/${fileId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async deleteKBFile(fileId) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/knowledge-base/${fileId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   async searchMessages({
     query,
     userId,

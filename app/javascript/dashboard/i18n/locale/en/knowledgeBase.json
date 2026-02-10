@@ -1,0 +1,34 @@
+{
+  "KNOWLEDGE_BASE": {
+    "HEADER": "Knowledge Base",
+    "DESCRIPTION": "Manage files in the knowledge base. Upload documents for AI-powered search and retrieval.",
+    "SEARCH_PLACEHOLDER": "Search files...",
+    "LOADING": "Loading knowledge base files...",
+    "EMPTY": "No files in the knowledge base. Upload a file to get started.",
+    "TABLE": {
+      "NAME": "Name",
+      "SIZE": "Size",
+      "TYPE": "Type",
+      "STATUS": "Status",
+      "ACTIONS": "Actions"
+    },
+    "UPLOAD": {
+      "BUTTON": "Upload File",
+      "SUCCESS": "File uploaded successfully",
+      "ERROR": "Failed to upload file. Please try again."
+    },
+    "DELETE": {
+      "CONFIRM": "Are you sure you want to delete {name}?",
+      "SUCCESS": "File deleted successfully",
+      "ERROR": "Failed to delete file. Please try again."
+    },
+    "ACTIONS": {
+      "VIEW": "View content",
+      "DELETE": "Delete file"
+    },
+    "CONTENT_MODAL": {
+      "LOADING": "Loading file content...",
+      "ERROR": "Failed to load file content. Please try again."
+    }
+  }
+}

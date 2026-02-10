@@ -198,6 +198,14 @@ const menuItems = computed(() => {
       icon: 'i-lucide-message-square-quote',
       to: accountScopedRoute('canned_list'),
     });
+    if (window.location.hostname === 'localhost') {
+      settingsChildren.push({
+        name: 'Settings Knowledge Base',
+        label: t('SIDEBAR.KNOWLEDGE_BASE'),
+        icon: 'i-lucide-book-open',
+        to: accountScopedRoute('knowledge_base_wrapper'),
+      });
+    }
   }
 
   settingsChildren.push(
