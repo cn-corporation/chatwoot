@@ -54,7 +54,7 @@ const reload = () => {
 
 <template>
   <!-- Always visible container for AI suggestions -->
-  <div class="ai-suggestion-container mb-2">
+  <div class="ai-suggestion-container mb-2 max-h-[50vh]">
     <!-- Loading State -->
     <div v-if="isLoading" class="ai-suggestion-banner">
       <div
@@ -117,7 +117,7 @@ const reload = () => {
             </div>
 
             <p
-              class="text-sm text-slate-700 dark:text-slate-300 mb-3 whitespace-pre-wrap"
+              class="text-sm text-slate-700 dark:text-slate-300 mb-3 whitespace-pre-wrap overflow-y-auto max-h-[40vh]"
             >
               {{ suggestionContent }}
             </p>

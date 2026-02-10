@@ -39,6 +39,7 @@ import sla from './sla.json';
 import teamsSettings from './teamsSettings.json';
 import todo from './todo.json';
 import whatsappTemplates from './whatsappTemplates.json';
+import knowledgeBase from './knowledgeBase.json';
 
 export default {
   ...ads,
@@ -82,4 +83,5 @@ export default {
   ...teamsSettings,
   ...todo,
   ...whatsappTemplates,
+  ...knowledgeBase,
 };
