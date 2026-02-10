@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - develop
   workflow_dispatch:
 
 env:
@@ -37,9 +38,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
+            type=raw,value=develop,enable=${{ github.ref_name == 'develop' }}
+            type=sha,prefix=${{ github.ref_name }}-
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -54,3 +56,17 @@ jobs:
             RAILS_ENV=production
             NODE_ENV=production
             SOURCE_COMMIT=${{ github.sha }}
+
+      - name: Trigger Coolify deployment (develop)
+        if: github.ref_name == 'develop'
+        run: |
+          curl -s -X POST "${{ secrets.COOLIFY_WEBHOOK_URL_DEV }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN_DEV }}" \
+            -H "Content-Type: application/json"
+
+      - name: Trigger Coolify deployment (production)
+        if: github.ref_name == 'main'
+        run: |
+          curl -s -X POST "${{ secrets.COOLIFY_WEBHOOK_URL_PROD }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN_PROD }}" \
+            -H "Content-Type: application/json"
