@@ -259,6 +259,8 @@
     "CHANGE_AGENT_FAILED": "Не удалось изменить назначение",
     "ASSIGN_LABEL_SUCCESFUL": "Метка успешно назначена",
     "ASSIGN_LABEL_FAILED": "Назначение метки не удалось",
+    "PREVIOUS_LABELS": "Предыдущие категории:",
+    "APPLY_LINKED_LABELS": "Применить категории из предыдущего разговора",
     "CHANGE_TEAM": "Команда назначенная в беседу изменена",
     "SUCCESS_DELETE_CONVERSATION": "Диалог удален",
     "FAIL_DELETE_CONVERSATION": "Не удалось удалить диалог! Попробуйте снова",

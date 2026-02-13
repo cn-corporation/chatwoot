@@ -263,6 +263,8 @@
     "CHANGE_AGENT_FAILED": "Assignee change failed",
     "ASSIGN_LABEL_SUCCESFUL": "Label assigned successfully",
     "ASSIGN_LABEL_FAILED": "Label assignment failed",
+    "PREVIOUS_LABELS": "Previous labels:",
+    "APPLY_LINKED_LABELS": "Apply labels from previous conversation",
     "CHANGE_TEAM": "Conversation team changed",
     "SUCCESS_DELETE_CONVERSATION": "Conversation deleted successfully",
     "FAIL_DELETE_CONVERSATION": "Couldn't delete conversation! Try again",
