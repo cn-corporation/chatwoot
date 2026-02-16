@@ -89,7 +89,7 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
 
   def bot_token
     return render json: { error: 'Not a Telegram channel' }, status: :unprocessable_entity unless @inbox.telegram?
-    return render json: { error: 'Unauthorized' }, status: :unauthorized unless Current.account_user&.administrator?
+    return render json: { error: 'Unauthorized' }, status: :unauthorized unless Current.account_user&.administrator? || Current.user.is_a?(AgentBot)
 
     render json: { bot_token: @inbox.channel.bot_token }
   end

@@ -7,6 +7,7 @@ class WebhookListener < BaseListener
     payload = conversation.webhook_data.merge(
       event: __method__.to_s,
       account_id: conversation.account_id,
+      account: conversation.account.webhook_data,
       changed_attributes: changed_attributes,
       performed_by: performed_by&.push_event_data,
       inbox: inbox.webhook_data
@@ -22,6 +23,7 @@ class WebhookListener < BaseListener
     payload = conversation.webhook_data.merge(
       event: __method__.to_s,
       account_id: conversation.account_id,
+      account: conversation.account.webhook_data,
       changed_attributes: changed_attributes,
       performed_by: performed_by&.push_event_data,
       inbox: inbox.webhook_data

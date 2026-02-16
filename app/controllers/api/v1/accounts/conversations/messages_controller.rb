@@ -18,6 +18,8 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
       update_message_content
     elsif permitted_params[:status].present?
       update_message_status
+    elsif permitted_params[:content_type].present? || !permitted_params[:content_attributes].nil?
+      update_message_type_and_attributes
     else
       render json: { error: 'No content or status provided' }, status: :unprocessable_entity
     end
@@ -75,7 +77,7 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def permitted_params
-    params.permit(:id, :target_language, :status, :external_error, :content)
+    params.permit(:id, :target_language, :status, :external_error, :content, :content_type, content_attributes: {})
   end
 
   def already_translated_content_available?
@@ -84,6 +86,14 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
 
   def status_update?
     permitted_params[:status].present?
+  end
+
+  def update_message_type_and_attributes
+    updates = {}
+    updates[:content_type] = permitted_params[:content_type] if permitted_params[:content_type].present?
+    updates[:content_attributes] = permitted_params[:content_attributes] unless permitted_params[:content_attributes].nil?
+    message.update!(updates)
+    @message = message
   end
 
   def update_message_content

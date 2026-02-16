@@ -34,6 +34,6 @@ class BaseListener
 
     return if changed_attributes.blank?
 
-    changed_attributes.map { |k, v| { k => { previous_value: v[0], current_value: v[1] } } }
+    changed_attributes.filter_map { |k, v| v.nil? ? nil : { k => { previous_value: v[0], current_value: v[1] } } }
   end
 end

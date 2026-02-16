@@ -14,6 +14,7 @@ import App from 'dashboard/App.vue';
 import i18nMessages from 'dashboard/i18n';
 import createAxios from 'dashboard/helper/APIHelper';
 import { initializeOperatorNotifications } from 'dashboard/helper/operatorNotifications';
+import { initializeConversationTopics } from 'dashboard/helper/conversationTopics';
 
 import commonHelpers, { isJSONValid } from 'dashboard/helper/commons';
 import { sync } from 'vuex-router-sync';
@@ -122,6 +123,7 @@ initializeChatwootEvents();
 initializeAnalyticsEvents();
 initalizeRouter();
 initializeOperatorNotifications(store);
+initializeConversationTopics(store);
 
 window.onload = () => {
   app.mount('#app');

@@ -1,20 +1,24 @@
 <script>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { mapGetters } from 'vuex';
+import { useStore } from 'dashboard/composables/store';
 import { useAdmin } from 'dashboard/composables/useAdmin';
 import { useConversationLabels } from 'dashboard/composables/useConversationLabels';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import Spinner from 'shared/components/Spinner.vue';
 import LabelDropdown from 'shared/components/ui/label/LabelDropdown.vue';
 import AddLabel from 'shared/components/ui/dropdown/AddLabel.vue';
+import NextButton from 'dashboard/components-next/button/Button.vue';
 
 export default {
   components: {
     Spinner,
     LabelDropdown,
     AddLabel,
+    NextButton,
   },
   setup() {
+    const store = useStore();
     const { isAdmin } = useAdmin();
 
     const {
@@ -23,9 +27,34 @@ export default {
       accountLabels,
       addLabelToConversation,
       removeLabelFromConversation,
+      onUpdateLabels,
     } = useConversationLabels();
 
     const showSearchDropdownLabel = ref(false);
+
+    const currentChat = computed(() => store.getters.getSelectedChat);
+    const conversationId = computed(() => currentChat.value?.id);
+
+    const linkedLabels = computed(() => {
+      return store.getters['linkedSourceChannels/getLinkedConversationLabels'](
+        conversationId.value
+      );
+    });
+
+    const newLinkedLabels = computed(() => {
+      return linkedLabels.value.filter(
+        label => !savedLabels.value.includes(label)
+      );
+    });
+
+    const showLinkedLabels = computed(() => newLinkedLabels.value.length > 0);
+
+    const applyLinkedLabels = () => {
+      const merged = [
+        ...new Set([...savedLabels.value, ...linkedLabels.value]),
+      ];
+      onUpdateLabels(merged);
+    };
 
     const toggleLabels = () => {
       showSearchDropdownLabel.value = !showSearchDropdownLabel.value;
@@ -62,6 +91,9 @@ export default {
       showSearchDropdownLabel,
       closeDropdownLabel,
       toggleLabels,
+      showLinkedLabels,
+      newLinkedLabels,
+      applyLinkedLabels,
     };
   },
   data() {
@@ -80,6 +112,31 @@ export default {
 
 <template>
   <div class="sidebar-labels-wrap">
+    <div
+      v-if="showLinkedLabels"
+      class="flex items-center gap-2 p-2 mb-2 bg-n-alpha-1 dark:bg-n-alpha-2 rounded-lg"
+    >
+      <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
+        <span class="text-xs text-n-slate-10 shrink-0">
+          {{ $t('CONVERSATION.PREVIOUS_LABELS') }}
+        </span>
+        <span
+          v-for="label in newLinkedLabels"
+          :key="label"
+          class="text-xs text-n-slate-11 bg-n-alpha-2 dark:bg-n-alpha-3 px-1.5 py-0.5 rounded"
+        >
+          {{ label }}
+        </span>
+      </div>
+      <NextButton
+        v-tooltip="$t('CONVERSATION.APPLY_LINKED_LABELS')"
+        icon="i-lucide-save"
+        slate
+        faded
+        xs
+        @click="applyLinkedLabels"
+      />
+    </div>
     <div
       v-if="!conversationUiFlags.isFetching"
       class="contact-conversation--list"

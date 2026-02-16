@@ -7,10 +7,16 @@ module Telegram::ParamHelpers
   end
 
   def telegram_params_content_attributes
+    attrs = {}
+    if callback_query_params?
+      attrs['is_callback_query'] = true
+      attrs['callback_query_id'] = params[:callback_query][:id]
+      attrs['in_reply_to_external_id'] = params[:callback_query][:message][:message_id]
+      attrs['callback_data'] = params[:callback_query][:data]
+    end
     reply_to = params.dig(:message, :reply_to_message, :message_id)
-    return { 'in_reply_to_external_id' => reply_to } if reply_to
-
-    {}
+    attrs['in_reply_to_external_id'] = reply_to if reply_to
+    attrs
   end
 
   def business_message?
@@ -88,10 +94,23 @@ module Telegram::ParamHelpers
 
   def telegram_params_message_content
     if callback_query_params?
-      params[:callback_query][:data]
+      data = params[:callback_query][:data]
+      keyboard = params.dig(:callback_query, :message, :reply_markup, :inline_keyboard)
+      return callback_button_text(keyboard, data) || data if keyboard
+
+      data
     else
       params[:message][:text].presence || params[:message][:caption]
     end
+  end
+
+  def callback_button_text(keyboard, data)
+    keyboard.each do |row|
+      row.each do |button|
+        return button[:text] if button[:callback_data] == data
+      end
+    end
+    nil
   end
 
   def telegram_params_message_id

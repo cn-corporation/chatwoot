@@ -243,6 +243,8 @@
     "CHANGE_AGENT_FAILED": "Не вдалося змінити виконавця",
     "ASSIGN_LABEL_SUCCESFUL": "Мітка успішно призначена",
     "ASSIGN_LABEL_FAILED": "Призначення мітки не вдалося",
+    "PREVIOUS_LABELS": "Попередні мітки:",
+    "APPLY_LINKED_LABELS": "Застосувати мітки з попередньої розмови",
     "CHANGE_TEAM": "Команда змінена",
     "SUCCESS_DELETE_CONVERSATION": "Conversation deleted successfully",
     "FAIL_DELETE_CONVERSATION": "Couldn't delete conversation! Try again",
