@@ -49,7 +49,9 @@ module ReportHelper
   end
 
   def outgoing_messages
-    scope.messages.where(account_id: account.id, created_at: range).outgoing.unscope(:order)
+    scope.messages.where(account_id: account.id, created_at: range).outgoing
+         .where.not(sender_type: 'AgentBot')
+         .unscope(:order)
   end
 
   def resolutions

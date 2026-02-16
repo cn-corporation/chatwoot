@@ -30,6 +30,10 @@ Sidekiq.configure_server do |config|
     config[:skip_default_job_logging] = true
     config.logger.level = Logger.const_get(ENV.fetch('LOG_LEVEL', 'info').upcase.to_s)
   end
+
+  config.on(:startup) do
+    Channels::Telegram::ReregisterWebhooksJob.perform_later
+  end
 end
 
 # https://github.com/ondrejbartas/sidekiq-cron
