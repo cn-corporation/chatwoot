@@ -57,13 +57,9 @@ const v$ = useVuelidate(
       ),
     },
     botUrl: {
-      required: helpers.withMessage(
-        () => t('AGENT_BOTS.FORM.ERRORS.URL'),
-        required
-      ),
       url: helpers.withMessage(
         () => t('AGENT_BOTS.FORM.ERRORS.VALID_URL'),
-        url
+        value => !value || url.$validator(value)
       ),
     },
   },
