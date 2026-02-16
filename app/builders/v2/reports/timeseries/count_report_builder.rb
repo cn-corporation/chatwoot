@@ -34,7 +34,9 @@ class V2::Reports::Timeseries::CountReportBuilder < V2::Reports::Timeseries::Bas
   end
 
   def scope_for_outgoing_messages_count
-    scope.messages.where(account_id: account.id, created_at: range).outgoing.unscope(:order)
+    scope.messages.where(account_id: account.id, created_at: range).outgoing
+         .where.not(sender_type: 'AgentBot')
+         .unscope(:order)
   end
 
   def scope_for_resolutions_count
