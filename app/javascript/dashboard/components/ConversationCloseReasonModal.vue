@@ -28,52 +28,69 @@ const customReason = ref('');
 const selectedTopics = ref([]);
 const isSubmitting = ref(false);
 
-// Watch for prop changes
+const closeTopics = computed(() => [
+  {
+    value: 'registration_funnel',
+    label: t('CLOSE_REASON.TOPIC_REGISTRATION_FUNNEL'),
+    buttonText: '📝 Регистрация',
+  },
+  {
+    value: 'deposits_withdrawals',
+    label: t('CLOSE_REASON.TOPIC_DEPOSITS_WITHDRAWALS'),
+    buttonText: '💳 Депозиты',
+  },
+  {
+    value: 'statistics_rake_rakeback',
+    label: t('CLOSE_REASON.TOPIC_STATISTICS_RAKE_RAKEBACK'),
+    buttonText: '📊 Стат./рейкбек',
+  },
+  {
+    value: 'bonuses_promotions',
+    label: t('CLOSE_REASON.TOPIC_BONUSES_PROMOTIONS'),
+    buttonText: '🎁 Бонусы/акции',
+  },
+  {
+    value: 'lobby_game',
+    label: t('CLOSE_REASON.TOPIC_LOBBY_GAME'),
+    buttonText: '🎮 Лобби/игра',
+  },
+  {
+    value: 'clubgg',
+    label: t('CLOSE_REASON.TOPIC_CLUBGG'),
+    buttonText: '🔧 Тех. проблемы',
+  },
+  {
+    value: 'other',
+    label: t('CLOSE_REASON.TOPIC_OTHER'),
+    buttonText: '❓ Иное',
+  },
+]);
+
 import { watch } from 'vue';
 watch(
   () => props.show,
   newVal => {
     isOpen.value = newVal;
-    // Reset form when modal opens
     if (newVal) {
       selectedReason.value = '';
       customReason.value = '';
-      selectedTopics.value = [];
-    }
-  }
-);
 
-// Close topics
-const closeTopics = computed(() => [
-  {
-    value: 'registration_funnel',
-    label: t('CLOSE_REASON.TOPIC_REGISTRATION_FUNNEL'),
+      const conversation = store.getters.getConversationById(
+        props.conversationId
+      );
+      const botTopic = conversation?.custom_attributes?.bot_topic;
+      const matched = closeTopics.value.find(
+        ct => ct.value === botTopic || ct.buttonText === botTopic
+      );
+      if (matched) {
+        selectedTopics.value = [matched.value];
+      } else {
+        selectedTopics.value = [];
+      }
+    }
   },
-  {
-    value: 'deposits_withdrawals',
-    label: t('CLOSE_REASON.TOPIC_DEPOSITS_WITHDRAWALS'),
-  },
-  {
-    value: 'statistics_rake_rakeback',
-    label: t('CLOSE_REASON.TOPIC_STATISTICS_RAKE_RAKEBACK'),
-  },
-  {
-    value: 'bonuses_promotions',
-    label: t('CLOSE_REASON.TOPIC_BONUSES_PROMOTIONS'),
-  },
-  {
-    value: 'lobby_game',
-    label: t('CLOSE_REASON.TOPIC_LOBBY_GAME'),
-  },
-  {
-    value: 'clubgg',
-    label: t('CLOSE_REASON.TOPIC_CLUBGG'),
-  },
-  {
-    value: 'other',
-    label: t('CLOSE_REASON.TOPIC_OTHER'),
-  },
-]);
+  { immediate: true }
+);
 
 // Predefined close reasons
 const closeReasons = computed(() => [
@@ -132,7 +149,6 @@ const submitReason = async () => {
       customReasonText = customReason.value;
     }
 
-    // Update conversation with resolution reason and topics in one request
     await store.dispatch('toggleStatus', {
       conversationId: props.conversationId,
       status: 'resolved',
@@ -141,6 +157,11 @@ const submitReason = async () => {
         reasonValue === 'custom' ? customReasonText : null,
       closeTopics:
         selectedTopics.value.length > 0 ? selectedTopics.value : null,
+    });
+
+    await store.dispatch('updateCustomAttributes', {
+      conversationId: props.conversationId,
+      customAttributes: {},
     });
 
     useAlert(t('CLOSE_REASON.SUCCESS_MESSAGE'));

@@ -566,6 +566,23 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async getConversationTopic(conversationId) {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/api/conversation-topics/${conversationId}`,
+        { headers: this.headers }
+      );
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  getConversationTopicStreamURL(operatorId) {
+    const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
+    return `${this.baseURL}/api/conversation-topics/stream/${operatorId}?apiKey=${apiKey}`;
+  }
+
   async searchMessages({
     query,
     userId,

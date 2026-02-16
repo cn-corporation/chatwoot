@@ -51,16 +51,12 @@ const recalculateUnreadCounts = _state => {
   _state.cachedUnreadCounts = counts;
 };
 
-const invalidateSortCache = _state => {
-  _state.cachedConversationsVersion += 1;
-};
-
 const state = {
   allConversations: [],
   attachments: {},
   listLoadingStatus: true,
   chatStatusFilter: wootConstants.STATUS_TYPE.OPEN,
-  chatSortFilter: wootConstants.SORT_BY_TYPE.LATEST,
+  chatSortFilter: wootConstants.SORT_BY_TYPE.PRIORITY_DESC,
   currentInbox: null,
   selectedChatId: null,
   appliedFilters: [],
@@ -74,10 +70,8 @@ const state = {
   sidebarCountsData: [],
   operatorNotifications: new Map(),
   operatorNotificationsReady: false,
+  conversationTopics: new Map(),
   // Cached computations to avoid expensive recalculations
-  cachedSortedConversations: [],
-  cachedSortKey: null,
-  cachedConversationsVersion: 0,
   // Cached unread counts
   cachedUnreadCounts: {
     total: 0,
@@ -141,7 +135,7 @@ export const mutations = {
       });
       _state.allConversations = newAllConversations;
     }
-    invalidateSortCache(_state);
+
     recalculateUnreadCounts(_state);
   },
   [types.EMPTY_ALL_CONVERSATION](_state) {
@@ -330,7 +324,6 @@ export const mutations = {
 
   [types.ADD_CONVERSATION](_state, conversation) {
     _state.allConversations.push(conversation);
-    invalidateSortCache(_state);
   },
 
   [types.DELETE_CONVERSATION](_state, conversationId) {
@@ -376,7 +369,6 @@ export const mutations = {
     } else {
       _state.allConversations.push(conversation);
     }
-    invalidateSortCache(_state);
   },
 
   [types.SET_LIST_LOADING_STATUS](_state) {
@@ -488,6 +480,28 @@ export const mutations = {
   [types.CLEAR_OPERATOR_NOTIFICATIONS](_state) {
     _state.operatorNotifications.clear();
     _state.operatorNotificationsReady = false;
+  },
+  [types.SET_CONVERSATION_TOPIC](
+    _state,
+    { conversationId, topic, labelColor }
+  ) {
+    _state.conversationTopics.set(String(conversationId), {
+      topic,
+      labelColor,
+    });
+
+    const conversation = _state.allConversations.find(
+      c => c.id === Number(conversationId)
+    );
+    if (conversation) {
+      if (!conversation.custom_attributes) {
+        conversation.custom_attributes = {};
+      }
+      conversation.custom_attributes.bot_topic = topic;
+    }
+  },
+  [types.CLEAR_CONVERSATION_TOPICS](_state) {
+    _state.conversationTopics.clear();
   },
 };
 

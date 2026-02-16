@@ -119,6 +119,10 @@ const computedPriority = computed(() => {
   return calculateTimePriority(props.chat);
 });
 
+const conversationColor = computed(
+  () => props.chat.custom_attributes?.conversation_color || null
+);
+
 const isInboxNameVisible = computed(() => !activeInbox.value);
 
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
@@ -324,6 +328,11 @@ const onUnblockContact = () => {
     @click="onCardClick"
     @contextmenu="openContextMenu($event)"
   >
+    <div
+      v-if="conversationColor"
+      class="absolute inset-0 pointer-events-none rounded"
+      :style="{ backgroundColor: conversationColor + '33' }"
+    />
     <div
       class="relative"
       @mouseenter="onThumbnailHover"

@@ -497,7 +497,7 @@ function setFiltersFromUISettings() {
     orderBy
   )
     ? orderBy
-    : wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC;
+    : wootConstants.SORT_BY_TYPE.PRIORITY_DESC;
 }
 
 function emitConversationLoaded() {

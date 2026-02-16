@@ -16,6 +16,10 @@ class Telegram::IncomingMessageService
 
     update_contact_avatar
     set_conversation
+    if callback_query_params? && @conversation.custom_attributes&.dig('bot_topic').present?
+      answer_callback_query
+      return
+    end
     # TODO: Since the recent Telegram Business update, we need to explicitly mark messages as read using an additional request.
     # Otherwise, the client will see their messages as unread.
     # Chatwoot defines a 'read' status in its enum but does not currently update this status for Telegram conversations.
@@ -35,9 +39,14 @@ class Telegram::IncomingMessageService
 
     process_message_attachments if message_params?
     @message.save!
+    answer_callback_query if callback_query_params?
   end
 
   private
+
+  def answer_callback_query
+    inbox.channel.answer_callback_query(params[:callback_query][:id])
+  end
 
   def set_contact
     contact_inbox = ::ContactInboxWithContactBuilder.new(
