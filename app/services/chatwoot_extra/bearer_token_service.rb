@@ -28,26 +28,26 @@ module ChatwootExtra
       # Try Rails cache first
       token = Rails.cache.read(key)
       if token.present?
-        Rails.logger.debug("[ChatwootExtra] Cache HIT for #{key}")
+        Rails.logger.debug { "[ChatwootExtra] Cache HIT for #{key}" }
         return token
       else
-        Rails.logger.debug("[ChatwootExtra] Cache MISS for #{key}")
+        Rails.logger.debug { "[ChatwootExtra] Cache MISS for #{key}" }
       end
 
       # Fallback: try memory cache
       token = fetch_from_memory_cache(key)
       if token.present?
-        Rails.logger.debug("[ChatwootExtra] Memory cache HIT for #{key}")
+        Rails.logger.debug { "[ChatwootExtra] Memory cache HIT for #{key}" }
         return token
       else
-        Rails.logger.debug("[ChatwootExtra] Memory cache MISS for #{key}")
+        Rails.logger.debug { "[ChatwootExtra] Memory cache MISS for #{key}" }
       end
 
       # Generate a new token if no cache hit
       token = build_encrypted_token
 
       if token.present?
-        Rails.logger.debug("[ChatwootExtra] Caching new token for #{key} (TTL: #{ttl}s)")
+        Rails.logger.debug { "[ChatwootExtra] Caching new token for #{key} (TTL: #{ttl}s)" }
         Rails.cache.write(key, token, expires_in: ttl)
         store_in_memory_cache(key, token, ttl)
       end
@@ -117,14 +117,19 @@ module ChatwootExtra
         return
       end
 
-      auth_headers = user.create_new_auth_token
+      token = user.access_token&.token
+      unless token
+        Rails.logger.warn("[ChatwootExtra] No access token found for user #{user.id} in account #{@account.id}")
+        return
+      end
+
       payload = {
         accountId: @account.id,
-        bearerToken: Base64.strict_encode64(auth_headers.to_json)
+        bearerToken: token
       }
 
       encrypted = ChatwootExtra::Encryption.encrypt(payload.to_json)
-      Rails.logger.debug("[ChatwootExtra] Generated encrypted bearer token for account #{@account.id}")
+      Rails.logger.debug { "[ChatwootExtra] Generated encrypted bearer token for account #{@account.id}" }
       encrypted
     end
 
