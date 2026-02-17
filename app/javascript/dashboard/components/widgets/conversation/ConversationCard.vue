@@ -123,6 +123,13 @@ const conversationColor = computed(
   () => props.chat.custom_attributes?.conversation_color || null
 );
 
+const topicEmoji = computed(() => {
+  const topic = props.chat.custom_attributes?.bot_topic;
+  if (!topic) return null;
+  const match = topic.match(/^\p{Emoji_Presentation}/u);
+  return match ? match[0] : null;
+});
+
 const isInboxNameVisible = computed(() => !activeInbox.value);
 
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
@@ -426,6 +433,13 @@ const onUnblockContact = () => {
           {{ $t(`CHAT_LIST.NO_MESSAGES`) }}
         </span>
       </p>
+      <span
+        v-if="topicEmoji"
+        class="absolute ltr:right-14 rtl:left-14 text-lg leading-4"
+        :class="showMetaSection ? 'top-9' : 'top-5'"
+      >
+        {{ topicEmoji }}
+      </span>
       <div
         class="absolute flex flex-col ltr:right-3 rtl:left-3 items-end"
         :class="showMetaSection ? 'top-8' : 'top-4'"

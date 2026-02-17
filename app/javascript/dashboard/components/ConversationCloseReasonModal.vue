@@ -37,7 +37,7 @@ const closeTopics = computed(() => [
   {
     value: 'deposits_withdrawals',
     label: t('CLOSE_REASON.TOPIC_DEPOSITS_WITHDRAWALS'),
-    buttonText: '💳 Депозиты',
+    buttonText: '💳 Деп/вывод',
   },
   {
     value: 'statistics_rake_rakeback',
