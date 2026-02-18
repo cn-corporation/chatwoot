@@ -8,6 +8,7 @@ import { useMapGetter, useStore } from 'dashboard/composables/store.js';
 import wootConstants from 'dashboard/constants/globals';
 import SelectMenu from 'dashboard/components-next/selectmenu/SelectMenu.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
+import Switch from 'dashboard/components-next/switch/Switch.vue';
 
 defineProps({
   isOnExpandedLayout: {
@@ -21,7 +22,12 @@ const emit = defineEmits(['changeFilter']);
 const store = useStore();
 const { t } = useI18n();
 
-const { updateUISettings } = useUISettings();
+const { uiSettings, updateUISettings } = useUISettings();
+
+const showConversationColor = computed({
+  get: () => uiSettings.value.show_conversation_color || false,
+  set: value => updateUISettings({ show_conversation_color: value }),
+});
 
 const chatStatusFilter = useMapGetter('getChatStatusFilter');
 const chatSortFilter = useMapGetter('getChatSortFilter');
@@ -170,6 +176,12 @@ const handleSortChange = value => {
           :sub-menu-position="isOnExpandedLayout ? 'left' : 'right'"
           @update:model-value="handleSortChange"
         />
+      </div>
+      <div class="flex items-center justify-between last:mt-4 gap-2">
+        <span class="text-sm truncate text-n-slate-12">
+          {{ $t('CHAT_LIST.CHAT_SORT.SHOW_CATEGORY_COLOR') }}
+        </span>
+        <Switch v-model="showConversationColor" />
       </div>
     </div>
   </div>
