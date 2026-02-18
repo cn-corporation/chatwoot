@@ -14,6 +14,7 @@ import SLACardLabel from './components/SLACardLabel.vue';
 import PriorityMark from './PriorityMark.vue';
 import ContextMenu from 'dashboard/components/ui/ContextMenu.vue';
 import { useSourceChannelColors } from 'dashboard/composables/useSourceChannelColors';
+import { useUISettings } from 'dashboard/composables/useUISettings';
 import {
   format,
   fromUnixTime,
@@ -64,6 +65,7 @@ const contextMenu = ref({
 });
 
 const { getSourceBgColor } = useSourceChannelColors();
+const { uiSettings } = useUISettings();
 
 const currentChat = useMapGetter('getSelectedChat');
 const inboxesList = useMapGetter('inboxes/getInboxes');
@@ -119,9 +121,14 @@ const computedPriority = computed(() => {
   return calculateTimePriority(props.chat);
 });
 
-const conversationColor = computed(
-  () => props.chat.custom_attributes?.conversation_color || null
+const showConversationColor = computed(
+  () => uiSettings.value.show_conversation_color || false
 );
+
+const conversationColor = computed(() => {
+  if (!showConversationColor.value) return null;
+  return props.chat.custom_attributes?.conversation_color || null;
+});
 
 const topicEmoji = computed(() => {
   const topic = props.chat.custom_attributes?.bot_topic;
@@ -435,7 +442,7 @@ const onUnblockContact = () => {
       </p>
       <span
         v-if="topicEmoji"
-        class="absolute ltr:right-14 rtl:left-14 text-lg leading-4"
+        class="absolute z-10 ltr:right-14 rtl:left-14 text-lg leading-4"
         :class="showMetaSection ? 'top-9' : 'top-5'"
       >
         {{ topicEmoji }}
