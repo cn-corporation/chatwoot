@@ -93,6 +93,8 @@ export default {
       originalSourceBgColor: null,
       sourceClubId: '',
       originalSourceClubId: null,
+      botFlowEnabled: true,
+      originalBotFlowEnabled: true,
       healthData: null,
       isLoadingHealth: false,
       healthError: null,
@@ -449,12 +451,16 @@ export default {
           }
           this.sourceClubId = response.data.clubId || '';
           this.originalSourceClubId = response.data.clubId || null;
+          this.botFlowEnabled = response.data.botFlowEnabled !== false;
+          this.originalBotFlowEnabled = this.botFlowEnabled;
         } else {
           this.sourceBgColor = '#000000';
           this.enableSourceBgColor = false;
           this.originalSourceBgColor = null;
           this.sourceClubId = '';
           this.originalSourceClubId = null;
+          this.botFlowEnabled = true;
+          this.originalBotFlowEnabled = true;
         }
       } catch (error) {
         this.sourceBgColor = '#000000';
@@ -462,6 +468,8 @@ export default {
         this.originalSourceBgColor = null;
         this.sourceClubId = '';
         this.originalSourceClubId = null;
+        this.botFlowEnabled = true;
+        this.originalBotFlowEnabled = true;
       }
     },
     async updateInbox() {
@@ -516,6 +524,11 @@ export default {
           needsSourceChannelUpdate = true;
         }
 
+        if (this.botFlowEnabled !== this.originalBotFlowEnabled) {
+          sourceChannelUpdate.botFlowEnabled = this.botFlowEnabled;
+          needsSourceChannelUpdate = true;
+        }
+
         if (needsSourceChannelUpdate) {
           await chatwootExtraAPI.updateSourceChannel(
             this.currentInboxId,
@@ -530,6 +543,9 @@ export default {
           }
           if (sourceChannelUpdate.clubId !== undefined) {
             this.originalSourceClubId = normalizedClubId;
+          }
+          if (sourceChannelUpdate.botFlowEnabled !== undefined) {
+            this.originalBotFlowEnabled = this.botFlowEnabled;
           }
         }
 
@@ -918,6 +934,21 @@ export default {
                   'INBOX_MGMT.SETTINGS_POPUP.LOCK_TO_SINGLE_CONVERSATION_SUB_TEXT'
                 )
               }}
+            </p>
+          </label>
+
+          <label v-if="isATelegramChannel" class="pb-4">
+            {{ $t('INBOX_MGMT.SETTINGS_POPUP.BOT_FLOW_ENABLED') }}
+            <select v-model="botFlowEnabled">
+              <option :value="true">
+                {{ $t('INBOX_MGMT.EDIT.BOT_FLOW_ENABLED.ENABLED') }}
+              </option>
+              <option :value="false">
+                {{ $t('INBOX_MGMT.EDIT.BOT_FLOW_ENABLED.DISABLED') }}
+              </option>
+            </select>
+            <p class="pb-1 text-sm not-italic text-n-slate-11">
+              {{ $t('INBOX_MGMT.SETTINGS_POPUP.BOT_FLOW_ENABLED_SUB_TEXT') }}
             </p>
           </label>
 

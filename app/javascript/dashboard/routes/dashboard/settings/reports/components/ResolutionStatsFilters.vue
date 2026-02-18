@@ -52,7 +52,10 @@ const handleConversationInput = event => {
 </script>
 
 <template>
-  <MetricCard :header="t('RESOLUTION_STATISTICS.FILTERS.HEADER')" :is-loading="false">
+  <MetricCard
+    :header="t('RESOLUTION_STATISTICS.FILTERS.HEADER')"
+    :is-loading="false"
+  >
     <div class="flex flex-wrap gap-4 items-end">
       <div class="flex flex-col gap-2">
         <label class="text-sm font-medium text-n-slate-12">
@@ -90,15 +93,23 @@ const handleConversationInput = event => {
             :close-on-select="false"
             :clear-on-select="false"
             :preserve-search="true"
-            :placeholder="t('RESOLUTION_STATISTICS.FILTERS.OPERATORS_PLACEHOLDER')"
+            :placeholder="
+              t('RESOLUTION_STATISTICS.FILTERS.OPERATORS_PLACEHOLDER')
+            "
             label="label"
             track-by="value"
             :preselect-first="false"
-            @update:model-value="value => emit('updateSelectedOperators', value)"
+            @update:model-value="
+              value => emit('updateSelectedOperators', value)
+            "
           >
             <template #selection="{ values, isOpen }">
               <span v-if="values.length && !isOpen" class="multiselect__single">
-                {{ t('RESOLUTION_STATISTICS.FILTERS.OPERATORS_SELECTED', { count: values.length }) }}
+                {{
+                  t('RESOLUTION_STATISTICS.FILTERS.OPERATORS_SELECTED', {
+                    count: values.length,
+                  })
+                }}
               </span>
             </template>
           </Multiselect>
@@ -136,7 +147,9 @@ const handleConversationInput = event => {
           type="number"
           min="1"
           class="px-3 py-2 border border-n-slate-7 rounded-lg bg-n-background text-n-slate-12"
-          :placeholder="t('RESOLUTION_STATISTICS.FILTERS.CONVERSATION_PLACEHOLDER')"
+          :placeholder="
+            t('RESOLUTION_STATISTICS.FILTERS.CONVERSATION_PLACEHOLDER')
+          "
           @input="handleConversationInput"
         />
       </div>

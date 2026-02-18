@@ -1,6 +1,5 @@
 import { MESSAGE_TYPE } from 'shared/constants/messages';
 import { showBadgeOnFavicon } from './faviconHelper';
-import { initFaviconSwitcher } from './faviconHelper';
 
 import { EVENT_TYPES } from 'dashboard/routes/dashboard/settings/profile/constants.js';
 import GlobalStore from 'dashboard/store';
@@ -92,7 +91,6 @@ export class DashboardAudioNotificationHelper {
       this.intializeAudio();
     }
 
-    initFaviconSwitcher();
     this.clearRecurringTimer();
     this.playAudioEvery30Seconds();
   };

@@ -5,8 +5,7 @@ import { ref, provide } from 'vue';
 import { useConfig } from 'dashboard/composables/useConfig';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import { useAI } from 'dashboard/composables/useAI';
-// TEMPORARILY DISABLED: AI suggestions
-// import { useAISuggestions } from 'dashboard/composables/useAISuggestions';
+import { useAISuggestions } from 'dashboard/composables/useAISuggestions';
 import { useSnakeCase } from 'dashboard/composables/useTransformKeys';
 import { useSourceChannelColors } from 'dashboard/composables/useSourceChannelColors';
 
@@ -14,13 +13,13 @@ import { useSourceChannelColors } from 'dashboard/composables/useSourceChannelCo
 import ReplyBox from './ReplyBox.vue';
 import MessageList from 'next/message/MessageList.vue';
 import ConversationLabelSuggestion from './conversation/LabelSuggestion.vue';
-// TEMPORARILY DISABLED: AI suggestions
-// import AISuggestionBanner from './AISuggestionBanner.vue';
+import AISuggestionBanner from './AISuggestionBanner.vue';
 import Banner from 'dashboard/components/ui/Banner.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
 // stores and apis
 import { mapGetters } from 'vuex';
+import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 
 // mixins
 import inboxMixin, { INBOX_FEATURES } from 'shared/mixins/inboxMixin';
@@ -49,8 +48,7 @@ export default {
     ReplyBox,
     Banner,
     ConversationLabelSuggestion,
-    // TEMPORARILY DISABLED: AI suggestions
-    // AISuggestionBanner,
+    AISuggestionBanner,
     Spinner,
   },
   mixins: [inboxMixin],
@@ -76,15 +74,14 @@ export default {
       fetchLabelSuggestions,
     } = useAI();
 
-    // TEMPORARILY DISABLED: AI suggestions
-    // const {
-    //   aiSuggestion,
-    //   isLoadingSuggestion,
-    //   suggestionError,
-    //   hasSuggestion,
-    //   fetchAISuggestion,
-    //   clearSuggestion,
-    // } = useAISuggestions();
+    const {
+      aiSuggestion,
+      isLoadingSuggestion,
+      suggestionError,
+      hasSuggestion,
+      fetchAISuggestion,
+      clearSuggestion,
+    } = useAISuggestions();
 
     const { getSourceBgColor, getInboxBackgroundStyle } =
       useSourceChannelColors();
@@ -98,13 +95,12 @@ export default {
       isLabelSuggestionFeatureEnabled,
       fetchIntegrationsIfRequired,
       fetchLabelSuggestions,
-      // TEMPORARILY DISABLED: AI suggestions
-      // aiSuggestion,
-      // isLoadingSuggestion,
-      // suggestionError,
-      // hasSuggestion,
-      // fetchAISuggestion,
-      // clearSuggestion,
+      aiSuggestion,
+      isLoadingSuggestion,
+      suggestionError,
+      hasSuggestion,
+      fetchAISuggestion,
+      clearSuggestion,
       conversationPanelRef,
       getSourceBgColor,
       getInboxBackgroundStyle,
@@ -131,6 +127,8 @@ export default {
       },
       initialLoadComplete: false,
       pendingLinkedCheck: false,
+      conversationTasks: [],
+      taskStatusMap: new Map(),
     };
   },
 
@@ -321,6 +319,61 @@ export default {
 
       return { incoming, outgoing };
     },
+    normalizedTasks() {
+      return this.conversationTasks.map(t => ({
+        id: t.id,
+        completed: t.completed ?? false,
+        messageId: t.messageId ?? t.message_id ?? null,
+        message: t.message ?? '',
+        operatorName: t.operatorName ?? t.operator_name ?? '',
+        createdAt: t.createdAt ?? t.created_at ?? null,
+      }));
+    },
+    uncompletedTaskMessageIds() {
+      const ids = new Set();
+      this.taskStatusMap.forEach((status, messageId) => {
+        if (!status.completed) {
+          ids.add(messageId);
+        }
+      });
+      const uncompletedApiTaskIds = new Set(
+        this.normalizedTasks.filter(t => !t.completed).map(t => String(t.id))
+      );
+      const messages = this.currentChat.messages || [];
+      messages.forEach(m => {
+        const tId =
+          m.content_attributes?.task_id || m.content_attributes?.taskId;
+        if (tId && uncompletedApiTaskIds.has(String(tId))) {
+          ids.add(m.id);
+        }
+      });
+      this.normalizedTasks
+        .filter(t => !t.completed && t.messageId)
+        .forEach(t => ids.add(t.messageId));
+      return ids;
+    },
+    pendingTaskMessages() {
+      const loadedIds = new Set(
+        (this.currentChat.messages || []).map(m => m.id)
+      );
+      return this.normalizedTasks
+        .filter(t => !t.completed && t.messageId && !loadedIds.has(t.messageId))
+        .map(task => ({
+          id: task.messageId,
+          content: task.message,
+          private: true,
+          message_type: 1,
+          content_attributes: { task_id: task.id },
+          created_at: task.createdAt
+            ? Math.floor(new Date(task.createdAt).getTime() / 1000)
+            : 0,
+          sender: { name: task.operatorName, type: 'User' },
+          status: 'sent',
+          content_type: 'text',
+          conversation_id: this.currentChat.id,
+          attachments: [],
+        }));
+    },
     shouldShowNewMessagesIndicator() {
       return this.hasUserScrolled && this.newMessagesWhileScrolledUp > 0;
     },
@@ -331,12 +384,12 @@ export default {
       if (newChat.id === oldChat.id) {
         return;
       }
-      // TEMPORARILY DISABLED: AI suggestions
-      // this.clearSuggestion(); // Clear previous suggestion when switching conversations
+      this.clearSuggestion();
+      this.taskStatusMap.clear();
       this.fetchAllAttachmentsFromCurrentChat();
       this.fetchSuggestions();
-      // TEMPORARILY DISABLED: AI suggestions
-      // this.fetchAISuggestionForConversation();
+      this.fetchConversationTasks();
+      this.fetchAISuggestionForConversation();
       this.messageSentSinceOpened = false;
       this.newMessagesWhileScrolledUp = 0;
       this.lastTrackedConversationId = newChat.id;
@@ -430,14 +483,16 @@ export default {
     // when a message is sent we set the flag to true this hides the label suggestions,
     // until the chat is changed and the flag is reset in the watch for currentChat
     emitter.on(BUS_EVENTS.MESSAGE_SENT, this.handleMessageSent);
+    emitter.on(BUS_EVENTS.TASK_COMPLETED, this.handleTaskCompleted);
+    emitter.on(BUS_EVENTS.TASK_STATUS_LOADED, this.handleTaskStatusLoaded);
   },
 
   mounted() {
     this.addScrollListener();
     this.fetchAllAttachmentsFromCurrentChat();
     this.fetchSuggestions();
-    // TEMPORARILY DISABLED: AI suggestions
-    // this.fetchAISuggestionForConversation();
+    this.fetchConversationTasks();
+    this.fetchAISuggestionForConversation();
     this.lastTrackedConversationId = this.currentChat?.id;
     const messages = this.getMessages;
     this.lastMessageId =
@@ -455,6 +510,34 @@ export default {
   },
 
   methods: {
+    handleTaskStatusLoaded({ taskId, messageId, completed }) {
+      if (completed) {
+        this.taskStatusMap.delete(messageId);
+      } else {
+        this.taskStatusMap.set(messageId, { taskId, completed });
+      }
+    },
+    handleTaskCompleted({ messageId, taskId }) {
+      this.taskStatusMap.delete(messageId);
+      const task = this.conversationTasks.find(
+        t =>
+          String(t.id) === String(taskId) ||
+          (t.messageId ?? t.message_id) === messageId
+      );
+      if (task) {
+        task.completed = true;
+      }
+      this.fetchConversationTasks();
+    },
+    async fetchConversationTasks() {
+      if (!this.currentChat?.id) return;
+      try {
+        const tasks = await ChatwootExtraAPI.getTasks(this.currentChat.id);
+        this.conversationTasks = tasks || [];
+      } catch {
+        this.conversationTasks = [];
+      }
+    },
     async fetchSuggestions() {
       // start empty, this ensures that the label suggestions are not shown
       this.labelSuggestions = [];
@@ -494,48 +577,44 @@ export default {
         }
       });
     },
-    // TEMPORARILY DISABLED: AI suggestions
-    // async fetchAISuggestionForConversation() {
-    //   if (!this.currentChat?.id) {
-    //     return;
-    //   }
+    async fetchAISuggestionForConversation() {
+      if (!this.currentChat?.id) {
+        return;
+      }
 
-    //   // Only auto-fetch if last message is incoming
-    //   const messages = this.getMessages;
-    //   if (messages.length === 0) {
-    //     return;
-    //   }
+      const messages = this.getMessages;
+      if (messages.length === 0) {
+        return;
+      }
 
-    //   const lastMessage = messages[messages.length - 1];
-    //   const MESSAGE_TYPE_INCOMING = 0;
-    //   const isLastMessageIncoming =
-    //     lastMessage.message_type === MESSAGE_TYPE_INCOMING;
+      const lastMessage = messages[messages.length - 1];
+      const MESSAGE_TYPE_INCOMING = 0;
+      const isLastMessageIncoming =
+        lastMessage.message_type === MESSAGE_TYPE_INCOMING;
 
-    //   if (!isLastMessageIncoming) {
-    //     return;
-    //   }
+      if (!isLastMessageIncoming) {
+        return;
+      }
 
-    //   try {
-    //     await this.fetchAISuggestion(this.currentChat.id);
-    //   } catch (error) {
-    //     // Silently handle errors - suggestion is optional
-    //   }
-    // },
-    // handleUseSuggestion(suggestionContent) {
-    //   // Emit an event to fill the reply box with the suggestion
-    //   emitter.emit(BUS_EVENTS.INSERT_INTO_NORMAL_EDITOR, suggestionContent);
-    //   this.clearSuggestion();
-    // },
-    // handleDismissSuggestion() {
-    //   this.clearSuggestion();
-    // },
-    // handleReloadSuggestion() {
-    //   // Force reload the suggestion from server (bypass auto-load checks)
-    //   if (!this.currentChat?.id) {
-    //     return;
-    //   }
-    //   this.fetchAISuggestion(this.currentChat.id).catch();
-    // },
+      try {
+        await this.fetchAISuggestion(this.currentChat.id);
+      } catch (error) {
+        // Silently handle - suggestion is optional
+      }
+    },
+    handleUseSuggestion(suggestionContent) {
+      emitter.emit(BUS_EVENTS.INSERT_INTO_NORMAL_EDITOR, suggestionContent);
+      this.clearSuggestion();
+    },
+    handleDismissSuggestion() {
+      this.clearSuggestion();
+    },
+    handleReloadSuggestion() {
+      if (!this.currentChat?.id) {
+        return;
+      }
+      this.fetchAISuggestion(this.currentChat.id).catch();
+    },
     isLabelSuggestionDismissed() {
       return LocalStorage.getFlag(
         LOCAL_STORAGE_KEYS.DISMISSED_LABEL_SUGGESTIONS,
@@ -550,6 +629,8 @@ export default {
       emitter.off(BUS_EVENTS.SCROLL_TO_MESSAGE, this.onScrollToMessage);
       emitter.off(BUS_EVENTS.FETCH_LABEL_SUGGESTIONS, this.fetchSuggestions);
       emitter.off(BUS_EVENTS.MESSAGE_SENT, this.handleMessageSent);
+      emitter.off(BUS_EVENTS.TASK_COMPLETED, this.handleTaskCompleted);
+      emitter.off(BUS_EVENTS.TASK_STATUS_LOADED, this.handleTaskStatusLoaded);
     },
     onScrollToMessage({ messageId = '' } = {}) {
       this.$nextTick(() => {
@@ -870,6 +951,8 @@ export default {
       :is-an-email-channel="isAnEmailChannel"
       :inbox-supports-reply-to="inboxSupportsReplyTo"
       :messages="getMessages"
+      :uncompleted-task-message-ids="uncompletedTaskMessageIds"
+      :pending-task-messages="pendingTaskMessages"
       @retry="handleMessageRetry"
     >
       <template #beforeAll>
@@ -962,7 +1045,6 @@ export default {
           />
         </div>
       </div>
-      <!-- TEMPORARILY DISABLED: AI suggestions -->
       <!-- <div v-if="!isReadOnlyMode" class="px-4">
         <AISuggestionBanner
           :suggestion="aiSuggestion"

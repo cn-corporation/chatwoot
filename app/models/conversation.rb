@@ -279,8 +279,7 @@ class Conversation < ApplicationRecord
 
     return handle_campaign_status if campaign.present?
 
-    # TODO: make this an inbox config instead of assuming bot conversations should start as pending
-    self.status = :pending if inbox.active_bot?
+    self.status = :pending if inbox.active_bot? || inbox.channel_type == 'Channel::Telegram'
   end
 
   def handle_campaign_status
@@ -332,7 +331,7 @@ class Conversation < ApplicationRecord
   end
 
   def status_changed_attributes
-    attrs = { status: status_change }
+    attrs = { status: saved_change_to_status }
     attrs[:resolution_reason] = saved_change_to_resolution_reason if saved_change_to_resolution_reason?
     attrs[:custom_attributes] = saved_change_to_custom_attributes if saved_change_to_custom_attributes?
     attrs

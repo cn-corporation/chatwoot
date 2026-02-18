@@ -147,6 +147,16 @@ class ConversationApi extends ApiClient {
     return axios.get(`${this.url}/${conversationId}/inbox_assistant`);
   }
 
+  blockContact(conversationId, duration) {
+    return axios.post(`${this.url}/${conversationId}/block_contact`, {
+      duration,
+    });
+  }
+
+  unblockContact(conversationId) {
+    return axios.post(`${this.url}/${conversationId}/unblock_contact`);
+  }
+
   delete(conversationId) {
     return axios.delete(`${this.url}/${conversationId}`);
   }

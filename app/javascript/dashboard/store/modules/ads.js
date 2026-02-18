@@ -237,6 +237,24 @@ export const actions = {
       commit(types.SET_ADS_UI_FLAG, { isFetchingStatus: false });
     }
   },
+  getLatestSendOperations: async ({ commit }) => {
+    commit(types.SET_ADS_UI_FLAG, { isFetchingOperations: true });
+    try {
+      const response = await ChatwootExtraAPI.getLatestSendOperations();
+      if (response.success && response.data) {
+        Object.entries(response.data).forEach(([adId, operation]) => {
+          commit(types.SET_SEND_OPERATION, { adId, operation });
+        });
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isFetchingOperations: false });
+    }
+  },
   getSendOperations: async ({ commit }, adId) => {
     commit(types.SET_ADS_UI_FLAG, { isFetchingOperations: true });
     try {

@@ -51,16 +51,12 @@ const recalculateUnreadCounts = _state => {
   _state.cachedUnreadCounts = counts;
 };
 
-const invalidateSortCache = _state => {
-  _state.cachedConversationsVersion += 1;
-};
-
 const state = {
   allConversations: [],
   attachments: {},
   listLoadingStatus: true,
   chatStatusFilter: wootConstants.STATUS_TYPE.OPEN,
-  chatSortFilter: wootConstants.SORT_BY_TYPE.LATEST,
+  chatSortFilter: wootConstants.SORT_BY_TYPE.PRIORITY_DESC,
   currentInbox: null,
   selectedChatId: null,
   appliedFilters: [],
@@ -74,10 +70,8 @@ const state = {
   sidebarCountsData: [],
   operatorNotifications: new Map(),
   operatorNotificationsReady: false,
+  conversationTopics: new Map(),
   // Cached computations to avoid expensive recalculations
-  cachedSortedConversations: [],
-  cachedSortKey: null,
-  cachedConversationsVersion: 0,
   // Cached unread counts
   cachedUnreadCounts: {
     total: 0,
@@ -141,7 +135,7 @@ export const mutations = {
       });
       _state.allConversations = newAllConversations;
     }
-    invalidateSortCache(_state);
+
     recalculateUnreadCounts(_state);
   },
   [types.EMPTY_ALL_CONVERSATION](_state) {
@@ -151,16 +145,39 @@ export const mutations = {
   },
 
   [types.UPDATE_CONVERSATIONS_FOR_COUNTS](_state, conversations) {
-    // Store sidebar counts data separately from main conversations
-    _state.sidebarCountsData = conversations.map(conv => ({
-      id: conv.id,
-      unread_count: conv.unread_count || 0,
-      labels: conv.labels || [],
-      inbox_id: conv.inbox_id,
-      team_id: conv.meta?.team?.id || conv.team_id,
-      status: conv.status,
-      assignee_id: conv.meta?.assignee?.id || conv.assignee_id,
-    }));
+    const apiIds = new Set();
+    const result = conversations.map(conv => {
+      apiIds.add(conv.id);
+      const liveConv = _state.allConversations.find(c => c.id === conv.id);
+      return {
+        id: conv.id,
+        unread_count: conv.unread_count || 0,
+        labels: conv.labels || [],
+        inbox_id: conv.inbox_id,
+        team_id: conv.meta?.team?.id || conv.team_id,
+        status: liveConv ? liveConv.status : conv.status,
+        assignee_id: liveConv
+          ? liveConv.meta?.assignee?.id || liveConv.assignee_id
+          : conv.meta?.assignee?.id || conv.assignee_id,
+      };
+    });
+
+    _state.sidebarCountsData.forEach(existing => {
+      if (apiIds.has(existing.id)) return;
+      const liveConv = _state.allConversations.find(c => c.id === existing.id);
+      if (!liveConv) return;
+      result.push({
+        id: existing.id,
+        unread_count: liveConv.unread_count || 0,
+        labels: liveConv.labels || [],
+        inbox_id: liveConv.inbox_id,
+        team_id: liveConv.meta?.team?.id || liveConv.team_id,
+        status: liveConv.status,
+        assignee_id: liveConv.meta?.assignee?.id || liveConv.assignee_id,
+      });
+    });
+
+    _state.sidebarCountsData = result;
     recalculateUnreadCounts(_state);
   },
   [types.SET_ALL_MESSAGES_LOADED](_state) {
@@ -330,7 +347,19 @@ export const mutations = {
 
   [types.ADD_CONVERSATION](_state, conversation) {
     _state.allConversations.push(conversation);
-    invalidateSortCache(_state);
+    if (_state.sidebarCountsData.length > 0) {
+      _state.sidebarCountsData.push({
+        id: conversation.id,
+        unread_count: conversation.unread_count || 0,
+        labels: conversation.labels || [],
+        inbox_id: conversation.inbox_id,
+        team_id: conversation.meta?.team?.id || conversation.team_id,
+        status: conversation.status,
+        assignee_id:
+          conversation.meta?.assignee?.id || conversation.assignee_id,
+      });
+      recalculateUnreadCounts(_state);
+    }
   },
 
   [types.DELETE_CONVERSATION](_state, conversationId) {
@@ -358,15 +387,28 @@ export const mutations = {
       const { messages, ...updates } = conversation;
       allConversations[index] = { ...selectedConversation, ...updates };
 
-      const sidebarItem = _state.sidebarCountsData.find(
-        c => c.id === conversation.id
-      );
-      if (sidebarItem) {
-        sidebarItem.unread_count = conversation.unread_count || 0;
-        sidebarItem.labels = conversation.labels || [];
-        sidebarItem.team_id = conversation.meta?.team?.id;
-        sidebarItem.status = conversation.status;
-        sidebarItem.assignee_id = conversation.meta?.assignee?.id;
+      if (_state.sidebarCountsData.length > 0) {
+        const sidebarItem = _state.sidebarCountsData.find(
+          c => c.id === conversation.id
+        );
+        if (sidebarItem) {
+          sidebarItem.unread_count = conversation.unread_count || 0;
+          sidebarItem.labels = conversation.labels || [];
+          sidebarItem.team_id = conversation.meta?.team?.id;
+          sidebarItem.status = conversation.status;
+          sidebarItem.assignee_id = conversation.meta?.assignee?.id;
+        } else {
+          _state.sidebarCountsData.push({
+            id: conversation.id,
+            unread_count: conversation.unread_count || 0,
+            labels: conversation.labels || [],
+            inbox_id: conversation.inbox_id,
+            team_id: conversation.meta?.team?.id || conversation.team_id,
+            status: conversation.status,
+            assignee_id:
+              conversation.meta?.assignee?.id || conversation.assignee_id,
+          });
+        }
         recalculateUnreadCounts(_state);
       }
       if (_state.selectedChatId === conversation.id) {
@@ -375,8 +417,20 @@ export const mutations = {
       }
     } else {
       _state.allConversations.push(conversation);
+      if (_state.sidebarCountsData.length > 0) {
+        _state.sidebarCountsData.push({
+          id: conversation.id,
+          unread_count: conversation.unread_count || 0,
+          labels: conversation.labels || [],
+          inbox_id: conversation.inbox_id,
+          team_id: conversation.meta?.team?.id || conversation.team_id,
+          status: conversation.status,
+          assignee_id:
+            conversation.meta?.assignee?.id || conversation.assignee_id,
+        });
+        recalculateUnreadCounts(_state);
+      }
     }
-    invalidateSortCache(_state);
   },
 
   [types.SET_LIST_LOADING_STATUS](_state) {
@@ -488,6 +542,28 @@ export const mutations = {
   [types.CLEAR_OPERATOR_NOTIFICATIONS](_state) {
     _state.operatorNotifications.clear();
     _state.operatorNotificationsReady = false;
+  },
+  [types.SET_CONVERSATION_TOPIC](
+    _state,
+    { conversationId, topic, labelColor }
+  ) {
+    _state.conversationTopics.set(String(conversationId), {
+      topic,
+      labelColor,
+    });
+
+    const conversation = _state.allConversations.find(
+      c => c.id === Number(conversationId)
+    );
+    if (conversation) {
+      if (!conversation.custom_attributes) {
+        conversation.custom_attributes = {};
+      }
+      conversation.custom_attributes.bot_topic = topic;
+    }
+  },
+  [types.CLEAR_CONVERSATION_TOPICS](_state) {
+    _state.conversationTopics.clear();
   },
 };
 

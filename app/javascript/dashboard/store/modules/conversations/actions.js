@@ -516,6 +516,43 @@ const actions = {
     commit(types.SET_ACTIVE_INBOX, inboxId);
   },
 
+  blockContact: async ({ commit, state }, { conversationId, duration }) => {
+    try {
+      await ConversationApi.blockContact(conversationId, duration);
+      const chat = state.allConversations.find(c => c.id === conversationId);
+      if (chat) {
+        const sender = chat.meta?.sender || {};
+        const blockedUntil = new Date(
+          Date.now() + duration * 60 * 1000
+        ).toISOString();
+        commit(types.UPDATE_CONVERSATION_CONTACT, {
+          conversationId,
+          ...sender,
+          blocked_until: blockedUntil,
+        });
+      }
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+
+  unblockContact: async ({ commit, state }, conversationId) => {
+    try {
+      await ConversationApi.unblockContact(conversationId);
+      const chat = state.allConversations.find(c => c.id === conversationId);
+      if (chat) {
+        const sender = chat.meta?.sender || {};
+        commit(types.UPDATE_CONVERSATION_CONTACT, {
+          conversationId,
+          ...sender,
+          blocked_until: null,
+        });
+      }
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+
   muteConversation: async ({ commit }, conversationId) => {
     try {
       await ConversationApi.mute(conversationId);

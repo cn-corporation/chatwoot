@@ -55,13 +55,7 @@ export const applyPageFilters = (conversation, filters) => {
   const team = meta.team || {};
   const { id: chatTeamId } = team;
 
-  // For open lists, include both open and pending conversations
-  let shouldFilter;
-  if (status === 'open') {
-    shouldFilter = chatStatus === 'open' || chatStatus === 'pending';
-  } else {
-    shouldFilter = filterByStatus(chatStatus, status);
-  }
+  let shouldFilter = filterByStatus(chatStatus, status);
 
   shouldFilter = filterByInbox(shouldFilter, inboxId, chatInboxId);
   shouldFilter = filterByTeam(shouldFilter, teamId, chatTeamId);
@@ -150,7 +144,10 @@ const sortConfig = {
     const p1 = CONVERSATION_PRIORITY_ORDER[a.priority] || DEFAULT_FOR_NULL;
     const p2 = CONVERSATION_PRIORITY_ORDER[b.priority] || DEFAULT_FOR_NULL;
 
-    return getSortOrderFunction(sortDirection)(p1, p2);
+    const priorityResult = getSortOrderFunction(sortDirection)(p1, p2);
+    if (priorityResult !== 0) return priorityResult;
+
+    return sortDescending(a.last_activity_at, b.last_activity_at);
   },
 
   sortOnWaitingSince: (a, b, sortDirection) => {

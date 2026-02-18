@@ -13,6 +13,16 @@ module ConversationMuteHelpers
   end
 
   def muted?
-    contact.blocked?
+    contact.blocked? || contact.time_blocked?
+  end
+
+  def block_for!(duration_minutes)
+    contact.update!(blocked_until: Time.current + duration_minutes.minutes)
+    create_blocked_message(duration_minutes)
+  end
+
+  def unblock!
+    contact.update!(blocked_until: nil)
+    create_unblocked_message
   end
 end

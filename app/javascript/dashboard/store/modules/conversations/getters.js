@@ -29,7 +29,7 @@ const isAssignedToCurrentUser = (conversation, currentUserId) => {
 
 const isOperatorUnreadEligible = (conversation, currentUserId) => {
   if (!conversation) return false;
-  if (!isOpenOrPending(conversation)) return false;
+  if (conversation.status !== 'open') return false;
   return isAssignedToCurrentUser(conversation, currentUserId);
 };
 
@@ -44,18 +44,9 @@ const findConversation = (state, conversationId) => {
 const getters = {
   getAllConversations: _state => {
     const { allConversations, chatSortFilter: sortKey } = _state;
-    if (
-      _state.cachedSortKey === sortKey &&
-      _state.cachedSortedConversations.length === allConversations.length
-    ) {
-      return _state.cachedSortedConversations;
-    }
-    const sorted = allConversations
+    return allConversations
       .slice()
       .sort((a, b) => sortComparator(a, b, sortKey));
-    _state.cachedSortedConversations = sorted;
-    _state.cachedSortKey = sortKey;
-    return sorted;
   },
   getFilteredConversations: (
     { allConversations, chatSortFilter, appliedFilters },
@@ -111,14 +102,14 @@ const getters = {
   getMineChats: (_state, _, __, rootGetters) => activeFilters => {
     const currentUserID = rootGetters.getCurrentUser?.id;
 
-    return _state.allConversations.filter(conversation => {
-      const { assignee } = conversation.meta;
-      const isAssignedToMe = assignee && assignee.id === currentUserID;
-      const shouldFilter = applyPageFilters(conversation, activeFilters);
-      const isChatMine = isAssignedToMe && shouldFilter;
-
-      return isChatMine;
-    });
+    return _state.allConversations
+      .filter(conversation => {
+        const { assignee } = conversation.meta;
+        const isAssignedToMe = assignee && assignee.id === currentUserID;
+        const shouldFilter = applyPageFilters(conversation, activeFilters);
+        return isAssignedToMe && shouldFilter;
+      })
+      .sort((a, b) => sortComparator(a, b, _state.chatSortFilter));
   },
   getAppliedConversationFiltersV2: _state => {
     // TODO: Replace existing one with V2 after migrating the filters to use camelcase
@@ -132,19 +123,23 @@ const getters = {
     return hasAppliedFilters ? filterQueryGenerator(_state.appliedFilters) : [];
   },
   getUnAssignedChats: _state => activeFilters => {
-    return _state.allConversations.filter(conversation => {
-      const { assignee } = conversation.meta;
-      const isUnAssigned = !assignee || !assignee.id;
-      const shouldFilter = applyPageFilters(conversation, activeFilters);
-      return isUnAssigned && shouldFilter;
-    });
+    return _state.allConversations
+      .filter(conversation => {
+        const { assignee } = conversation.meta;
+        const isUnAssigned = !assignee || !assignee.id;
+        const shouldFilter = applyPageFilters(conversation, activeFilters);
+        return isUnAssigned && shouldFilter;
+      })
+      .sort((a, b) => sortComparator(a, b, _state.chatSortFilter));
   },
   getResolvedChats: _state => activeFilters => {
-    return _state.allConversations.filter(conversation => {
-      const isResolved = conversation.status === 'resolved';
-      const shouldFilter = applyPageFilters(conversation, activeFilters);
-      return isResolved && shouldFilter;
-    });
+    return _state.allConversations
+      .filter(conversation => {
+        const isResolved = conversation.status === 'resolved';
+        const shouldFilter = applyPageFilters(conversation, activeFilters);
+        return isResolved && shouldFilter;
+      })
+      .sort((a, b) => sortComparator(a, b, _state.chatSortFilter));
   },
   getAllStatusChats: (_state, _, __, rootGetters) => activeFilters => {
     const currentUser = rootGetters.getCurrentUser;
@@ -154,17 +149,19 @@ const getters = {
     const permissions = getUserPermissions(currentUser, currentAccountId);
     const userRole = getUserRole(currentUser, currentAccountId);
 
-    return _state.allConversations.filter(conversation => {
-      const shouldFilter = applyPageFilters(conversation, activeFilters);
-      const allowedForRole = applyRoleFilter(
-        conversation,
-        userRole,
-        permissions,
-        currentUserId
-      );
+    return _state.allConversations
+      .filter(conversation => {
+        const shouldFilter = applyPageFilters(conversation, activeFilters);
+        const allowedForRole = applyRoleFilter(
+          conversation,
+          userRole,
+          permissions,
+          currentUserId
+        );
 
-      return shouldFilter && allowedForRole;
-    });
+        return shouldFilter && allowedForRole;
+      })
+      .sort((a, b) => sortComparator(a, b, _state.chatSortFilter));
   },
   getChatListLoadingStatus: ({ listLoadingStatus }) => listLoadingStatus,
   getAllMessagesLoaded(_state) {
@@ -281,6 +278,8 @@ const getters = {
         : _state.allConversations;
     const currentUserId = rootGetters.getCurrentUser?.id;
 
+    if (source.length === 0) return 0;
+
     return source.reduce((total, conv) => {
       if (!isOperatorUnreadEligible(conv, currentUserId)) return total;
       return total + (_state.operatorNotifications.get(String(conv.id)) || 0);
@@ -347,6 +346,10 @@ const getters = {
           return total + selfGetters.getOperatorUnreadCount(conv.id);
         }, 0);
     },
+
+  getConversationTopic: _state => conversationId => {
+    return _state.conversationTopics.get(String(conversationId)) || null;
+  },
 };
 
 export default getters;

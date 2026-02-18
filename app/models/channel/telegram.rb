@@ -2,12 +2,13 @@
 #
 # Table name: channel_telegram
 #
-#  id         :bigint           not null, primary key
-#  bot_name   :string
-#  bot_token  :string           not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  account_id :integer          not null
+#  id                    :bigint           not null, primary key
+#  additional_attributes :jsonb
+#  bot_name              :string
+#  bot_token             :string           not null
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  account_id            :integer          not null
 #
 # Indexes
 #
@@ -100,6 +101,11 @@ class Channel::Telegram < ApplicationRecord
     "https://api.telegram.org/file/bot#{bot_token}/#{response.parsed_response['result']['file_path']}"
   end
 
+  def answer_callback_query(callback_query_id)
+    HTTParty.post("#{telegram_api_url}/answerCallbackQuery",
+                  body: { callback_query_id: callback_query_id })
+  end
+
   def process_error(message, response)
     return unless response.parsed_response['ok'] == false
 
@@ -154,7 +160,9 @@ class Channel::Telegram < ApplicationRecord
     HTTParty.post("#{telegram_api_url}/deleteWebhook")
     response = HTTParty.post("#{telegram_api_url}/setWebhook",
                              body: {
-                               url: "#{ENV.fetch('FRONTEND_URL', nil)}/webhooks/telegram/#{bot_token}"
+                               url: "#{ENV.fetch('FRONTEND_URL', nil)}/webhooks/telegram/#{bot_token}",
+                               allowed_updates: %w[message edited_message callback_query
+                                                   business_message edited_business_message business_connection].to_json
                              })
     errors.add(:bot_token, 'error setting up the webook') unless response.success?
   end

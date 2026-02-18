@@ -359,6 +359,18 @@ class ChatwootExtraAPI {
     }
   }
 
+  async getAllPersonalCannedResponses() {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/api/canned-responses/all`,
+        { headers: this.headers }
+      );
+      return response.data?.data || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
   async updatePersonalCannedResponse(id, { command, text }) {
     const response = await axios.patch(
       `${this.baseURL}/api/canned-responses/${id}`,
@@ -415,6 +427,14 @@ class ChatwootExtraAPI {
   async getAdSendOperations(adId) {
     const response = await axios.get(
       `${this.baseURL}/api/ads-send-operations/ad/${adId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getLatestSendOperations() {
+    const response = await axios.get(
+      `${this.baseURL}/api/ads-send-operations/latest`,
       { headers: this.headers }
     );
     return response.data;
@@ -502,6 +522,86 @@ class ChatwootExtraAPI {
     } catch (error) {
       return [];
     }
+  }
+
+  async getKBFiles(limit) {
+    const params = {};
+    if (limit) params.limit = limit;
+    const response = await axios.get(`${this.baseURL}/api/knowledge-base`, {
+      params,
+      headers: this.headers,
+    });
+    return response.data;
+  }
+
+  async uploadKBFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axios.post(
+      `${this.baseURL}/api/knowledge-base/upload`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'X-API-Key': CHATWOOT_EXTRA_API_KEY,
+        },
+      }
+    );
+    return response.data;
+  }
+
+  async getKBFile(fileId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/knowledge-base/${fileId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async deleteKBFile(fileId) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/knowledge-base/${fileId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getConversationTopic(conversationId) {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/api/conversation-topics/${conversationId}`,
+        { headers: this.headers }
+      );
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  getConversationTopicStreamURL(operatorId) {
+    const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
+    return `${this.baseURL}/api/conversation-topics/stream/${operatorId}?apiKey=${apiKey}`;
+  }
+
+  async searchMessages({
+    query,
+    userId,
+    dateFrom,
+    dateTo,
+    accountId,
+    limit = 20,
+    offset = 0,
+  }) {
+    const params = { query, accountId, limit, offset };
+    if (userId) params.userId = userId;
+    if (dateFrom) params.dateFrom = dateFrom;
+    if (dateTo) params.dateTo = dateTo;
+
+    const response = await axios.get(`${this.baseURL}/api/message-search`, {
+      params,
+      headers: this.headers,
+    });
+    return response.data;
   }
 }
 

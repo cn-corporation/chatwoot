@@ -16,6 +16,16 @@ export const getters = {
     const channels = $state.linkedChannels[conversationId] || [];
     return channels.length > 0 ? channels[0].contact_name : null;
   },
+  getLinkedConversationLabels: $state => conversationId => {
+    const channels = $state.linkedChannels[conversationId] || [];
+    if (channels.length === 0) return [];
+    const labelList = channels[0].cached_label_list;
+    if (!labelList) return [];
+    return labelList
+      .split(',')
+      .map(l => l.trim())
+      .filter(Boolean);
+  },
   hasLinkedSourceChannels: $state => conversationId => {
     const channels = $state.linkedChannels[conversationId] || [];
     return channels.length > 0;

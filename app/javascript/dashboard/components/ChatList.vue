@@ -497,7 +497,7 @@ function setFiltersFromUISettings() {
     orderBy
   )
     ? orderBy
-    : wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC;
+    : wootConstants.SORT_BY_TYPE.PRIORITY_DESC;
 }
 
 function emitConversationLoaded() {
@@ -992,6 +992,24 @@ const closeTodoModal = () => {
   selectedChatForTask.value = null;
 };
 
+async function onBlockContact(duration, conversationId) {
+  try {
+    await store.dispatch('blockContact', { conversationId, duration });
+    useAlert(t('CONVERSATION.CARD_CONTEXT_MENU.BLOCK_SUCCESS', { duration }));
+  } catch (error) {
+    // Handle error
+  }
+}
+
+async function onUnblockContact(conversationId) {
+  try {
+    await store.dispatch('unblockContact', conversationId);
+    useAlert(t('CONVERSATION.CARD_CONTEXT_MENU.UNBLOCK_SUCCESS'));
+  } catch (error) {
+    // Handle error
+  }
+}
+
 provide('selectConversation', selectConversation);
 provide('deSelectConversation', deSelectConversation);
 provide('assignAgent', onAssignAgent);
@@ -1005,6 +1023,8 @@ provide('assignPriority', assignPriority);
 provide('isConversationSelected', isConversationSelected);
 provide('createTask', handleCreateTask);
 provide('deleteConversation', handleDelete);
+provide('blockContact', onBlockContact);
+provide('unblockContact', onUnblockContact);
 provide('isBulkMessageMode', isBulkMessageMode);
 provide('canSelectMore', canSelectMore);
 

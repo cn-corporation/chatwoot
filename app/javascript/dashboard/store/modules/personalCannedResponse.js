@@ -5,13 +5,16 @@ import ChatwootExtraAPI from '../../api/chatwootExtra';
 
 const state = {
   records: [],
+  allRecords: [],
   uiFlags: {
     fetchingList: false,
+    fetchingAllList: false,
     creatingItem: false,
     updatingItem: false,
     deletingItem: false,
   },
   hasFetched: false,
+  hasAllFetched: false,
 };
 
 const getters = {
@@ -27,11 +30,26 @@ const getters = {
         return b.command.localeCompare(a.command);
       });
   },
+  getAllPersonalCannedResponses(_state) {
+    return _state.allRecords;
+  },
+  getSortedAllPersonalCannedResponses(_state) {
+    return sortOrder =>
+      [..._state.allRecords].sort((a, b) => {
+        if (sortOrder === 'asc') {
+          return a.command.localeCompare(b.command);
+        }
+        return b.command.localeCompare(a.command);
+      });
+  },
   getPersonalCannedUIFlags(_state) {
     return _state.uiFlags;
   },
   hasPersonalCannedFetched(_state) {
     return _state.hasFetched;
+  },
+  hasAllPersonalCannedFetched(_state) {
+    return _state.hasAllFetched;
   },
 };
 
@@ -65,6 +83,31 @@ const actions = {
     } catch (error) {
       commit(types.default.SET_PERSONAL_CANNED_UI_FLAG, {
         fetchingList: false,
+      });
+    }
+  },
+
+  getAllPersonalCannedResponses: async function getAllPersonalCannedResponses(
+    { commit },
+    { force = false } = {}
+  ) {
+    const hasFetched = state.hasAllFetched;
+    if (hasFetched && !force) {
+      return;
+    }
+
+    commit(types.default.SET_PERSONAL_CANNED_UI_FLAG, {
+      fetchingAllList: true,
+    });
+    try {
+      const responses = await ChatwootExtraAPI.getAllPersonalCannedResponses();
+      commit(types.default.SET_ALL_PERSONAL_CANNED, responses);
+      commit(types.default.SET_PERSONAL_CANNED_UI_FLAG, {
+        fetchingAllList: false,
+      });
+    } catch (error) {
+      commit(types.default.SET_PERSONAL_CANNED_UI_FLAG, {
+        fetchingAllList: false,
       });
     }
   },
@@ -159,9 +202,30 @@ const mutations = {
     _state.hasFetched = true;
   },
 
+  [types.default.SET_ALL_PERSONAL_CANNED](_state, data) {
+    _state.allRecords = data;
+    _state.hasAllFetched = true;
+  },
+
   [types.default.ADD_PERSONAL_CANNED]: MutationHelpers.create,
-  [types.default.EDIT_PERSONAL_CANNED]: MutationHelpers.update,
-  [types.default.DELETE_PERSONAL_CANNED]: MutationHelpers.destroy,
+
+  [types.default.EDIT_PERSONAL_CANNED](_state, data) {
+    _state.records.forEach((element, index) => {
+      if (element.id === data.id) {
+        _state.records[index] = data;
+      }
+    });
+    _state.allRecords.forEach((element, index) => {
+      if (element.id === data.id) {
+        _state.allRecords[index] = data;
+      }
+    });
+  },
+
+  [types.default.DELETE_PERSONAL_CANNED](_state, id) {
+    _state.records = _state.records.filter(record => record.id !== id);
+    _state.allRecords = _state.allRecords.filter(record => record.id !== id);
+  },
 };
 
 export default {

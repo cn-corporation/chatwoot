@@ -18,7 +18,11 @@ const { t } = useI18n();
     >
       <span class="i-lucide-history text-n-slate-10" />
       <span class="text-sm text-n-slate-11">
-        {{ t('CONVERSATION.MESSAGES_FROM_PREVIOUS_ACCOUNT', { name: contactName }) }}
+        {{
+          t('CONVERSATION.MESSAGES_FROM_PREVIOUS_ACCOUNT', {
+            name: contactName,
+          })
+        }}
       </span>
     </div>
   </li>

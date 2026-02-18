@@ -2,17 +2,22 @@
   "PERSONAL_CANNED_MGMT": {
     "BADGE": "Personal",
     "HEADER": "Personal Canned Responses",
+    "HEADER_ADMIN": "All Operators' Personal Canned Responses",
     "DESCRIPTION": "Personal canned responses are your own pre-written reply templates. They are only visible to you and appear on top when using the '/' shortcut.",
+    "DESCRIPTION_ADMIN": "View all personal canned responses created by operators. These are visible only to their respective owners during conversations.",
     "HEADER_BTN_TXT": "Add personal canned response",
     "LOADING": "Fetching personal canned responses...",
+    "LOADING_ADMIN": "Fetching all operators' canned responses...",
     "SEARCH_404": "There are no items matching this query.",
     "LIST": {
       "404": "You don't have any personal canned responses yet.",
+      "404_ADMIN": "No operators have created personal canned responses yet.",
       "TITLE": "Manage personal canned responses",
       "DESC": "Personal canned responses are your private reply templates which can be used to quickly send out replies to conversations.",
       "TABLE_HEADER": {
         "SHORT_CODE": "Short code",
         "CONTENT": "Content",
+        "OWNER": "Owner",
         "ACTIONS": "Actions"
       }
     },

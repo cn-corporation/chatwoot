@@ -1,11 +1,20 @@
 import SearchAPI from '../../api/search';
+import ChatwootExtraAPI from '../../api/chatwootExtra';
 import types from '../mutation-types';
+const MESSAGE_SEARCH_LIMIT = 15;
+
 export const initialState = {
   records: [],
   contactRecords: [],
   conversationRecords: [],
   messageRecords: [],
   articleRecords: [],
+  messageFilters: {
+    userId: null,
+    dateFrom: null,
+    dateTo: null,
+  },
+  hasMoreMessages: true,
   uiFlags: {
     isFetching: false,
     isSearchCompleted: false,
@@ -31,6 +40,12 @@ export const getters = {
   },
   getArticleRecords(state) {
     return state.articleRecords;
+  },
+  getMessageFilters(state) {
+    return state.messageFilters;
+  },
+  getHasMoreMessages(state) {
+    return state.hasMoreMessages;
   },
   getUIFlags(state) {
     return state.uiFlags;
@@ -103,16 +118,49 @@ export const actions = {
       commit(types.CONVERSATION_SEARCH_SET_UI_FLAG, { isFetching: false });
     }
   },
-  async messageSearch({ commit }, { q, page = 1 }) {
+  async messageSearch({ commit, state, rootGetters }, { q, page = 1 }) {
     commit(types.MESSAGE_SEARCH_SET_UI_FLAG, { isFetching: true });
     try {
-      const { data } = await SearchAPI.messages({ q, page });
-      commit(types.MESSAGE_SEARCH_SET, data.payload.messages);
+      const accountId = rootGetters.getCurrentAccountId;
+      const { userId, dateFrom, dateTo } = state.messageFilters;
+
+      const response = await ChatwootExtraAPI.searchMessages({
+        query: q,
+        userId,
+        dateFrom,
+        dateTo,
+        accountId,
+        limit: MESSAGE_SEARCH_LIMIT,
+        offset: (page - 1) * MESSAGE_SEARCH_LIMIT,
+      });
+
+      const hits = response.hits || [];
+      const totalHits = response.totalHits || 0;
+      const currentOffset = (page - 1) * MESSAGE_SEARCH_LIMIT;
+      const hasMore = currentOffset + hits.length < totalHits;
+      commit('SET_HAS_MORE_MESSAGES', hasMore);
+
+      const agents = rootGetters['agents/getAgents'];
+      const messages = hits.map(hit => ({
+        id: hit.messageId,
+        conversation_id: hit.conversationId,
+        content: hit.content,
+        created_at: Math.floor(hit.timestamp / 1000),
+        sender: hit.userId
+          ? { name: agents.find(a => a.id === hit.userId)?.name || 'Agent' }
+          : null,
+        inbox: {},
+      }));
+
+      commit(types.MESSAGE_SEARCH_SET, messages);
     } catch (error) {
-      // Ignore error
+      commit('SET_HAS_MORE_MESSAGES', false);
     } finally {
       commit(types.MESSAGE_SEARCH_SET_UI_FLAG, { isFetching: false });
     }
+  },
+  setMessageFilters({ commit }, filters) {
+    commit(types.SET_MESSAGE_SEARCH_FILTERS, filters);
   },
   async articleSearch({ commit }, { q, page = 1 }) {
     commit(types.ARTICLE_SEARCH_SET_UI_FLAG, { isFetching: true });
@@ -127,6 +175,9 @@ export const actions = {
   },
   async clearSearchResults({ commit }) {
     commit(types.CLEAR_SEARCH_RESULTS);
+  },
+  clearMessageResults({ commit }) {
+    commit('CLEAR_MESSAGE_RESULTS');
   },
 };
 
@@ -169,6 +220,17 @@ export const mutations = {
     state.conversationRecords = [];
     state.messageRecords = [];
     state.articleRecords = [];
+    state.hasMoreMessages = true;
+  },
+  [types.SET_MESSAGE_SEARCH_FILTERS](state, filters) {
+    state.messageFilters = { ...state.messageFilters, ...filters };
+  },
+  SET_HAS_MORE_MESSAGES(state, hasMore) {
+    state.hasMoreMessages = hasMore;
+  },
+  CLEAR_MESSAGE_RESULTS(state) {
+    state.messageRecords = [];
+    state.hasMoreMessages = true;
   },
 };
 
