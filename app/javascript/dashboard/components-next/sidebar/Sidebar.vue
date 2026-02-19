@@ -285,24 +285,6 @@ const menuItems = computed(() => {
       to: accountScopedRoute('label_reports_index'),
     },
     {
-      name: 'Reports CSAT',
-      label: t('SIDEBAR.CSAT'),
-      icon: 'i-lucide-smile',
-      to: accountScopedRoute('csat_reports'),
-    },
-    {
-      name: 'Reports Bot',
-      label: t('SIDEBAR.REPORTS_BOT'),
-      icon: 'i-lucide-bot',
-      to: accountScopedRoute('bot_reports'),
-    },
-    {
-      name: 'Reports SLA',
-      label: t('SIDEBAR.REPORTS_SLA'),
-      icon: 'i-lucide-clock-alert',
-      to: accountScopedRoute('sla_reports'),
-    },
-    {
       name: 'Reports Tasks',
       label: t('SIDEBAR.REPORTS_TASKS'),
       icon: 'i-lucide-list-todo',

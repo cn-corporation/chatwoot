@@ -19,10 +19,7 @@ import InboxReports from './InboxReports.vue';
 import LabelReports from './LabelReports.vue';
 import TeamReports from './TeamReports.vue';
 
-import CsatResponses from './CsatResponses.vue';
-import BotReports from './BotReports.vue';
 import LiveReports from './LiveReports.vue';
-import SLAReports from './SLAReports.vue';
 import ResponseStatistics from './ResponseStatistics.vue';
 import ResolutionStatistics from './ResolutionStatistics.vue';
 import TasksReports from './TasksReports.vue';
@@ -154,24 +151,6 @@ export default {
         },
         ...oldReportRoutes,
         ...revisedReportRoutes,
-        {
-          path: 'sla',
-          name: 'sla_reports',
-          meta,
-          component: SLAReports,
-        },
-        {
-          path: 'csat',
-          name: 'csat_reports',
-          meta,
-          component: CsatResponses,
-        },
-        {
-          path: 'bot',
-          name: 'bot_reports',
-          meta,
-          component: BotReports,
-        },
         {
           path: 'response_statistics',
           name: 'response_statistics',
