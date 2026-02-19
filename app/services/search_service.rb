@@ -98,7 +98,7 @@ class SearchService
   end
 
   def should_skip_inbox_filtering?
-    account_user.administrator? || user_has_access_to_all_inboxes?
+    user_has_access_to_all_inboxes?
   end
 
   def user_has_access_to_all_inboxes?

@@ -106,7 +106,9 @@ onUnmounted(() => {
 });
 
 const sortedInboxes = computed(() =>
-  inboxes.value.slice().sort((a, b) => a.name.localeCompare(b.name))
+  inboxes.value
+    .filter(inbox => inbox.is_member)
+    .sort((a, b) => a.name.localeCompare(b.name))
 );
 
 const closeMobileSidebar = () => {

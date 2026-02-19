@@ -24,6 +24,7 @@ class InboxMember < ApplicationRecord
 
   after_create :add_agent_to_round_robin
   after_destroy :remove_agent_from_round_robin
+  after_commit :invalidate_inbox_cache, on: [:create, :destroy]
 
   private
 
@@ -33,6 +34,10 @@ class InboxMember < ApplicationRecord
 
   def remove_agent_from_round_robin
     ::AutoAssignment::InboxRoundRobinService.new(inbox: inbox).remove_agent_from_queue(user_id) if inbox.present?
+  end
+
+  def invalidate_inbox_cache
+    inbox.account.update_cache_key('inbox')
   end
 end
 
