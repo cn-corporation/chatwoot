@@ -9,6 +9,7 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
 
   def index
     @inboxes = policy_scope(Current.account.inboxes.order_by_name.includes(:channel, { avatar_attachment: [:blob] }))
+    @member_inbox_ids = Current.user.inbox_members.where(inbox_id: @inboxes.select(:id)).pluck(:inbox_id).to_set
   end
 
   def show; end
@@ -262,9 +263,7 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
     excluded_contact_ids = []
 
     categories = filter_params[:categories]
-    if categories.present? && categories.is_a?(Array) && categories.any?
-      excluded_contact_ids += contacts_with_labeled_conversations(categories)
-    end
+    excluded_contact_ids += contacts_with_labeled_conversations(categories) if categories.present? && categories.is_a?(Array) && categories.any?
 
     contact_attributes = filter_params[:contact_attributes]
     if contact_attributes.present? && contact_attributes.is_a?(ActionController::Parameters)
