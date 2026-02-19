@@ -323,6 +323,12 @@ const menuItems = computed(() => {
       icon: 'i-lucide-check-circle',
       to: accountScopedRoute('resolution_statistics'),
     });
+    reportsChildren.push({
+      name: 'Reports CSAT Statistics',
+      label: t('SIDEBAR.CSAT_STATISTICS'),
+      icon: 'i-lucide-star',
+      to: accountScopedRoute('csat_statistics'),
+    });
   }
 
   return [

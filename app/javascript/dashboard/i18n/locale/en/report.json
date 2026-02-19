@@ -675,5 +675,53 @@
       "COMPLETED_AT": "Completed at",
       "CREATED_AT": "Created at"
     }
+  },
+  "CSAT_STATISTICS": {
+    "HEADER": "CSAT Statistics",
+    "DESCRIPTION": "Analyze customer satisfaction ratings, trends, and operator performance",
+    "FILTERS": {
+      "HEADER": "Filters",
+      "START_DATE": "Start Date",
+      "END_DATE": "End Date",
+      "OPERATORS": "Operators (optional)",
+      "OPERATORS_PLACEHOLDER": "Select operators...",
+      "OPERATORS_SELECTED": "{count} operator(s) selected",
+      "RATING": "Rating (optional)",
+      "RATING_PLACEHOLDER": "All ratings",
+      "APPLY": "Apply Filters"
+    },
+    "METRICS": {
+      "TOTAL_RESPONSES": "Total Responses",
+      "SATISFACTION_SCORE": "Satisfaction Score",
+      "UNIQUE_CONVERSATIONS": "Unique Conversations",
+      "UNIQUE_OPERATORS": "Unique Operators"
+    },
+    "RATINGS": {
+      "AWESOME": "Awesome",
+      "GOOD": "Good",
+      "BAD": "Bad",
+      "TERRIBLE": "Terrible"
+    },
+    "CHARTS": {
+      "RATINGS": "Responses by Rating",
+      "RATINGS_LABEL": "Responses",
+      "TREND": "CSAT Trend",
+      "TREND_LABEL": "Responses per Day",
+      "OPERATORS": "Operator CSAT (Top 10)",
+      "OPERATORS_RESPONSES": "Responses"
+    },
+    "TABLE": {
+      "HEADER": "CSAT Records",
+      "COLUMNS": {
+        "CONVERSATION": "Conversation",
+        "OPERATOR": "Operator",
+        "RATING": "Rating",
+        "COMMENT": "Comment",
+        "RESOLVED_AT": "Resolved At"
+      }
+    },
+    "EMPTY_STATE": "No data available",
+    "EMPTY_VALUE": "--",
+    "OPERATOR_ID": "Operator {id}"
   }
 }
