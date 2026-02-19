@@ -396,6 +396,7 @@ class Message < ApplicationRecord
   def reopen_conversation
     return if conversation.muted?
     return unless incoming?
+    return if content_attributes&.dig('is_callback_query') && conversation.resolved?
 
     conversation.open! if conversation.snoozed?
 

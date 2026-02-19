@@ -26,6 +26,7 @@ import SLAReports from './SLAReports.vue';
 import ResponseStatistics from './ResponseStatistics.vue';
 import ResolutionStatistics from './ResolutionStatistics.vue';
 import TasksReports from './TasksReports.vue';
+import CsatStatistics from './CsatStatistics.vue';
 
 const meta = {
   featureFlag: FEATURE_FLAGS.REPORTS,
@@ -188,6 +189,12 @@ export default {
           name: 'tasks_reports',
           meta,
           component: TasksReports,
+        },
+        {
+          path: 'csat_statistics',
+          name: 'csat_statistics',
+          meta,
+          component: CsatStatistics,
         },
       ],
     },

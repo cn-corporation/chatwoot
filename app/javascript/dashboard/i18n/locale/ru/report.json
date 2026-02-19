@@ -676,5 +676,53 @@
       "COMPLETED_AT": "Выполнено",
       "CREATED_AT": "Создано"
     }
+  },
+  "CSAT_STATISTICS": {
+    "HEADER": "Статистика CSAT",
+    "DESCRIPTION": "Анализ оценок удовлетворённости клиентов, трендов и эффективности операторов",
+    "FILTERS": {
+      "HEADER": "Фильтры",
+      "START_DATE": "Начало",
+      "END_DATE": "Конец",
+      "OPERATORS": "Операторы (необязательно)",
+      "OPERATORS_PLACEHOLDER": "Выберите операторов...",
+      "OPERATORS_SELECTED": "Выбрано операторов: {count}",
+      "RATING": "Оценка (необязательно)",
+      "RATING_PLACEHOLDER": "Все оценки",
+      "APPLY": "Применить"
+    },
+    "METRICS": {
+      "TOTAL_RESPONSES": "Всего ответов",
+      "SATISFACTION_SCORE": "Удовлетворённость",
+      "UNIQUE_CONVERSATIONS": "Уникальных диалогов",
+      "UNIQUE_OPERATORS": "Уникальных операторов"
+    },
+    "RATINGS": {
+      "AWESOME": "Супер",
+      "GOOD": "Хорошо",
+      "BAD": "Плохо",
+      "TERRIBLE": "Ужасно"
+    },
+    "CHARTS": {
+      "RATINGS": "Ответы по оценкам",
+      "RATINGS_LABEL": "Ответы",
+      "TREND": "Тренд CSAT",
+      "TREND_LABEL": "Ответов в день",
+      "OPERATORS": "CSAT по операторам (Топ 10)",
+      "OPERATORS_RESPONSES": "Ответы"
+    },
+    "TABLE": {
+      "HEADER": "Записи CSAT",
+      "COLUMNS": {
+        "CONVERSATION": "Диалог",
+        "OPERATOR": "Оператор",
+        "RATING": "Оценка",
+        "COMMENT": "Комментарий",
+        "RESOLVED_AT": "Разрешено"
+      }
+    },
+    "EMPTY_STATE": "Нет данных",
+    "EMPTY_VALUE": "--",
+    "OPERATOR_ID": "Оператор {id}"
   }
 }

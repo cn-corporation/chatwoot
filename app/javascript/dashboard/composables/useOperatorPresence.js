@@ -231,14 +231,7 @@ export const useOperatorPresence = (conversationId, operatorId) => {
     window.addEventListener('focus', focusHandler);
 
     beforeUnloadHandler = () => {
-      if (hasJoined.value) {
-        const baseURL =
-          window.chatwootConfig?.chatwootExtraApiUrl || 'http://localhost:3001';
-        navigator.sendBeacon(
-          `${baseURL}/api/operator-presence/conversations/${currentConversationId.value}/leave`,
-          JSON.stringify({ operatorId: operatorId.value })
-        );
-      }
+      cleanupConnections();
     };
     window.addEventListener('beforeunload', beforeUnloadHandler);
   }
