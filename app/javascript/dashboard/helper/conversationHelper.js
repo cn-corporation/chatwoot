@@ -50,7 +50,9 @@ export const getLastMessage = m => {
   const lastMessageIncludingActivity = m.messages[m.messages.length - 1];
 
   const nonActivityMessages = m.messages.filter(
-    message => message.message_type !== 2
+    message =>
+      message.message_type !== 2 &&
+      !message.content_attributes?.bot_system_message
   );
   const lastNonActivityMessageInStore =
     nonActivityMessages[nonActivityMessages.length - 1];
