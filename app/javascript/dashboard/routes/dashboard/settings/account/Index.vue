@@ -16,6 +16,8 @@ import BuildInfo from './components/BuildInfo.vue';
 import AccountDelete from './components/AccountDelete.vue';
 import AutoResolve from './components/AutoResolve.vue';
 import AudioTranscription from './components/AudioTranscription.vue';
+import DialogueSegregation from './components/DialogueSegregation.vue';
+import AssignableAgents from './components/AssignableAgents.vue';
 import SectionLayout from './components/SectionLayout.vue';
 
 export default {
@@ -27,6 +29,8 @@ export default {
     AccountDelete,
     AutoResolve,
     AudioTranscription,
+    DialogueSegregation,
+    AssignableAgents,
     SectionLayout,
     WithLabel,
     NextInput,
@@ -241,6 +245,8 @@ export default {
     </div>
     <AutoResolve v-if="showAutoResolutionConfig" />
     <AudioTranscription v-if="showAudioTranscriptionConfig" />
+    <DialogueSegregation />
+    <AssignableAgents />
     <AccountId />
     <div v-if="!uiFlags.isFetchingItem && isOnChatwootCloud">
       <AccountDelete />

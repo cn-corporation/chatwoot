@@ -52,9 +52,18 @@ export default {
       ];
     },
     assignableAgents() {
-      return this.$store.getters['inboxAssignableAgents/getAssignableAgents'](
-        this.selectedInboxes.join(',')
-      );
+      let agents = this.$store.getters[
+        'inboxAssignableAgents/getAssignableAgents'
+      ](this.selectedInboxes.join(','));
+      const currentAccountId = this.$store.getters.getCurrentAccountId;
+      const account =
+        this.$store.getters['accounts/getAccount'](currentAccountId);
+      const allowedIds = account?.settings?.assignable_agent_ids;
+      if (allowedIds?.length) {
+        const numericIds = allowedIds.map(Number);
+        agents = agents.filter(a => numericIds.includes(a.id));
+      }
+      return agents;
     },
     conversationLabel() {
       return this.conversationCount > 1 ? 'conversations' : 'conversation';
