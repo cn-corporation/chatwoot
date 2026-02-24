@@ -153,6 +153,8 @@ const inboxesList = useMapGetter('inboxes/getInboxes');
 const campaigns = useMapGetter('campaigns/getAllCampaigns');
 const labels = useMapGetter('labels/getLabels');
 const currentAccountId = useMapGetter('getCurrentAccountId');
+const getAccountFn = useMapGetter('accounts/getAccount');
+const myTeams = useMapGetter('teams/getMyTeams');
 // We can't useFunctionGetter here since it needs to be called on setup?
 const getTeamFn = useMapGetter('teams/getTeam');
 
@@ -461,6 +463,20 @@ const conversationList = computed(() => {
     const { payload } = activeFolder.value.query;
     localConversationList = localConversationList.filter(conversation => {
       return matchesFilters(conversation, payload);
+    });
+  }
+
+  const account = getAccountFn.value(currentAccountId.value);
+  const isCurrentUserAdmin = currentUser.value?.role === 'administrator';
+  if (account?.settings?.dialogue_segregation_enabled && !isCurrentUserAdmin) {
+    const myTeamIds = myTeams.value.map(team => team.id);
+    localConversationList = localConversationList.filter(conversation => {
+      const teamId =
+        conversation.team_id || conversation.meta?.team?.id || null;
+      if (myTeamIds.length) {
+        return myTeamIds.includes(teamId);
+      }
+      return teamId === null;
     });
   }
 

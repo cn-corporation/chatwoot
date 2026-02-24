@@ -3,6 +3,24 @@ import types from '../store/mutation-types';
 
 const ALERT_AUDIO_PATH = '/audio/dashboard/ding.mp3';
 
+const shouldNotify = (store, conversationId) => {
+  const accountId = store.getters.getCurrentAccountId;
+  const account = store.getters['accounts/getAccount'](accountId);
+  if (!account?.settings?.dialogue_segregation_enabled) return true;
+  const currentUser = store.getters.getCurrentUser;
+  if (currentUser?.role === 'administrator') return true;
+  const allConversations = store.getters.getAllConversations;
+  const conversation = allConversations.find(
+    c => c.id === Number(conversationId)
+  );
+  if (!conversation) return true;
+  const myTeams = store.getters['teams/getMyTeams'] || [];
+  const myTeamIds = myTeams.map(t => t.id);
+  const teamId = conversation.team_id || conversation.meta?.team?.id || null;
+  if (myTeamIds.length) return myTeamIds.includes(teamId);
+  return teamId === null;
+};
+
 const toNumber = value => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -54,7 +72,8 @@ const setFaviconHrefs = href => {
 
 const updateTitle = count => {
   const clean = document.title.replace(/^\(\d+\+?\)\s*/, '');
-  document.title = count > 0 ? `(${count > 99 ? '99+' : count}) ${clean}` : clean;
+  document.title =
+    count > 0 ? `(${count > 99 ? '99+' : count}) ${clean}` : clean;
 };
 
 const updateFavicon = async totalCount => {
@@ -184,6 +203,7 @@ export const initializeOperatorNotifications = store => {
     eventSource.addEventListener('message_created', event => {
       try {
         const payload = JSON.parse(event.data);
+        if (!shouldNotify(store, payload.conversationId)) return;
         updateCount('message_created', payload);
         store.commit(types.SET_OPERATOR_NOTIFICATION_COUNT, {
           conversationId: payload.conversationId,

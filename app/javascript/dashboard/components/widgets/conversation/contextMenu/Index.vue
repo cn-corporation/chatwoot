@@ -190,9 +190,17 @@ export default {
         this.currentUser,
         this.currentAccountId
       );
-      const filteredAgents = getSortedAgentsByAvailability(
+      let filteredAgents = getSortedAgentsByAvailability(
         agentsByUpdatedPresence
       );
+      const account = this.$store.getters['accounts/getAccount'](
+        this.currentAccountId
+      );
+      const allowedIds = account?.settings?.assignable_agent_ids;
+      if (allowedIds?.length) {
+        const numericIds = allowedIds.map(Number);
+        filteredAgents = filteredAgents.filter(a => numericIds.includes(a.id));
+      }
       return filteredAgents;
     },
     assignableAgents() {

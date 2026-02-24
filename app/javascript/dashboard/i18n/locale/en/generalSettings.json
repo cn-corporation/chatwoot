@@ -96,6 +96,22 @@
         "LABEL": "Exclude unattended conversations",
         "HELP": "When enabled, the system will skip resolving conversations that are still waiting for an agent's reply."
       },
+      "DIALOGUE_SEGREGATION": {
+        "TITLE": "Dialogue segregation",
+        "NOTE": "When enabled, operators will only see conversations assigned to their teams. Operators without a team will only see unassigned conversations.",
+        "API": {
+          "SUCCESS": "Dialogue segregation settings updated successfully",
+          "ERROR": "Failed to update dialogue segregation settings"
+        }
+      },
+      "ASSIGNABLE_AGENTS": {
+        "TITLE": "Assignable agents",
+        "NOTE": "Select which agents can be assigned to conversations. If none selected, all agents will be available.",
+        "API": {
+          "SUCCESS": "Assignable agents updated successfully",
+          "ERROR": "Failed to update assignable agents"
+        }
+      },
       "AUDIO_TRANSCRIPTION": {
         "TITLE": "Transcribe Audio Messages",
         "NOTE": "Automatically transcribe audio messages in conversations. Generate a text transcript whenever an audio message is sent or received, and display it alongside the message.",

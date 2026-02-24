@@ -1,6 +1,7 @@
 import { computed } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
+import { useAccount } from 'dashboard/composables/useAccount';
 import {
   getAgentsByUpdatedPresence,
   getSortedAgentsByAvailability,
@@ -14,6 +15,7 @@ import {
  */
 export function useAgentsList(includeNoneAgent = true) {
   const { t } = useI18n();
+  const { currentAccount } = useAccount();
   const currentUser = useMapGetter('getCurrentUser');
   const currentChat = useMapGetter('getSelectedChat');
   const currentAccountId = useMapGetter('getCurrentAccountId');
@@ -53,13 +55,17 @@ export function useAgentsList(includeNoneAgent = true) {
       currentAccountId.value
     );
 
-    const filteredAgentsByAvailability = getSortedAgentsByAvailability(
-      agentsByUpdatedPresence
-    );
+    let filteredAgents = getSortedAgentsByAvailability(agentsByUpdatedPresence);
+
+    const allowedIds = currentAccount.value?.settings?.assignable_agent_ids;
+    if (allowedIds?.length) {
+      const numericIds = allowedIds.map(Number);
+      filteredAgents = filteredAgents.filter(a => numericIds.includes(a.id));
+    }
 
     return [
       ...(includeNoneAgent && isAgentSelected.value ? [createNoneAgent()] : []),
-      ...filteredAgentsByAvailability,
+      ...filteredAgents,
     ];
   });
 
