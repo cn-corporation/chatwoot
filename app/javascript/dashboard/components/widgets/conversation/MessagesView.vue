@@ -1048,16 +1048,16 @@ export default {
           />
         </div>
       </div>
-      <!-- <div v-if="!isReadOnlyMode" class="px-4">
+      <div v-if="!isReadOnlyMode" class="px-4">
         <AISuggestionBanner
           :suggestion="aiSuggestion"
           :is-loading="isLoadingSuggestion"
           :error="suggestionError"
-          @useSuggestion="handleUseSuggestion"
+          @use-suggestion="handleUseSuggestion"
           @dismiss="handleDismissSuggestion"
           @reload="handleReloadSuggestion"
         />
-      </div> -->
+      </div>
       <ReplyBox
         v-if="!isReadOnlyMode"
         :pop-out-reply-box="isPopOutReplyBox"
