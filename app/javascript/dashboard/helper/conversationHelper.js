@@ -57,10 +57,11 @@ export const getLastMessage = m => {
   const lastNonActivityMessageInStore =
     nonActivityMessages[nonActivityMessages.length - 1];
 
-  const lastNonActivityMessageFromAPI = m.last_non_activity_message;
+  const lastNonActivityMessageFromAPI = m.last_non_activity_message
+    ?.content_attributes?.bot_system_message
+    ? null
+    : m.last_non_activity_message;
 
-  // If API value and store value for last non activity message
-  // is empty, then return the last activity message
   if (!lastNonActivityMessageInStore && !lastNonActivityMessageFromAPI) {
     return lastMessageIncludingActivity;
   }
