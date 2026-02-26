@@ -30,39 +30,29 @@ const isSubmitting = ref(false);
 
 const closeTopics = computed(() => [
   {
-    value: 'registration_funnel',
-    label: t('CLOSE_REASON.TOPIC_REGISTRATION_FUNNEL'),
-    buttonText: '📝 Регистрация',
-  },
-  {
     value: 'deposits_withdrawals',
     label: t('CLOSE_REASON.TOPIC_DEPOSITS_WITHDRAWALS'),
-    buttonText: '💳 Деп/вывод',
+    buttonText: '💰 Пополнение / Вывод',
   },
   {
-    value: 'statistics_rake_rakeback',
-    label: t('CLOSE_REASON.TOPIC_STATISTICS_RAKE_RAKEBACK'),
-    buttonText: '📊 Стат./рейкбек',
+    value: 'registration_login',
+    label: t('CLOSE_REASON.TOPIC_REGISTRATION_LOGIN'),
+    buttonText: '📝 Регистрация и вход',
   },
   {
-    value: 'bonuses_promotions',
-    label: t('CLOSE_REASON.TOPIC_BONUSES_PROMOTIONS'),
-    buttonText: '🎁 Бонусы/акции',
+    value: 'bonuses_rakeback',
+    label: t('CLOSE_REASON.TOPIC_BONUSES_RAKEBACK'),
+    buttonText: '🎁 Бонусы и рейкбек',
   },
   {
-    value: 'lobby_game',
-    label: t('CLOSE_REASON.TOPIC_LOBBY_GAME'),
-    buttonText: '🎮 Лобби/игра',
-  },
-  {
-    value: 'clubgg',
-    label: t('CLOSE_REASON.TOPIC_CLUBGG'),
-    buttonText: '🔧 Тех. проблемы',
+    value: 'complaint',
+    label: t('CLOSE_REASON.TOPIC_COMPLAINT'),
+    buttonText: '🚨 Жалоба / Нарушение',
   },
   {
     value: 'other',
     label: t('CLOSE_REASON.TOPIC_OTHER'),
-    buttonText: '❓ Иное',
+    buttonText: '❓ Другое',
   },
 ]);
 
