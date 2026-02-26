@@ -8,26 +8,19 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Breadcrumb from 'dashboard/components-next/breadcrumb/Breadcrumb.vue';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import VoiceCallButton from 'dashboard/components-next/Contacts/VoiceCallButton.vue';
-import { useAdmin } from 'dashboard/composables/useAdmin';
 
 const props = defineProps({
   selectedContact: {
     type: Object,
     default: () => ({}),
   },
-  isUpdating: {
-    type: Boolean,
-    default: false,
-  },
 });
 
-const emit = defineEmits(['goToContactsList', 'toggleBlock']);
+const emit = defineEmits(['goToContactsList']);
 
 const { t } = useI18n();
 const slots = useSlots();
 const route = useRoute();
-const { isAdmin } = useAdmin();
-
 const isContactSidebarOpen = ref(false);
 
 const contactId = computed(() => route.params.contactId);
@@ -51,16 +44,8 @@ const breadcrumbItems = computed(() => {
   return items;
 });
 
-const isContactBlocked = computed(() => {
-  return props.selectedContact?.blocked;
-});
-
 const handleBreadcrumbClick = () => {
   emit('goToContactsList');
-};
-
-const toggleBlock = () => {
-  emit('toggleBlock', isContactBlocked.value);
 };
 
 const handleConversationSidebarToggle = () => {
@@ -90,19 +75,6 @@ const closeMobileSidebar = () => {
               @click="handleBreadcrumbClick"
             />
             <div class="flex items-center gap-2">
-              <Button
-                v-if="isAdmin"
-                :label="
-                  !isContactBlocked
-                    ? $t('CONTACTS_LAYOUT.HEADER.BLOCK_CONTACT')
-                    : $t('CONTACTS_LAYOUT.HEADER.UNBLOCK_CONTACT')
-                "
-                size="sm"
-                slate
-                :is-loading="isUpdating"
-                :disabled="isUpdating"
-                @click="toggleBlock"
-              />
               <VoiceCallButton
                 :phone="selectedContact?.phoneNumber"
                 :label="$t('CONTACT_PANEL.CALL')"

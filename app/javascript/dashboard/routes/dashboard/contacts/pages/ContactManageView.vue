@@ -1,7 +1,6 @@
 <script setup>
 import { onMounted, computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useAlert } from 'dashboard/composables';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -26,8 +25,6 @@ const contactMergeRef = ref(null);
 
 const isFetchingItem = computed(() => uiFlags.value.isFetchingItem);
 const isMergingContact = computed(() => uiFlags.value.isMerging);
-const isUpdatingContact = computed(() => uiFlags.value.isUpdating);
-
 const selectedContact = computed(() => contact.value(route.params.contactId));
 
 const showSpinner = computed(
@@ -90,33 +87,6 @@ const fetchAttributes = () => {
   store.dispatch('attributes/get');
 };
 
-const toggleContactBlock = async isBlocked => {
-  const ALERT_MESSAGES = {
-    success: {
-      block: t('CONTACTS_LAYOUT.HEADER.ACTIONS.BLOCK_SUCCESS_MESSAGE'),
-      unblock: t('CONTACTS_LAYOUT.HEADER.ACTIONS.UNBLOCK_SUCCESS_MESSAGE'),
-    },
-    error: {
-      block: t('CONTACTS_LAYOUT.HEADER.ACTIONS.BLOCK_ERROR_MESSAGE'),
-      unblock: t('CONTACTS_LAYOUT.HEADER.ACTIONS.UNBLOCK_ERROR_MESSAGE'),
-    },
-  };
-
-  try {
-    await store.dispatch(`contacts/update`, {
-      ...selectedContact.value,
-      blocked: !isBlocked,
-    });
-    useAlert(
-      isBlocked ? ALERT_MESSAGES.success.unblock : ALERT_MESSAGES.success.block
-    );
-  } catch (error) {
-    useAlert(
-      isBlocked ? ALERT_MESSAGES.error.unblock : ALERT_MESSAGES.error.block
-    );
-  }
-};
-
 onMounted(() => {
   fetchActiveContact();
   fetchContactNotes();
@@ -134,9 +104,7 @@ onMounted(() => {
       :selected-contact="selectedContact"
       is-detail-view
       :show-pagination-footer="false"
-      :is-updating="isUpdatingContact"
       @go-to-contacts-list="goToContactsList"
-      @toggle-block="toggleContactBlock"
     >
       <div
         v-if="showSpinner"
