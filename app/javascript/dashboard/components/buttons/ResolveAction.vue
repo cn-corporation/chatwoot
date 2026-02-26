@@ -6,7 +6,7 @@ import { useStore, useStoreGetters } from 'dashboard/composables/store';
 import { useEmitter } from 'dashboard/composables/emitter';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 
-import ConversationCloseReasonModal from 'dashboard/components/ConversationCloseReasonModal.vue';
+import ConversationCloseTopicsModal from 'dashboard/components/ConversationCloseTopicsModal.vue';
 import wootConstants from 'dashboard/constants/globals';
 import {
   CMD_REOPEN_CONVERSATION,
@@ -20,7 +20,7 @@ const getters = useStoreGetters();
 const { t } = useI18n();
 
 const isLoading = ref(false);
-const showCloseReasonModal = ref(false);
+const showCloseTopicsModal = ref(false);
 const closeConversationId = ref(null);
 
 const currentChat = computed(() => getters.getSelectedChat.value);
@@ -63,14 +63,12 @@ const getConversationParams = () => {
 };
 
 const toggleStatus = (status, snoozedUntil) => {
-  // Show close reason modal first when resolving
   if (status === wootConstants.STATUS_TYPE.RESOLVED) {
     closeConversationId.value = currentChat.value.id;
-    showCloseReasonModal.value = true;
+    showCloseTopicsModal.value = true;
     return;
   }
 
-  // For other status changes, proceed normally
   isLoading.value = true;
   store
     .dispatch('toggleStatus', {
@@ -84,15 +82,14 @@ const toggleStatus = (status, snoozedUntil) => {
     });
 };
 
-const closeCloseReasonModal = () => {
-  showCloseReasonModal.value = false;
+const closeTopicsModal = () => {
+  showCloseTopicsModal.value = false;
   closeConversationId.value = null;
 };
 
-const onCloseReasonSuccess = () => {
-  showCloseReasonModal.value = false;
+const onCloseTopicsSuccess = () => {
+  showCloseTopicsModal.value = false;
   closeConversationId.value = null;
-  // No quality rating modal - just close
   useAlert(t('CONVERSATION.CHANGE_STATUS'));
 };
 
@@ -158,13 +155,12 @@ useEmitter(CMD_RESOLVE_CONVERSATION, onCmdResolveConversation);
       :is-loading="isLoading"
       @click="onCmdOpenConversation"
     />
-    <!-- Close Reason Modal -->
-    <ConversationCloseReasonModal
-      v-if="showCloseReasonModal"
-      :show="showCloseReasonModal"
+    <ConversationCloseTopicsModal
+      v-if="showCloseTopicsModal"
+      :show="showCloseTopicsModal"
       :conversation-id="closeConversationId"
-      @close="closeCloseReasonModal"
-      @success="onCloseReasonSuccess"
+      @close="closeTopicsModal"
+      @success="onCloseTopicsSuccess"
     />
   </div>
 </template>
