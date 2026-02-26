@@ -216,6 +216,9 @@ export default {
         ...this.filteredAgentOnAvailability,
       ];
     },
+    assignableTeams() {
+      return [{ name: 'None', id: 0 }, ...this.teams];
+    },
     isContactBlocked() {
       if (!this.contactBlockedUntil) return false;
       return new Date(this.contactBlockedUntil) > new Date();
@@ -392,10 +395,10 @@ export default {
       <MenuItemWithSubmenu
         v-if="isAllowed([MENU.TEAM])"
         :option="teamMenuConfig"
-        :sub-menu-available="!!teams.length"
+        :sub-menu-available="!!assignableTeams.length"
       >
         <MenuItem
-          v-for="team in teams"
+          v-for="team in assignableTeams"
           :key="team.id"
           :option="generateMenuLabelConfig(team, 'team')"
           @click.stop="$emit('assignTeam', team)"

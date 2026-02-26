@@ -1,6 +1,7 @@
 <script setup>
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useAlert } from 'dashboard/composables';
 import { useMapGetter } from 'dashboard/composables/store';
@@ -8,7 +9,12 @@ import SectionLayout from './SectionLayout.vue';
 import Multiselect from 'vue-multiselect';
 
 const { t } = useI18n();
+const store = useStore();
 const { currentAccount, updateAccount } = useAccount();
+
+onMounted(() => {
+  store.dispatch('agents/get');
+});
 const verifiedAgents = useMapGetter('agents/getVerifiedAgents');
 
 const selectedAgents = ref([]);
