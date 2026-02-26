@@ -192,15 +192,6 @@ export default {
       },
     },
     showSelfAssignBanner() {
-      if (this.message !== '' && !this.isOnPrivateNote) {
-        if (!this.assignedAgent) {
-          return true;
-        }
-        if (this.assignedAgent.id !== this.currentUser.id) {
-          return true;
-        }
-      }
-
       return false;
     },
     showWhatsappTemplates() {
@@ -1272,16 +1263,6 @@ export default {
 </script>
 
 <template>
-  <Banner
-    v-if="showSelfAssignBanner"
-    action-button-variant="ghost"
-    color-scheme="secondary"
-    class="mx-2 mb-2 rounded-lg banner--self-assign"
-    :banner-message="$t('CONVERSATION.NOT_ASSIGNED_TO_YOU')"
-    has-action-button
-    :action-button-label="$t('CONVERSATION.ASSIGN_TO_ME')"
-    @primary-action="onClickSelfAssign"
-  />
   <div ref="replyEditor" class="reply-box" :class="replyBoxClass">
     <ReplyTopPanel
       :mode="replyType"
@@ -1447,10 +1428,6 @@ export default {
 <style lang="scss" scoped>
 .send-button {
   @apply mb-0;
-}
-
-.banner--self-assign {
-  @apply py-2;
 }
 
 .attachment-preview-box {

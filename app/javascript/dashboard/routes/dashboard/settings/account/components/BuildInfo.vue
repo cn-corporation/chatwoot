@@ -35,13 +35,6 @@ const copyGitSha = () => {
 
 <template>
   <div class="p-4 text-sm text-center">
-    <div v-if="hasAnUpdateAvailable && globalConfig.displayManifest">
-      {{
-        t('GENERAL_SETTINGS.UPDATE_CHATWOOT', {
-          latestChatwootVersion: latestChatwootVersion,
-        })
-      }}
-    </div>
     <div class="divide-x divide-n-slate-9">
       <span class="px-2">{{ `v${globalConfig.appVersion}` }}</span>
       <span
