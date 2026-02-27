@@ -161,6 +161,7 @@ const submitTopics = async () => {
         <Button
           :label="$t('CLOSE_TOPICS.SAVE')"
           :is-loading="isSubmitting"
+          :disabled="selectedTopics.length === 0"
           @click="submitTopics"
         />
       </div>

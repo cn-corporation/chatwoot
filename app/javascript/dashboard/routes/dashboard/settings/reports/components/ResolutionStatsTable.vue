@@ -42,12 +42,6 @@ const conversationLink = id => {
               {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.OPERATOR') }}
             </th>
             <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
-              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.REASON') }}
-            </th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
-              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.DETAILS') }}
-            </th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
               {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.TOPICS') }}
             </th>
             <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
@@ -71,12 +65,6 @@ const conversationLink = id => {
             </td>
             <td class="py-3 px-4 text-sm text-n-slate-12">
               {{ row.operator }}
-            </td>
-            <td class="py-3 px-4 text-sm text-n-slate-12">
-              {{ row.reason }}
-            </td>
-            <td class="py-3 px-4 text-sm text-n-slate-12">
-              {{ row.details }}
             </td>
             <td class="py-3 px-4 text-sm text-n-slate-12">
               {{ row.topics }}

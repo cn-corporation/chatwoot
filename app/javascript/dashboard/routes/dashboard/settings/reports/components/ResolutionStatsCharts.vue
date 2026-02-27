@@ -3,10 +3,6 @@ import { Line, Bar } from 'vue-chartjs';
 import MetricCard from './overview/MetricCard.vue';
 
 defineProps({
-  reasonChartData: {
-    type: Object,
-    default: null,
-  },
   trendChartData: {
     type: Object,
     default: null,
@@ -33,21 +29,6 @@ defineProps({
 <template>
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <MetricCard
-      :header="t('RESOLUTION_STATISTICS.CHARTS.REASONS')"
-      :is-loading="isLoading"
-    >
-      <div v-if="reasonChartData" class="h-[300px]">
-        <Bar :data="reasonChartData" :options="chartOptions" />
-      </div>
-      <div
-        v-else
-        class="flex items-center justify-center h-[300px] text-n-slate-11"
-      >
-        {{ t('RESOLUTION_STATISTICS.EMPTY_STATE') }}
-      </div>
-    </MetricCard>
-
-    <MetricCard
       :header="t('RESOLUTION_STATISTICS.CHARTS.TREND')"
       :is-loading="isLoading"
     >
@@ -61,20 +42,20 @@ defineProps({
         {{ t('RESOLUTION_STATISTICS.EMPTY_STATE') }}
       </div>
     </MetricCard>
-  </div>
 
-  <MetricCard
-    :header="t('RESOLUTION_STATISTICS.CHARTS.OPERATORS')"
-    :is-loading="isLoading"
-  >
-    <div v-if="operatorChartData" class="h-[300px]">
-      <Bar :data="operatorChartData" :options="chartOptions" />
-    </div>
-    <div
-      v-else
-      class="flex items-center justify-center h-[300px] text-n-slate-11"
+    <MetricCard
+      :header="t('RESOLUTION_STATISTICS.CHARTS.OPERATORS')"
+      :is-loading="isLoading"
     >
-      {{ t('RESOLUTION_STATISTICS.EMPTY_STATE') }}
-    </div>
-  </MetricCard>
+      <div v-if="operatorChartData" class="h-[300px]">
+        <Bar :data="operatorChartData" :options="chartOptions" />
+      </div>
+      <div
+        v-else
+        class="flex items-center justify-center h-[300px] text-n-slate-11"
+      >
+        {{ t('RESOLUTION_STATISTICS.EMPTY_STATE') }}
+      </div>
+    </MetricCard>
+  </div>
 </template>
