@@ -16,14 +16,6 @@ defineProps({
     type: Array,
     default: () => [],
   },
-  reasonOptions: {
-    type: Array,
-    default: () => [],
-  },
-  selectedReason: {
-    type: Object,
-    default: null,
-  },
   conversationId: {
     type: String,
     default: '',
@@ -37,7 +29,6 @@ defineProps({
 const emit = defineEmits([
   'updateDateRange',
   'updateSelectedOperators',
-  'updateSelectedReason',
   'updateConversationId',
   'apply',
 ]);
@@ -113,28 +104,6 @@ const handleConversationInput = event => {
               </span>
             </template>
           </Multiselect>
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <label class="text-sm font-medium text-n-slate-12">
-          {{ t('RESOLUTION_STATISTICS.FILTERS.REASON') }}
-        </label>
-        <div class="min-w-[220px]">
-          <Multiselect
-            :model-value="selectedReason"
-            :options="reasonOptions"
-            :multiple="false"
-            :allow-empty="true"
-            :close-on-select="true"
-            :clear-on-select="true"
-            :preserve-search="true"
-            :placeholder="t('RESOLUTION_STATISTICS.FILTERS.REASON_PLACEHOLDER')"
-            label="label"
-            track-by="value"
-            :preselect-first="false"
-            @update:model-value="value => emit('updateSelectedReason', value)"
-          />
         </div>
       </div>
 

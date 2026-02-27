@@ -40,10 +40,7 @@ const store = useStore();
 
 const isLoading = ref(false);
 const aggregatedData = ref(null);
-const reasons = ref([]);
-const topics = ref([]);
 const selectedOperators = ref([]);
-const selectedReason = ref(null);
 const conversationId = ref('');
 const dateRange = ref({
   start: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
@@ -60,34 +57,17 @@ const agentsMap = computed(() => {
   return map;
 });
 
-const resolutionReasonLabels = {
-  resolved_success: () => t('CLOSE_REASON.RESOLVED_SUCCESS'),
-  resolved_compensation: () => t('CLOSE_REASON.RESOLVED_COMPENSATION'),
-  partially_resolved: () => t('CLOSE_REASON.PARTIALLY_RESOLVED'),
-  waiting_client: () => t('CLOSE_REASON.WAITING_CLIENT'),
-  escalated: () => t('CLOSE_REASON.ESCALATED'),
-  conflict: () => t('CLOSE_REASON.CONFLICT'),
-  custom: () => t('CLOSE_REASON.CUSTOM'),
-  other: () => t('CLOSE_REASON.CUSTOM'),
-};
-
-const getResolutionReasonLabel = reason => {
-  if (!reason || reason === 'empty') {
-    return t('RESOLUTION_STATISTICS.UNKNOWN');
-  }
-  const resolver = resolutionReasonLabels[reason];
-  return resolver ? resolver() : reason;
-};
-
 const resolutionTopicLabels = {
-  registration_funnel: () => t('CLOSE_REASON.TOPIC_REGISTRATION_FUNNEL'),
-  deposits_withdrawals: () => t('CLOSE_REASON.TOPIC_DEPOSITS_WITHDRAWALS'),
-  statistics_rake_rakeback: () =>
-    t('CLOSE_REASON.TOPIC_STATISTICS_RAKE_RAKEBACK'),
-  bonuses_promotions: () => t('CLOSE_REASON.TOPIC_BONUSES_PROMOTIONS'),
-  lobby_game: () => t('CLOSE_REASON.TOPIC_LOBBY_GAME'),
-  clubgg: () => t('CLOSE_REASON.TOPIC_CLUBGG'),
-  other: () => t('CLOSE_REASON.TOPIC_OTHER'),
+  deposits_withdrawals: () => t('CLOSE_TOPICS.TOPIC_DEPOSITS_WITHDRAWALS'),
+  registration_login: () => t('CLOSE_TOPICS.TOPIC_REGISTRATION_LOGIN'),
+  bonuses_rakeback: () => t('CLOSE_TOPICS.TOPIC_BONUSES_RAKEBACK'),
+  complaint: () => t('CLOSE_TOPICS.TOPIC_COMPLAINT'),
+  other: () => t('CLOSE_TOPICS.TOPIC_OTHER'),
+  registration_funnel: () => 'Registration Funnel',
+  statistics_rake_rakeback: () => 'Statistics / Rake / Rakeback',
+  bonuses_promotions: () => 'Bonuses & Promotions',
+  lobby_game: () => 'Lobby / Game',
+  clubgg: () => 'ClubGG',
 };
 
 const getTopicLabel = topic => {
@@ -125,46 +105,16 @@ const operatorOptions = computed(() => {
       t('RESOLUTION_STATISTICS.OPERATOR_ID', { id: agent.id }),
   }));
 });
-const reasonOptions = computed(() =>
-  reasons.value.map(reason => ({
-    value: reason,
-    label: getResolutionReasonLabel(reason),
-  }))
-);
 
 const overviewMetrics = computed(() => {
   if (!aggregatedData.value) return null;
 
   const { overview } = aggregatedData.value;
-  const topReasonLabel = getResolutionReasonLabel(overview.topReason);
 
   return {
     totalResolutions: overview.totalResolutions,
     uniqueConversations: overview.uniqueConversations,
     uniqueOperators: overview.uniqueOperators,
-    topReason:
-      overview.topReasonCount > 0
-        ? `${topReasonLabel} (${overview.topReasonCount})`
-        : t('RESOLUTION_STATISTICS.NO_TOP_REASON'),
-  };
-});
-
-const reasonChartData = computed(() => {
-  if (!aggregatedData.value?.reasonChart?.length) return null;
-
-  return {
-    labels: aggregatedData.value.reasonChart.map(r =>
-      getResolutionReasonLabel(r.reason)
-    ),
-    datasets: [
-      {
-        label: t('RESOLUTION_STATISTICS.CHARTS.REASONS_LABEL'),
-        data: aggregatedData.value.reasonChart.map(r => r.count),
-        backgroundColor: 'rgba(59, 130, 246, 0.6)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        borderWidth: 1,
-      },
-    ],
   };
 });
 
@@ -239,8 +189,6 @@ const tableRows = computed(() => {
     id: stat.id,
     conversationId: stat.conversationId,
     operator: getAgentName(stat.operatorChatwootId ?? stat.operatorId),
-    reason: getResolutionReasonLabel(stat.resolutionReason),
-    details: stat.resolutionDetails || t('RESOLUTION_STATISTICS.EMPTY_VALUE'),
     topics: formatTopics(stat.topics),
     createdAt: formatDateTime(stat.createdAt),
   }));
@@ -248,24 +196,6 @@ const tableRows = computed(() => {
 
 const handleDateRangeChange = ({ field, value }) => {
   dateRange.value[field] = value;
-};
-
-const fetchReasons = async () => {
-  try {
-    const response = await resolutionStatisticsAPI.getResolutionReasons();
-    reasons.value = response?.data || [];
-  } catch (error) {
-    reasons.value = [];
-  }
-};
-
-const fetchTopics = async () => {
-  try {
-    const response = await resolutionStatisticsAPI.getResolutionTopics();
-    topics.value = response?.data || [];
-  } catch (error) {
-    topics.value = [];
-  }
 };
 
 const fetchData = async () => {
@@ -280,10 +210,6 @@ const fetchData = async () => {
       params.operatorIds = selectedOperators.value.map(option =>
         String(option.value || option)
       );
-    }
-
-    if (selectedReason.value?.value) {
-      params.resolutionReason = selectedReason.value.value;
     }
 
     const normalizedConversationId = String(conversationId.value || '').trim();
@@ -309,18 +235,12 @@ const updateSelectedOperators = value => {
   selectedOperators.value = value;
 };
 
-const updateSelectedReason = value => {
-  selectedReason.value = value;
-};
-
 const updateConversationId = value => {
   conversationId.value = value;
 };
 
 onMounted(() => {
   store.dispatch('agents/get');
-  fetchReasons();
-  fetchTopics();
   fetchData();
 });
 </script>
@@ -336,13 +256,10 @@ onMounted(() => {
       :date-range="dateRange"
       :operator-options="operatorOptions"
       :selected-operators="selectedOperators"
-      :reason-options="reasonOptions"
-      :selected-reason="selectedReason"
       :conversation-id="conversationId"
       :t="t"
       @update-date-range="handleDateRangeChange"
       @update-selected-operators="updateSelectedOperators"
-      @update-selected-reason="updateSelectedReason"
       @update-conversation-id="updateConversationId"
       @apply="applyFilters"
     />
@@ -354,7 +271,6 @@ onMounted(() => {
     />
 
     <ResolutionStatsCharts
-      :reason-chart-data="reasonChartData"
       :trend-chart-data="trendChartData"
       :operator-chart-data="operatorChartData"
       :chart-options="chartOptions"
