@@ -16,9 +16,13 @@ defineProps({
     type: Array,
     default: () => [],
   },
-  conversationId: {
-    type: String,
-    default: '',
+  ratingOptions: {
+    type: Array,
+    default: () => [],
+  },
+  selectedRating: {
+    type: Object,
+    default: null,
   },
   t: {
     type: Function,
@@ -29,28 +33,24 @@ defineProps({
 const emit = defineEmits([
   'updateDateRange',
   'updateSelectedOperators',
-  'updateConversationId',
+  'updateSelectedRating',
   'apply',
 ]);
 
 const handleDateRangeChange = (field, value) => {
   emit('updateDateRange', { field, value });
 };
-
-const handleConversationInput = event => {
-  emit('updateConversationId', event.target.value);
-};
 </script>
 
 <template>
   <MetricCard
-    :header="t('RESOLUTION_STATISTICS.FILTERS.HEADER')"
+    :header="t('CSAT_STATISTICS.FILTERS.HEADER')"
     :is-loading="false"
   >
     <div class="flex flex-wrap gap-4 items-end">
       <div class="flex flex-col gap-2">
         <label class="text-sm font-medium text-n-slate-12">
-          {{ t('RESOLUTION_STATISTICS.FILTERS.START_DATE') }}
+          {{ t('CSAT_STATISTICS.FILTERS.START_DATE') }}
         </label>
         <input
           type="date"
@@ -62,7 +62,7 @@ const handleConversationInput = event => {
 
       <div class="flex flex-col gap-2">
         <label class="text-sm font-medium text-n-slate-12">
-          {{ t('RESOLUTION_STATISTICS.FILTERS.END_DATE') }}
+          {{ t('CSAT_STATISTICS.FILTERS.END_DATE') }}
         </label>
         <input
           type="date"
@@ -74,7 +74,7 @@ const handleConversationInput = event => {
 
       <div class="flex flex-col gap-2">
         <label class="text-sm font-medium text-n-slate-12">
-          {{ t('RESOLUTION_STATISTICS.FILTERS.OPERATORS') }}
+          {{ t('CSAT_STATISTICS.FILTERS.OPERATORS') }}
         </label>
         <div class="min-w-[250px]">
           <Multiselect
@@ -84,9 +84,7 @@ const handleConversationInput = event => {
             :close-on-select="false"
             :clear-on-select="false"
             :preserve-search="true"
-            :placeholder="
-              t('RESOLUTION_STATISTICS.FILTERS.OPERATORS_PLACEHOLDER')
-            "
+            :placeholder="t('CSAT_STATISTICS.FILTERS.OPERATORS_PLACEHOLDER')"
             label="label"
             track-by="value"
             :preselect-first="false"
@@ -95,9 +93,12 @@ const handleConversationInput = event => {
             "
           >
             <template #selection="{ values, isOpen }">
-              <span v-if="values.length && !isOpen" class="multiselect__single">
+              <span
+                v-if="values.length && !isOpen"
+                class="multiselect__single"
+              >
                 {{
-                  t('RESOLUTION_STATISTICS.FILTERS.OPERATORS_SELECTED', {
+                  t('CSAT_STATISTICS.FILTERS.OPERATORS_SELECTED', {
                     count: values.length,
                   })
                 }}
@@ -109,22 +110,28 @@ const handleConversationInput = event => {
 
       <div class="flex flex-col gap-2">
         <label class="text-sm font-medium text-n-slate-12">
-          {{ t('RESOLUTION_STATISTICS.FILTERS.CONVERSATION') }}
+          {{ t('CSAT_STATISTICS.FILTERS.RATING') }}
         </label>
-        <input
-          :value="conversationId"
-          type="number"
-          min="1"
-          class="px-3 py-2 border border-n-slate-7 rounded-lg bg-n-background text-n-slate-12"
-          :placeholder="
-            t('RESOLUTION_STATISTICS.FILTERS.CONVERSATION_PLACEHOLDER')
-          "
-          @input="handleConversationInput"
-        />
+        <div class="min-w-[200px]">
+          <Multiselect
+            :model-value="selectedRating"
+            :options="ratingOptions"
+            :multiple="false"
+            :allow-empty="true"
+            :close-on-select="true"
+            :clear-on-select="true"
+            :preserve-search="true"
+            :placeholder="t('CSAT_STATISTICS.FILTERS.RATING_PLACEHOLDER')"
+            label="label"
+            track-by="value"
+            :preselect-first="false"
+            @update:model-value="value => emit('updateSelectedRating', value)"
+          />
+        </div>
       </div>
 
       <Button variant="primary" size="md" @click="emit('apply')">
-        {{ t('RESOLUTION_STATISTICS.FILTERS.APPLY') }}
+        {{ t('CSAT_STATISTICS.FILTERS.APPLY') }}
       </Button>
     </div>
   </MetricCard>

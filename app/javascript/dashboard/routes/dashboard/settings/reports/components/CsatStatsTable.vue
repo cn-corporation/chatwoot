@@ -28,24 +28,37 @@ const conversationLink = id => {
 
 <template>
   <MetricCard
-    :header="t('RESOLUTION_STATISTICS.TABLE.HEADER')"
+    :header="t('CSAT_STATISTICS.TABLE.HEADER')"
     :is-loading="isLoading"
   >
     <div v-if="rows.length" class="overflow-x-auto w-full">
       <table class="w-full">
         <thead>
           <tr class="border-b border-n-slate-6">
-            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
-              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.CONVERSATION') }}
+            <th
+              class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
+            >
+              {{ t('CSAT_STATISTICS.TABLE.COLUMNS.CONVERSATION') }}
             </th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
-              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.OPERATOR') }}
+            <th
+              class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
+            >
+              {{ t('CSAT_STATISTICS.TABLE.COLUMNS.OPERATOR') }}
             </th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
-              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.TOPICS') }}
+            <th
+              class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
+            >
+              {{ t('CSAT_STATISTICS.TABLE.COLUMNS.RATING') }}
             </th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
-              {{ t('RESOLUTION_STATISTICS.TABLE.COLUMNS.DATE') }}
+            <th
+              class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
+            >
+              {{ t('CSAT_STATISTICS.TABLE.COLUMNS.COMMENT') }}
+            </th>
+            <th
+              class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
+            >
+              {{ t('CSAT_STATISTICS.TABLE.COLUMNS.RESOLVED_AT') }}
             </th>
           </tr>
         </thead>
@@ -67,10 +80,13 @@ const conversationLink = id => {
               {{ row.operator }}
             </td>
             <td class="py-3 px-4 text-sm text-n-slate-12">
-              {{ row.topics }}
+              {{ row.rating }}
             </td>
             <td class="py-3 px-4 text-sm text-n-slate-12">
-              {{ row.createdAt }}
+              {{ row.comment }}
+            </td>
+            <td class="py-3 px-4 text-sm text-n-slate-12">
+              {{ row.resolutionDate }}
             </td>
           </tr>
         </tbody>
@@ -80,7 +96,7 @@ const conversationLink = id => {
       v-else
       class="flex items-center justify-center h-[200px] text-n-slate-11"
     >
-      {{ t('RESOLUTION_STATISTICS.EMPTY_STATE') }}
+      {{ t('CSAT_STATISTICS.EMPTY_STATE') }}
     </div>
   </MetricCard>
 </template>

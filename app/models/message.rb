@@ -396,10 +396,16 @@ class Message < ApplicationRecord
   def reopen_conversation
     return if conversation.muted?
     return unless incoming?
+    return if csat_callback? && conversation.resolved?
 
     conversation.open! if conversation.snoozed?
 
     reopen_resolved_conversation if conversation.resolved?
+  end
+
+  def csat_callback?
+    content_attributes&.dig('is_callback_query') &&
+      content_attributes&.dig('callback_data')&.start_with?('csat_')
   end
 
   def reopen_resolved_conversation

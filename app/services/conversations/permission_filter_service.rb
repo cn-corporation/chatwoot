@@ -8,8 +8,6 @@ class Conversations::PermissionFilterService
   end
 
   def perform
-    return conversations if user_role == 'administrator'
-
     accessible_conversations
   end
 

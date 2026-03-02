@@ -190,9 +190,17 @@ export default {
         this.currentUser,
         this.currentAccountId
       );
-      const filteredAgents = getSortedAgentsByAvailability(
+      let filteredAgents = getSortedAgentsByAvailability(
         agentsByUpdatedPresence
       );
+      const account = this.$store.getters['accounts/getAccount'](
+        this.currentAccountId
+      );
+      const allowedIds = account?.settings?.assignable_agent_ids;
+      if (allowedIds?.length) {
+        const numericIds = allowedIds.map(Number);
+        filteredAgents = filteredAgents.filter(a => numericIds.includes(a.id));
+      }
       return filteredAgents;
     },
     assignableAgents() {
@@ -207,6 +215,9 @@ export default {
         },
         ...this.filteredAgentOnAvailability,
       ];
+    },
+    assignableTeams() {
+      return [{ name: 'None', id: 0 }, ...this.teams];
     },
     isContactBlocked() {
       if (!this.contactBlockedUntil) return false;
@@ -384,10 +395,10 @@ export default {
       <MenuItemWithSubmenu
         v-if="isAllowed([MENU.TEAM])"
         :option="teamMenuConfig"
-        :sub-menu-available="!!teams.length"
+        :sub-menu-available="!!assignableTeams.length"
       >
         <MenuItem
-          v-for="team in teams"
+          v-for="team in assignableTeams"
           :key="team.id"
           :option="generateMenuLabelConfig(team, 'team')"
           @click.stop="$emit('assignTeam', team)"

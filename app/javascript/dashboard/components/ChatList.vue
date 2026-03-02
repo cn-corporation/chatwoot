@@ -34,7 +34,7 @@ import IntersectionObserver from './IntersectionObserver.vue';
 import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import TodoModal from './widgets/conversation/TodoModal.vue';
-import ConversationCloseReasonModal from './ConversationCloseReasonModal.vue';
+import ConversationCloseTopicsModal from './ConversationCloseTopicsModal.vue';
 
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAlert } from 'dashboard/composables';
@@ -153,6 +153,8 @@ const inboxesList = useMapGetter('inboxes/getInboxes');
 const campaigns = useMapGetter('campaigns/getAllCampaigns');
 const labels = useMapGetter('labels/getLabels');
 const currentAccountId = useMapGetter('getCurrentAccountId');
+const getAccountFn = useMapGetter('accounts/getAccount');
+const myTeams = useMapGetter('teams/getMyTeams');
 // We can't useFunctionGetter here since it needs to be called on setup?
 const getTeamFn = useMapGetter('teams/getTeam');
 
@@ -174,26 +176,20 @@ const {
   onUpdateConversations: onUpdateConversationsOriginal,
 } = useBulkActions();
 
-// Define modal refs before using them
-const showCloseReasonModal = ref(false);
+const showCloseTopicsModal = ref(false);
 const closeConversationId = ref(null);
 const pendingBulkAction = ref(null);
 
-// Wrapper for bulk actions to show modal when resolving
 const onUpdateConversations = (status, snoozedUntil) => {
-  // Show close reason modal first when resolving
   if (status === wootConstants.STATUS_TYPE.RESOLVED) {
-    // For bulk actions, open modal for first selected conversation
     if (selectedConversations.value.length > 0) {
       closeConversationId.value = selectedConversations.value[0];
-      showCloseReasonModal.value = true;
-      // Store the bulk action to continue after modal closes
+      showCloseTopicsModal.value = true;
       pendingBulkAction.value = { status, snoozedUntil };
       return;
     }
   }
 
-  // For other status changes, proceed normally
   onUpdateConversationsOriginal(status, snoozedUntil);
 };
 const showBulkMessageModal = ref(false);
@@ -461,6 +457,20 @@ const conversationList = computed(() => {
     const { payload } = activeFolder.value.query;
     localConversationList = localConversationList.filter(conversation => {
       return matchesFilters(conversation, payload);
+    });
+  }
+
+  const account = getAccountFn.value(currentAccountId.value);
+  const isCurrentUserAdmin = currentUser.value?.role === 'administrator';
+  if (account?.settings?.dialogue_segregation_enabled && !isCurrentUserAdmin) {
+    const myTeamIds = myTeams.value.map(team => team.id);
+    localConversationList = localConversationList.filter(conversation => {
+      const teamId =
+        conversation.team_id || conversation.meta?.team?.id || null;
+      if (myTeamIds.length) {
+        return myTeamIds.includes(teamId);
+      }
+      return teamId === null;
     });
   }
 
@@ -866,14 +876,12 @@ async function onAssignTeam(team, conversationId = null) {
 }
 
 function toggleConversationStatus(conversationId, status, snoozedUntil) {
-  // Show close reason modal first when resolving
   if (status === wootConstants.STATUS_TYPE.RESOLVED) {
     closeConversationId.value = conversationId;
-    showCloseReasonModal.value = true;
+    showCloseTopicsModal.value = true;
     return;
   }
 
-  // For other status changes, proceed normally
   store
     .dispatch('toggleStatus', {
       conversationId,
@@ -885,25 +893,21 @@ function toggleConversationStatus(conversationId, status, snoozedUntil) {
     });
 }
 
-function closeCloseReasonModal() {
-  showCloseReasonModal.value = false;
+function closeTopicsModal() {
+  showCloseTopicsModal.value = false;
   closeConversationId.value = null;
 }
 
-function onCloseReasonSuccess() {
-  showCloseReasonModal.value = false;
+function onCloseTopicsSuccess() {
+  showCloseTopicsModal.value = false;
   const conversationId = closeConversationId.value;
   closeConversationId.value = null;
 
-  // If there was a pending bulk action, continue with remaining conversations
   if (pendingBulkAction.value && selectedConversations.value.length > 1) {
-    // Remove the first conversation from the list and continue
     const remainingIds = selectedConversations.value.filter(
       id => id !== conversationId
     );
-    // Update selected conversations to remaining ones
     store.dispatch('bulkActions/setSelectedConversationIds', remainingIds);
-    // Continue with bulk action for remaining conversations
     onUpdateConversationsOriginal(
       pendingBulkAction.value.status,
       pendingBulkAction.value.snoozedUntil
@@ -1214,12 +1218,12 @@ watch(chatLists, () => {
       :current-chat="selectedChatForTask"
       @cancel="closeTodoModal"
     />
-    <ConversationCloseReasonModal
-      v-if="showCloseReasonModal && closeConversationId"
-      :show="showCloseReasonModal"
+    <ConversationCloseTopicsModal
+      v-if="showCloseTopicsModal && closeConversationId"
+      :show="showCloseTopicsModal"
       :conversation-id="closeConversationId"
-      @close="closeCloseReasonModal"
-      @success="onCloseReasonSuccess"
+      @close="closeTopicsModal"
+      @success="onCloseTopicsSuccess"
     />
     <BulkMessageModal
       v-if="showBulkMessageModal"

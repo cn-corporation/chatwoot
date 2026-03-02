@@ -46,7 +46,9 @@ export default {
   },
   watch: {
     inbox() {
-      this.setDefaults();
+      if (!this.isAgentListUpdating) {
+        this.setDefaults();
+      }
     },
   },
   mounted() {
@@ -79,10 +81,12 @@ export default {
       const agentList = this.selectedAgents.map(el => el.id);
       this.isAgentListUpdating = true;
       try {
-        await this.$store.dispatch('inboxMembers/create', {
+        const response = await this.$store.dispatch('inboxMembers/create', {
           inboxId: this.inbox.id,
           agentList,
         });
+        this.selectedAgents = response.data.payload;
+        await this.$store.dispatch('inboxes/get');
         useAlert(this.$t('AGENT_MGMT.EDIT.API.SUCCESS_MESSAGE'));
       } catch (error) {
         useAlert(this.$t('AGENT_MGMT.EDIT.API.ERROR_MESSAGE'));

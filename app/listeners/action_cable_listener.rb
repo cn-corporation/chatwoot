@@ -23,7 +23,7 @@ class ActionCableListener < BaseListener
 
   def account_cache_invalidated(event)
     account = event.data[:account]
-    tokens = user_tokens(account, account.agents)
+    tokens = account.users.pluck(:pubsub_token)
 
     broadcast(account, tokens, ACCOUNT_CACHE_INVALIDATED, {
                 cache_keys: event.data[:cache_keys]
@@ -173,10 +173,8 @@ class ActionCableListener < BaseListener
     (user_tokens(account, conversation.inbox.members) + [conversation.contact_inbox.pubsub_token]) - [current_user_token]
   end
 
-  def user_tokens(account, agents)
-    agent_tokens = agents.pluck(:pubsub_token)
-    admin_tokens = account.administrators.pluck(:pubsub_token)
-    (agent_tokens + admin_tokens).uniq
+  def user_tokens(_account, agents)
+    agents.pluck(:pubsub_token)
   end
 
   def contact_tokens(contact_inbox, message)

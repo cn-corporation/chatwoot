@@ -33,6 +33,18 @@ const isOperatorUnreadEligible = (conversation, currentUserId) => {
   return isAssignedToCurrentUser(conversation, currentUserId);
 };
 
+const passesDialogueSegregation = (conversation, rootGetters) => {
+  const accountId = rootGetters.getCurrentAccountId;
+  const account = rootGetters['accounts/getAccount'](accountId);
+  if (!account?.settings?.dialogue_segregation_enabled) return true;
+  const currentUser = rootGetters.getCurrentUser;
+  if (currentUser?.role === 'administrator') return true;
+  const myTeamIds = (rootGetters['teams/getMyTeams'] || []).map(t => t.id);
+  const teamId = conversation.team_id || conversation.meta?.team?.id || null;
+  if (myTeamIds.length) return myTeamIds.includes(teamId);
+  return teamId === null;
+};
+
 const findConversation = (state, conversationId) => {
   const normalizedId = Number(conversationId);
   return (
@@ -268,6 +280,7 @@ const getters = {
       const currentUserId = rootGetters.getCurrentUser?.id;
       const conversation = findConversation(_state, conversationId);
       if (!isOperatorUnreadEligible(conversation, currentUserId)) return 0;
+      if (!passesDialogueSegregation(conversation, rootGetters)) return 0;
       return _state.operatorNotifications.get(String(conversationId)) || 0;
     },
 
@@ -282,6 +295,7 @@ const getters = {
 
     return source.reduce((total, conv) => {
       if (!isOperatorUnreadEligible(conv, currentUserId)) return total;
+      if (!passesDialogueSegregation(conv, rootGetters)) return total;
       return total + (_state.operatorNotifications.get(String(conv.id)) || 0);
     }, 0);
   },
@@ -297,7 +311,8 @@ const getters = {
       return source
         .filter(conv => {
           if (conv.inbox_id !== inboxId) return false;
-          return isOperatorUnreadEligible(conv, currentUserId);
+          if (!isOperatorUnreadEligible(conv, currentUserId)) return false;
+          return passesDialogueSegregation(conv, rootGetters);
         })
         .reduce((total, conv) => {
           return total + selfGetters.getOperatorUnreadCount(conv.id);
@@ -316,7 +331,8 @@ const getters = {
         .filter(conv => {
           const convTeamId = conv.team_id || conv.meta?.team?.id;
           if (convTeamId !== teamId) return false;
-          return isOperatorUnreadEligible(conv, currentUserId);
+          if (!isOperatorUnreadEligible(conv, currentUserId)) return false;
+          return passesDialogueSegregation(conv, rootGetters);
         })
         .reduce((total, conv) => {
           return total + selfGetters.getOperatorUnreadCount(conv.id);
@@ -335,6 +351,7 @@ const getters = {
         .filter(conv => {
           if (!conv.labels || !Array.isArray(conv.labels)) return false;
           if (!isOperatorUnreadEligible(conv, currentUserId)) return false;
+          if (!passesDialogueSegregation(conv, rootGetters)) return false;
 
           return conv.labels.some(label =>
             typeof label === 'string'

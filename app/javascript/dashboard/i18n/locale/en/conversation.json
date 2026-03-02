@@ -455,31 +455,17 @@
   "GALLERY_VIEW": {
     "ERROR_DOWNLOADING": "Unable to download attachment. Please try again"
   },
-  "CLOSE_REASON": {
-    "TITLE": "Select Resolution Status",
-    "SELECT_REASON": "Select resolution reason:",
-    "RESOLVED_SUCCESS": "Successfully resolved",
-    "RESOLVED_COMPENSATION": "Resolved with compensation",
-    "PARTIALLY_RESOLVED": "Partially resolved",
-    "WAITING_CLIENT": "Waiting for client action",
-    "ESCALATED": "Escalated for review",
-    "CONFLICT": "Conflict resolution",
-    "CUSTOM": "Other",
-    "CUSTOM_PLACEHOLDER": "Enter custom reason...",
-    "TOPICS_TITLE": "Conversation topics",
-    "STATUS_TITLE": "Select resolution reason:",
-    "TOPIC_REGISTRATION_FUNNEL": "Registration/Funnel",
+  "CLOSE_TOPICS": {
+    "TITLE": "Select Conversation Topics",
+    "TOPICS_TITLE": "What was this conversation about?",
     "TOPIC_DEPOSITS_WITHDRAWALS": "Deposits/Withdrawals",
-    "TOPIC_STATISTICS_RAKE_RAKEBACK": "Statistics/Rake/Rakeback",
-    "TOPIC_BONUSES_PROMOTIONS": "Bonuses/Promotions",
-    "TOPIC_LOBBY_GAME": "Lobby/Game",
-    "TOPIC_CLUBGG": "ClubGG",
+    "TOPIC_REGISTRATION_LOGIN": "Registration & Login",
+    "TOPIC_BONUSES_RAKEBACK": "Bonuses & Rakeback",
+    "TOPIC_COMPLAINT": "Complaint/Violation",
     "TOPIC_OTHER": "Other",
-    "SUCCESS_INFO": "The ticket will be marked as successfully resolved.",
-    "SUCCESS_MESSAGE": "Resolution status saved successfully",
-    "ERROR_MESSAGE": "Failed to save resolution status",
+    "ERROR_MESSAGE": "Failed to save topics",
     "CANCEL": "Cancel",
-    "SAVE": "Save"
+    "SAVE": "Resolve"
   },
   "QUALITY_RATING": {
     "TITLE": "Rate Service Quality",

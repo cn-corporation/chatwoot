@@ -209,6 +209,9 @@ export default {
       if (this.isAWhatsAppChannel) {
         filteredMessages = filterDuplicateSourceMessages(messages);
       }
+      filteredMessages = filteredMessages.filter(
+        m => !m.content_attributes?.bot_system_message
+      );
       if (this.linkedMessages.length > 0) {
         return [...this.linkedMessages, ...filteredMessages];
       }
@@ -1050,7 +1053,7 @@ export default {
           :suggestion="aiSuggestion"
           :is-loading="isLoadingSuggestion"
           :error="suggestionError"
-          @useSuggestion="handleUseSuggestion"
+          @use-suggestion="handleUseSuggestion"
           @dismiss="handleDismissSuggestion"
           @reload="handleReloadSuggestion"
         />

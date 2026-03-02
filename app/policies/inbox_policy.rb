@@ -11,7 +11,7 @@ class InboxPolicy < ApplicationPolicy
     end
 
     def resolve
-      user.assigned_inboxes
+      user.manageable_inboxes
     end
   end
 
@@ -23,7 +23,7 @@ class InboxPolicy < ApplicationPolicy
     # FIXME: for agent bots, lets bring this validation to policies as well in future
     return true if @user.is_a?(AgentBot)
 
-    Current.user.assigned_inboxes.include? record
+    Current.user.manageable_inboxes.include? record
   end
 
   def assignable_agents?
@@ -67,6 +67,6 @@ class InboxPolicy < ApplicationPolicy
   end
 
   def telegram_users?
-    @account_user.administrator? || Current.user.assigned_inboxes.include?(record)
+    @account_user.administrator? || Current.user.manageable_inboxes.include?(record)
   end
 end

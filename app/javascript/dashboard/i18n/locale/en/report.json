@@ -597,7 +597,7 @@
   },
   "RESOLUTION_STATISTICS": {
     "HEADER": "Resolution Statistics",
-    "DESCRIPTION": "Analyze resolution reasons, operators, and volumes over time",
+    "DESCRIPTION": "Analyze operators and resolution volumes over time",
     "FILTERS": {
       "HEADER": "Filters",
       "START_DATE": "Start Date",
@@ -605,8 +605,6 @@
       "OPERATORS": "Operators (optional)",
       "OPERATORS_PLACEHOLDER": "Select operators...",
       "OPERATORS_SELECTED": "{count} operator(s) selected",
-      "REASON": "Resolution reason (optional)",
-      "REASON_PLACEHOLDER": "All reasons",
       "CONVERSATION": "Conversation ID (optional)",
       "CONVERSATION_PLACEHOLDER": "Enter conversation ID",
       "APPLY": "Apply Filters"
@@ -614,12 +612,9 @@
     "METRICS": {
       "TOTAL": "Total Resolutions",
       "UNIQUE_CONVERSATIONS": "Unique Conversations",
-      "UNIQUE_OPERATORS": "Unique Operators",
-      "TOP_REASON": "Top Reason"
+      "UNIQUE_OPERATORS": "Unique Operators"
     },
     "CHARTS": {
-      "REASONS": "Resolutions by Reason",
-      "REASONS_LABEL": "Resolutions",
       "TREND": "Resolution Trend",
       "TREND_LABEL": "Resolutions per Day",
       "OPERATORS": "Operator Resolutions (Top 10)",
@@ -630,14 +625,11 @@
       "COLUMNS": {
         "CONVERSATION": "Conversation",
         "OPERATOR": "Operator",
-        "REASON": "Reason",
-        "DETAILS": "Details",
+        "TOPICS": "Topics",
         "DATE": "Resolved At"
       }
     },
     "EMPTY_STATE": "No data available",
-    "UNKNOWN": "Unknown",
-    "NO_TOP_REASON": "No data",
     "EMPTY_VALUE": "--",
     "OPERATOR_ID": "Operator {id}"
   },
@@ -675,5 +667,53 @@
       "COMPLETED_AT": "Completed at",
       "CREATED_AT": "Created at"
     }
+  },
+  "CSAT_STATISTICS": {
+    "HEADER": "CSAT Statistics",
+    "DESCRIPTION": "Analyze customer satisfaction ratings, trends, and operator performance",
+    "FILTERS": {
+      "HEADER": "Filters",
+      "START_DATE": "Start Date",
+      "END_DATE": "End Date",
+      "OPERATORS": "Operators (optional)",
+      "OPERATORS_PLACEHOLDER": "Select operators...",
+      "OPERATORS_SELECTED": "{count} operator(s) selected",
+      "RATING": "Rating (optional)",
+      "RATING_PLACEHOLDER": "All ratings",
+      "APPLY": "Apply Filters"
+    },
+    "METRICS": {
+      "TOTAL_RESPONSES": "Total Responses",
+      "SATISFACTION_SCORE": "Satisfaction Score",
+      "UNIQUE_CONVERSATIONS": "Unique Conversations",
+      "UNIQUE_OPERATORS": "Unique Operators"
+    },
+    "RATINGS": {
+      "AWESOME": "Awesome",
+      "GOOD": "Good",
+      "BAD": "Bad",
+      "TERRIBLE": "Terrible"
+    },
+    "CHARTS": {
+      "RATINGS": "Responses by Rating",
+      "RATINGS_LABEL": "Responses",
+      "TREND": "CSAT Trend",
+      "TREND_LABEL": "Responses per Day",
+      "OPERATORS": "Operator CSAT (Top 10)",
+      "OPERATORS_RESPONSES": "Responses"
+    },
+    "TABLE": {
+      "HEADER": "CSAT Records",
+      "COLUMNS": {
+        "CONVERSATION": "Conversation",
+        "OPERATOR": "Operator",
+        "RATING": "Rating",
+        "COMMENT": "Comment",
+        "RESOLVED_AT": "Resolved At"
+      }
+    },
+    "EMPTY_STATE": "No data available",
+    "EMPTY_VALUE": "--",
+    "OPERATOR_ID": "Operator {id}"
   }
 }

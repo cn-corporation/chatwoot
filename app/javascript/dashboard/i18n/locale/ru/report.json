@@ -597,7 +597,7 @@
   },
   "RESOLUTION_STATISTICS": {
     "HEADER": "Статистика решений",
-    "DESCRIPTION": "Анализ причин завершения, операторов и динамики",
+    "DESCRIPTION": "Анализ операторов и динамики завершений",
     "FILTERS": {
       "HEADER": "Фильтры",
       "START_DATE": "Дата начала",
@@ -605,8 +605,6 @@
       "OPERATORS": "Операторы (необязательно)",
       "OPERATORS_PLACEHOLDER": "Выберите операторов...",
       "OPERATORS_SELECTED": "Выбрано операторов: {count}",
-      "REASON": "Причина завершения (необязательно)",
-      "REASON_PLACEHOLDER": "Все причины",
       "CONVERSATION": "ID диалога (необязательно)",
       "CONVERSATION_PLACEHOLDER": "Введите ID диалога",
       "APPLY": "Применить фильтры"
@@ -614,12 +612,9 @@
     "METRICS": {
       "TOTAL": "Всего завершений",
       "UNIQUE_CONVERSATIONS": "Уникальные диалоги",
-      "UNIQUE_OPERATORS": "Уникальные операторы",
-      "TOP_REASON": "Топ причина"
+      "UNIQUE_OPERATORS": "Уникальные операторы"
     },
     "CHARTS": {
-      "REASONS": "Завершения по причинам",
-      "REASONS_LABEL": "Завершения",
       "TREND": "Тренд завершений",
       "TREND_LABEL": "Завершения в день",
       "OPERATORS": "Завершения операторов (Топ 10)",
@@ -630,15 +625,11 @@
       "COLUMNS": {
         "CONVERSATION": "Диалог",
         "OPERATOR": "Оператор",
-        "REASON": "Причина",
-        "DETAILS": "Детали",
         "TOPICS": "Темы",
         "DATE": "Дата завершения"
       }
     },
     "EMPTY_STATE": "Нет данных",
-    "UNKNOWN": "Неизвестно",
-    "NO_TOP_REASON": "Нет данных",
     "EMPTY_VALUE": "--",
     "OPERATOR_ID": "Оператор {id}"
   },
@@ -676,5 +667,53 @@
       "COMPLETED_AT": "Выполнено",
       "CREATED_AT": "Создано"
     }
+  },
+  "CSAT_STATISTICS": {
+    "HEADER": "Статистика CSAT",
+    "DESCRIPTION": "Анализ оценок удовлетворённости клиентов, трендов и эффективности операторов",
+    "FILTERS": {
+      "HEADER": "Фильтры",
+      "START_DATE": "Начало",
+      "END_DATE": "Конец",
+      "OPERATORS": "Операторы (необязательно)",
+      "OPERATORS_PLACEHOLDER": "Выберите операторов...",
+      "OPERATORS_SELECTED": "Выбрано операторов: {count}",
+      "RATING": "Оценка (необязательно)",
+      "RATING_PLACEHOLDER": "Все оценки",
+      "APPLY": "Применить"
+    },
+    "METRICS": {
+      "TOTAL_RESPONSES": "Всего ответов",
+      "SATISFACTION_SCORE": "Удовлетворённость",
+      "UNIQUE_CONVERSATIONS": "Уникальных диалогов",
+      "UNIQUE_OPERATORS": "Уникальных операторов"
+    },
+    "RATINGS": {
+      "AWESOME": "Супер",
+      "GOOD": "Хорошо",
+      "BAD": "Плохо",
+      "TERRIBLE": "Ужасно"
+    },
+    "CHARTS": {
+      "RATINGS": "Ответы по оценкам",
+      "RATINGS_LABEL": "Ответы",
+      "TREND": "Тренд CSAT",
+      "TREND_LABEL": "Ответов в день",
+      "OPERATORS": "CSAT по операторам (Топ 10)",
+      "OPERATORS_RESPONSES": "Ответы"
+    },
+    "TABLE": {
+      "HEADER": "Записи CSAT",
+      "COLUMNS": {
+        "CONVERSATION": "Диалог",
+        "OPERATOR": "Оператор",
+        "RATING": "Оценка",
+        "COMMENT": "Комментарий",
+        "RESOLVED_AT": "Разрешено"
+      }
+    },
+    "EMPTY_STATE": "Нет данных",
+    "EMPTY_VALUE": "--",
+    "OPERATOR_ID": "Оператор {id}"
   }
 }

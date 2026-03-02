@@ -16,7 +16,12 @@ class Telegram::IncomingMessageService
 
     update_contact_avatar
     set_conversation
-    if callback_query_params? && @conversation.custom_attributes&.dig('bot_topic').present?
+    if callback_query_params? && csat_callback?
+      answer_callback_query
+      dispatch_csat_webhook unless csat_noop_callback?
+      return
+    end
+    if callback_query_params? && @conversation.custom_attributes&.dig('bot_topic').present? && !@conversation.resolved?
       answer_callback_query
       return
     end
@@ -46,6 +51,33 @@ class Telegram::IncomingMessageService
 
   def answer_callback_query
     inbox.channel.answer_callback_query(params[:callback_query][:id])
+  end
+
+  def csat_callback?
+    params.dig(:callback_query, :data)&.start_with?('csat_')
+  end
+
+  def csat_noop_callback?
+    params.dig(:callback_query, :data) == 'csat_noop'
+  end
+
+  def dispatch_csat_webhook
+    payload = {
+      event: 'message_created_with_context',
+      id: 0,
+      message_type: 'incoming',
+      content_attributes: telegram_params_content_attributes,
+      created_at: Time.zone.now.to_s,
+      conversation: @conversation.webhook_data,
+      account: @conversation.account.webhook_data,
+      inbox: inbox.webhook_data
+    }
+
+    @conversation.account.webhooks.account_type.each do |webhook|
+      next unless webhook.subscriptions.include?('message_created_with_context')
+
+      WebhookJob.perform_later(webhook.url, payload)
+    end
   end
 
   def set_contact

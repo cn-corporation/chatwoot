@@ -1,4 +1,3 @@
-<!-- eslint-disable no-plusplus -->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -17,11 +16,11 @@ import {
 } from 'chart.js';
 import { format, subDays } from 'date-fns';
 import ReportHeader from './components/ReportHeader.vue';
-import ResolutionStatsFilters from './components/ResolutionStatsFilters.vue';
-import ResolutionStatsOverview from './components/ResolutionStatsOverview.vue';
-import ResolutionStatsCharts from './components/ResolutionStatsCharts.vue';
-import ResolutionStatsTable from './components/ResolutionStatsTable.vue';
-import resolutionStatisticsAPI from 'dashboard/api/resolutionStatistics';
+import CsatStatsFilters from './components/CsatStatsFilters.vue';
+import CsatStatsOverview from './components/CsatStatsOverview.vue';
+import CsatStatsCharts from './components/CsatStatsCharts.vue';
+import CsatStatsTable from './components/CsatStatsTable.vue';
+import csatStatisticsAPI from 'dashboard/api/csatStatistics';
 
 ChartJS.register(
   CategoryScale,
@@ -41,7 +40,7 @@ const store = useStore();
 const isLoading = ref(false);
 const aggregatedData = ref(null);
 const selectedOperators = ref([]);
-const conversationId = ref('');
+const selectedRating = ref(null);
 const dateRange = ref({
   start: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
   end: format(new Date(), 'yyyy-MM-dd'),
@@ -57,64 +56,83 @@ const agentsMap = computed(() => {
   return map;
 });
 
-const resolutionTopicLabels = {
-  deposits_withdrawals: () => t('CLOSE_TOPICS.TOPIC_DEPOSITS_WITHDRAWALS'),
-  registration_login: () => t('CLOSE_TOPICS.TOPIC_REGISTRATION_LOGIN'),
-  bonuses_rakeback: () => t('CLOSE_TOPICS.TOPIC_BONUSES_RAKEBACK'),
-  complaint: () => t('CLOSE_TOPICS.TOPIC_COMPLAINT'),
-  other: () => t('CLOSE_TOPICS.TOPIC_OTHER'),
-  registration_funnel: () => 'Registration Funnel',
-  statistics_rake_rakeback: () => 'Statistics / Rake / Rakeback',
-  bonuses_promotions: () => 'Bonuses & Promotions',
-  lobby_game: () => 'Lobby / Game',
-  clubgg: () => 'ClubGG',
+const RATING_CONFIG = {
+  awesome: { emoji: '\u{1F604}', label: 'CSAT_STATISTICS.RATINGS.AWESOME' },
+  good: { emoji: '\u{1F642}', label: 'CSAT_STATISTICS.RATINGS.GOOD' },
+  bad: { emoji: '\u{1F615}', label: 'CSAT_STATISTICS.RATINGS.BAD' },
+  terrible: { emoji: '\u{1F621}', label: 'CSAT_STATISTICS.RATINGS.TERRIBLE' },
 };
 
-const getTopicLabel = topic => {
-  const resolver = resolutionTopicLabels[topic];
-  return resolver ? resolver() : topic;
-};
-
-const formatTopics = topicsArray => {
-  if (!topicsArray || !Array.isArray(topicsArray) || topicsArray.length === 0) {
-    return t('RESOLUTION_STATISTICS.EMPTY_VALUE');
-  }
-  return topicsArray.map(getTopicLabel).join(', ');
+const getRatingLabel = rating => {
+  const config = RATING_CONFIG[rating];
+  return config ? `${config.emoji} ${t(config.label)}` : rating;
 };
 
 const getAgentName = operatorId => {
   const agent = agentsMap.value.get(String(operatorId));
   if (agent) {
-    return (
-      agent.name ||
-      agent.email ||
-      t('RESOLUTION_STATISTICS.OPERATOR_ID', {
-        id: operatorId,
-      })
-    );
+    return agent.name || agent.email || t('CSAT_STATISTICS.OPERATOR_ID', { id: operatorId });
   }
-  return t('RESOLUTION_STATISTICS.OPERATOR_ID', { id: operatorId });
+  return t('CSAT_STATISTICS.OPERATOR_ID', { id: operatorId });
 };
 
 const operatorOptions = computed(() => {
   return agents.value.map(agent => ({
     value: agent.id,
-    label:
-      agent.name ||
-      agent.email ||
-      t('RESOLUTION_STATISTICS.OPERATOR_ID', { id: agent.id }),
+    label: agent.name || agent.email || t('CSAT_STATISTICS.OPERATOR_ID', { id: agent.id }),
   }));
 });
 
+const ratingOptions = computed(() => [
+  { value: 'awesome', label: `\u{1F604} ${t('CSAT_STATISTICS.RATINGS.AWESOME')}` },
+  { value: 'good', label: `\u{1F642} ${t('CSAT_STATISTICS.RATINGS.GOOD')}` },
+  { value: 'bad', label: `\u{1F615} ${t('CSAT_STATISTICS.RATINGS.BAD')}` },
+  { value: 'terrible', label: `\u{1F621} ${t('CSAT_STATISTICS.RATINGS.TERRIBLE')}` },
+]);
+
 const overviewMetrics = computed(() => {
   if (!aggregatedData.value) return null;
-
   const { overview } = aggregatedData.value;
-
   return {
-    totalResolutions: overview.totalResolutions,
+    totalResponses: overview.totalResponses,
     uniqueConversations: overview.uniqueConversations,
     uniqueOperators: overview.uniqueOperators,
+    satisfactionScore: `${overview.satisfactionScore}%`,
+  };
+});
+
+const ratingChartData = computed(() => {
+  if (!aggregatedData.value?.ratingChart?.length) return null;
+
+  const colorMap = {
+    awesome: 'rgba(16, 185, 129, 0.7)',
+    good: 'rgba(59, 130, 246, 0.7)',
+    bad: 'rgba(245, 158, 11, 0.7)',
+    terrible: 'rgba(239, 68, 68, 0.7)',
+  };
+
+  const borderMap = {
+    awesome: 'rgba(16, 185, 129, 1)',
+    good: 'rgba(59, 130, 246, 1)',
+    bad: 'rgba(245, 158, 11, 1)',
+    terrible: 'rgba(239, 68, 68, 1)',
+  };
+
+  return {
+    labels: aggregatedData.value.ratingChart.map(r => getRatingLabel(r.rating)),
+    datasets: [
+      {
+        label: t('CSAT_STATISTICS.CHARTS.RATINGS_LABEL'),
+        data: aggregatedData.value.ratingChart.map(r => r.count),
+        backgroundColor: aggregatedData.value.ratingChart.map(
+          r => colorMap[r.rating] || 'rgba(107, 114, 128, 0.7)'
+        ),
+        borderColor: aggregatedData.value.ratingChart.map(
+          r => borderMap[r.rating] || 'rgba(107, 114, 128, 1)'
+        ),
+        borderWidth: 1,
+      },
+    ],
   };
 });
 
@@ -127,7 +145,7 @@ const trendChartData = computed(() => {
     ),
     datasets: [
       {
-        label: t('RESOLUTION_STATISTICS.CHARTS.TREND_LABEL'),
+        label: t('CSAT_STATISTICS.CHARTS.TREND_LABEL'),
         data: aggregatedData.value.trendChart.map(d => d.count),
         borderColor: 'rgba(16, 185, 129, 1)',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -142,12 +160,10 @@ const operatorChartData = computed(() => {
   if (!aggregatedData.value?.operatorChart?.length) return null;
 
   return {
-    labels: aggregatedData.value.operatorChart.map(o =>
-      getAgentName(o.operatorId)
-    ),
+    labels: aggregatedData.value.operatorChart.map(o => getAgentName(o.operatorId)),
     datasets: [
       {
-        label: t('RESOLUTION_STATISTICS.CHARTS.OPERATORS_LABEL'),
+        label: t('CSAT_STATISTICS.CHARTS.OPERATORS_RESPONSES'),
         data: aggregatedData.value.operatorChart.map(o => o.count),
         backgroundColor: 'rgba(139, 92, 246, 0.6)',
         borderColor: 'rgba(139, 92, 246, 1)',
@@ -161,36 +177,29 @@ const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: {
-      display: true,
-      position: 'top',
-    },
-    tooltip: {
-      mode: 'index',
-      intersect: false,
-    },
+    legend: { display: true, position: 'top' },
+    tooltip: { mode: 'index', intersect: false },
   },
   scales: {
-    y: {
-      beginAtZero: true,
-    },
+    y: { beginAtZero: true },
   },
 };
 
 const formatDateTime = value => {
-  if (!value) return t('RESOLUTION_STATISTICS.EMPTY_VALUE');
+  if (!value) return t('CSAT_STATISTICS.EMPTY_VALUE');
   return format(new Date(value), 'MMM dd, yyyy HH:mm');
 };
 
 const tableRows = computed(() => {
   if (!aggregatedData.value?.tableRows?.length) return [];
 
-  return aggregatedData.value.tableRows.map(stat => ({
-    id: stat.id,
-    conversationId: stat.conversationId,
-    operator: getAgentName(stat.operatorChatwootId ?? stat.operatorId),
-    topics: formatTopics(stat.topics),
-    createdAt: formatDateTime(stat.createdAt),
+  return aggregatedData.value.tableRows.map(row => ({
+    id: row.id,
+    conversationId: row.conversationId,
+    operator: getAgentName(row.operatorChatwootId),
+    rating: getRatingLabel(row.rating),
+    comment: row.comment || t('CSAT_STATISTICS.EMPTY_VALUE'),
+    resolutionDate: formatDateTime(row.resolutionDate),
   }));
 });
 
@@ -212,14 +221,12 @@ const fetchData = async () => {
       );
     }
 
-    const normalizedConversationId = String(conversationId.value || '').trim();
-    if (normalizedConversationId) {
-      params.conversationId = normalizedConversationId;
+    if (selectedRating.value?.value) {
+      params.rating = selectedRating.value.value;
     }
 
-    const statsRes =
-      await resolutionStatisticsAPI.getAggregatedStatistics(params);
-    aggregatedData.value = statsRes?.data || null;
+    const res = await csatStatisticsAPI.getAggregatedReport(params);
+    aggregatedData.value = res?.data || null;
   } catch (error) {
     aggregatedData.value = null;
   } finally {
@@ -235,8 +242,8 @@ const updateSelectedOperators = value => {
   selectedOperators.value = value;
 };
 
-const updateConversationId = value => {
-  conversationId.value = value;
+const updateSelectedRating = value => {
+  selectedRating.value = value;
 };
 
 onMounted(() => {
@@ -248,29 +255,31 @@ onMounted(() => {
 <template>
   <div class="flex flex-col gap-6 pb-6">
     <ReportHeader
-      :header-title="t('RESOLUTION_STATISTICS.HEADER')"
-      :header-description="t('RESOLUTION_STATISTICS.DESCRIPTION')"
+      :header-title="t('CSAT_STATISTICS.HEADER')"
+      :header-description="t('CSAT_STATISTICS.DESCRIPTION')"
     />
 
-    <ResolutionStatsFilters
+    <CsatStatsFilters
       :date-range="dateRange"
       :operator-options="operatorOptions"
       :selected-operators="selectedOperators"
-      :conversation-id="conversationId"
+      :rating-options="ratingOptions"
+      :selected-rating="selectedRating"
       :t="t"
       @update-date-range="handleDateRangeChange"
       @update-selected-operators="updateSelectedOperators"
-      @update-conversation-id="updateConversationId"
+      @update-selected-rating="updateSelectedRating"
       @apply="applyFilters"
     />
 
-    <ResolutionStatsOverview
+    <CsatStatsOverview
       v-if="!isLoading && overviewMetrics"
       :metrics="overviewMetrics"
       :t="t"
     />
 
-    <ResolutionStatsCharts
+    <CsatStatsCharts
+      :rating-chart-data="ratingChartData"
       :trend-chart-data="trendChartData"
       :operator-chart-data="operatorChartData"
       :chart-options="chartOptions"
@@ -278,6 +287,6 @@ onMounted(() => {
       :t="t"
     />
 
-    <ResolutionStatsTable :rows="tableRows" :is-loading="isLoading" :t="t" />
+    <CsatStatsTable :rows="tableRows" :is-loading="isLoading" :t="t" />
   </div>
 </template>
