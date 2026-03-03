@@ -126,6 +126,13 @@ export default {
     chatwootChannelId() {
       return this.currentChat?.inbox_id || null;
     },
+    playerName() {
+      return this.contact.custom_attributes?.player_name || null;
+    },
+    playerOverlay() {
+      const val = this.contact.custom_attributes?.overlay;
+      return val != null ? Number(val).toFixed(2) : null;
+    },
     // Delete Modal
     confirmDeleteMessage() {
       return ` ${this.contact.name}?`;
@@ -160,6 +167,20 @@ export default {
     copyTelegramUsername() {
       if (this.telegramUsername) {
         navigator.clipboard.writeText(this.telegramUsername).then(() => {
+          useAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
+        });
+      }
+    },
+    copyPlayerName() {
+      if (this.playerName) {
+        navigator.clipboard.writeText(this.playerName).then(() => {
+          useAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
+        });
+      }
+    },
+    copyOverlay() {
+      if (this.playerOverlay != null) {
+        navigator.clipboard.writeText(String(this.playerOverlay)).then(() => {
           useAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
         });
       }
@@ -308,6 +329,7 @@ export default {
           v-if="telegramId"
           class="flex items-center gap-2 text-sm text-n-slate-11"
         >
+          <span class="text-n-slate-10">{{ $t('CONTACT_PANEL.LABEL_TELEGRAM_ID') }}</span>
           <span
             v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_ID')"
             class="cursor-pointer hover:text-n-slate-12"
@@ -327,6 +349,7 @@ export default {
           v-if="telegramUsername"
           class="flex items-center gap-2 text-sm text-n-slate-11"
         >
+          <span class="text-n-slate-10">{{ $t('CONTACT_PANEL.LABEL_TELEGRAM_USERNAME') }}</span>
           <span
             v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_USERNAME')"
             class="cursor-pointer hover:text-n-slate-12"
@@ -338,6 +361,46 @@ export default {
             v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_USERNAME')"
             class="i-lucide-copy text-xs text-n-slate-10 hover:text-n-slate-12 cursor-pointer"
             @click="copyTelegramUsername"
+          />
+        </div>
+
+        <!-- ClubGG Username display -->
+        <div
+          v-if="playerName"
+          class="flex items-center gap-2 text-sm text-n-slate-11"
+        >
+          <span class="text-n-slate-10">{{ $t('CONTACT_PANEL.LABEL_CLUBGG_USERNAME') }}</span>
+          <span
+            v-tooltip.left="$t('CONTACT_PANEL.COPY_CLUBGG_USERNAME')"
+            class="cursor-pointer hover:text-n-slate-12"
+            @click="copyPlayerName"
+          >
+            {{ playerName }}
+          </span>
+          <button
+            v-tooltip.left="$t('CONTACT_PANEL.COPY_CLUBGG_USERNAME')"
+            class="i-lucide-copy text-xs text-n-slate-10 hover:text-n-slate-12 cursor-pointer"
+            @click="copyPlayerName"
+          />
+        </div>
+
+        <!-- Overlay display -->
+        <div
+          v-if="playerOverlay != null"
+          class="flex items-center gap-2 text-sm text-n-slate-11"
+        >
+          <span class="text-n-slate-10">{{ $t('CONTACT_PANEL.LABEL_OVERLAY') }}</span>
+          <span
+            v-tooltip.left="$t('CONTACT_PANEL.COPY_OVERLAY')"
+            class="cursor-pointer hover:text-n-slate-12"
+            @click="copyOverlay"
+          >
+            {{ playerOverlay }}
+          </span>
+          <button
+            v-tooltip.left="$t('CONTACT_PANEL.COPY_OVERLAY')"
+            class="i-lucide-copy text-xs text-n-slate-10 hover:text-n-slate-12 cursor-pointer"
+            @click="copyOverlay"
           />
         </div>
 

@@ -139,8 +139,60 @@ const sortConfig = {
     getSortOrderFunction(sortDirection)(a.created_at, b.created_at),
 
   sortOnPriority: (a, b, sortDirection) => {
-    const DEFAULT_FOR_NULL = sortDirection === 'asc' ? 5 : 0;
+    const getOverlay = c => {
+      const val =
+        c.meta?.sender?.custom_attributes?.overlay ??
+        c.custom_attributes?.overlay;
+      return val != null ? Number(val) : null;
+    };
+    const getTicketCount = c =>
+      c.custom_attributes?.ticket_count ??
+      c.meta?.sender?.custom_attributes?.ticket_count ??
+      0;
 
+    const ticketA = getTicketCount(a);
+    const ticketB = getTicketCount(b);
+    const isNewA = ticketA <= 1;
+    const isNewB = ticketB <= 1;
+
+    if (isNewA !== isNewB) return isNewA ? -1 : 1;
+    if (isNewA && isNewB) {
+      const overlayA = getOverlay(a);
+      const overlayB = getOverlay(b);
+      if (overlayA != null && overlayB != null && overlayA !== overlayB) {
+        return sortAscending(overlayA, overlayB);
+      }
+      if (overlayA != null && overlayB == null) return -1;
+      if (overlayA == null && overlayB != null) return 1;
+
+      const DEFAULT_FOR_NULL = sortDirection === 'asc' ? 5 : 0;
+      const p1 = CONVERSATION_PRIORITY_ORDER[a.priority] || DEFAULT_FOR_NULL;
+      const p2 = CONVERSATION_PRIORITY_ORDER[b.priority] || DEFAULT_FOR_NULL;
+      const priorityResult = getSortOrderFunction(sortDirection)(p1, p2);
+      if (priorityResult !== 0) return priorityResult;
+
+      return sortDescending(a.last_activity_at, b.last_activity_at);
+    }
+
+    const overlayA = getOverlay(a);
+    const overlayB = getOverlay(b);
+    const hasOverlayA = overlayA != null;
+    const hasOverlayB = overlayB != null;
+
+    if (hasOverlayA !== hasOverlayB) return hasOverlayA ? -1 : 1;
+    if (hasOverlayA && hasOverlayB) {
+      if (overlayA !== overlayB) return sortAscending(overlayA, overlayB);
+
+      const DEFAULT_FOR_NULL = sortDirection === 'asc' ? 5 : 0;
+      const p1 = CONVERSATION_PRIORITY_ORDER[a.priority] || DEFAULT_FOR_NULL;
+      const p2 = CONVERSATION_PRIORITY_ORDER[b.priority] || DEFAULT_FOR_NULL;
+      const priorityResult = getSortOrderFunction(sortDirection)(p1, p2);
+      if (priorityResult !== 0) return priorityResult;
+
+      return sortDescending(a.last_activity_at, b.last_activity_at);
+    }
+
+    const DEFAULT_FOR_NULL = sortDirection === 'asc' ? 5 : 0;
     const p1 = CONVERSATION_PRIORITY_ORDER[a.priority] || DEFAULT_FOR_NULL;
     const p2 = CONVERSATION_PRIORITY_ORDER[b.priority] || DEFAULT_FOR_NULL;
 
