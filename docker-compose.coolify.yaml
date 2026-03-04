@@ -28,6 +28,8 @@ services:
     container_name: chatwoot-pgvector
     pull_policy: always
     restart: always
+    ports:
+      - '9432:5432'
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-chatwoot}
       POSTGRES_USER: postgres
