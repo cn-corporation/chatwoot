@@ -501,6 +501,18 @@ const actions = {
     commit(types.UPDATE_CONVERSATION_CONTACT, data);
   },
 
+  updateContactInConversations({ state, commit }, contact) {
+    state.allConversations.forEach(conversation => {
+      if (conversation.meta?.sender?.id === contact.id) {
+        commit(types.UPDATE_CONVERSATION_CONTACT, {
+          conversationId: conversation.id,
+          ...conversation.meta.sender,
+          ...contact,
+        });
+      }
+    });
+  },
+
   setActiveInbox({ commit }, inboxId) {
     commit(types.SET_ACTIVE_INBOX, inboxId);
   },
