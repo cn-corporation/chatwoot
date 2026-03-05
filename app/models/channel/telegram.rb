@@ -185,10 +185,12 @@ class Channel::Telegram < ApplicationRecord
     {
       one_time_keyboard: true,
       inline_keyboard: message.content_attributes['items'].map do |item|
-        [{
-          text: item['title'],
-          callback_data: item['value']
-        }]
+        [
+          {
+            text: item['title'],
+            callback_data: item['value']
+          }.tap { |btn| btn[:style] = item['style'] if item['style'] }
+        ]
       end
     }.to_json
   end
