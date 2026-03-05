@@ -52,6 +52,20 @@ const getName = message => {
           :created-at="message.created_at"
           :message-id="message.id"
         >
+          <div class="flex items-center gap-1">
+            <span
+              v-if="message.message_type === 'private_note'"
+              class="inline-flex items-center rounded-sm px-1 py-0.5 text-xxs font-medium bg-y-50 text-y-800"
+            >
+              {{ $t('SEARCH.TYPE_BADGE.PRIVATE_NOTE') }}
+            </span>
+            <span
+              v-if="message.message_type === 'task'"
+              class="inline-flex items-center rounded-sm px-1 py-0.5 text-xxs font-medium bg-b-50 text-b-800"
+            >
+              {{ $t('SEARCH.TYPE_BADGE.TASK') }}
+            </span>
+          </div>
           <MessageContent
             :author="getName(message)"
             :message="message"

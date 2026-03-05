@@ -146,6 +146,7 @@ export const actions = {
         conversation_id: hit.conversationId,
         content: hit.content,
         created_at: Math.floor(hit.timestamp / 1000),
+        message_type: hit.messageType || 'message',
         sender: hit.userId
           ? { name: agents.find(a => a.id === hit.userId)?.name || 'Agent' }
           : null,

@@ -1121,6 +1121,7 @@ export default {
       try {
         const taskData = {
           conversationId: this.currentChat.id,
+          accountId: this.currentChat.account_id,
           message: this.message,
           operatorId: this.currentUser.id,
           operatorName:

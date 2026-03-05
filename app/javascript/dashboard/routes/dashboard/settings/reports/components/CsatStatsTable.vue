@@ -35,29 +35,19 @@ const conversationLink = id => {
       <table class="w-full">
         <thead>
           <tr class="border-b border-n-slate-6">
-            <th
-              class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-            >
+            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
               {{ t('CSAT_STATISTICS.TABLE.COLUMNS.CONVERSATION') }}
             </th>
-            <th
-              class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-            >
+            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
               {{ t('CSAT_STATISTICS.TABLE.COLUMNS.OPERATOR') }}
             </th>
-            <th
-              class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-            >
+            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
               {{ t('CSAT_STATISTICS.TABLE.COLUMNS.RATING') }}
             </th>
-            <th
-              class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-            >
+            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
               {{ t('CSAT_STATISTICS.TABLE.COLUMNS.COMMENT') }}
             </th>
-            <th
-              class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-            >
+            <th class="text-left py-3 px-4 text-sm font-medium text-n-slate-11">
               {{ t('CSAT_STATISTICS.TABLE.COLUMNS.RESOLVED_AT') }}
             </th>
           </tr>
@@ -79,7 +69,7 @@ const conversationLink = id => {
             <td class="py-3 px-4 text-sm text-n-slate-12">
               {{ row.operator }}
             </td>
-            <td class="py-3 px-4 text-sm text-n-slate-12">
+            <td class="py-3 px-4 text-sm text-n-slate-12 whitespace-nowrap">
               {{ row.rating }}
             </td>
             <td class="py-3 px-4 text-sm text-n-slate-12">
