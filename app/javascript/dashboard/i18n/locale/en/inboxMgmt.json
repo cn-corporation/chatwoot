@@ -585,6 +585,14 @@
         "ENABLED": "Enabled",
         "DISABLED": "Disabled"
       },
+      "CSAT_ENABLED": {
+        "ENABLED": "Enabled",
+        "DISABLED": "Disabled"
+      },
+      "AUTO_CLOSE_ENABLED": {
+        "ENABLED": "Enabled",
+        "DISABLED": "Disabled"
+      },
       "ENABLE_HMAC": {
         "LABEL": "Enable"
       }
@@ -714,6 +722,10 @@
       "LOCK_TO_SINGLE_CONVERSATION_SUB_TEXT": "Enable or disable multiple conversations for the same contact in this inbox",
       "BOT_FLOW_ENABLED": "Bot flow (topic selection)",
       "BOT_FLOW_ENABLED_SUB_TEXT": "When enabled, new conversations will require topic selection before being assigned to an operator",
+      "CSAT_ENABLED": "CSAT survey",
+      "CSAT_ENABLED_SUB_TEXT": "When enabled, a CSAT survey will be sent after conversation is resolved",
+      "AUTO_CLOSE_ENABLED": "Inactivity auto-close",
+      "AUTO_CLOSE_ENABLED_SUB_TEXT": "When enabled, inactive conversations will be automatically closed after a timeout",
       "INBOX_UPDATE_TITLE": "Inbox Settings",
       "INBOX_UPDATE_SUB_TEXT": "Update your inbox settings",
       "AUTO_ASSIGNMENT_SUB_TEXT": "Enable or disable the automatic assignment of new conversations to the agents added to this inbox.",
