@@ -95,6 +95,10 @@ export default {
       originalSourceClubId: null,
       botFlowEnabled: true,
       originalBotFlowEnabled: true,
+      csatEnabled: true,
+      originalCsatEnabled: true,
+      autoCloseEnabled: true,
+      originalAutoCloseEnabled: true,
       healthData: null,
       isLoadingHealth: false,
       healthError: null,
@@ -453,6 +457,10 @@ export default {
           this.originalSourceClubId = response.data.clubId || null;
           this.botFlowEnabled = response.data.botFlowEnabled !== false;
           this.originalBotFlowEnabled = this.botFlowEnabled;
+          this.csatEnabled = response.data.csatEnabled !== false;
+          this.originalCsatEnabled = this.csatEnabled;
+          this.autoCloseEnabled = response.data.autoCloseEnabled !== false;
+          this.originalAutoCloseEnabled = this.autoCloseEnabled;
         } else {
           this.sourceBgColor = '#000000';
           this.enableSourceBgColor = false;
@@ -461,6 +469,10 @@ export default {
           this.originalSourceClubId = null;
           this.botFlowEnabled = true;
           this.originalBotFlowEnabled = true;
+          this.csatEnabled = true;
+          this.originalCsatEnabled = true;
+          this.autoCloseEnabled = true;
+          this.originalAutoCloseEnabled = true;
         }
       } catch (error) {
         this.sourceBgColor = '#000000';
@@ -529,6 +541,16 @@ export default {
           needsSourceChannelUpdate = true;
         }
 
+        if (this.csatEnabled !== this.originalCsatEnabled) {
+          sourceChannelUpdate.csatEnabled = this.csatEnabled;
+          needsSourceChannelUpdate = true;
+        }
+
+        if (this.autoCloseEnabled !== this.originalAutoCloseEnabled) {
+          sourceChannelUpdate.autoCloseEnabled = this.autoCloseEnabled;
+          needsSourceChannelUpdate = true;
+        }
+
         if (needsSourceChannelUpdate) {
           await chatwootExtraAPI.updateSourceChannel(
             this.currentInboxId,
@@ -546,6 +568,12 @@ export default {
           }
           if (sourceChannelUpdate.botFlowEnabled !== undefined) {
             this.originalBotFlowEnabled = this.botFlowEnabled;
+          }
+          if (sourceChannelUpdate.csatEnabled !== undefined) {
+            this.originalCsatEnabled = this.csatEnabled;
+          }
+          if (sourceChannelUpdate.autoCloseEnabled !== undefined) {
+            this.originalAutoCloseEnabled = this.autoCloseEnabled;
           }
         }
 
@@ -949,6 +977,36 @@ export default {
             </select>
             <p class="pb-1 text-sm not-italic text-n-slate-11">
               {{ $t('INBOX_MGMT.SETTINGS_POPUP.BOT_FLOW_ENABLED_SUB_TEXT') }}
+            </p>
+          </label>
+
+          <label v-if="isATelegramChannel" class="pb-4">
+            {{ $t('INBOX_MGMT.SETTINGS_POPUP.CSAT_ENABLED') }}
+            <select v-model="csatEnabled">
+              <option :value="true">
+                {{ $t('INBOX_MGMT.EDIT.CSAT_ENABLED.ENABLED') }}
+              </option>
+              <option :value="false">
+                {{ $t('INBOX_MGMT.EDIT.CSAT_ENABLED.DISABLED') }}
+              </option>
+            </select>
+            <p class="pb-1 text-sm not-italic text-n-slate-11">
+              {{ $t('INBOX_MGMT.SETTINGS_POPUP.CSAT_ENABLED_SUB_TEXT') }}
+            </p>
+          </label>
+
+          <label v-if="isATelegramChannel" class="pb-4">
+            {{ $t('INBOX_MGMT.SETTINGS_POPUP.AUTO_CLOSE_ENABLED') }}
+            <select v-model="autoCloseEnabled">
+              <option :value="true">
+                {{ $t('INBOX_MGMT.EDIT.AUTO_CLOSE_ENABLED.ENABLED') }}
+              </option>
+              <option :value="false">
+                {{ $t('INBOX_MGMT.EDIT.AUTO_CLOSE_ENABLED.DISABLED') }}
+              </option>
+            </select>
+            <p class="pb-1 text-sm not-italic text-n-slate-11">
+              {{ $t('INBOX_MGMT.SETTINGS_POPUP.AUTO_CLOSE_ENABLED_SUB_TEXT') }}
             </p>
           </label>
 
