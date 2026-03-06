@@ -37,9 +37,12 @@ const isResolved = computed(
 const isSnoozed = computed(
   () => currentChat.value.status === wootConstants.STATUS_TYPE.SNOOZED
 );
+const isStandBy = computed(
+  () => currentChat.value.status === wootConstants.STATUS_TYPE.STAND_BY
+);
 
 const showOpenButton = computed(() => {
-  return isPending.value || isSnoozed.value;
+  return isPending.value || isSnoozed.value || isStandBy.value;
 });
 
 const getConversationParams = () => {

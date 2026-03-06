@@ -8,6 +8,7 @@ const state = {
   allCount: 0,
   pendingCount: 0,
   resolvedCount: 0,
+  standByCount: 0,
 };
 
 export const getters = {
@@ -60,6 +61,7 @@ export const mutations = {
       all_count: allCount,
       pending_count: pendingCount,
       resolved_count: resolvedCount,
+      stand_by_count: standByCount,
     } = {}
   ) {
     $state.mineCount = mineCount || 0;
@@ -67,6 +69,7 @@ export const mutations = {
     $state.unAssignedCount = unAssignedCount || 0;
     $state.pendingCount = pendingCount || 0;
     $state.resolvedCount = resolvedCount || 0;
+    $state.standByCount = standByCount || 0;
     $state.updatedOn = new Date();
   },
 };

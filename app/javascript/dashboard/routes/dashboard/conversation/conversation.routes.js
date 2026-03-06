@@ -131,26 +131,49 @@ export default {
       }),
     },
     {
-      path: frontendURL('accounts/:accountId/mentions/conversations'),
-      name: 'conversation_mentions',
+      path: frontendURL('accounts/:accountId/mine/conversations'),
+      name: 'conversation_mine',
+      meta: {
+        permissions: ['administrator'],
+      },
+      component: ConversationView,
+      props: () => ({ conversationType: 'mine' }),
+    },
+    {
+      path: frontendURL(
+        'accounts/:accountId/mine/conversations/:conversationId'
+      ),
+      name: 'conversation_through_mine',
+      meta: {
+        permissions: ['administrator'],
+      },
+      component: ConversationView,
+      props: route => ({
+        conversationId: route.params.conversationId,
+        conversationType: 'mine',
+      }),
+    },
+    {
+      path: frontendURL('accounts/:accountId/pending/conversations'),
+      name: 'conversation_pending',
       meta: {
         permissions: CONVERSATION_PERMISSIONS,
       },
       component: ConversationView,
-      props: () => ({ conversationType: 'mention' }),
+      props: () => ({ conversationType: 'pending' }),
     },
     {
       path: frontendURL(
-        'accounts/:accountId/mentions/conversations/:conversationId'
+        'accounts/:accountId/pending/conversations/:conversationId'
       ),
-      name: 'conversation_through_mentions',
+      name: 'conversation_through_pending',
       meta: {
         permissions: CONVERSATION_PERMISSIONS,
       },
       component: ConversationView,
       props: route => ({
         conversationId: route.params.conversationId,
-        conversationType: 'mention',
+        conversationType: 'pending',
       }),
     },
     {

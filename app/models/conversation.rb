@@ -75,7 +75,7 @@ class Conversation < ApplicationRecord
   validates :uuid, uniqueness: true
   validate :validate_referer_url
 
-  enum status: { open: 0, resolved: 1, pending: 2, snoozed: 3 }
+  enum status: { open: 0, resolved: 1, pending: 2, snoozed: 3, stand_by: 4 }
   enum priority: { low: 0, medium: 1, high: 2, urgent: 3 }
   enum resolution_reason: {
     resolved_success: 0,
@@ -160,7 +160,7 @@ class Conversation < ApplicationRecord
   def toggle_status
     # FIXME: implement state machine with aasm
     self.status = open? ? :resolved : :open
-    self.status = :open if pending? || snoozed?
+    self.status = :open if pending? || snoozed? || stand_by?
 
     clear_resolution_attributes if status == 'open'
 

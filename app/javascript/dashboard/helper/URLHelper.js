@@ -27,6 +27,10 @@ export const conversationUrl = ({
     url = `accounts/${accountId}/participating/conversations/${id}`;
   } else if (conversationType === 'unattended') {
     url = `accounts/${accountId}/unattended/conversations/${id}`;
+  } else if (conversationType === 'mine') {
+    url = `accounts/${accountId}/mine/conversations/${id}`;
+  } else if (conversationType === 'pending') {
+    url = `accounts/${accountId}/pending/conversations/${id}`;
   }
   return url;
 };
@@ -52,6 +56,8 @@ export const conversationListPageURL = ({
     const urlMap = {
       mention: 'mentions/conversations',
       unattended: 'unattended/conversations',
+      mine: 'mine/conversations',
+      pending: 'pending/conversations',
     };
     url = `accounts/${accountId}/${urlMap[conversationType]}`;
   }

@@ -2,13 +2,12 @@
 #
 # Table name: channel_telegram
 #
-#  id                    :bigint           not null, primary key
-#  additional_attributes :jsonb
-#  bot_name              :string
-#  bot_token             :string           not null
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  account_id            :integer          not null
+#  id         :bigint           not null, primary key
+#  bot_name   :string
+#  bot_token  :string           not null
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  account_id :integer          not null
 #
 # Indexes
 #
