@@ -58,15 +58,14 @@ class ConversationFinder
     unassigned_count = base_conversations.where(status: :open).unassigned.count
     all_count = base_conversations.where(status: :open).count
 
-    # Count resolved conversations
     resolved_count = base_conversations.resolved.count
-    # Count pending conversations
     pending_count = base_conversations.pending.count
+    stand_by_count = base_conversations.stand_by.count
     assigned_count = all_count - unassigned_count
 
-    filter_by_assignee_type # filter by assignee
+    filter_by_assignee_type
 
-    filter_by_status unless %w[resolved pending].include?(@assignee_type)
+    filter_by_status unless %w[resolved pending stand_by].include?(@assignee_type)
 
     {
       conversations: conversations,
@@ -76,7 +75,8 @@ class ConversationFinder
         unassigned_count: unassigned_count,
         all_count: all_count,
         resolved_count: resolved_count,
-        pending_count: pending_count
+        pending_count: pending_count,
+        stand_by_count: stand_by_count
       }
     }
   end
@@ -131,6 +131,8 @@ class ConversationFinder
       @conversations = @conversations.resolved
     when 'pending'
       @conversations = @conversations.pending
+    when 'stand_by'
+      @conversations = @conversations.stand_by
     end
     @conversations
   end

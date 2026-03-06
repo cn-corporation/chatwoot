@@ -332,6 +332,9 @@ const currentPageFilterKey = computed(() => {
   if (activeAssigneeTab.value === 'no_category') {
     return 'pending';
   }
+  if (props.conversationType === 'pending') {
+    return 'stand_by';
+  }
   return activeAssigneeTab.value;
 });
 
@@ -373,6 +376,11 @@ const conversationFilters = computed(() => {
 
   if (props.conversationType === 'mine') {
     assigneeType = 'me';
+  }
+
+  if (props.conversationType === 'pending') {
+    assigneeType = 'stand_by';
+    status = 'stand_by';
   }
 
   return {
@@ -431,20 +439,18 @@ const pageTitle = computed(() => {
 const conversationList = computed(() => {
   let localConversationList = [];
 
-  if (props.conversationType === 'pending') {
-    return [];
-  }
-
   if (!hasAppliedFiltersOrActiveFolders.value) {
     const filters = conversationFilters.value;
-    if (activeAssigneeTab.value === 'unassigned') {
+    if (props.conversationType === 'mine') {
+      localConversationList = [...mineChatsList.value(filters)];
+    } else if (props.conversationType === 'pending') {
+      localConversationList = [...allChatList.value(filters)];
+    } else if (activeAssigneeTab.value === 'unassigned') {
       localConversationList = [...unAssignedChatsList.value(filters)];
     } else if (activeAssigneeTab.value === 'resolved') {
       localConversationList = [...resolvedChatsList.value(filters)];
     } else if (activeAssigneeTab.value === 'no_category') {
       localConversationList = [...allChatList.value(filters)];
-    } else if (props.conversationType === 'mine') {
-      localConversationList = [...mineChatsList.value(filters)];
     } else {
       localConversationList = [...allChatList.value(filters)];
     }

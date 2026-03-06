@@ -14,9 +14,6 @@ export const getSelectedChatConversation = ({
 }) =>
   allConversations.filter(conversation => conversation.id === selectedChatId);
 
-const isOpenOrPending = conversation =>
-  conversation?.status === 'open' || conversation?.status === 'pending';
-
 const getAssigneeId = conversation =>
   conversation?.assignee_id ?? conversation?.meta?.assignee?.id;
 
@@ -30,6 +27,12 @@ const isAssignedToCurrentUser = (conversation, currentUserId) => {
 const isOperatorUnreadEligible = (conversation, currentUserId) => {
   if (!conversation) return false;
   if (conversation.status !== 'open') return false;
+  return isAssignedToCurrentUser(conversation, currentUserId);
+};
+
+const isStandByUnreadEligible = (conversation, currentUserId) => {
+  if (!conversation) return false;
+  if (conversation.status !== 'stand_by') return false;
   return isAssignedToCurrentUser(conversation, currentUserId);
 };
 
@@ -279,7 +282,11 @@ const getters = {
     (_state, _getters, _rootState, rootGetters) => conversationId => {
       const currentUserId = rootGetters.getCurrentUser?.id;
       const conversation = findConversation(_state, conversationId);
-      if (!isOperatorUnreadEligible(conversation, currentUserId)) return 0;
+      if (
+        !isOperatorUnreadEligible(conversation, currentUserId) &&
+        !isStandByUnreadEligible(conversation, currentUserId)
+      )
+        return 0;
       if (!passesDialogueSegregation(conversation, rootGetters)) return 0;
       return _state.operatorNotifications.get(String(conversationId)) || 0;
     },
@@ -366,6 +373,27 @@ const getters = {
 
   getConversationTopic: _state => conversationId => {
     return _state.conversationTopics.get(String(conversationId)) || null;
+  },
+
+  getStandByOperatorUnreadCount: (
+    _state,
+    _getters,
+    _rootState,
+    rootGetters
+  ) => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+    const currentUserId = rootGetters.getCurrentUser?.id;
+
+    if (source.length === 0) return 0;
+
+    return source.reduce((total, conv) => {
+      if (!isStandByUnreadEligible(conv, currentUserId)) return total;
+      if (!passesDialogueSegregation(conv, rootGetters)) return total;
+      return total + (_state.operatorNotifications.get(String(conv.id)) || 0);
+    }, 0);
   },
 };
 

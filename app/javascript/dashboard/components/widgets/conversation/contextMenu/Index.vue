@@ -112,6 +112,11 @@ export default {
           label: this.$t('CONVERSATION.CARD_CONTEXT_MENU.REOPEN'),
           icon: 'arrow-redo',
         },
+        {
+          key: wootConstants.STATUS_TYPE.STAND_BY,
+          label: this.$t('CONVERSATION.CARD_CONTEXT_MENU.PENDING'),
+          icon: 'clock',
+        },
       ],
       priorityConfig: {
         key: MENU.PRIORITY,
