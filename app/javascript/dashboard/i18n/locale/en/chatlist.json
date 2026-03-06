@@ -19,6 +19,7 @@
       "unassigned": "Unassigned",
       "all": "All",
       "all-operators": "All",
+      "no_category": "No category",
       "pending": "Pending",
       "resolved": "Archived"
     },

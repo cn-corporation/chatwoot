@@ -341,11 +341,21 @@ const menuItems = computed(() => {
           to: accountScopedRoute('conversation_unattended'),
           count: totalUnreadCount.value || 0,
         },
+        ...(isAdmin.value
+          ? [
+              {
+                name: 'Mine',
+                activeOn: ['conversation_through_mine'],
+                label: t('SIDEBAR.MINE_CONVERSATIONS'),
+                to: accountScopedRoute('conversation_mine'),
+              },
+            ]
+          : []),
         {
-          name: 'Mentions',
-          label: t('SIDEBAR.MENTIONED_CONVERSATIONS'),
-          activeOn: ['conversation_through_mentions'],
-          to: accountScopedRoute('conversation_mentions'),
+          name: 'Pending',
+          activeOn: ['conversation_through_pending'],
+          label: t('SIDEBAR.PENDING_CONVERSATIONS'),
+          to: accountScopedRoute('conversation_pending'),
         },
         {
           name: 'Teams',

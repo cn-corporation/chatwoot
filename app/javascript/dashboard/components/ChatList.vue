@@ -116,7 +116,7 @@ const stopPriorityTimer = () => {
 
 provide('conversationTimerTick', conversationTimerTick);
 
-const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ME);
+const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.UNASSIGNED);
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
 const showAdvancedFilters = ref(false);
@@ -254,6 +254,10 @@ const hasAppliedFiltersOrActiveFolders = computed(() => {
   return hasAppliedFilters.value || hasActiveFolders.value;
 });
 
+const isSidebarConversationType = computed(() => {
+  return ['mine', 'pending'].includes(props.conversationType);
+});
+
 const currentUserDetails = computed(() => {
   const { id, name } = currentUser.value;
   return { id, name };
@@ -284,6 +288,7 @@ const assigneeTabItems = computed(() => {
       case 'all-operators':
         count = stats.allCount || 0;
         break;
+      case 'no_category':
       case 'pending':
         count = stats.pendingCount || 0;
         break;
@@ -302,25 +307,13 @@ const assigneeTabItems = computed(() => {
   });
 });
 
-// Simplified tabs for operators - Block 1 requirement
-// Only showing "Dialogs" (me), "Unanswered" (unassigned), "All dialogs" (all), "Mentions", and "Categories"
-// Admins also get "All" (all-operators) tab
 const simplifiedAssigneeTabItems = computed(() => {
-  const operatorEssentialTabs = ['me', 'unassigned', 'pending', 'resolved'];
-
-  // Check if current user is administrator
-  const isAdmin = currentUser.value?.role === 'administrator';
-
-  // Add all-operators tab for admins
-  if (isAdmin) {
-    operatorEssentialTabs.splice(2, 0, 'all-operators'); // Insert before 'pending'
-  }
+  const operatorEssentialTabs = ['unassigned', 'no_category', 'resolved'];
 
   const filteredTabs = assigneeTabItems.value.filter(item =>
     operatorEssentialTabs.includes(item.key)
   );
 
-  // Add counter for unanswered messages to categories section
   return filteredTabs;
 });
 
@@ -328,7 +321,7 @@ const showAssigneeInConversationCard = computed(() => {
   return (
     hasAppliedFiltersOrActiveFolders.value ||
     activeAssigneeTab.value === wootConstants.ASSIGNEE_TYPE.ALL ||
-    activeAssigneeTab.value === 'all-operators'
+    activeAssigneeTab.value === 'no_category'
   );
 });
 
@@ -336,10 +329,10 @@ const currentPageFilterKey = computed(() => {
   if (hasAppliedFiltersOrActiveFolders.value) {
     return 'appliedFilters';
   }
-  // Map all-operators to 'all' for page tracking (frontend-only distinction)
-  return activeAssigneeTab.value === 'all-operators'
-    ? 'all'
-    : activeAssigneeTab.value;
+  if (activeAssigneeTab.value === 'no_category') {
+    return 'pending';
+  }
+  return activeAssigneeTab.value;
 });
 
 const inbox = useFunctionGetter('inboxes/getInbox', activeInbox);
@@ -366,20 +359,21 @@ const conversationListPagination = computed(() => {
 });
 
 const conversationFilters = computed(() => {
-  // For resolved tab, override status to 'resolved'
-  // For pending tab, override status to 'pending'
   let status = activeStatus.value;
   if (activeAssigneeTab.value === 'resolved') {
     status = 'resolved';
-  } else if (activeAssigneeTab.value === 'pending') {
+  } else if (activeAssigneeTab.value === 'no_category') {
     status = 'pending';
   }
 
-  // Map all-operators to 'all' for backend API (frontend-only distinction)
-  const assigneeType =
-    activeAssigneeTab.value === 'all-operators'
-      ? 'all'
-      : activeAssigneeTab.value;
+  let assigneeType = activeAssigneeTab.value;
+  if (assigneeType === 'no_category') {
+    assigneeType = 'all';
+  }
+
+  if (props.conversationType === 'mine') {
+    assigneeType = 'me';
+  }
 
   return {
     inboxId: props.conversationInbox ? props.conversationInbox : undefined,
@@ -422,6 +416,12 @@ const pageTitle = computed(() => {
   if (props.conversationType === 'unattended') {
     return t('CHAT_LIST.UNATTENDED_HEADING');
   }
+  if (props.conversationType === 'mine') {
+    return t('SIDEBAR.MINE_CONVERSATIONS');
+  }
+  if (props.conversationType === 'pending') {
+    return t('SIDEBAR.PENDING_CONVERSATIONS');
+  }
   if (hasActiveFolders.value) {
     return activeFolder.value.name;
   }
@@ -431,21 +431,20 @@ const pageTitle = computed(() => {
 const conversationList = computed(() => {
   let localConversationList = [];
 
+  if (props.conversationType === 'pending') {
+    return [];
+  }
+
   if (!hasAppliedFiltersOrActiveFolders.value) {
     const filters = conversationFilters.value;
-    if (activeAssigneeTab.value === 'me') {
-      localConversationList = [...mineChatsList.value(filters)];
-    } else if (activeAssigneeTab.value === 'unassigned') {
+    if (activeAssigneeTab.value === 'unassigned') {
       localConversationList = [...unAssignedChatsList.value(filters)];
     } else if (activeAssigneeTab.value === 'resolved') {
-      // Use dedicated resolved chats list
       localConversationList = [...resolvedChatsList.value(filters)];
-    } else if (activeAssigneeTab.value === 'pending') {
-      // Show all pending conversations
+    } else if (activeAssigneeTab.value === 'no_category') {
       localConversationList = [...allChatList.value(filters)];
-    } else if (activeAssigneeTab.value === 'all-operators') {
-      // Show all conversations for admin's All tab
-      localConversationList = [...allChatList.value(filters)];
+    } else if (props.conversationType === 'mine') {
+      localConversationList = [...mineChatsList.value(filters)];
     } else {
       localConversationList = [...allChatList.value(filters)];
     }
@@ -1109,9 +1108,8 @@ watch(chatLists, () => {
       @close="onCloseDeleteFoldersModal"
     />
 
-    <!-- Simplified tabs for operators - only showing essential tabs -->
     <ChatTypeTabs
-      v-if="!hasAppliedFiltersOrActiveFolders"
+      v-if="!hasAppliedFiltersOrActiveFolders && !isSidebarConversationType"
       :items="simplifiedAssigneeTabItems"
       :active-tab="activeAssigneeTab"
       is-compact
