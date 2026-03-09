@@ -30,6 +30,10 @@
     "PLACEHOLDER_KEYBINDING": "/ to focus",
     "INPUT_PLACEHOLDER": "Type 3 or more characters to search",
     "EMPTY_STATE_DEFAULT": "Search by conversation id, email, phone number, messages for better search results. ",
+    "TYPE_BADGE": {
+      "PRIVATE_NOTE": "Note",
+      "TASK": "Task"
+    },
     "BOT_LABEL": "Bot",
     "READ_MORE": "Read more",
     "WROTE": "wrote:",

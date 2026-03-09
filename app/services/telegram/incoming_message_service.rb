@@ -21,10 +21,11 @@ class Telegram::IncomingMessageService
       dispatch_csat_webhook unless csat_noop_callback?
       return
     end
-    if callback_query_params? && @conversation.custom_attributes&.dig('bot_topic').present? && !@conversation.resolved?
+    if callback_query_params? && stale_callback?
       answer_callback_query
       return
     end
+    dispatch_callback_webhook if callback_query_params? && inactivity_callback?
     # TODO: Since the recent Telegram Business update, we need to explicitly mark messages as read using an additional request.
     # Otherwise, the client will see their messages as unread.
     # Chatwoot defines a 'read' status in its enum but does not currently update this status for Telegram conversations.
@@ -53,12 +54,46 @@ class Telegram::IncomingMessageService
     inbox.channel.answer_callback_query(params[:callback_query][:id])
   end
 
+  def stale_callback?
+    button_source_id = params.dig(:callback_query, :message, :message_id)&.to_s
+    return false unless button_source_id
+
+    button_msg = @conversation.messages.find_by(source_id: button_source_id)
+    return false unless button_msg
+
+    @conversation.messages.where('id > ?', button_msg.id).exists?
+  end
+
+  def inactivity_callback?
+    params.dig(:callback_query, :data)&.start_with?('inactivity_')
+  end
+
   def csat_callback?
     params.dig(:callback_query, :data)&.start_with?('csat_')
   end
 
   def csat_noop_callback?
     params.dig(:callback_query, :data) == 'csat_noop'
+  end
+
+  def dispatch_callback_webhook
+    payload = {
+      event: 'message_created_with_context',
+      id: 0,
+      content: telegram_params_message_content,
+      message_type: 'incoming',
+      content_attributes: telegram_params_content_attributes,
+      created_at: Time.zone.now.to_s,
+      conversation: @conversation.webhook_data,
+      account: @conversation.account.webhook_data,
+      inbox: inbox.webhook_data
+    }
+
+    @conversation.account.webhooks.account_type.each do |webhook|
+      next unless webhook.subscriptions.include?('message_created_with_context')
+
+      WebhookJob.perform_later(webhook.url, payload)
+    end
   end
 
   def dispatch_csat_webhook

@@ -71,7 +71,11 @@ const getRatingLabel = rating => {
 const getAgentName = operatorId => {
   const agent = agentsMap.value.get(String(operatorId));
   if (agent) {
-    return agent.name || agent.email || t('CSAT_STATISTICS.OPERATOR_ID', { id: operatorId });
+    return (
+      agent.name ||
+      agent.email ||
+      t('CSAT_STATISTICS.OPERATOR_ID', { id: operatorId })
+    );
   }
   return t('CSAT_STATISTICS.OPERATOR_ID', { id: operatorId });
 };
@@ -79,15 +83,24 @@ const getAgentName = operatorId => {
 const operatorOptions = computed(() => {
   return agents.value.map(agent => ({
     value: agent.id,
-    label: agent.name || agent.email || t('CSAT_STATISTICS.OPERATOR_ID', { id: agent.id }),
+    label:
+      agent.name ||
+      agent.email ||
+      t('CSAT_STATISTICS.OPERATOR_ID', { id: agent.id }),
   }));
 });
 
 const ratingOptions = computed(() => [
-  { value: 'awesome', label: `\u{1F604} ${t('CSAT_STATISTICS.RATINGS.AWESOME')}` },
+  {
+    value: 'awesome',
+    label: `\u{1F604} ${t('CSAT_STATISTICS.RATINGS.AWESOME')}`,
+  },
   { value: 'good', label: `\u{1F642} ${t('CSAT_STATISTICS.RATINGS.GOOD')}` },
   { value: 'bad', label: `\u{1F615} ${t('CSAT_STATISTICS.RATINGS.BAD')}` },
-  { value: 'terrible', label: `\u{1F621} ${t('CSAT_STATISTICS.RATINGS.TERRIBLE')}` },
+  {
+    value: 'terrible',
+    label: `\u{1F621} ${t('CSAT_STATISTICS.RATINGS.TERRIBLE')}`,
+  },
 ]);
 
 const overviewMetrics = computed(() => {
@@ -101,35 +114,44 @@ const overviewMetrics = computed(() => {
   };
 });
 
+const RATING_ORDER = [
+  {
+    key: 'awesome',
+    color: 'rgba(16, 185, 129, 0.7)',
+    borderColor: 'rgba(16, 185, 129, 1)',
+  },
+  {
+    key: 'good',
+    color: 'rgba(59, 130, 246, 0.7)',
+    borderColor: 'rgba(59, 130, 246, 1)',
+  },
+  {
+    key: 'bad',
+    color: 'rgba(245, 158, 11, 0.7)',
+    borderColor: 'rgba(245, 158, 11, 1)',
+  },
+  {
+    key: 'terrible',
+    color: 'rgba(239, 68, 68, 0.7)',
+    borderColor: 'rgba(239, 68, 68, 1)',
+  },
+];
+
 const ratingChartData = computed(() => {
   if (!aggregatedData.value?.ratingChart?.length) return null;
 
-  const colorMap = {
-    awesome: 'rgba(16, 185, 129, 0.7)',
-    good: 'rgba(59, 130, 246, 0.7)',
-    bad: 'rgba(245, 158, 11, 0.7)',
-    terrible: 'rgba(239, 68, 68, 0.7)',
-  };
-
-  const borderMap = {
-    awesome: 'rgba(16, 185, 129, 1)',
-    good: 'rgba(59, 130, 246, 1)',
-    bad: 'rgba(245, 158, 11, 1)',
-    terrible: 'rgba(239, 68, 68, 1)',
-  };
+  const countByRating = new Map(
+    aggregatedData.value.ratingChart.map(r => [r.rating, r.count])
+  );
 
   return {
-    labels: aggregatedData.value.ratingChart.map(r => getRatingLabel(r.rating)),
+    labels: RATING_ORDER.map(r => getRatingLabel(r.key)),
     datasets: [
       {
         label: t('CSAT_STATISTICS.CHARTS.RATINGS_LABEL'),
-        data: aggregatedData.value.ratingChart.map(r => r.count),
-        backgroundColor: aggregatedData.value.ratingChart.map(
-          r => colorMap[r.rating] || 'rgba(107, 114, 128, 0.7)'
-        ),
-        borderColor: aggregatedData.value.ratingChart.map(
-          r => borderMap[r.rating] || 'rgba(107, 114, 128, 1)'
-        ),
+        data: RATING_ORDER.map(r => countByRating.get(r.key) || 0),
+        backgroundColor: RATING_ORDER.map(r => r.color),
+        borderColor: RATING_ORDER.map(r => r.borderColor),
         borderWidth: 1,
       },
     ],
@@ -160,7 +182,9 @@ const operatorChartData = computed(() => {
   if (!aggregatedData.value?.operatorChart?.length) return null;
 
   return {
-    labels: aggregatedData.value.operatorChart.map(o => getAgentName(o.operatorId)),
+    labels: aggregatedData.value.operatorChart.map(o =>
+      getAgentName(o.operatorId)
+    ),
     datasets: [
       {
         label: t('CSAT_STATISTICS.CHARTS.OPERATORS_RESPONSES'),

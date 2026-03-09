@@ -77,6 +77,7 @@ const inboxes = useMapGetter('inboxes/getInboxes');
 const labels = useMapGetter('labels/getLabelsOnSidebar');
 const teams = useMapGetter('teams/getMyTeams');
 const totalUnreadCount = useMapGetter('getTotalOperatorUnreadCount');
+const standByUnreadCount = useMapGetter('getStandByOperatorUnreadCount');
 const getUnreadCountForLabel = useMapGetter('getOperatorUnreadCountForLabel');
 const getUnreadCountForTeam = useMapGetter('getOperatorUnreadCountForTeam');
 // Removed unused custom views - simplified for poker operator UI
@@ -341,11 +342,22 @@ const menuItems = computed(() => {
           to: accountScopedRoute('conversation_unattended'),
           count: totalUnreadCount.value || 0,
         },
+        ...(isAdmin.value
+          ? [
+              {
+                name: 'Mine',
+                activeOn: ['conversation_through_mine'],
+                label: t('SIDEBAR.MINE_CONVERSATIONS'),
+                to: accountScopedRoute('conversation_mine'),
+              },
+            ]
+          : []),
         {
-          name: 'Mentions',
-          label: t('SIDEBAR.MENTIONED_CONVERSATIONS'),
-          activeOn: ['conversation_through_mentions'],
-          to: accountScopedRoute('conversation_mentions'),
+          name: 'Pending',
+          activeOn: ['conversation_through_pending'],
+          label: t('SIDEBAR.PENDING_CONVERSATIONS'),
+          to: accountScopedRoute('conversation_pending'),
+          count: standByUnreadCount.value || 0,
         },
         {
           name: 'Teams',

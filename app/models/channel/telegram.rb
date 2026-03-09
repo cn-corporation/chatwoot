@@ -2,13 +2,12 @@
 #
 # Table name: channel_telegram
 #
-#  id                    :bigint           not null, primary key
-#  additional_attributes :jsonb
-#  bot_name              :string
-#  bot_token             :string           not null
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  account_id            :integer          not null
+#  id         :bigint           not null, primary key
+#  bot_name   :string
+#  bot_token  :string           not null
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  account_id :integer          not null
 #
 # Indexes
 #
@@ -185,10 +184,12 @@ class Channel::Telegram < ApplicationRecord
     {
       one_time_keyboard: true,
       inline_keyboard: message.content_attributes['items'].map do |item|
-        [{
-          text: item['title'],
-          callback_data: item['value']
-        }]
+        [
+          {
+            text: item['title'],
+            callback_data: item['value']
+          }.tap { |btn| btn[:style] = item['style'] if item['style'] }
+        ]
       end
     }.to_json
   end
