@@ -603,6 +603,52 @@ class ChatwootExtraAPI {
     });
     return response.data;
   }
+
+  async getTelegramSources() {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getTelegramChats(sourceId, { limit = 50, offset = 0 } = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats`,
+      { params: { limit, offset }, headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getTelegramMessages(sourceId, chatId, { limit = 50, offset = 0 } = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats/${chatId}/messages`,
+      { params: { limit, offset }, headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async markTelegramChatRead(sourceId, chatId) {
+    await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats/${chatId}/read`,
+      {},
+      { headers: this.headers }
+    );
+  }
+
+  async sendTelegramMessage(sourceId, { chatId, text, replyToMsgId }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/messages`,
+      { chatId, text, replyToMsgId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  getTelegramSSEUrl(sourceId) {
+    const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
+    return `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/sse?apiKey=${apiKey}`;
+  }
 }
 
 export default new ChatwootExtraAPI();
