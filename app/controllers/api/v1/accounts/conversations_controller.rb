@@ -88,7 +88,6 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   def toggle_status
     # FIXME: move this logic into a service object
     Current.executed_by = Current.user
-    previous_status = @conversation.status
     if pending_to_open_by_bot?
       @conversation.bot_handoff!
     elsif params[:status].present?
@@ -97,19 +96,12 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     else
       @status = @conversation.toggle_status
     end
-    assign_conversation if should_assign_conversation?(previous_status)
   end
 
   def pending_to_open_by_bot?
     return false unless Current.user.is_a?(AgentBot)
 
     @conversation.status == 'pending' && params[:status] == 'open'
-  end
-
-  def should_assign_conversation?(previous_status)
-    return false if previous_status == 'resolved' && @conversation.status == 'open'
-
-    @conversation.status == 'open' && Current.user.is_a?(User) && Current.user&.agent?
   end
 
   def toggle_priority
@@ -198,26 +190,6 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     return if @conversation.custom_attributes.blank?
 
     @conversation.custom_attributes = @conversation.custom_attributes.except('custom_resolution_reason')
-  end
-
-  def assign_conversation
-    assignee_before = @conversation.assignee
-
-    @conversation.log_agent_assignment(
-      source: 'Api::V1::Accounts::ConversationsController#assign_conversation',
-      assignee_before: assignee_before,
-      assignee_after: current_user,
-      context: {
-        action: 'self_assignment',
-        current_user_id: current_user.id,
-        current_user_name: current_user.name,
-        current_user_email: current_user.email,
-        trigger: 'status_toggle'
-      }
-    )
-
-    @conversation.assignee = current_user
-    @conversation.save!
   end
 
   def conversation

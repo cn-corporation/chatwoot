@@ -6,14 +6,12 @@ import { useAgentsList } from 'dashboard/composables/useAgentsList';
 import ContactDetailsItem from './ContactDetailsItem.vue';
 import MultiselectDropdown from 'shared/components/ui/MultiselectDropdown.vue';
 import ConversationLabels from './labels/LabelBox.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 
 export default {
   components: {
     ContactDetailsItem,
     MultiselectDropdown,
     ConversationLabels,
-    NextButton,
   },
   props: {
     conversationId: {
@@ -33,7 +31,6 @@ export default {
   computed: {
     ...mapGetters({
       currentChat: 'getSelectedChat',
-      currentUser: 'getCurrentUser',
       teams: 'teams/getTeams',
     }),
     hasAnAssignedTeam() {
@@ -82,40 +79,8 @@ export default {
           });
       },
     },
-    showSelfAssign() {
-      if (!this.assignedAgent) {
-        return true;
-      }
-      if (this.assignedAgent.id !== this.currentUser.id) {
-        return true;
-      }
-      return false;
-    },
   },
   methods: {
-    onSelfAssign() {
-      const {
-        account_id,
-        availability_status,
-        available_name,
-        email,
-        id,
-        name,
-        role,
-        avatar_url,
-      } = this.currentUser;
-      const selfAssign = {
-        account_id,
-        availability_status,
-        available_name,
-        email,
-        id,
-        name,
-        role,
-        thumbnail: avatar_url,
-      };
-      this.assignedAgent = selfAssign;
-    },
     onClickAssignAgent(selectedItem) {
       if (this.assignedAgent && this.assignedAgent.id === selectedItem.id) {
         this.assignedAgent = null;
@@ -141,19 +106,7 @@ export default {
       <ContactDetailsItem
         compact
         :title="$t('CONVERSATION_SIDEBAR.ASSIGNEE_LABEL')"
-      >
-        <template #button>
-          <NextButton
-            v-if="showSelfAssign"
-            link
-            xs
-            icon="i-lucide-arrow-right"
-            class="!gap-1"
-            :label="$t('CONVERSATION_SIDEBAR.SELF_ASSIGN')"
-            @click="onSelfAssign"
-          />
-        </template>
-      </ContactDetailsItem>
+      />
       <MultiselectDropdown
         :options="agentsList"
         :selected-item="assignedAgent"
