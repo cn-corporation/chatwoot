@@ -371,6 +371,77 @@ const getters = {
         }, 0);
     },
 
+  getSidebarAllCount: (_state, _getters, _rootState, rootGetters) => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    return source.filter(conv => {
+      if (!passesDialogueSegregation(conv, rootGetters)) return false;
+      const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
+      const isUnassigned = conv.status === 'open' && !assigneeId;
+      const isPending = conv.status === 'pending';
+      return isUnassigned || isPending;
+    }).length;
+  },
+
+  getSidebarUnattendedCount: (_state, _getters, _rootState, rootGetters) => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    return source.filter(conv => {
+      if (conv.status !== 'open') return false;
+      if (!passesDialogueSegregation(conv, rootGetters)) return false;
+      return !conv.first_reply_created_at || conv.waiting_since;
+    }).length;
+  },
+
+  getSidebarMineCount: (_state, _getters, _rootState, rootGetters) => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+    const currentUserId = rootGetters.getCurrentUser?.id;
+
+    return source.filter(conv => {
+      if (!passesDialogueSegregation(conv, rootGetters)) return false;
+      const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
+      return assigneeId === currentUserId && conv.status === 'open';
+    }).length;
+  },
+
+  getSidebarStandByCount: (_state, _getters, _rootState, rootGetters) => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    return source.filter(conv => {
+      if (!passesDialogueSegregation(conv, rootGetters)) return false;
+      return conv.status === 'stand_by';
+    }).length;
+  },
+
+  getSidebarTotalCountForTeam: _state => teamId => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+
+    return source.filter(conv => {
+      const convTeamId = conv.team_id || conv.meta?.team?.id;
+      if (convTeamId !== Number(teamId)) return false;
+      const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
+      const isUnassigned = conv.status === 'open' && !assigneeId;
+      const isPending = conv.status === 'pending';
+      const isStandBy = conv.status === 'stand_by';
+      return isUnassigned || isPending || isStandBy;
+    }).length;
+  },
+
   getConversationTopic: _state => conversationId => {
     return _state.conversationTopics.get(String(conversationId)) || null;
   },

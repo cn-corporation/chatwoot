@@ -437,6 +437,8 @@ const actions = {
             team_id: conversation.meta?.team?.id,
             status: conversation.status,
             assignee_id: conversation.meta?.assignee?.id,
+            waiting_since: conversation.waiting_since,
+            first_reply_created_at: conversation.first_reply_created_at,
           },
         ]);
       }
