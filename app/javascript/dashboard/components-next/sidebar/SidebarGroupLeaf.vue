@@ -11,6 +11,7 @@ const props = defineProps({
   active: { type: Boolean, default: false },
   component: { type: Function, default: null },
   count: { type: Number, default: 0 },
+  totalCount: { type: Number, default: 0 },
 });
 
 const { resolvePermissions, resolveFeatureFlag } = useSidebarContext();
@@ -48,10 +49,16 @@ const shouldRenderComponent = computed(() => {
       />
       <template v-else>
         <Icon v-if="icon" :icon="icon" class="size-4 inline-block" />
-        <div class="flex-1 truncate min-w-0">{{ label }}</div>
+        <div class="truncate min-w-0">{{ label }}</div>
+        <span
+          v-if="totalCount > 0"
+          class="text-xs font-medium px-1 py-0.5 rounded bg-n-slate-3 text-n-slate-11 flex-shrink-0"
+        >
+          {{ totalCount > 99 ? '99+' : totalCount }}
+        </span>
         <span
           v-if="count > 0"
-          class="ml-auto text-xs font-semibold px-1.5 py-0.5 rounded bg-n-ruby-9 text-white"
+          class="ml-auto text-xs font-semibold px-1.5 py-0.5 rounded bg-n-ruby-9 text-white flex-shrink-0"
         >
           {{ count }}
         </span>

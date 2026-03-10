@@ -80,6 +80,11 @@ const totalUnreadCount = useMapGetter('getTotalOperatorUnreadCount');
 const standByUnreadCount = useMapGetter('getStandByOperatorUnreadCount');
 const getUnreadCountForLabel = useMapGetter('getOperatorUnreadCountForLabel');
 const getUnreadCountForTeam = useMapGetter('getOperatorUnreadCountForTeam');
+const sidebarAllCount = useMapGetter('getSidebarAllCount');
+const sidebarUnattendedCount = useMapGetter('getSidebarUnattendedCount');
+const sidebarMineCount = useMapGetter('getSidebarMineCount');
+const sidebarStandByCount = useMapGetter('getSidebarStandByCount');
+const getSidebarTotalCountForTeam = useMapGetter('getSidebarTotalCountForTeam');
 // Removed unused custom views - simplified for poker operator UI
 
 const refreshCounts = async () => {
@@ -334,6 +339,7 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.ALL_CONVERSATIONS'),
           activeOn: ['inbox_conversation'],
           to: accountScopedRoute('home'),
+          totalCount: sidebarAllCount.value,
         },
         {
           name: 'Unattended',
@@ -341,6 +347,7 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.UNATTENDED_CONVERSATIONS'),
           to: accountScopedRoute('conversation_unattended'),
           count: totalUnreadCount.value || 0,
+          totalCount: sidebarUnattendedCount.value,
         },
         ...(isAdmin.value
           ? [
@@ -349,6 +356,7 @@ const menuItems = computed(() => {
                 activeOn: ['conversation_through_mine'],
                 label: t('SIDEBAR.MINE_CONVERSATIONS'),
                 to: accountScopedRoute('conversation_mine'),
+                totalCount: sidebarMineCount.value,
               },
             ]
           : []),
@@ -358,6 +366,7 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.PENDING_CONVERSATIONS'),
           to: accountScopedRoute('conversation_pending'),
           count: standByUnreadCount.value || 0,
+          totalCount: sidebarStandByCount.value,
         },
         {
           name: 'Teams',
@@ -366,10 +375,12 @@ const menuItems = computed(() => {
           activeOn: ['conversations_through_team'],
           children: teams.value.map(team => {
             const unreadCount = getUnreadCountForTeam.value(team.id);
+            const teamTotalCount = getSidebarTotalCountForTeam.value(team.id);
             return {
               name: `${team.name}-${team.id}`,
               label: team.name,
               count: unreadCount,
+              totalCount: teamTotalCount,
               to: accountScopedRoute('team_conversations', { teamId: team.id }),
             };
           }),
