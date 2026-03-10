@@ -636,11 +636,38 @@ class ChatwootExtraAPI {
     );
   }
 
+  async sendTelegramMedia(sourceId, { chatId, file, caption, replyToMsgId }) {
+    const formData = new FormData();
+    formData.append('chatId', String(chatId));
+    formData.append('file', file);
+    if (caption) formData.append('caption', caption);
+    if (replyToMsgId) formData.append('replyToMsgId', String(replyToMsgId));
+
+    const response = await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/send-media`,
+      formData,
+      {
+        headers: {
+          'X-API-Key': CHATWOOT_EXTRA_API_KEY,
+        },
+      }
+    );
+    return response.data;
+  }
+
   async sendTelegramMessage(sourceId, { chatId, text, replyToMsgId }) {
     const response = await axios.post(
       `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/messages`,
       { chatId, text, replyToMsgId },
       { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async fetchTelegramMedia(sourceId, mediaPath) {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/media/${mediaPath}`,
+      { headers: this.headers, responseType: 'blob' }
     );
     return response.data;
   }

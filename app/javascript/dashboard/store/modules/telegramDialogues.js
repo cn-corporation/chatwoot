@@ -22,6 +22,11 @@ function handleSSEEvent(commit, s, eventType, data) {
         telegramUsername: data.telegramUsername,
         telegramName: data.telegramName || data.senderName,
         createdAt: data.createdAt,
+        mediaType: data.mediaType || null,
+        mediaPath: data.mediaPath || null,
+        mediaMimeType: data.mediaMimeType || null,
+        mediaFileName: data.mediaFileName || null,
+        mediaSize: data.mediaSize || null,
       });
       if (data.direction === 'incoming') {
         ChatwootExtraAPI.markTelegramChatRead(
@@ -321,6 +326,25 @@ const actions = {
       });
     } catch (error) {
       console.error('[TelegramDialogues] Failed to send message:', error);
+    } finally {
+      commit('SET_SENDING_MESSAGE', false);
+    }
+  },
+
+  async sendMedia({ commit, state: s }, { file, caption, replyToMsgId }) {
+    if (s.sendingMessage || !s.activeSourceId || !s.activeChatId) return;
+    commit('SET_SENDING_MESSAGE', true);
+    try {
+      const activeChat = s.chats.find(c => c.id === s.activeChatId);
+      if (!activeChat) return;
+      await ChatwootExtraAPI.sendTelegramMedia(s.activeSourceId, {
+        chatId: Number(activeChat.chatId),
+        file,
+        caption,
+        replyToMsgId,
+      });
+    } catch (error) {
+      console.error('[TelegramDialogues] Failed to send media:', error);
     } finally {
       commit('SET_SENDING_MESSAGE', false);
     }
