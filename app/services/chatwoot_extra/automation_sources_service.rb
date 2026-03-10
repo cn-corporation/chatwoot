@@ -5,7 +5,7 @@ module ChatwootExtra
         fetch_from_api(automation_id)
       rescue StandardError => e
         Rails.logger.error "[AutomationSourcesService] Error: #{e.message}"
-        nil
+        raise
       end
 
       private
