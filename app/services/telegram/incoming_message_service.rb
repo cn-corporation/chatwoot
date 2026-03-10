@@ -26,6 +26,15 @@ class Telegram::IncomingMessageService
       return
     end
     if callback_query_params? && inactivity_callback?
+      @message = @conversation.messages.create!(
+        content: telegram_params_message_content,
+        account_id: @inbox.account_id,
+        inbox_id: @inbox.id,
+        message_type: message_type,
+        sender: message_sender,
+        content_attributes: telegram_params_content_attributes,
+        source_id: telegram_params_message_id.to_s
+      )
       answer_callback_query
       dispatch_callback_webhook
       return
