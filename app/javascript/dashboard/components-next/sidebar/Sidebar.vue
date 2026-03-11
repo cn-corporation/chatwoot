@@ -76,10 +76,12 @@ provideSidebarContext({
 const inboxes = useMapGetter('inboxes/getInboxes');
 const labels = useMapGetter('labels/getLabelsOnSidebar');
 const teams = useMapGetter('teams/getMyTeams');
-const totalUnreadCount = useMapGetter('getTotalOperatorUnreadCount');
 const standByUnreadCount = useMapGetter('getStandByOperatorUnreadCount');
 const getUnreadCountForLabel = useMapGetter('getOperatorUnreadCountForLabel');
 const getUnreadCountForTeam = useMapGetter('getOperatorUnreadCountForTeam');
+const allSectionUnreadCount = useMapGetter('getAllSectionOperatorUnreadCount');
+const unattendedUnreadCount = useMapGetter('getUnattendedOperatorUnreadCount');
+const mineUnreadCount = useMapGetter('getMineOperatorUnreadCount');
 const sidebarAllCount = useMapGetter('getSidebarAllCount');
 const sidebarUnattendedCount = useMapGetter('getSidebarUnattendedCount');
 const sidebarMineCount = useMapGetter('getSidebarMineCount');
@@ -339,6 +341,7 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.ALL_CONVERSATIONS'),
           activeOn: ['inbox_conversation'],
           to: accountScopedRoute('home'),
+          count: allSectionUnreadCount.value || 0,
           totalCount: sidebarAllCount.value,
         },
         {
@@ -346,7 +349,7 @@ const menuItems = computed(() => {
           activeOn: ['conversation_through_unattended'],
           label: t('SIDEBAR.UNATTENDED_CONVERSATIONS'),
           to: accountScopedRoute('conversation_unattended'),
-          count: totalUnreadCount.value || 0,
+          count: unattendedUnreadCount.value || 0,
           totalCount: sidebarUnattendedCount.value,
         },
         ...(isAdmin.value
@@ -356,6 +359,7 @@ const menuItems = computed(() => {
                 activeOn: ['conversation_through_mine'],
                 label: t('SIDEBAR.MINE_CONVERSATIONS'),
                 to: accountScopedRoute('conversation_mine'),
+                count: mineUnreadCount.value || 0,
                 totalCount: sidebarMineCount.value,
               },
             ]
