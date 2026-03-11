@@ -393,8 +393,9 @@ const getters = {
         : _state.allConversations;
 
     return source.filter(conv => {
-      if (conv.status !== 'open') return false;
       if (!passesDialogueSegregation(conv, rootGetters)) return false;
+      if (conv.status === 'pending') return true;
+      if (conv.status !== 'open') return false;
       return !conv.first_reply_created_at || conv.waiting_since;
     }).length;
   },
