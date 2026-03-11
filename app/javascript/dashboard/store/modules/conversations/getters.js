@@ -318,6 +318,9 @@ const getters = {
       return source
         .filter(conv => {
           if (conv.inbox_id !== inboxId) return false;
+          const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
+          if (assigneeId && String(assigneeId) === String(currentUserId))
+            return false;
           if (!isOperatorUnreadEligible(conv, currentUserId)) return false;
           return passesDialogueSegregation(conv, rootGetters);
         })
@@ -338,6 +341,9 @@ const getters = {
         .filter(conv => {
           const convTeamId = conv.team_id || conv.meta?.team?.id;
           if (convTeamId !== teamId) return false;
+          const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
+          if (assigneeId && String(assigneeId) === String(currentUserId))
+            return false;
           if (!isOperatorUnreadEligible(conv, currentUserId)) return false;
           return passesDialogueSegregation(conv, rootGetters);
         })
@@ -357,6 +363,9 @@ const getters = {
       return source
         .filter(conv => {
           if (!conv.labels || !Array.isArray(conv.labels)) return false;
+          const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
+          if (assigneeId && String(assigneeId) === String(currentUserId))
+            return false;
           if (!isOperatorUnreadEligible(conv, currentUserId)) return false;
           if (!passesDialogueSegregation(conv, rootGetters)) return false;
 
@@ -391,10 +400,14 @@ const getters = {
       _state.sidebarCountsData.length > 0
         ? _state.sidebarCountsData
         : _state.allConversations;
+    const currentUserId = rootGetters.getCurrentUser?.id;
 
     return source.filter(conv => {
       if (conv.status !== 'open' && conv.status !== 'pending') return false;
       if (!passesDialogueSegregation(conv, rootGetters)) return false;
+      const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
+      if (assigneeId && String(assigneeId) === String(currentUserId))
+        return false;
       return !conv.first_reply_created_at || conv.waiting_since;
     }).length;
   },
@@ -437,13 +450,80 @@ const getters = {
       const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
       const isUnassigned = conv.status === 'open' && !assigneeId;
       const isPending = conv.status === 'pending';
-      const isStandBy = conv.status === 'stand_by';
-      return isUnassigned || isPending || isStandBy;
+      return isUnassigned || isPending;
     }).length;
   },
 
   getConversationTopic: _state => conversationId => {
     return _state.conversationTopics.get(String(conversationId)) || null;
+  },
+
+  getUnattendedOperatorUnreadCount: (
+    _state,
+    _getters,
+    _rootState,
+    rootGetters
+  ) => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+    const currentUserId = rootGetters.getCurrentUser?.id;
+
+    if (source.length === 0) return 0;
+
+    return source.reduce((total, conv) => {
+      if (conv.status !== 'open' && conv.status !== 'pending') return total;
+      const isUnattended = !conv.first_reply_created_at || conv.waiting_since;
+      if (!isUnattended) return total;
+      const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
+      if (assigneeId && String(assigneeId) === String(currentUserId))
+        return total;
+      if (!passesDialogueSegregation(conv, rootGetters)) return total;
+      return total + (_state.operatorNotifications.get(String(conv.id)) || 0);
+    }, 0);
+  },
+
+  getAllSectionOperatorUnreadCount: (
+    _state,
+    _getters,
+    _rootState,
+    rootGetters
+  ) => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+    const currentUserId = rootGetters.getCurrentUser?.id;
+
+    if (source.length === 0) return 0;
+
+    return source.reduce((total, conv) => {
+      if (!passesDialogueSegregation(conv, rootGetters)) return total;
+      const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
+      const isUnassigned = conv.status === 'open' && !assigneeId;
+      const isPending = conv.status === 'pending';
+      if (!isUnassigned && !isPending) return total;
+      if (!isOperatorUnreadEligible(conv, currentUserId)) return total;
+      return total + (_state.operatorNotifications.get(String(conv.id)) || 0);
+    }, 0);
+  },
+
+  getMineOperatorUnreadCount: (_state, _getters, _rootState, rootGetters) => {
+    const source =
+      _state.sidebarCountsData.length > 0
+        ? _state.sidebarCountsData
+        : _state.allConversations;
+    const currentUserId = rootGetters.getCurrentUser?.id;
+
+    if (source.length === 0) return 0;
+
+    return source.reduce((total, conv) => {
+      if (!passesDialogueSegregation(conv, rootGetters)) return total;
+      const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
+      if (assigneeId !== currentUserId || conv.status !== 'open') return total;
+      return total + (_state.operatorNotifications.get(String(conv.id)) || 0);
+    }, 0);
   },
 
   getStandByOperatorUnreadCount: (
