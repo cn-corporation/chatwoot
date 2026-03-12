@@ -6,6 +6,7 @@ const state = {
     unassigned: 0,
     all: 0,
     pending: 0,
+    stand_by: 0,
     resolved: 0,
     appliedFilters: 0,
   },
@@ -14,6 +15,7 @@ const state = {
     unassigned: false,
     all: false,
     pending: false,
+    stand_by: false,
     resolved: false,
   },
 };
@@ -68,6 +70,7 @@ export const mutations = {
       unassigned: 0,
       all: 0,
       pending: 0,
+      stand_by: 0,
       resolved: 0,
       appliedFilters: 0,
     };
@@ -77,6 +80,7 @@ export const mutations = {
       unassigned: false,
       all: false,
       pending: false,
+      stand_by: false,
       resolved: false,
       appliedFilters: false,
     };

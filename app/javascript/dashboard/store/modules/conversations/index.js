@@ -146,10 +146,13 @@ export const mutations = {
 
   [types.UPDATE_CONVERSATIONS_FOR_COUNTS](_state, conversations) {
     const apiIds = new Set();
-    const result = conversations.map(conv => {
+    const result = [];
+    conversations.forEach(conv => {
+      if (apiIds.has(conv.id)) return;
       apiIds.add(conv.id);
       const liveConv = _state.allConversations.find(c => c.id === conv.id);
-      return {
+      const src = liveConv || conv;
+      result.push({
         id: conv.id,
         unread_count: conv.unread_count || 0,
         labels: conv.labels || [],
@@ -159,7 +162,9 @@ export const mutations = {
         assignee_id: liveConv
           ? liveConv.meta?.assignee?.id || liveConv.assignee_id
           : conv.meta?.assignee?.id || conv.assignee_id,
-      };
+        waiting_since: src.waiting_since,
+        first_reply_created_at: src.first_reply_created_at,
+      });
     });
 
     _state.sidebarCountsData.forEach(existing => {
@@ -174,6 +179,8 @@ export const mutations = {
         team_id: liveConv.meta?.team?.id || liveConv.team_id,
         status: liveConv.status,
         assignee_id: liveConv.meta?.assignee?.id || liveConv.assignee_id,
+        waiting_since: liveConv.waiting_since,
+        first_reply_created_at: liveConv.first_reply_created_at,
       });
     });
 
@@ -346,8 +353,14 @@ export const mutations = {
   },
 
   [types.ADD_CONVERSATION](_state, conversation) {
-    _state.allConversations.push(conversation);
-    if (_state.sidebarCountsData.length > 0) {
+    const exists = _state.allConversations.some(c => c.id === conversation.id);
+    if (!exists) {
+      _state.allConversations.push(conversation);
+    }
+    if (
+      _state.sidebarCountsData.length > 0 &&
+      !_state.sidebarCountsData.some(c => c.id === conversation.id)
+    ) {
       _state.sidebarCountsData.push({
         id: conversation.id,
         unread_count: conversation.unread_count || 0,
@@ -357,6 +370,8 @@ export const mutations = {
         status: conversation.status,
         assignee_id:
           conversation.meta?.assignee?.id || conversation.assignee_id,
+        waiting_since: conversation.waiting_since,
+        first_reply_created_at: conversation.first_reply_created_at,
       });
       recalculateUnreadCounts(_state);
     }
@@ -397,6 +412,9 @@ export const mutations = {
           sidebarItem.team_id = conversation.meta?.team?.id;
           sidebarItem.status = conversation.status;
           sidebarItem.assignee_id = conversation.meta?.assignee?.id;
+          sidebarItem.waiting_since = conversation.waiting_since;
+          sidebarItem.first_reply_created_at =
+            conversation.first_reply_created_at;
         } else {
           _state.sidebarCountsData.push({
             id: conversation.id,
@@ -407,6 +425,8 @@ export const mutations = {
             status: conversation.status,
             assignee_id:
               conversation.meta?.assignee?.id || conversation.assignee_id,
+            waiting_since: conversation.waiting_since,
+            first_reply_created_at: conversation.first_reply_created_at,
           });
         }
         recalculateUnreadCounts(_state);
@@ -416,8 +436,13 @@ export const mutations = {
         emitter.emit(BUS_EVENTS.SCROLL_TO_MESSAGE);
       }
     } else {
-      _state.allConversations.push(conversation);
-      if (_state.sidebarCountsData.length > 0) {
+      if (!_state.allConversations.some(c => c.id === conversation.id)) {
+        _state.allConversations.push(conversation);
+      }
+      if (
+        _state.sidebarCountsData.length > 0 &&
+        !_state.sidebarCountsData.some(c => c.id === conversation.id)
+      ) {
         _state.sidebarCountsData.push({
           id: conversation.id,
           unread_count: conversation.unread_count || 0,
@@ -427,6 +452,8 @@ export const mutations = {
           status: conversation.status,
           assignee_id:
             conversation.meta?.assignee?.id || conversation.assignee_id,
+          waiting_since: conversation.waiting_since,
+          first_reply_created_at: conversation.first_reply_created_at,
         });
         recalculateUnreadCounts(_state);
       }
