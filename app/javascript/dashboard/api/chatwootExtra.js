@@ -636,12 +636,13 @@ class ChatwootExtraAPI {
     );
   }
 
-  async sendTelegramMedia(sourceId, { chatId, file, caption, replyToMsgId }) {
+  async sendTelegramMedia(sourceId, { chatId, file, caption, replyToMsgId, topicId }) {
     const formData = new FormData();
     formData.append('chatId', String(chatId));
     formData.append('file', file);
     if (caption) formData.append('caption', caption);
     if (replyToMsgId) formData.append('replyToMsgId', String(replyToMsgId));
+    if (topicId) formData.append('topicId', String(topicId));
 
     const response = await axios.post(
       `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/send-media`,
@@ -655,10 +656,10 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
-  async sendTelegramMessage(sourceId, { chatId, text, replyToMsgId }) {
+  async sendTelegramMessage(sourceId, { chatId, text, replyToMsgId, topicId }) {
     const response = await axios.post(
       `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/messages`,
-      { chatId, text, replyToMsgId },
+      { chatId, text, replyToMsgId, topicId },
       { headers: this.headers }
     );
     return response.data;

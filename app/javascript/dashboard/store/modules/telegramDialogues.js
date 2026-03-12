@@ -328,6 +328,7 @@ const actions = {
         chatId: Number(activeChat.chatId),
         text,
         replyToMsgId,
+        topicId: activeChat.topicId || undefined,
       });
     } catch (error) {
       console.error('[TelegramDialogues] Failed to send message:', error);
@@ -347,6 +348,7 @@ const actions = {
         file,
         caption,
         replyToMsgId,
+        topicId: activeChat.topicId || undefined,
       });
     } catch (error) {
       console.error('[TelegramDialogues] Failed to send media:', error);
