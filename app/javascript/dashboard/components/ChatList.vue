@@ -945,7 +945,9 @@ useEmitter('fetch_conversation_stats', () => {
   if (hasAppliedFiltersOrActiveFolders.value) return;
   if (fetchStatsTimer) clearTimeout(fetchStatsTimer);
   fetchStatsTimer = setTimeout(() => {
-    fetchConversations();
+    if (!hasCurrentPageEndReached.value) {
+      fetchConversations();
+    }
     store.dispatch('conversationStats/get', conversationFilters.value);
   }, 2000);
 });
@@ -1196,7 +1198,7 @@ watch(chatLists, () => {
             {{ $t('CHAT_LIST.EOF') }}
           </p>
           <IntersectionObserver
-            v-else
+            v-else-if="!hasCurrentPageEndReached && conversationList.length > 0"
             :options="intersectionObserverOptions"
             @observed="loadMoreConversations"
           />

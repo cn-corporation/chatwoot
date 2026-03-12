@@ -94,7 +94,7 @@ class AutomationRuleListener < BaseListener
 
     sources.include?(conversation.inbox.channel_id)
   rescue StandardError => e
-    Rails.logger.error "[AutomationSources] Error for rule #{rule.id}: #{e.message}"
-    true
+    Rails.logger.error "[AutomationSources] Skipping rule #{rule.id} due to error: #{e.message}"
+    false
   end
 end
