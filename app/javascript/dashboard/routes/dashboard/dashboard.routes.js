@@ -9,6 +9,7 @@ import { frontendURL } from '../../helper/URLHelper';
 import helpcenterRoutes from './helpcenter/helpcenter.routes';
 import campaignsRoutes from './campaigns/campaigns.routes';
 import { routes as captainRoutes } from './captain/captain.routes';
+import telegramDialoguesRoutes from './telegramDialogues/telegramDialogues.routes';
 import AppContainer from './Dashboard.vue';
 import Suspended from './suspended/Index.vue';
 import TodoList from './TodoList.vue';
@@ -38,6 +39,7 @@ export default {
         ...notificationRoutes,
         ...helpcenterRoutes.routes,
         ...campaignsRoutes.routes,
+        ...telegramDialoguesRoutes.routes,
       ],
     },
     {

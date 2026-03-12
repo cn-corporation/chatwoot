@@ -603,6 +603,79 @@ class ChatwootExtraAPI {
     });
     return response.data;
   }
+
+  async getTelegramSources() {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getTelegramChats(sourceId, { limit = 50, offset = 0 } = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats`,
+      { params: { limit, offset }, headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getTelegramMessages(sourceId, chatId, { limit = 50, offset = 0 } = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats/${chatId}/messages`,
+      { params: { limit, offset }, headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async markTelegramChatRead(sourceId, chatId) {
+    await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats/${chatId}/read`,
+      {},
+      { headers: this.headers }
+    );
+  }
+
+  async sendTelegramMedia(sourceId, { chatId, file, caption, replyToMsgId }) {
+    const formData = new FormData();
+    formData.append('chatId', String(chatId));
+    formData.append('file', file);
+    if (caption) formData.append('caption', caption);
+    if (replyToMsgId) formData.append('replyToMsgId', String(replyToMsgId));
+
+    const response = await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/send-media`,
+      formData,
+      {
+        headers: {
+          'X-API-Key': CHATWOOT_EXTRA_API_KEY,
+        },
+      }
+    );
+    return response.data;
+  }
+
+  async sendTelegramMessage(sourceId, { chatId, text, replyToMsgId }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/messages`,
+      { chatId, text, replyToMsgId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async fetchTelegramMedia(sourceId, mediaPath) {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/media/${mediaPath}`,
+      { headers: this.headers, responseType: 'blob' }
+    );
+    return response.data;
+  }
+
+  getTelegramSSEUrl(sourceId) {
+    const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
+    return `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/sse?apiKey=${apiKey}`;
+  }
 }
 
 export default new ChatwootExtraAPI();

@@ -102,6 +102,7 @@ onMounted(async () => {
     store.dispatch('customViews/get', 'contact'),
     store.dispatch('macros/get'),
     store.dispatch('fetchAllConversationsForCounts'),
+    store.dispatch('telegramDialogues/initGlobalSSE'),
   ]);
   // Refresh counts when conversations are updated
   emitter.on(BUS_EVENTS.WEBSOCKET_RECONNECT, refreshCounts);
@@ -330,6 +331,17 @@ const menuItems = computed(() => {
       icon: 'i-lucide-list-todo',
       to: accountScopedRoute('todo_list'),
       activeOn: ['todo_list'],
+    },
+    {
+      name: 'TelegramDialogues',
+      label: t('SIDEBAR.TELEGRAM_DIALOGUES'),
+      icon: 'i-lucide-send',
+      to: accountScopedRoute('telegram_dialogues'),
+      activeOn: ['telegram_dialogues', 'telegram_dialogues_chat'],
+      getterKeys: {
+        count: 'telegramDialogues/getTotalUnreadCount',
+        badge: 'telegramDialogues/getTotalUnreadCount',
+      },
     },
     {
       name: 'Conversation',
