@@ -50,7 +50,9 @@ const displayName = computed(() => {
       >
         <span :class="chatTypeInfo.icon" class="size-6 text-n-slate-11" />
       </div>
-      <h3 class="text-sm font-medium text-n-slate-12 text-center">
+      <h3
+        class="text-sm font-medium text-n-slate-12 text-center break-words max-w-full"
+      >
         {{ displayName }}
       </h3>
       <span class="text-xs text-n-slate-10">
@@ -63,28 +65,41 @@ const displayName = computed(() => {
       </h4>
       <div class="flex flex-col gap-2 text-sm">
         <div class="flex justify-between">
-          <span class="text-n-slate-10">Type</span>
-          <span class="text-n-slate-12">{{ chatTypeInfo.label }}</span>
+          <span class="text-n-slate-10 flex-shrink-0">Type</span>
+          <span class="text-n-slate-12 text-right">{{
+            chatTypeInfo.label
+          }}</span>
         </div>
-        <div class="flex justify-between">
-          <span class="text-n-slate-10">Telegram ID</span>
-          <span class="text-n-slate-12 font-mono text-xs">{{
+        <div class="flex justify-between gap-2">
+          <span class="text-n-slate-10 flex-shrink-0">Telegram ID</span>
+          <span class="text-n-slate-12 font-mono text-xs truncate text-right">{{
             chat.chatId
           }}</span>
         </div>
-        <div v-if="chat.topicId" class="flex justify-between">
-          <span class="text-n-slate-10">Topic ID</span>
-          <span class="text-n-slate-12 font-mono text-xs">{{
+        <div v-if="chat.topicId" class="flex justify-between gap-2">
+          <span class="text-n-slate-10 flex-shrink-0">Topic ID</span>
+          <span class="text-n-slate-12 font-mono text-xs truncate text-right">{{
             chat.topicId
           }}</span>
         </div>
-        <div v-if="chat.topicName" class="flex justify-between">
-          <span class="text-n-slate-10">Topic</span>
-          <span class="text-n-slate-12">{{ chat.topicName }}</span>
+        <div v-if="chat.topicName" class="flex justify-between gap-2">
+          <span class="text-n-slate-10 flex-shrink-0">Topic</span>
+          <span
+            class="text-n-slate-12 truncate text-right"
+            :title="chat.topicName"
+            >{{ chat.topicName }}</span
+          >
         </div>
-        <div v-if="chat.name && chat.topicId" class="flex justify-between">
-          <span class="text-n-slate-10">Group</span>
-          <span class="text-n-slate-12">{{ chat.name }}</span>
+        <div
+          v-if="chat.name && chat.topicId"
+          class="flex justify-between gap-2"
+        >
+          <span class="text-n-slate-10 flex-shrink-0">Group</span>
+          <span
+            class="text-n-slate-12 truncate text-right"
+            :title="chat.name"
+            >{{ chat.name }}</span
+          >
         </div>
       </div>
     </div>

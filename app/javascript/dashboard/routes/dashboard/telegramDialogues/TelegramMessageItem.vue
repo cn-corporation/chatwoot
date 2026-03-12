@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useStore } from 'vuex';
+import DOMPurify from 'dompurify';
 import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 
 const props = defineProps({
@@ -19,17 +20,49 @@ const formattedTime = computed(() => {
 
 const senderDisplay = computed(() => {
   if (props.message.telegramName) return props.message.telegramName;
-  if (props.message.telegramUsername) return `@${props.message.telegramUsername}`;
+  if (props.message.telegramUsername)
+    return `@${props.message.telegramUsername}`;
   return `User ${props.message.telegramUserId}`;
 });
 
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function formatTelegramMarkdown(text) {
+  let html = escapeHtml(text);
+  html = html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  html = html.replace(/__(.+?)__/g, '<i>$1</i>');
+  html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
+  html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+  return html;
+}
+
+const formattedText = computed(() => {
+  if (!props.message.text) return '';
+  const html = formatTelegramMarkdown(props.message.text);
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['b', 'i', 'u', 's', 'code', 'pre'],
+    ALLOWED_ATTR: [],
+  });
+});
+
+const hasFormatting = computed(() => {
+  if (!props.message.text) return false;
+  return /\*\*.+?\*\*|__.+?__|~~.+?~~|`.+?`/.test(props.message.text);
+});
+
 const isImage = computed(
-  () => props.message.mediaType === 'photo' || props.message.mediaMimeType?.startsWith('image/')
+  () =>
+    props.message.mediaType === 'photo' ||
+    props.message.mediaMimeType?.startsWith('image/')
 );
 
-const isDocument = computed(
-  () => props.message.mediaType && !isImage.value
-);
+const isDocument = computed(() => props.message.mediaType && !isImage.value);
 
 const hasMedia = computed(() => !!props.message.mediaPath);
 
@@ -49,14 +82,18 @@ const mediaLoading = ref(false);
 const mediaError = ref(false);
 
 const loadMedia = async () => {
-  if (mediaBlobUrl.value || mediaLoading.value || !props.message.mediaPath) return;
+  if (mediaBlobUrl.value || mediaLoading.value || !props.message.mediaPath)
+    return;
   const sourceId = store.getters['telegramDialogues/getActiveSourceId'];
   if (!sourceId) return;
 
   mediaLoading.value = true;
   mediaError.value = false;
   try {
-    const blob = await ChatwootExtraAPI.fetchTelegramMedia(sourceId, props.message.mediaPath);
+    const blob = await ChatwootExtraAPI.fetchTelegramMedia(
+      sourceId,
+      props.message.mediaPath
+    );
     mediaBlobUrl.value = URL.createObjectURL(blob);
   } catch {
     mediaError.value = true;
@@ -93,20 +130,16 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div
-    class="flex"
-    :class="isOutgoing ? 'justify-end' : 'justify-start'"
-  >
+  <div class="flex" :class="isOutgoing ? 'justify-end' : 'justify-start'">
     <div
       class="max-w-[70%] rounded-xl px-3 py-2"
-      :class="isOutgoing
-        ? 'bg-n-brand text-white rounded-br-sm'
-        : 'bg-n-solid-3 text-n-slate-12 rounded-bl-sm'"
+      :class="
+        isOutgoing
+          ? 'bg-n-brand text-white rounded-br-sm'
+          : 'bg-n-solid-3 text-n-slate-12 rounded-bl-sm'
+      "
     >
-      <div
-        v-if="!isOutgoing"
-        class="text-xs font-medium mb-0.5 text-n-brand"
-      >
+      <div v-if="!isOutgoing" class="text-xs font-medium mb-0.5 text-n-brand">
         {{ senderDisplay }}
       </div>
       <template v-if="hasMedia && isImage">
@@ -127,11 +160,17 @@ onBeforeUnmount(() => {
         <button
           v-else
           class="flex items-center gap-2 p-3 rounded-lg mb-1 w-full"
-          :class="isOutgoing ? 'bg-white/10 hover:bg-white/20' : 'bg-n-solid-2 hover:bg-n-solid-3'"
+          :class="
+            isOutgoing
+              ? 'bg-white/10 hover:bg-white/20'
+              : 'bg-n-solid-2 hover:bg-n-solid-3'
+          "
           @click="loadMedia"
         >
           <span class="i-lucide-image size-5 flex-shrink-0" />
-          <span class="text-sm">{{ mediaError ? 'Retry loading image' : 'Load image' }}</span>
+          <span class="text-sm">{{
+            mediaError ? 'Retry loading image' : 'Load image'
+          }}</span>
         </button>
       </template>
       <template v-else-if="hasMedia && isDocument">
@@ -149,7 +188,11 @@ onBeforeUnmount(() => {
         <button
           v-else
           class="flex items-center gap-2 p-2 mb-1 rounded-lg w-full"
-          :class="isOutgoing ? 'bg-white/10 hover:bg-white/20' : 'bg-n-solid-2 hover:bg-n-solid-3'"
+          :class="
+            isOutgoing
+              ? 'bg-white/10 hover:bg-white/20'
+              : 'bg-n-solid-2 hover:bg-n-solid-3'
+          "
           @click="downloadMedia"
         >
           <span class="i-lucide-file-text size-5 flex-shrink-0" />
@@ -167,7 +210,12 @@ onBeforeUnmount(() => {
         </button>
       </template>
       <div
-        v-if="message.text"
+        v-if="message.text && hasFormatting"
+        class="text-sm whitespace-pre-wrap break-words [&_code]:bg-black/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono"
+        v-html="formattedText"
+      />
+      <div
+        v-else-if="message.text"
         class="text-sm whitespace-pre-wrap break-words"
       >
         {{ message.text }}

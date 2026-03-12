@@ -3,13 +3,18 @@ import ChatwootExtraAPI from '../../api/chatwootExtra';
 const CHATS_PAGE_SIZE = 50;
 const MESSAGES_PAGE_SIZE = 50;
 
-function handleSSEEvent(commit, s, eventType, data) {
+function handleSSEEvent(commit, s, eventType, data, dispatch) {
   if (eventType === 'new_message') {
-    commit('UPDATE_CHAT_WITH_LAST_MESSAGE', {
-      chatDbId: data.chatDbId,
-      text: data.text,
-      createdAt: data.createdAt,
-    });
+    const chatExists = s.chats.some(c => c.id === data.chatDbId);
+    if (chatExists) {
+      commit('UPDATE_CHAT_WITH_LAST_MESSAGE', {
+        chatDbId: data.chatDbId,
+        text: data.text,
+        createdAt: data.createdAt,
+      });
+    } else {
+      dispatch('fetchChats');
+    }
 
     if (s.activeChatId && s.activeChatId === data.chatDbId) {
       commit('APPEND_MESSAGE', {
@@ -364,7 +369,7 @@ const actions = {
     }
   },
 
-  connectSSE({ commit, state: s }, sourceId) {
+  connectSSE({ commit, dispatch, state: s }, sourceId) {
     if (s.sseInitialized) return;
 
     if (s.sseConnection) {
@@ -378,7 +383,7 @@ const actions = {
     eventSource.addEventListener('new_message', event => {
       try {
         const data = JSON.parse(event.data);
-        handleSSEEvent(commit, s, 'new_message', data);
+        handleSSEEvent(commit, s, 'new_message', data, dispatch);
       } catch (_) {
         /* noop */
       }
@@ -387,7 +392,7 @@ const actions = {
     eventSource.addEventListener('chat_read', event => {
       try {
         const data = JSON.parse(event.data);
-        handleSSEEvent(commit, s, 'chat_read', data);
+        handleSSEEvent(commit, s, 'chat_read', data, dispatch);
       } catch (_) {
         /* noop */
       }
@@ -396,7 +401,7 @@ const actions = {
     eventSource.addEventListener('unread_update', event => {
       try {
         const data = JSON.parse(event.data);
-        handleSSEEvent(commit, s, 'unread_update', data);
+        handleSSEEvent(commit, s, 'unread_update', data, dispatch);
       } catch (_) {
         /* noop */
       }
