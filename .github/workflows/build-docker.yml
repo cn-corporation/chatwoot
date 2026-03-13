@@ -70,3 +70,10 @@ jobs:
           curl -s -X POST "${{ secrets.COOLIFY_WEBHOOK_URL_PROD }}" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN_PROD }}" \
             -H "Content-Type: application/json"
+
+      - name: Trigger Coolify deployment (production mono)
+        if: github.ref_name == 'main'
+        run: |
+          curl -s -X POST "${{ secrets.COOLIFY_WEBHOOK_URL_PROD_MONO }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN_PROD_MONO }}" \
+            -H "Content-Type: application/json"
