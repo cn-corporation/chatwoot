@@ -593,6 +593,11 @@
         "ENABLED": "Enabled",
         "DISABLED": "Disabled"
       },
+      "BOT_FLOW_LANG": {
+        "DEFAULT": "Default (from server config)",
+        "RU": "Russian",
+        "UA": "Ukrainian"
+      },
       "ENABLE_HMAC": {
         "LABEL": "Enable"
       }
@@ -726,6 +731,8 @@
       "CSAT_ENABLED_SUB_TEXT": "When enabled, a CSAT survey will be sent after conversation is resolved",
       "AUTO_CLOSE_ENABLED": "Inactivity auto-close",
       "AUTO_CLOSE_ENABLED_SUB_TEXT": "When enabled, inactive conversations will be automatically closed after a timeout",
+      "BOT_FLOW_LANG": "Bot flow language",
+      "BOT_FLOW_LANG_SUB_TEXT": "Language for bot flow messages, CSAT surveys and auto-close prompts in this inbox. Default uses the server-level setting.",
       "INBOX_UPDATE_TITLE": "Inbox Settings",
       "INBOX_UPDATE_SUB_TEXT": "Update your inbox settings",
       "AUTO_ASSIGNMENT_SUB_TEXT": "Enable or disable the automatic assignment of new conversations to the agents added to this inbox.",
