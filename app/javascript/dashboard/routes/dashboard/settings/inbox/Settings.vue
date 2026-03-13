@@ -99,6 +99,8 @@ export default {
       originalCsatEnabled: true,
       autoCloseEnabled: true,
       originalAutoCloseEnabled: true,
+      sourceLang: null,
+      originalSourceLang: null,
       healthData: null,
       isLoadingHealth: false,
       healthError: null,
@@ -461,6 +463,8 @@ export default {
           this.originalCsatEnabled = this.csatEnabled;
           this.autoCloseEnabled = response.data.autoCloseEnabled !== false;
           this.originalAutoCloseEnabled = this.autoCloseEnabled;
+          this.sourceLang = response.data.lang || null;
+          this.originalSourceLang = this.sourceLang;
         } else {
           this.sourceBgColor = '#000000';
           this.enableSourceBgColor = false;
@@ -473,6 +477,8 @@ export default {
           this.originalCsatEnabled = true;
           this.autoCloseEnabled = true;
           this.originalAutoCloseEnabled = true;
+          this.sourceLang = null;
+          this.originalSourceLang = null;
         }
       } catch (error) {
         this.sourceBgColor = '#000000';
@@ -482,6 +488,8 @@ export default {
         this.originalSourceClubId = null;
         this.botFlowEnabled = true;
         this.originalBotFlowEnabled = true;
+        this.sourceLang = null;
+        this.originalSourceLang = null;
       }
     },
     async updateInbox() {
@@ -551,6 +559,11 @@ export default {
           needsSourceChannelUpdate = true;
         }
 
+        if (this.sourceLang !== this.originalSourceLang) {
+          sourceChannelUpdate.lang = this.sourceLang;
+          needsSourceChannelUpdate = true;
+        }
+
         if (needsSourceChannelUpdate) {
           await chatwootExtraAPI.updateSourceChannel(
             this.currentInboxId,
@@ -574,6 +587,9 @@ export default {
           }
           if (sourceChannelUpdate.autoCloseEnabled !== undefined) {
             this.originalAutoCloseEnabled = this.autoCloseEnabled;
+          }
+          if (sourceChannelUpdate.lang !== undefined) {
+            this.originalSourceLang = this.sourceLang;
           }
         }
 
@@ -1007,6 +1023,24 @@ export default {
             </select>
             <p class="pb-1 text-sm not-italic text-n-slate-11">
               {{ $t('INBOX_MGMT.SETTINGS_POPUP.AUTO_CLOSE_ENABLED_SUB_TEXT') }}
+            </p>
+          </label>
+
+          <label v-if="isATelegramChannel" class="pb-4">
+            {{ $t('INBOX_MGMT.SETTINGS_POPUP.BOT_FLOW_LANG') }}
+            <select v-model="sourceLang">
+              <option :value="null">
+                {{ $t('INBOX_MGMT.EDIT.BOT_FLOW_LANG.DEFAULT') }}
+              </option>
+              <option value="ru">
+                {{ $t('INBOX_MGMT.EDIT.BOT_FLOW_LANG.RU') }}
+              </option>
+              <option value="ua">
+                {{ $t('INBOX_MGMT.EDIT.BOT_FLOW_LANG.UA') }}
+              </option>
+            </select>
+            <p class="pb-1 text-sm not-italic text-n-slate-11">
+              {{ $t('INBOX_MGMT.SETTINGS_POPUP.BOT_FLOW_LANG_SUB_TEXT') }}
             </p>
           </label>
 
