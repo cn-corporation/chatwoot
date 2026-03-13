@@ -26,30 +26,33 @@ const isOpen = ref(props.show);
 const selectedTopics = ref([]);
 const isSubmitting = ref(false);
 
+const LEGACY_LABEL_TO_VALUE = {
+  '💰 Пополнение / Вывод': 'deposits_withdrawals',
+  '📝 Регистрация и вход': 'registration_login',
+  '🎁 Бонусы и рейкбек': 'bonuses_rakeback',
+  '🚨 Жалоба / Нарушение': 'complaint',
+  '❓ Другое': 'other',
+};
+
 const closeTopics = computed(() => [
   {
     value: 'deposits_withdrawals',
-    buttonText: '💰 Пополнение / Вывод',
     label: t('CLOSE_TOPICS.TOPIC_DEPOSITS_WITHDRAWALS'),
   },
   {
     value: 'registration_login',
-    buttonText: '📝 Регистрация и вход',
     label: t('CLOSE_TOPICS.TOPIC_REGISTRATION_LOGIN'),
   },
   {
     value: 'bonuses_rakeback',
-    buttonText: '🎁 Бонусы и рейкбек',
     label: t('CLOSE_TOPICS.TOPIC_BONUSES_RAKEBACK'),
   },
   {
     value: 'complaint',
-    buttonText: '🚨 Жалоба / Нарушение',
     label: t('CLOSE_TOPICS.TOPIC_COMPLAINT'),
   },
   {
     value: 'other',
-    buttonText: '❓ Другое',
     label: t('CLOSE_TOPICS.TOPIC_OTHER'),
   },
 ]);
@@ -62,10 +65,9 @@ watch(
       const conversation = store.getters.getConversationById(
         props.conversationId
       );
-      const botTopic = conversation?.custom_attributes?.bot_topic;
-      const matched = closeTopics.value.find(
-        ct => ct.value === botTopic || ct.buttonText === botTopic
-      );
+      const rawBotTopic = conversation?.custom_attributes?.bot_topic;
+      const botTopic = LEGACY_LABEL_TO_VALUE[rawBotTopic] || rawBotTopic;
+      const matched = closeTopics.value.find(ct => ct.value === botTopic);
       if (matched) {
         selectedTopics.value = [matched.value];
       } else {

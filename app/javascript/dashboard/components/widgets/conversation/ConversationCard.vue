@@ -130,9 +130,18 @@ const conversationColor = computed(() => {
   return props.chat.custom_attributes?.conversation_color || null;
 });
 
+const TOPIC_EMOJIS = {
+  deposits_withdrawals: '💰',
+  registration_login: '📝',
+  bonuses_rakeback: '🎁',
+  complaint: '🚨',
+  other: '❓',
+};
+
 const topicEmoji = computed(() => {
   const topic = props.chat.custom_attributes?.bot_topic;
   if (!topic) return null;
+  if (TOPIC_EMOJIS[topic]) return TOPIC_EMOJIS[topic];
   const match = topic.match(/^\p{Emoji_Presentation}/u);
   return match ? match[0] : null;
 });
