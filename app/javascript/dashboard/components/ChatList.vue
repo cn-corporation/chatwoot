@@ -465,18 +465,23 @@ const conversationList = computed(() => {
     });
   }
 
-  const account = getAccountFn.value(currentAccountId.value);
-  const isCurrentUserAdmin = currentUser.value?.role === 'administrator';
-  if (account?.settings?.dialogue_segregation_enabled && !isCurrentUserAdmin) {
-    const myTeamIds = myTeams.value.map(team => team.id);
-    localConversationList = localConversationList.filter(conversation => {
-      const teamId =
-        conversation.team_id || conversation.meta?.team?.id || null;
-      if (myTeamIds.length) {
-        return myTeamIds.includes(teamId);
-      }
-      return teamId === null;
-    });
+  if (activeAssigneeTab.value !== 'resolved') {
+    const account = getAccountFn.value(currentAccountId.value);
+    const isCurrentUserAdmin = currentUser.value?.role === 'administrator';
+    if (
+      account?.settings?.dialogue_segregation_enabled &&
+      !isCurrentUserAdmin
+    ) {
+      const myTeamIds = myTeams.value.map(team => team.id);
+      localConversationList = localConversationList.filter(conversation => {
+        const teamId =
+          conversation.team_id || conversation.meta?.team?.id || null;
+        if (myTeamIds.length) {
+          return myTeamIds.includes(teamId);
+        }
+        return teamId === null;
+      });
+    }
   }
 
   return localConversationList;
