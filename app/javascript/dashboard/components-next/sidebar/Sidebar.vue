@@ -217,6 +217,12 @@ const menuItems = computed(() => {
         to: accountScopedRoute('knowledge_base_wrapper'),
       });
     }
+    settingsChildren.push({
+      name: 'Settings RAG Admin',
+      label: 'RAG Admin',
+      icon: 'i-lucide-brain',
+      to: accountScopedRoute('rag_admin_index'),
+    });
   }
 
   settingsChildren.push(

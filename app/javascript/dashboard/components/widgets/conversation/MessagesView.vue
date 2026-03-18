@@ -428,7 +428,6 @@ export default {
       const lastMessage = messages[messages.length - 1];
       const currentLastMessageId = lastMessage?.id;
 
-      // Only count if there's a new message at the end AND user is scrolled up
       if (
         this.lastMessageId &&
         currentLastMessageId &&
@@ -1048,7 +1047,7 @@ export default {
           />
         </div>
       </div>
-      <!-- <div v-if="!isReadOnlyMode" class="px-4">
+      <div v-if="!isReadOnlyMode" class="px-4">
         <AISuggestionBanner
           :suggestion="aiSuggestion"
           :is-loading="isLoadingSuggestion"
@@ -1057,7 +1056,7 @@ export default {
           @dismiss="handleDismissSuggestion"
           @reload="handleReloadSuggestion"
         />
-      </div> -->
+      </div>
       <ReplyBox
         v-if="!isReadOnlyMode"
         :pop-out-reply-box="isPopOutReplyBox"
