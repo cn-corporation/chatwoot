@@ -6,7 +6,67 @@ const store = useStore();
 const messageText = ref('');
 const attachedFile = ref(null);
 const fileInputRef = ref(null);
-const sending = computed(() => store.getters['telegramDialogues/getSendingMessage']);
+const textareaRef = ref(null);
+const sending = computed(
+  () => store.getters['telegramDialogues/getSendingMessage']
+);
+
+const wrapSelection = (before, after) => {
+  const el = textareaRef.value;
+  if (!el) return;
+  const start = el.selectionStart;
+  const end = el.selectionEnd;
+  const text = messageText.value;
+  const selected = text.slice(start, end);
+
+  if (selected) {
+    messageText.value =
+      text.slice(0, start) + before + selected + after + text.slice(end);
+    el.focus();
+    const newCursorPos = end + before.length + after.length;
+    requestAnimationFrame(() => {
+      el.setSelectionRange(newCursorPos, newCursorPos);
+    });
+  } else {
+    messageText.value = text.slice(0, start) + before + after + text.slice(end);
+    el.focus();
+    const cursorPos = start + before.length;
+    requestAnimationFrame(() => {
+      el.setSelectionRange(cursorPos, cursorPos);
+    });
+  }
+};
+
+const applyBold = () => wrapSelection('**', '**');
+const applyItalic = () => wrapSelection('__', '__');
+const applyStrikethrough = () => wrapSelection('~~', '~~');
+const applyCode = () => wrapSelection('`', '`');
+
+const applyLink = () => {
+  const el = textareaRef.value;
+  if (!el) return;
+  const start = el.selectionStart;
+  const end = el.selectionEnd;
+  const text = messageText.value;
+  const selected = text.slice(start, end);
+
+  if (selected) {
+    messageText.value =
+      text.slice(0, start) + `[${selected}](url)` + text.slice(end);
+    el.focus();
+    const urlStart = start + selected.length + 3;
+    requestAnimationFrame(() => {
+      el.setSelectionRange(urlStart, urlStart + 3);
+    });
+  } else {
+    messageText.value = text.slice(0, start) + '[text](url)' + text.slice(end);
+    el.focus();
+    const textStart = start + 1;
+    requestAnimationFrame(() => {
+      el.setSelectionRange(textStart, textStart + 4);
+    });
+  }
+};
 
 const handleSend = async () => {
   const text = messageText.value.trim();
@@ -27,7 +87,7 @@ const handleSend = async () => {
   }
 };
 
-const handleKeydown = (event) => {
+const handleKeydown = event => {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
     handleSend();
@@ -38,7 +98,7 @@ const openFilePicker = () => {
   fileInputRef.value?.click();
 };
 
-const handleFileChange = (event) => {
+const handleFileChange = event => {
   const file = event.target.files?.[0];
   if (file) {
     attachedFile.value = file;
@@ -65,12 +125,51 @@ const formatFileSize = size => {
     >
       <span class="i-lucide-paperclip size-4 text-n-slate-10 flex-shrink-0" />
       <span class="text-sm truncate flex-1">{{ attachedFile.name }}</span>
-      <span class="text-xs text-n-slate-10">{{ formatFileSize(attachedFile.size) }}</span>
+      <span class="text-xs text-n-slate-10">{{
+        formatFileSize(attachedFile.size)
+      }}</span>
       <button
         class="flex items-center justify-center size-5 rounded hover:bg-n-solid-4"
         @click="removeFile"
       >
         <span class="i-lucide-x size-3" />
+      </button>
+    </div>
+    <div class="flex items-center gap-0.5 mb-1.5">
+      <button
+        class="flex items-center justify-center size-9 rounded-lg hover:bg-n-solid-3 text-n-slate-10"
+        title="Bold (**text**)"
+        @click="applyBold"
+      >
+        <span class="i-lucide-bold size-4.5" />
+      </button>
+      <button
+        class="flex items-center justify-center size-9 rounded-lg hover:bg-n-solid-3 text-n-slate-10"
+        title="Italic (__text__)"
+        @click="applyItalic"
+      >
+        <span class="i-lucide-italic size-4.5" />
+      </button>
+      <button
+        class="flex items-center justify-center size-9 rounded-lg hover:bg-n-solid-3 text-n-slate-10"
+        title="Strikethrough (~~text~~)"
+        @click="applyStrikethrough"
+      >
+        <span class="i-lucide-strikethrough size-4.5" />
+      </button>
+      <button
+        class="flex items-center justify-center size-9 rounded-lg hover:bg-n-solid-3 text-n-slate-10"
+        title="Code (`code`)"
+        @click="applyCode"
+      >
+        <span class="i-lucide-code size-4.5" />
+      </button>
+      <button
+        class="flex items-center justify-center size-9 rounded-lg hover:bg-n-solid-3 text-n-slate-10"
+        title="Link ([text](url))"
+        @click="applyLink"
+      >
+        <span class="i-lucide-link size-4.5" />
       </button>
     </div>
     <div class="flex items-end gap-2">
@@ -88,9 +187,10 @@ const formatFileSize = size => {
         @change="handleFileChange"
       />
       <textarea
+        ref="textareaRef"
         v-model="messageText"
-        rows="1"
-        class="flex-1 resize-none rounded-lg border border-n-weak bg-n-solid-3 px-3 py-2 text-sm outline-none placeholder:text-n-slate-10 focus:border-n-brand"
+        rows="3"
+        class="flex-1 resize-none rounded-lg border border-n-weak bg-n-solid-3 px-3 py-2 text-sm outline-none placeholder:text-n-slate-10 focus:border-n-brand min-h-[4.5rem]"
         :placeholder="attachedFile ? 'Add a caption...' : 'Type a message...'"
         @keydown="handleKeydown"
       />

@@ -12,7 +12,7 @@ const activeChat = computed(
 const chatTitle = computed(() => {
   if (!activeChat.value) return '';
   if (activeChat.value.topicId && activeChat.value.topicName) {
-    return `${activeChat.value.name || 'Group'} › ${activeChat.value.topicName}`;
+    return activeChat.value.topicName;
   }
   return activeChat.value.name || `Chat #${activeChat.value.chatId}`;
 });

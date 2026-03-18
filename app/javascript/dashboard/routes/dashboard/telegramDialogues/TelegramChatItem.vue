@@ -12,22 +12,26 @@ defineEmits(['select']);
 
 const store = useStore();
 
+const isForumGroup = computed(() => !!props.chat.isForumGroup);
+
 const chatTypeLabel = computed(() => {
-  if (props.chat.topicId) return 'Topic';
+  if (isForumGroup.value)
+    return `${props.chat.topicCount} topic${props.chat.topicCount !== 1 ? 's' : ''}`;
   if (props.chat.type === 'personal') return 'Personal';
+  if (props.chat.topicId) return '';
   return 'Group';
 });
 
 const chatTypeIcon = computed(() => {
+  if (isForumGroup.value) return 'i-lucide-users';
   if (props.chat.topicId) return 'i-lucide-hash';
   if (props.chat.type === 'personal') return 'i-lucide-user';
   return 'i-lucide-users';
 });
 
 const displayName = computed(() => {
-  if (props.chat.topicId && props.chat.topicName) {
-    return `${props.chat.name || 'Group'} › ${props.chat.topicName}`;
-  }
+  if (isForumGroup.value) return props.chat.name;
+  if (props.chat.topicId && props.chat.topicName) return props.chat.topicName;
   return props.chat.name || `Chat #${props.chat.chatId}`;
 });
 
@@ -49,9 +53,12 @@ const timeDisplay = computed(() => {
   return `${diffDays}d`;
 });
 
-const unreadCount = computed(() =>
-  store.getters['telegramDialogues/getUnreadCountForChat'](props.chat.id)
-);
+const unreadCount = computed(() => {
+  if (isForumGroup.value) return props.chat.totalUnread || 0;
+  return store.getters['telegramDialogues/getUnreadCountForChat'](
+    props.chat.id
+  );
+});
 
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -60,9 +67,10 @@ function escapeHtml(str) {
 function stripMarkdown(text) {
   if (!text) return '';
   let result = escapeHtml(text);
-  result = result.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-  result = result.replace(/__(.+?)__/g, '<i>$1</i>');
-  result = result.replace(/~~(.+?)~~/g, '<s>$1</s>');
+  result = result.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  result = result.replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>');
+  result = result.replace(/__([\s\S]+?)__/g, '<i>$1</i>');
+  result = result.replace(/~~([\s\S]+?)~~/g, '<s>$1</s>');
   result = result.replace(/`(.+?)`/g, '<code>$1</code>');
   return DOMPurify.sanitize(result, {
     ALLOWED_TAGS: ['b', 'i', 's', 'code'],
@@ -76,7 +84,9 @@ const formattedPreview = computed(() =>
 
 const previewHasFormatting = computed(() => {
   if (!props.chat.lastMessageText) return false;
-  return /\*\*.+?\*\*|__.+?__|~~.+?~~|`.+?`/.test(props.chat.lastMessageText);
+  return /\*\*[\s\S]+?\*\*|__[\s\S]+?__|~~[\s\S]+?~~|`.+?`|\[.+?\]\(.+?\)|https?:\/\/\S+/.test(
+    props.chat.lastMessageText
+  );
 });
 </script>
 
@@ -105,10 +115,15 @@ const previewHasFormatting = computed(() => {
           <span class="text-xs text-n-slate-10">
             {{ timeDisplay }}
           </span>
+          <span
+            v-if="isForumGroup"
+            class="i-lucide-chevron-right size-4 text-n-slate-9"
+          />
         </div>
       </div>
       <div class="flex items-center gap-1.5 mt-0.5">
         <span
+          v-if="chatTypeLabel"
           class="text-[11px] px-1 py-0.5 rounded bg-n-alpha-1 text-n-slate-10 flex-shrink-0"
         >
           {{ chatTypeLabel }}

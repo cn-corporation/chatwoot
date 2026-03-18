@@ -35,10 +35,19 @@ function escapeHtml(str) {
 
 function formatTelegramMarkdown(text) {
   let html = escapeHtml(text);
-  html = html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-  html = html.replace(/__(.+?)__/g, '<i>$1</i>');
-  html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
+  html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
   html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+  html = html.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
+  html = html.replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>');
+  html = html.replace(/__([\s\S]+?)__/g, '<i>$1</i>');
+  html = html.replace(/~~([\s\S]+?)~~/g, '<s>$1</s>');
+  html = html.replace(
+    /(^|[^"'>])(https?:\/\/[^\s<]+)/g,
+    '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>'
+  );
   return html;
 }
 
@@ -46,14 +55,16 @@ const formattedText = computed(() => {
   if (!props.message.text) return '';
   const html = formatTelegramMarkdown(props.message.text);
   return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['b', 'i', 'u', 's', 'code', 'pre'],
-    ALLOWED_ATTR: [],
+    ALLOWED_TAGS: ['b', 'i', 'u', 's', 'code', 'pre', 'a'],
+    ALLOWED_ATTR: ['href', 'target', 'rel'],
   });
 });
 
 const hasFormatting = computed(() => {
   if (!props.message.text) return false;
-  return /\*\*.+?\*\*|__.+?__|~~.+?~~|`.+?`/.test(props.message.text);
+  return /\*\*[\s\S]+?\*\*|__[\s\S]+?__|~~[\s\S]+?~~|`.+?`|\[.+?\]\(.+?\)|https?:\/\/\S+/.test(
+    props.message.text
+  );
 });
 
 const isImage = computed(
@@ -211,7 +222,7 @@ onBeforeUnmount(() => {
       </template>
       <div
         v-if="message.text && hasFormatting"
-        class="text-sm whitespace-pre-wrap break-words [&_code]:bg-black/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono"
+        class="text-sm whitespace-pre-wrap break-words [&_code]:bg-black/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono [&_pre]:bg-black/10 [&_pre]:p-2 [&_pre]:rounded-lg [&_pre]:my-1 [&_pre]:overflow-x-auto [&_a]:underline [&_a]:underline-offset-2"
         v-html="formattedText"
       />
       <div

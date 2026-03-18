@@ -61,6 +61,7 @@ const state = {
   chatsHasMore: true,
   chatsOffset: 0,
   activeChatId: null,
+  activeGroupChatId: null,
   messages: [],
   messagesLoading: false,
   messagesHasMore: true,
@@ -81,6 +82,57 @@ const getters = {
       const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
       return dateB - dateA;
     }),
+  getGroupedChats: (s, g) => {
+    const sorted = g.getChats;
+    const groups = new Map();
+    sorted.forEach(chat => {
+      const key = chat.chatId;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(chat);
+    });
+    const result = [];
+    groups.forEach(chats => {
+      const hasTopics = chats.some(c => c.topicId);
+      if (hasTopics) {
+        const mostRecent = chats.reduce((a, b) => {
+          const dA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const dB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return dA > dB ? a : b;
+        });
+        const totalUnread = chats.reduce(
+          (sum, c) => sum + (s.unreadCounts[c.id] || 0),
+          0
+        );
+        result.push({
+          id: `group_${mostRecent.chatId}`,
+          chatId: mostRecent.chatId,
+          name: mostRecent.name || 'Group',
+          type: mostRecent.type,
+          isForumGroup: true,
+          topicCount: chats.filter(c => c.topicId).length,
+          totalUnread: totalUnread,
+          updatedAt: mostRecent.updatedAt,
+          lastMessageText: mostRecent.lastMessageText,
+        });
+      } else {
+        chats.forEach(c => result.push(c));
+      }
+    });
+    return result.sort((a, b) => {
+      const dA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const dB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      return dB - dA;
+    });
+  },
+  getTopicsForGroup: s => chatId =>
+    s.chats
+      .filter(c => String(c.chatId) === String(chatId))
+      .sort((a, b) => {
+        const dA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dB - dA;
+      }),
+  getActiveGroupChatId: s => s.activeGroupChatId,
   getChatsLoading: s => s.chatsLoading,
   getChatsHasMore: s => s.chatsHasMore,
   getActiveChatId: s => s.activeChatId,
@@ -121,6 +173,9 @@ const mutations = {
   },
   SET_ACTIVE_CHAT_ID(s, id) {
     s.activeChatId = id;
+  },
+  SET_ACTIVE_GROUP_CHAT_ID(s, chatId) {
+    s.activeGroupChatId = chatId;
   },
   SET_MESSAGES(s, messages) {
     s.messages = messages;
@@ -202,6 +257,7 @@ const actions = {
     commit('SET_CHATS_OFFSET', 0);
     commit('SET_CHATS_HAS_MORE', true);
     commit('SET_ACTIVE_CHAT_ID', null);
+    commit('SET_ACTIVE_GROUP_CHAT_ID', null);
     commit('SET_MESSAGES', []);
     await dispatch('fetchChats');
     if (!s.sseInitialized) {
