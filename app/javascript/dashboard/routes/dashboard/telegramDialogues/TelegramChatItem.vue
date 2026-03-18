@@ -67,9 +67,10 @@ function escapeHtml(str) {
 function stripMarkdown(text) {
   if (!text) return '';
   let result = escapeHtml(text);
-  result = result.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-  result = result.replace(/__(.+?)__/g, '<i>$1</i>');
-  result = result.replace(/~~(.+?)~~/g, '<s>$1</s>');
+  result = result.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  result = result.replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>');
+  result = result.replace(/__([\s\S]+?)__/g, '<i>$1</i>');
+  result = result.replace(/~~([\s\S]+?)~~/g, '<s>$1</s>');
   result = result.replace(/`(.+?)`/g, '<code>$1</code>');
   return DOMPurify.sanitize(result, {
     ALLOWED_TAGS: ['b', 'i', 's', 'code'],
@@ -83,7 +84,9 @@ const formattedPreview = computed(() =>
 
 const previewHasFormatting = computed(() => {
   if (!props.chat.lastMessageText) return false;
-  return /\*\*.+?\*\*|__.+?__|~~.+?~~|`.+?`/.test(props.chat.lastMessageText);
+  return /\*\*[\s\S]+?\*\*|__[\s\S]+?__|~~[\s\S]+?~~|`.+?`|\[.+?\]\(.+?\)|https?:\/\/\S+/.test(
+    props.chat.lastMessageText
+  );
 });
 </script>
 
