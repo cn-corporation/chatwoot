@@ -12,22 +12,26 @@ defineEmits(['select']);
 
 const store = useStore();
 
+const isForumGroup = computed(() => !!props.chat.isForumGroup);
+
 const chatTypeLabel = computed(() => {
-  if (props.chat.topicId) return 'Topic';
+  if (isForumGroup.value)
+    return `${props.chat.topicCount} topic${props.chat.topicCount !== 1 ? 's' : ''}`;
   if (props.chat.type === 'personal') return 'Personal';
+  if (props.chat.topicId) return '';
   return 'Group';
 });
 
 const chatTypeIcon = computed(() => {
+  if (isForumGroup.value) return 'i-lucide-users';
   if (props.chat.topicId) return 'i-lucide-hash';
   if (props.chat.type === 'personal') return 'i-lucide-user';
   return 'i-lucide-users';
 });
 
 const displayName = computed(() => {
-  if (props.chat.topicId && props.chat.topicName) {
-    return `${props.chat.name || 'Group'} › ${props.chat.topicName}`;
-  }
+  if (isForumGroup.value) return props.chat.name;
+  if (props.chat.topicId && props.chat.topicName) return props.chat.topicName;
   return props.chat.name || `Chat #${props.chat.chatId}`;
 });
 
@@ -49,9 +53,12 @@ const timeDisplay = computed(() => {
   return `${diffDays}d`;
 });
 
-const unreadCount = computed(() =>
-  store.getters['telegramDialogues/getUnreadCountForChat'](props.chat.id)
-);
+const unreadCount = computed(() => {
+  if (isForumGroup.value) return props.chat.totalUnread || 0;
+  return store.getters['telegramDialogues/getUnreadCountForChat'](
+    props.chat.id
+  );
+});
 
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -105,10 +112,15 @@ const previewHasFormatting = computed(() => {
           <span class="text-xs text-n-slate-10">
             {{ timeDisplay }}
           </span>
+          <span
+            v-if="isForumGroup"
+            class="i-lucide-chevron-right size-4 text-n-slate-9"
+          />
         </div>
       </div>
       <div class="flex items-center gap-1.5 mt-0.5">
         <span
+          v-if="chatTypeLabel"
           class="text-[11px] px-1 py-0.5 rounded bg-n-alpha-1 text-n-slate-10 flex-shrink-0"
         >
           {{ chatTypeLabel }}

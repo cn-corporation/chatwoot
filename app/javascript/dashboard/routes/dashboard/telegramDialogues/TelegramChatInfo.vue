@@ -35,9 +35,7 @@ const chatTypeInfo = computed(() => {
 });
 
 const displayName = computed(() => {
-  if (props.chat.topicId && props.chat.topicName) {
-    return props.chat.topicName;
-  }
+  if (props.chat.topicId && props.chat.topicName) return props.chat.topicName;
   return props.chat.name || `Chat #${props.chat.chatId}`;
 });
 </script>
@@ -55,7 +53,7 @@ const displayName = computed(() => {
       >
         {{ displayName }}
       </h3>
-      <span class="text-xs text-n-slate-10">
+      <span v-if="chatTypeInfo.description" class="text-xs text-n-slate-10">
         {{ chatTypeInfo.description }}
       </span>
     </div>

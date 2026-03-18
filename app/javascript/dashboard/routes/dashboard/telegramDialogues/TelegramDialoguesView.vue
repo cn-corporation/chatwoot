@@ -34,6 +34,10 @@ const onSelectSource = sourceId => {
 };
 
 const onSelectChat = chat => {
+  if (chat.isForumGroup) {
+    store.commit('telegramDialogues/SET_ACTIVE_GROUP_CHAT_ID', chat.chatId);
+    return;
+  }
   store.dispatch('telegramDialogues/setActiveChat', chat.id);
   router.push(
     accountScopedRoute('telegram_dialogues_chat', {
