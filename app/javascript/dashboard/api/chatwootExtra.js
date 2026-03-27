@@ -604,6 +604,31 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async getTelegramDialoguesOperators() {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/operators`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async addTelegramDialoguesOperator({ chatwootUserId, name }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/operators`,
+      { chatwootUserId, name },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async removeTelegramDialoguesOperator(chatwootUserId) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/telegram-dialogues/operators/${chatwootUserId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   async getTelegramSources() {
     const response = await axios.get(
       `${this.baseURL}/api/telegram-dialogues/sources`,
