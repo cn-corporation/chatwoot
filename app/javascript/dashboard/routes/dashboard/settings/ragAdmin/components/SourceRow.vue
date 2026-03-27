@@ -13,7 +13,15 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  onRefresh: {
+  onUpdate: {
+    type: Function,
+    required: true,
+  },
+  onDelete: {
+    type: Function,
+    required: true,
+  },
+  onStatusRefresh: {
     type: Function,
     required: true,
   },
@@ -73,56 +81,112 @@ const availableTagsForSubSource = subSource => {
   return props.allTags.filter(t => !assignedIds.has(t.id));
 };
 
-const withAction = async (name, fn) => {
+const setLocal = updates => {
+  props.onUpdate({ ...props.source, ...updates });
+};
+
+const withAction = async (name, fn, successUpdates) => {
   if (actionInProgress.value) return;
   actionInProgress.value = name;
   try {
     await fn();
-    await props.onRefresh();
-  } finally {
-    actionInProgress.value = null;
+    setLocal(successUpdates);
+  } catch {
+    try {
+      await props.onStatusRefresh();
+    } catch {
+      /* ignore */
+    }
   }
+  actionInProgress.value = null;
 };
 
 const handleIndex = () =>
-  withAction('index', () => chatwootExtraAPI.indexRagSource(props.source.id));
+  withAction('index', () => chatwootExtraAPI.indexRagSource(props.source.id), {
+    status: 'processing',
+  });
 
 const handleReindex = () =>
-  withAction('reindex', () =>
-    chatwootExtraAPI.reindexRagSource(props.source.id)
+  withAction(
+    'reindex',
+    () => chatwootExtraAPI.reindexRagSource(props.source.id),
+    { status: 'processing' }
   );
 
 const handleDeindex = () =>
-  withAction('deindex', () =>
-    chatwootExtraAPI.deindexRagSource(props.source.id)
+  withAction(
+    'deindex',
+    () => chatwootExtraAPI.deindexRagSource(props.source.id),
+    { status: 'pending', indexedAt: null, subSources: [] }
   );
 
-const handleDelete = () => {
+const handleDelete = async () => {
   if (actionInProgress.value) return;
   const confirmed = window.confirm(
     `Delete "${props.source.filename}"?\nThis will remove all indexed chunks and the source file.`
   );
   if (!confirmed) return;
-  withAction('delete', () => chatwootExtraAPI.deleteRagSource(props.source.id));
+  actionInProgress.value = 'delete';
+  try {
+    await chatwootExtraAPI.deleteRagSource(props.source.id);
+    props.onDelete(props.source.id);
+  } catch {
+    try {
+      await props.onStatusRefresh();
+    } catch {
+      /* ignore */
+    }
+  }
+  actionInProgress.value = null;
 };
 
-const handleAddTag = subSource => {
+const patchSubSourceTags = (subSourceName, patchFn) => {
+  props.onUpdate({
+    ...props.source,
+    subSources: (props.source.subSources || []).map(s =>
+      s.name === subSourceName ? { ...s, tags: patchFn(s.tags || []) } : s
+    ),
+  });
+};
+
+const handleAddTag = async subSource => {
   const tagId = selectedTags.value[subSource.name];
-  if (!tagId) return;
+  if (!tagId || actionInProgress.value) return;
+  const tag = props.allTags.find(t => t.id === tagId);
   selectedTags.value[subSource.name] = '';
-  withAction('tag', () =>
-    chatwootExtraAPI.addRagSubSourceTag(props.source.id, subSource.name, tagId)
-  );
-};
-
-const handleRemoveTag = (subSource, tagId) => {
-  withAction('tag', () =>
-    chatwootExtraAPI.removeRagSubSourceTag(
+  patchSubSourceTags(subSource.name, tags => [
+    ...tags,
+    { id: tagId, name: tag?.name },
+  ]);
+  actionInProgress.value = 'tag';
+  try {
+    await chatwootExtraAPI.addRagSubSourceTag(
       props.source.id,
       subSource.name,
       tagId
-    )
-  );
+    );
+  } catch {
+    await props.onStatusRefresh();
+  } finally {
+    actionInProgress.value = null;
+  }
+};
+
+const handleRemoveTag = async (subSource, tagId) => {
+  if (actionInProgress.value) return;
+  patchSubSourceTags(subSource.name, tags => tags.filter(t => t.id !== tagId));
+  actionInProgress.value = 'tag';
+  try {
+    await chatwootExtraAPI.removeRagSubSourceTag(
+      props.source.id,
+      subSource.name,
+      tagId
+    );
+  } catch {
+    await props.onStatusRefresh();
+  } finally {
+    actionInProgress.value = null;
+  }
 };
 </script>
 
@@ -197,7 +261,7 @@ const handleRemoveTag = (subSource, tagId) => {
       @click.stop
     >
       <Button
-        v-if="isPending || isError"
+        v-if="isPending || isError || actionInProgress === 'index'"
         icon="i-lucide-play"
         label="Index"
         xs
@@ -208,7 +272,7 @@ const handleRemoveTag = (subSource, tagId) => {
         @click="handleIndex"
       />
       <Button
-        v-if="isIndexed"
+        v-if="isIndexed || actionInProgress === 'reindex'"
         icon="i-lucide-refresh-cw"
         label="Re-index"
         xs
@@ -219,7 +283,7 @@ const handleRemoveTag = (subSource, tagId) => {
         @click="handleReindex"
       />
       <Button
-        v-if="isIndexed"
+        v-if="isIndexed || actionInProgress === 'deindex'"
         icon="i-lucide-circle-stop"
         label="De-index"
         xs
@@ -231,6 +295,7 @@ const handleRemoveTag = (subSource, tagId) => {
       />
       <div class="flex-1" />
       <Button
+        v-if="!isProcessing || actionInProgress === 'delete'"
         icon="i-lucide-trash-2"
         label="Delete"
         xs

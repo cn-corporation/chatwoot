@@ -64,6 +64,7 @@ import captainTools from './captain/tools';
 import captainCustomTools from './captain/customTools';
 import knowledgeBase from './modules/knowledgeBase';
 import telegramDialogues from './modules/telegramDialogues';
+import telegramDialoguesAccess from './modules/telegramDialoguesAccess';
 
 const plugins = [];
 
@@ -133,6 +134,7 @@ export default createStore({
     captainCustomTools,
     knowledgeBase,
     telegramDialogues,
+    telegramDialoguesAccess,
   },
   plugins,
 });

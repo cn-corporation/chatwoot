@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import chatwootExtraAPI from '../../../../../api/chatwootExtra';
 import Button from 'dashboard/components-next/button/Button.vue';
 import SourceRow from './SourceRow.vue';
+import SettingsLayout from '../../SettingsLayout.vue';
 
 const sources = ref([]);
 const tags = ref([]);
@@ -15,28 +16,21 @@ const hasProcessing = computed(() =>
   sources.value.some(s => s.status === 'processing')
 );
 
-const sortSources = (data) =>
-  data.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+const sortSources = data =>
+  [...data].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
 
-const fetchData = async () => {
-  try {
-    const [sourcesData, tagsData] = await Promise.all([
-      chatwootExtraAPI.getRagSources(),
-      chatwootExtraAPI.getRagTags(),
-    ]);
-    sources.value = sortSources(sourcesData);
-    tags.value = tagsData;
-  } finally {
-    loading.value = false;
-  }
+const refreshSources = async () => {
+  const data = await chatwootExtraAPI.getRagSources();
+  sources.value = sortSources(data);
 };
 
 const startPolling = () => {
   stopPolling();
   pollInterval = setInterval(async () => {
     if (hasProcessing.value) {
-      const sourcesData = await chatwootExtraAPI.getRagSources();
-      sources.value = sortSources(sourcesData);
+      await refreshSources();
     } else {
       stopPolling();
     }
@@ -52,37 +46,62 @@ const stopPolling = () => {
 
 const triggerUpload = () => fileInputRef.value?.click();
 
-const handleFileSelect = async (event) => {
+const handleFileSelect = async event => {
   const file = event.target.files[0];
   if (!file) return;
   uploading.value = true;
   try {
-    await chatwootExtraAPI.uploadRagSource(file);
-    await fetchData();
+    const result = await chatwootExtraAPI.uploadRagSource(file);
+    sources.value = sortSources([...sources.value, result.data]);
+    if (result.data?.status === 'processing') startPolling();
   } finally {
     uploading.value = false;
     event.target.value = '';
   }
 };
 
-const handleRefresh = async () => {
-  await fetchData();
+const handleSourceUpdate = updatedSource => {
+  const idx = sources.value.findIndex(s => s.id === updatedSource.id);
+  if (idx !== -1) sources.value[idx] = updatedSource;
+  if (updatedSource.status === 'processing') startPolling();
+};
+
+const handleSourceDelete = sourceId => {
+  sources.value = sources.value.filter(s => s.id !== sourceId);
+};
+
+const handleStatusRefresh = async () => {
+  await refreshSources();
   if (hasProcessing.value) startPolling();
 };
 
 onMounted(async () => {
-  await fetchData();
-  if (hasProcessing.value) startPolling();
+  try {
+    const [sourcesData, tagsData] = await Promise.all([
+      chatwootExtraAPI.getRagSources(),
+      chatwootExtraAPI.getRagTags(),
+    ]);
+    sources.value = sortSources(sourcesData);
+    tags.value = tagsData;
+    if (hasProcessing.value) startPolling();
+  } finally {
+    loading.value = false;
+  }
 });
 
 onUnmounted(() => stopPolling());
 </script>
 
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-base font-medium text-n-slate-12">Sources</h2>
-      <div>
+  <SettingsLayout
+    :is-loading="loading"
+    loading-message="Loading sources..."
+    :no-records-found="!loading && !sources.length"
+    no-records-message="No sources uploaded yet."
+  >
+    <template #header>
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-medium text-n-slate-12">Sources</h2>
         <Button
           icon="i-lucide-upload"
           label="Upload Source"
@@ -97,24 +116,17 @@ onUnmounted(() => stopPolling());
           @change="handleFileSelect"
         />
       </div>
-    </div>
-    <div v-if="loading" class="flex justify-center py-8">
-      <span class="i-lucide-loader-2 animate-spin h-6 w-6 text-slate-400" />
-    </div>
-    <p
-      v-else-if="!sources.length"
-      class="flex flex-col items-center justify-center text-base text-n-slate-11 py-8"
-    >
-      No sources uploaded yet.
-    </p>
-    <div v-else>
+    </template>
+    <template #body>
       <SourceRow
         v-for="source in sources"
         :key="source.id"
         :source="source"
         :all-tags="tags"
-        :on-refresh="handleRefresh"
+        :on-update="handleSourceUpdate"
+        :on-delete="handleSourceDelete"
+        :on-status-refresh="handleStatusRefresh"
       />
-    </div>
-  </div>
+    </template>
+  </SettingsLayout>
 </template>
