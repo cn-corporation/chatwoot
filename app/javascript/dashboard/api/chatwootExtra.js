@@ -603,6 +603,231 @@ class ChatwootExtraAPI {
     });
     return response.data;
   }
+
+  async getTelegramDialoguesOperators() {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/operators`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async addTelegramDialoguesOperator({ chatwootUserId, name }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/operators`,
+      { chatwootUserId, name },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async removeTelegramDialoguesOperator(chatwootUserId) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/telegram-dialogues/operators/${chatwootUserId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getTelegramSources() {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getTelegramChats(sourceId, { limit = 50, offset = 0 } = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats`,
+      { params: { limit, offset }, headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getTelegramMessages(sourceId, chatId, { limit = 50, offset = 0 } = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats/${chatId}/messages`,
+      { params: { limit, offset }, headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async markTelegramChatRead(sourceId, chatId) {
+    await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats/${chatId}/read`,
+      {},
+      { headers: this.headers }
+    );
+  }
+
+  async sendTelegramMedia(
+    sourceId,
+    { chatId, file, caption, replyToMsgId, topicId }
+  ) {
+    const formData = new FormData();
+    formData.append('chatId', String(chatId));
+    formData.append('file', file);
+    if (caption) formData.append('caption', caption);
+    if (replyToMsgId) formData.append('replyToMsgId', String(replyToMsgId));
+    if (topicId) formData.append('topicId', String(topicId));
+
+    const response = await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/send-media`,
+      formData,
+      {
+        headers: {
+          'X-API-Key': CHATWOOT_EXTRA_API_KEY,
+        },
+      }
+    );
+    return response.data;
+  }
+
+  async sendTelegramMessage(sourceId, { chatId, text, replyToMsgId, topicId }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/messages`,
+      { chatId, text, replyToMsgId, topicId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async fetchTelegramMedia(sourceId, mediaPath) {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/media/${mediaPath}`,
+      { headers: this.headers, responseType: 'blob' }
+    );
+    return response.data;
+  }
+
+  getTelegramSSEUrl(sourceId) {
+    const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
+    return `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/sse?apiKey=${apiKey}`;
+  }
+
+  async getRagOverview() {
+    const response = await axios.get(`${this.baseURL}/api/rag-admin/overview`, {
+      headers: this.headers,
+    });
+    return response.data;
+  }
+
+  async getRagTags() {
+    const response = await axios.get(`${this.baseURL}/api/rag-admin/tags`, {
+      headers: this.headers,
+    });
+    return response.data.data;
+  }
+
+  async createRagTag(data) {
+    const response = await axios.post(
+      `${this.baseURL}/api/rag-admin/tags`,
+      data,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async updateRagTag(id, data) {
+    const response = await axios.put(
+      `${this.baseURL}/api/rag-admin/tags/${id}`,
+      data,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async deleteRagTag(id) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/rag-admin/tags/${id}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getRagSources() {
+    const response = await axios.get(`${this.baseURL}/api/rag-admin/sources`, {
+      headers: this.headers,
+    });
+    return response.data.data;
+  }
+
+  async uploadRagSource(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axios.post(
+      `${this.baseURL}/api/rag-admin/sources`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'X-API-Key': CHATWOOT_EXTRA_API_KEY,
+        },
+      }
+    );
+    return response.data;
+  }
+
+  async deleteRagSource(id) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/rag-admin/sources/${id}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async indexRagSource(id) {
+    const response = await axios.post(
+      `${this.baseURL}/api/rag-admin/sources/${id}/index`,
+      {},
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async deindexRagSource(id) {
+    const response = await axios.post(
+      `${this.baseURL}/api/rag-admin/sources/${id}/deindex`,
+      {},
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async reindexRagSource(id) {
+    const response = await axios.post(
+      `${this.baseURL}/api/rag-admin/sources/${id}/reindex`,
+      {},
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getRagSubSources(sourceId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/rag-admin/sources/${sourceId}/sub-sources`,
+      { headers: this.headers }
+    );
+    return response.data.data;
+  }
+
+  async addRagSubSourceTag(sourceId, subSourceName, tagId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/rag-admin/sources/${sourceId}/sub-sources/${encodeURIComponent(subSourceName)}/tags`,
+      { tagId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async removeRagSubSourceTag(sourceId, subSourceName, tagId) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/rag-admin/sources/${sourceId}/sub-sources/${encodeURIComponent(subSourceName)}/tags/${tagId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
 }
 
 export default new ChatwootExtraAPI();

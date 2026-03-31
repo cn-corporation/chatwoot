@@ -87,6 +87,9 @@ const sidebarUnattendedCount = useMapGetter('getSidebarUnattendedCount');
 const sidebarMineCount = useMapGetter('getSidebarMineCount');
 const sidebarStandByCount = useMapGetter('getSidebarStandByCount');
 const getSidebarTotalCountForTeam = useMapGetter('getSidebarTotalCountForTeam');
+const isTelegramOperator = useMapGetter(
+  'telegramDialoguesAccess/isCurrentUserAllowed'
+);
 // Removed unused custom views - simplified for poker operator UI
 
 const refreshCounts = async () => {
@@ -102,7 +105,11 @@ onMounted(async () => {
     store.dispatch('customViews/get', 'contact'),
     store.dispatch('macros/get'),
     store.dispatch('fetchAllConversationsForCounts'),
+    store.dispatch('telegramDialoguesAccess/fetchOperators'),
   ]);
+  if (isAdmin.value || isTelegramOperator.value) {
+    store.dispatch('telegramDialogues/initGlobalSSE');
+  }
   // Refresh counts when conversations are updated
   emitter.on(BUS_EVENTS.WEBSOCKET_RECONNECT, refreshCounts);
   emitter.on('fetch_conversation_stats', refreshCounts);
@@ -216,6 +223,18 @@ const menuItems = computed(() => {
         to: accountScopedRoute('knowledge_base_wrapper'),
       });
     }
+    settingsChildren.push({
+      name: 'Settings RAG Admin',
+      label: 'RAG Admin',
+      icon: 'i-lucide-brain',
+      to: accountScopedRoute('rag_admin_index'),
+    });
+    settingsChildren.push({
+      name: 'Settings Telegram Dialogues Access',
+      label: 'Telegram Access',
+      icon: 'i-lucide-send',
+      to: accountScopedRoute('telegram_dialogues_access'),
+    });
   }
 
   settingsChildren.push(
@@ -323,7 +342,7 @@ const menuItems = computed(() => {
     });
   }
 
-  return [
+  const topItems = [
     {
       name: 'TodoList',
       label: t('TODO.TITLE'),
@@ -331,6 +350,24 @@ const menuItems = computed(() => {
       to: accountScopedRoute('todo_list'),
       activeOn: ['todo_list'],
     },
+  ];
+
+  if (isAdmin.value || isTelegramOperator.value) {
+    topItems.push({
+      name: 'TelegramDialogues',
+      label: t('SIDEBAR.TELEGRAM_DIALOGUES'),
+      icon: 'i-lucide-send',
+      to: accountScopedRoute('telegram_dialogues'),
+      activeOn: ['telegram_dialogues', 'telegram_dialogues_chat'],
+      getterKeys: {
+        count: 'telegramDialogues/getTotalUnreadCount',
+        badge: 'telegramDialogues/getTotalUnreadCount',
+      },
+    });
+  }
+
+  return [
+    ...topItems,
     {
       name: 'Conversation',
       label: t('SIDEBAR.CONVERSATIONS'),

@@ -42,7 +42,6 @@ class ConversationFinder
     set_team
 
     find_all_conversations # find all with the inbox
-    filter_by_dialogue_segregation
 
     # Apply team and label filters before counting
     filter_by_team
@@ -50,18 +49,23 @@ class ConversationFinder
     filter_by_query
     filter_by_source_id
 
-    # Calculate counts for different tabs
-    # Base query includes all filters except status and assignee_type
+    # Resolved count is computed before dialogue segregation so all users see the real total
+    conversations_before_segregation = @conversations
+    resolved_count = conversations_before_segregation.resolved.count
+
+    # Apply dialogue segregation for non-resolved counts
+    filter_by_dialogue_segregation
     base_conversations = @conversations
 
     mine_count = base_conversations.where(status: :open).assigned_to(current_user).count
     unassigned_count = base_conversations.where(status: :open).unassigned.count
     all_count = base_conversations.where(status: :open).count
-
-    resolved_count = base_conversations.resolved.count
     pending_count = base_conversations.pending.count
     stand_by_count = base_conversations.stand_by.count
     assigned_count = all_count - unassigned_count
+
+    # For resolved tab, use conversations without dialogue segregation
+    @conversations = conversations_before_segregation if @assignee_type == 'resolved'
 
     filter_by_assignee_type
 

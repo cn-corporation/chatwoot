@@ -27,6 +27,8 @@ import customRoles from './customRoles/customRole.routes';
 import profile from './profile/profile.routes';
 import security from './security/security.routes';
 import knowledgeBase from './knowledgeBase/knowledgeBase.routes';
+import ragAdmin from './ragAdmin/ragAdmin.routes';
+import telegramDialoguesAccess from './telegramDialogues/telegramDialogues.routes';
 
 export default {
   routes: [
@@ -69,5 +71,7 @@ export default {
     ...profile.routes,
     ...security.routes,
     ...knowledgeBase.routes,
+    ...ragAdmin.routes,
+    ...telegramDialoguesAccess.routes,
   ],
 };
