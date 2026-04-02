@@ -340,6 +340,12 @@ const menuItems = computed(() => {
       icon: 'i-lucide-star',
       to: accountScopedRoute('csat_statistics'),
     });
+    reportsChildren.push({
+      name: 'Reports Quality Review',
+      label: t('SIDEBAR.QUALITY_REVIEW'),
+      icon: 'i-lucide-brain',
+      to: accountScopedRoute('quality_review_statistics'),
+    });
   }
 
   const topItems = [
