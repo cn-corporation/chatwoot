@@ -266,12 +266,6 @@ export const mutations = {
     if (resolutionReason !== undefined) {
       conversation.resolution_reason = resolutionReason;
     }
-    const sidebarItem = _state.sidebarCountsData.find(
-      c => c.id === conversationId
-    );
-    if (sidebarItem) {
-      sidebarItem.status = status;
-    }
   },
 
   [types.MUTE_CONVERSATION](_state) {
@@ -504,10 +498,6 @@ export const mutations = {
   [types.UPDATE_ASSIGNEE](_state, payload) {
     const [chat] = _state.allConversations.filter(c => c.id === payload.id);
     chat.meta.assignee = payload.assignee;
-    const sidebarItem = _state.sidebarCountsData.find(c => c.id === payload.id);
-    if (sidebarItem) {
-      sidebarItem.assignee_id = payload.assignee?.id;
-    }
   },
 
   [types.UPDATE_CONVERSATION_CONTACT](_state, { conversationId, ...payload }) {

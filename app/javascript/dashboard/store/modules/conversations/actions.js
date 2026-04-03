@@ -57,26 +57,19 @@ const actions = {
   },
 
   fetchAllConversationsForCounts: async ({ commit }) => {
-    const fetchAllPages = async params => {
-      const all = [];
-      let page = 1;
-      let hasMore = true;
-      while (hasMore) {
-        // eslint-disable-next-line no-await-in-loop
-        const response = await ConversationApi.get({ ...params, page });
-        const payload = response.data.data.payload || [];
-        all.push(...payload);
-        hasMore = payload.length > 0;
-        page += 1;
-      }
-      return all;
-    };
-
     try {
-      const [meConversations, unassignedConversations] = await Promise.all([
-        fetchAllPages({ status: 'all', assigneeType: 'me' }),
-        fetchAllPages({ status: 'all', assigneeType: 'unassigned' }),
+      const [meResponse, unassignedResponse] = await Promise.all([
+        ConversationApi.get({ page: 1, status: 'all', assigneeType: 'me' }),
+        ConversationApi.get({
+          page: 1,
+          status: 'all',
+          assigneeType: 'unassigned',
+        }),
       ]);
+
+      const meConversations = meResponse.data.data.payload || [];
+      const unassignedConversations =
+        unassignedResponse.data.data.payload || [];
 
       const allConversations = [...meConversations, ...unassignedConversations];
 
