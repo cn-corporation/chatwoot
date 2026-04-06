@@ -174,12 +174,16 @@ class ConversationFinder
     return unless current_account.settings&.dig('dialogue_segregation_enabled')
     return if @is_admin
 
+    support_team_id = current_account.settings&.dig('support_247_team_id')
+    support_line_1 = current_account.settings&.dig('support_line_1_active')
+
     user_team_ids = current_user.teams.where(account_id: current_account.id).pluck(:id)
+
     @conversations = if user_team_ids.present?
-                       @conversations.where(team_id: user_team_ids)
-                     else
-                       @conversations.where(team_id: nil)
-                     end
+                        @conversations.where(team_id: user_team_ids)
+                      else
+                        @conversations.where(team_id: nil)
+                      end
   end
 
   def filter_by_team

@@ -19,6 +19,10 @@ class AccountPolicy < ApplicationPolicy
     true
   end
 
+  def toggle_support_line?
+    @account_user.administrator? || @account_user.agent?
+  end
+
   def subscription?
     @account_user.administrator?
   end

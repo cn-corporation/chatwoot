@@ -132,6 +132,7 @@ class Conversation < ApplicationRecord
   after_update_commit :execute_after_update_commit_callbacks
   after_create_commit :notify_conversation_creation
   after_create_commit :load_attributes_created_by_db_triggers
+  after_create_commit :assign_support_247_team
 
   delegate :auto_resolve_after, to: :account
 
@@ -241,6 +242,7 @@ class Conversation < ApplicationRecord
 
   def execute_after_update_commit_callbacks
     handle_resolved_status_change
+    assign_support_247_team_on_reopen
     notify_status_change
     create_activity
     notify_conversation_updation
@@ -254,6 +256,33 @@ class Conversation < ApplicationRecord
     update_column(:waiting_since, nil)
     update_column(:team_id, nil) if team_id.present?
     # rubocop:enable Rails/SkipsModelValidations
+  end
+
+  def assign_support_247_team
+    return unless should_assign_support_247_team?
+
+    # rubocop:disable Rails/SkipsModelValidations
+    update_column(:team_id, account.settings&.dig('support_247_team_id'))
+    # rubocop:enable Rails/SkipsModelValidations
+  end
+
+  def assign_support_247_team_on_reopen
+    return unless saved_change_to_status? && (open? || pending?)
+    return unless should_assign_support_247_team?
+
+    # rubocop:disable Rails/SkipsModelValidations
+    update_column(:team_id, account.settings&.dig('support_247_team_id'))
+    # rubocop:enable Rails/SkipsModelValidations
+  end
+
+  def should_assign_support_247_team?
+    return false unless account.settings&.dig('dialogue_segregation_enabled')
+
+    support_team_id = account.settings&.dig('support_247_team_id')
+    return false if support_team_id.blank?
+    return false if account.settings&.dig('support_line_1_active')
+
+    true
   end
 
   def ensure_snooze_until_reset

@@ -473,12 +473,12 @@ const conversationList = computed(() => {
       !isCurrentUserAdmin
     ) {
       const myTeamIds = myTeams.value.map(team => team.id);
+
       localConversationList = localConversationList.filter(conversation => {
         const teamId =
           conversation.team_id || conversation.meta?.team?.id || null;
-        if (myTeamIds.length) {
-          return myTeamIds.includes(teamId);
-        }
+
+        if (myTeamIds.length) return myTeamIds.includes(teamId);
         return teamId === null;
       });
     }

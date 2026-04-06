@@ -81,6 +81,19 @@ export const actions = {
       throw new Error(error);
     }
   },
+  toggleSupportLine: async (_, { active }) => {
+    await AccountAPI.toggleSupportLine(active);
+  },
+  applySupportLineChange: ({ commit, state: localState }, { support_line_1_active: active }) => {
+    localState.records.forEach(account => {
+      if (account.settings) {
+        commit(types.default.EDIT_ACCOUNT, {
+          ...account,
+          settings: { ...account.settings, support_line_1_active: active },
+        });
+      }
+    });
+  },
   delete: async ({ commit }, { id }) => {
     commit(types.default.SET_ACCOUNT_UI_FLAG, { isUpdating: true });
     try {
