@@ -16,6 +16,7 @@ import { format, subDays } from 'date-fns';
 import ReportHeader from './components/ReportHeader.vue';
 import CsatStatsFilters from './components/CsatStatsFilters.vue';
 import qualityReviewStatisticsAPI from 'dashboard/api/qualityReviewStatistics';
+import { conversationUrl, frontendURL } from 'dashboard/helper/URLHelper';
 
 ChartJS.register(
   CategoryScale,
@@ -39,6 +40,12 @@ const dateRange = ref({
 });
 
 const agents = useMapGetter('agents/getAgents');
+const accountId = useMapGetter('getCurrentAccountId');
+
+const conversationLink = id => {
+  if (!accountId.value) return '#';
+  return frontendURL(conversationUrl({ accountId: accountId.value, id }));
+};
 
 const agentsMap = computed(() => {
   const map = new Map();
@@ -330,8 +337,13 @@ onMounted(() => {
             :key="row.id"
             class="border-b border-slate-100 dark:border-slate-700"
           >
-            <td class="px-4 py-3 text-slate-900 dark:text-white">
-              #{{ row.conversationId }}
+            <td class="px-4 py-3">
+              <a
+                :href="conversationLink(row.conversationId)"
+                class="text-n-primary hover:underline"
+              >
+                {{ '#' + row.conversationId }}
+              </a>
             </td>
             <td class="px-4 py-3 text-slate-700 dark:text-slate-300">
               {{ row.operator }}

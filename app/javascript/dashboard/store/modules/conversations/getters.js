@@ -37,13 +37,12 @@ const isStandByUnreadEligible = (conversation, currentUserId) => {
 };
 
 const passesDialogueSegregation = (conversation, rootGetters) => {
-  const accountId = rootGetters.getCurrentAccountId;
-  const account = rootGetters['accounts/getAccount'](accountId);
-  if (!account?.settings?.dialogue_segregation_enabled) return true;
   const currentUser = rootGetters.getCurrentUser;
   if (currentUser?.role === 'administrator') return true;
+
   const myTeamIds = (rootGetters['teams/getMyTeams'] || []).map(t => t.id);
   const teamId = conversation.team_id || conversation.meta?.team?.id || null;
+
   if (myTeamIds.length) return myTeamIds.includes(teamId);
   return teamId === null;
 };

@@ -4,9 +4,6 @@ import types from '../store/mutation-types';
 const ALERT_AUDIO_PATH = '/audio/dashboard/ding.mp3';
 
 const shouldNotify = (store, conversationId) => {
-  const accountId = store.getters.getCurrentAccountId;
-  const account = store.getters['accounts/getAccount'](accountId);
-  if (!account?.settings?.dialogue_segregation_enabled) return true;
   const currentUser = store.getters.getCurrentUser;
   if (currentUser?.role === 'administrator') return true;
   const allConversations = store.getters.getAllConversations;

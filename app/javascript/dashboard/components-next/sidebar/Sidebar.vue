@@ -1,5 +1,5 @@
 <script setup>
-import { h, computed, onMounted, onUnmounted } from 'vue';
+import { h, computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import { provideSidebarContext } from './provider';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useKbd } from 'dashboard/composables/utils/useKbd';
@@ -21,6 +21,7 @@ import ChannelLeaf from './ChannelLeaf.vue';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
 import Logo from 'next/icon/Logo.vue';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
+import Switch from 'next/switch/Switch.vue';
 
 const props = defineProps({
   isMobileSidebarOpen: {
@@ -91,6 +92,49 @@ const isTelegramOperator = useMapGetter(
   'telegramDialoguesAccess/isCurrentUserAllowed'
 );
 // Removed unused custom views - simplified for poker operator UI
+
+const supportLine1Active = ref(false);
+
+const support247TeamId = computed(() => {
+  const accountId = store.getters.getCurrentAccountId;
+  const account = store.getters['accounts/getAccount'](accountId);
+  return account?.settings?.support_247_team_id || null;
+});
+
+const showSupportLine1Toggle = computed(() => {
+  return !!support247TeamId.value;
+});
+
+const canToggleSupportLine1 = computed(() => {
+  const currentUserVal = store.getters.getCurrentUser;
+  if (currentUserVal?.role === 'administrator') return true;
+  const myTeamIds = (store.getters['teams/getMyTeams'] || []).map(
+    team => team.id
+  );
+  if (myTeamIds.length === 0) return true;
+  return myTeamIds.includes(support247TeamId.value);
+});
+
+watch(
+  () => {
+    const accountId = store.getters.getCurrentAccountId;
+    return store.getters['accounts/getAccount'](accountId)?.settings
+      ?.support_line_1_active;
+  },
+  val => {
+    supportLine1Active.value = !!val;
+  },
+  { immediate: true }
+);
+
+const toggleSupportLine1 = async () => {
+  const desired = supportLine1Active.value;
+  try {
+    await store.dispatch('accounts/toggleSupportLine', { active: desired });
+  } catch {
+    supportLine1Active.value = !desired;
+  }
+};
 
 const refreshCounts = async () => {
   await store.dispatch('fetchAllConversationsForCounts');
@@ -563,7 +607,33 @@ const menuItems = computed(() => {
         </ComposeConversation>
       </div>
     </section>
-    <nav class="grid overflow-y-scroll flex-grow gap-2 px-2 pb-5 no-scrollbar">
+    <nav
+      class="flex flex-col overflow-y-scroll flex-grow gap-2 px-2 pb-5 no-scrollbar"
+    >
+      <div
+        v-if="showSupportLine1Toggle"
+        class="flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium"
+        :class="[
+          supportLine1Active
+            ? 'bg-n-teal-3 text-n-teal-11'
+            : 'bg-n-solid-3 text-n-slate-11',
+          !canToggleSupportLine1 && 'opacity-60',
+        ]"
+      >
+        <div class="flex items-center gap-1.5">
+          <span
+            :class="supportLine1Active ? 'i-lucide-zap' : 'i-lucide-moon'"
+            class="size-3.5"
+          />
+          <span>{{ t('SIDEBAR.SUPPORT_LINE_1') }}</span>
+        </div>
+        <Switch
+          v-model="supportLine1Active"
+          size="small"
+          :disabled="!canToggleSupportLine1"
+          @change="toggleSupportLine1"
+        />
+      </div>
       <ul class="flex flex-col gap-1.5 m-0 list-none">
         <SidebarGroup
           v-for="item in menuItems"
