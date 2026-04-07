@@ -370,6 +370,11 @@
     "RESOLUTION_STATISTICS": "Resolution Statistics",
     "CSAT_STATISTICS": "CSAT Statistics",
     "QUALITY_REVIEW": "AI Quality Review",
+    "MY_REPORTS": "My Reports",
+    "MY_RESPONSE_STATISTICS": "My Response Statistics",
+    "MY_RESOLUTION_STATISTICS": "My Resolution Statistics",
+    "MY_CSAT_STATISTICS": "My CSAT Statistics",
+    "MY_QUALITY_REVIEW": "My AI Quality Review",
     "REAUTHORIZE": "Your inbox connection has expired, please reconnect\n to continue receiving and sending messages",
     "HELP_CENTER": {
       "TITLE": "Help Center",
