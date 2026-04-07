@@ -392,6 +392,33 @@ const menuItems = computed(() => {
     });
   }
 
+  const operatorReportsChildren = [
+    {
+      name: 'My Response Statistics',
+      label: t('SIDEBAR.MY_RESPONSE_STATISTICS'),
+      icon: 'i-lucide-timer',
+      to: accountScopedRoute('my_response_statistics'),
+    },
+    {
+      name: 'My Resolution Statistics',
+      label: t('SIDEBAR.MY_RESOLUTION_STATISTICS'),
+      icon: 'i-lucide-check-circle',
+      to: accountScopedRoute('my_resolution_statistics'),
+    },
+    {
+      name: 'My CSAT Statistics',
+      label: t('SIDEBAR.MY_CSAT_STATISTICS'),
+      icon: 'i-lucide-star',
+      to: accountScopedRoute('my_csat_statistics'),
+    },
+    {
+      name: 'My Quality Review',
+      label: t('SIDEBAR.MY_QUALITY_REVIEW'),
+      icon: 'i-lucide-brain',
+      to: accountScopedRoute('my_quality_review_statistics'),
+    },
+  ];
+
   const topItems = [
     {
       name: 'TodoList',
@@ -540,9 +567,9 @@ const menuItems = computed(() => {
     },
     {
       name: 'Reports',
-      label: t('SIDEBAR.REPORTS'),
+      label: isAdmin.value ? t('SIDEBAR.REPORTS') : t('SIDEBAR.MY_REPORTS'),
       icon: 'i-lucide-bar-chart-2',
-      children: reportsChildren,
+      children: isAdmin.value ? reportsChildren : operatorReportsChildren,
     },
     {
       name: 'Settings',

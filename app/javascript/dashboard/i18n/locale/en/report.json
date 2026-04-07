@@ -746,5 +746,23 @@
       "CSAT_RATING": "CSAT Rating",
       "DATE": "Resolved At"
     }
+  },
+  "MY_REPORTS": {
+    "RESPONSE_STATISTICS": {
+      "HEADER": "My Response Time Statistics",
+      "DESCRIPTION": "Your personal response time metrics and performance"
+    },
+    "RESOLUTION_STATISTICS": {
+      "HEADER": "My Resolution Statistics",
+      "DESCRIPTION": "Your personal resolution volumes and trends"
+    },
+    "CSAT_STATISTICS": {
+      "HEADER": "My CSAT Statistics",
+      "DESCRIPTION": "Your personal customer satisfaction ratings and trends"
+    },
+    "QUALITY_REVIEW": {
+      "HEADER": "My AI Quality Review",
+      "DESCRIPTION": "AI-powered analysis of your conversation quality"
+    }
   }
 }
