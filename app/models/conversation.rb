@@ -276,8 +276,6 @@ class Conversation < ApplicationRecord
   end
 
   def should_assign_support_247_team?
-    return false unless account.settings&.dig('dialogue_segregation_enabled')
-
     support_team_id = account.settings&.dig('support_247_team_id')
     return false if support_team_id.blank?
     return false if account.settings&.dig('support_line_1_active')

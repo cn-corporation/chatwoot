@@ -20,7 +20,16 @@ class AccountPolicy < ApplicationPolicy
   end
 
   def toggle_support_line?
-    @account_user.administrator? || @account_user.agent?
+    return true if @account_user.administrator?
+    return false unless @account_user.agent?
+
+    user = @account_user.user
+    account = @account_user.account
+    support_team_id = account.settings&.dig('support_247_team_id')
+    return false if support_team_id.blank?
+
+    user_team_ids = user.teams.where(account_id: account.id).pluck(:id)
+    user_team_ids.empty? || user_team_ids.include?(support_team_id)
   end
 
   def subscription?

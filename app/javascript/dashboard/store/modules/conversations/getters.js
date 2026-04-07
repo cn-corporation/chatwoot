@@ -37,11 +37,6 @@ const isStandByUnreadEligible = (conversation, currentUserId) => {
 };
 
 const passesDialogueSegregation = (conversation, rootGetters) => {
-  const accountId = rootGetters.getCurrentAccountId;
-  const account = rootGetters['accounts/getAccount'](accountId);
-  const settings = account?.settings || {};
-  if (!settings.dialogue_segregation_enabled) return true;
-
   const currentUser = rootGetters.getCurrentUser;
   if (currentUser?.role === 'administrator') return true;
 

@@ -95,18 +95,24 @@ const isTelegramOperator = useMapGetter(
 
 const supportLine1Active = ref(false);
 
-const showSupportLine1Toggle = computed(() => {
+const support247TeamId = computed(() => {
   const accountId = store.getters.getCurrentAccountId;
   const account = store.getters['accounts/getAccount'](accountId);
-  const settings = account?.settings || {};
-  if (!settings.dialogue_segregation_enabled) return false;
-  if (!settings.support_247_team_id) return false;
+  return account?.settings?.support_247_team_id || null;
+});
+
+const showSupportLine1Toggle = computed(() => {
+  return !!support247TeamId.value;
+});
+
+const canToggleSupportLine1 = computed(() => {
   const currentUserVal = store.getters.getCurrentUser;
   if (currentUserVal?.role === 'administrator') return true;
   const myTeamIds = (store.getters['teams/getMyTeams'] || []).map(
     team => team.id
   );
-  return myTeamIds.length === 0;
+  if (myTeamIds.length === 0) return true;
+  return myTeamIds.includes(support247TeamId.value);
 });
 
 watch(
@@ -601,15 +607,18 @@ const menuItems = computed(() => {
         </ComposeConversation>
       </div>
     </section>
-    <nav class="flex flex-col overflow-y-scroll flex-grow gap-2 px-2 pb-5 no-scrollbar">
+    <nav
+      class="flex flex-col overflow-y-scroll flex-grow gap-2 px-2 pb-5 no-scrollbar"
+    >
       <div
         v-if="showSupportLine1Toggle"
         class="flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium"
-        :class="
+        :class="[
           supportLine1Active
             ? 'bg-n-teal-3 text-n-teal-11'
-            : 'bg-n-solid-3 text-n-slate-11'
-        "
+            : 'bg-n-solid-3 text-n-slate-11',
+          !canToggleSupportLine1 && 'opacity-60',
+        ]"
       >
         <div class="flex items-center gap-1.5">
           <span
@@ -621,6 +630,7 @@ const menuItems = computed(() => {
         <Switch
           v-model="supportLine1Active"
           size="small"
+          :disabled="!canToggleSupportLine1"
           @change="toggleSupportLine1"
         />
       </div>

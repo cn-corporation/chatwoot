@@ -171,11 +171,7 @@ class ConversationFinder
   end
 
   def filter_by_dialogue_segregation
-    return unless current_account.settings&.dig('dialogue_segregation_enabled')
     return if @is_admin
-
-    support_team_id = current_account.settings&.dig('support_247_team_id')
-    support_line_1 = current_account.settings&.dig('support_line_1_active')
 
     user_team_ids = current_user.teams.where(account_id: current_account.id).pluck(:id)
 
