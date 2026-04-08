@@ -39,7 +39,8 @@ class Account < ApplicationRecord
         'audio_transcriptions': { 'type': %w[boolean null] },
         'auto_resolve_label': { 'type': %w[string null] },
         'dialogue_segregation_enabled': { 'type': %w[boolean null] },
-        'assignable_agent_ids': { 'type': %w[array null], 'items': { 'type': 'integer' } }
+        'assignable_agent_ids': { 'type': %w[array null], 'items': { 'type': 'integer' } },
+        'hidden_contact_fields': { 'type': %w[array null], 'items': { 'type': 'string' } }
       },
     'required': [],
     'additionalProperties': true
@@ -58,6 +59,7 @@ class Account < ApplicationRecord
   store_accessor :settings, :auto_resolve_after, :auto_resolve_message, :auto_resolve_ignore_waiting
   store_accessor :settings, :audio_transcriptions, :auto_resolve_label
   store_accessor :settings, :dialogue_segregation_enabled, :assignable_agent_ids
+  store_accessor :settings, :hidden_contact_fields
 
   has_many :account_users, dependent: :destroy_async
   has_many :agent_bot_inboxes, dependent: :destroy_async
