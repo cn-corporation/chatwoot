@@ -828,6 +828,44 @@ class ChatwootExtraAPI {
     );
     return response.data;
   }
+
+  async sendOperatorStatusHeartbeat(operatorId, operatorName) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-status/heartbeat`,
+      { operatorId, operatorName },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getOnlineOperators() {
+    const response = await axios.get(
+      `${this.baseURL}/api/operator-status/online`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getOperatorStatusReport(params = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/operator-status/report`,
+      { params, headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getOperatorsList() {
+    const response = await axios.get(
+      `${this.baseURL}/api/operator-status/operators`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  getOperatorStatusStreamURL() {
+    const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
+    return `${this.baseURL}/api/operator-status/stream?apiKey=${apiKey}`;
+  }
 }
 
 export default new ChatwootExtraAPI();
