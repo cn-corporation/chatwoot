@@ -390,6 +390,12 @@ const menuItems = computed(() => {
       icon: 'i-lucide-brain',
       to: accountScopedRoute('quality_review_statistics'),
     });
+    reportsChildren.push({
+      name: 'Reports Operator Status',
+      label: t('SIDEBAR.OPERATOR_STATUS'),
+      icon: 'i-lucide-user-check',
+      to: accountScopedRoute('operator_status'),
+    });
   }
 
   const operatorReportsChildren = [
