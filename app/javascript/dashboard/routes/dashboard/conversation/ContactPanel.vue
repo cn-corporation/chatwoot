@@ -10,7 +10,6 @@ import { useUISettings } from 'dashboard/composables/useUISettings';
 import AccordionItem from 'dashboard/components/Accordion/AccordionItem.vue';
 // import ContactConversations from './ContactConversations.vue';
 import ConversationAction from './ConversationAction.vue';
-import ConversationParticipant from './ConversationParticipant.vue';
 import ContactInfo from './contact/ContactInfo.vue';
 // import ContactNotes from './contact/ContactNotes.vue';
 // import ConversationInfo from './ConversationInfo.vue';
@@ -130,24 +129,6 @@ onMounted(() => {
                 "
               >
                 <ConversationAction
-                  :conversation-id="conversationId"
-                  :inbox-id="inboxId"
-                />
-              </AccordionItem>
-            </div>
-            <div
-              v-else-if="element.name === 'conversation_participants'"
-              class="conversation--actions"
-            >
-              <AccordionItem
-                :title="$t('CONVERSATION_PARTICIPANTS.SIDEBAR_TITLE')"
-                :is-open="isContactSidebarItemOpen('is_conv_participants_open')"
-                @toggle="
-                  value =>
-                    toggleSidebarUIState('is_conv_participants_open', value)
-                "
-              >
-                <ConversationParticipant
                   :conversation-id="conversationId"
                   :inbox-id="inboxId"
                 />

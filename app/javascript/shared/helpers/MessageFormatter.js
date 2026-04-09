@@ -85,7 +85,7 @@ class MessageFormatter {
         TWITTER_HASH_REPLACEMENT
       );
     }
-    return this.md.render(updatedMessage);
+    return this.md.render(updatedMessage).replace(/ {2}/g, ' &nbsp;');
   }
 
   get formattedMessage() {

@@ -18,6 +18,7 @@ import AutoResolve from './components/AutoResolve.vue';
 import AudioTranscription from './components/AudioTranscription.vue';
 import DialogueSegregation from './components/DialogueSegregation.vue';
 import AssignableAgents from './components/AssignableAgents.vue';
+import HiddenContactFields from './components/HiddenContactFields.vue';
 import SectionLayout from './components/SectionLayout.vue';
 
 export default {
@@ -31,6 +32,7 @@ export default {
     AudioTranscription,
     DialogueSegregation,
     AssignableAgents,
+    HiddenContactFields,
     SectionLayout,
     WithLabel,
     NextInput,
@@ -247,6 +249,7 @@ export default {
     <AudioTranscription v-if="showAudioTranscriptionConfig" />
     <DialogueSegregation />
     <AssignableAgents />
+    <HiddenContactFields />
     <AccountId />
     <div v-if="!uiFlags.isFetchingItem && isOnChatwootCloud">
       <AccountDelete />

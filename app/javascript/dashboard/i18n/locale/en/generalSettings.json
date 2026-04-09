@@ -121,6 +121,20 @@
           "ERROR": "Failed to update assignable agents"
         }
       },
+      "HIDDEN_CONTACT_FIELDS": {
+        "TITLE": "Hidden contact fields",
+        "NOTE": "Hide selected contact fields from operators in the conversation sidebar. Admins will still see all fields.",
+        "FIELDS": {
+          "TELEGRAM_ID": "Telegram ID",
+          "TELEGRAM_USERNAME": "Telegram Username",
+          "CLUBGG_USERNAME": "ClubGG Username",
+          "OVERLAY": "Overall"
+        },
+        "API": {
+          "SUCCESS": "Hidden contact fields updated successfully",
+          "ERROR": "Failed to update hidden contact fields"
+        }
+      },
       "AUDIO_TRANSCRIPTION": {
         "TITLE": "Transcribe Audio Messages",
         "NOTE": "Automatically transcribe audio messages in conversations. Generate a text transcript whenever an audio message is sent or received, and display it alongside the message.",
