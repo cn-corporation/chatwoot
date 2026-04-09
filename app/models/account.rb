@@ -41,7 +41,7 @@ class Account < ApplicationRecord
         'dialogue_segregation_enabled': { 'type': %w[boolean null] },
         'assignable_agent_ids': { 'type': %w[array null], 'items': { 'type': 'integer' } },
         'support_247_team_id': { 'type': %w[integer null] },
-        'support_line_1_active': { 'type': %w[boolean null] }
+        'support_line_1_active': { 'type': %w[boolean null] },
         'hidden_contact_fields': { 'type': %w[array null], 'items': { 'type': 'string' } }
       },
     'required': [],
