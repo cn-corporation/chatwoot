@@ -61,7 +61,13 @@ export default {
       uiFlags: 'contacts/getUIFlags',
       agents: 'agents/getAgents',
       currentChat: 'getSelectedChat',
+      getAccount: 'accounts/getAccount',
     }),
+    hiddenContactFields() {
+      const accountId = Number(this.$route.params.accountId);
+      const account = this.getAccount(accountId);
+      return account?.settings?.hidden_contact_fields || [];
+    },
     linkedContactName() {
       return this.$store.getters['linkedSourceChannels/getLinkedContactName'](
         this.currentChat?.id
@@ -149,6 +155,10 @@ export default {
   },
   methods: {
     dynamicTime,
+    isFieldVisible(fieldKey) {
+      if (this.isAdmin) return true;
+      return !this.hiddenContactFields.includes(fieldKey);
+    },
     toggleEditModal() {
       this.showEditModal = !this.showEditModal;
     },
@@ -326,10 +336,12 @@ export default {
 
         <!-- Telegram ID display -->
         <div
-          v-if="telegramId"
+          v-if="telegramId && isFieldVisible('telegram_id')"
           class="flex items-center gap-2 text-sm text-n-slate-11"
         >
-          <span class="text-n-slate-10">{{ $t('CONTACT_PANEL.LABEL_TELEGRAM_ID') }}</span>
+          <span class="text-n-slate-10">{{
+            $t('CONTACT_PANEL.LABEL_TELEGRAM_ID')
+          }}</span>
           <span
             v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_ID')"
             class="cursor-pointer hover:text-n-slate-12"
@@ -346,10 +358,12 @@ export default {
 
         <!-- Telegram Username display -->
         <div
-          v-if="telegramUsername"
+          v-if="telegramUsername && isFieldVisible('telegram_username')"
           class="flex items-center gap-2 text-sm text-n-slate-11"
         >
-          <span class="text-n-slate-10">{{ $t('CONTACT_PANEL.LABEL_TELEGRAM_USERNAME') }}</span>
+          <span class="text-n-slate-10">{{
+            $t('CONTACT_PANEL.LABEL_TELEGRAM_USERNAME')
+          }}</span>
           <span
             v-tooltip.left="$t('CONTACT_PANEL.COPY_TELEGRAM_USERNAME')"
             class="cursor-pointer hover:text-n-slate-12"
@@ -366,10 +380,12 @@ export default {
 
         <!-- ClubGG Username display -->
         <div
-          v-if="playerName"
+          v-if="playerName && isFieldVisible('clubgg_username')"
           class="flex items-center gap-2 text-sm text-n-slate-11"
         >
-          <span class="text-n-slate-10">{{ $t('CONTACT_PANEL.LABEL_CLUBGG_USERNAME') }}</span>
+          <span class="text-n-slate-10">{{
+            $t('CONTACT_PANEL.LABEL_CLUBGG_USERNAME')
+          }}</span>
           <span
             v-tooltip.left="$t('CONTACT_PANEL.COPY_CLUBGG_USERNAME')"
             class="cursor-pointer hover:text-n-slate-12"
@@ -386,10 +402,12 @@ export default {
 
         <!-- Overlay display -->
         <div
-          v-if="playerOverlay != null"
+          v-if="playerOverlay != null && isFieldVisible('overlay')"
           class="flex items-center gap-2 text-sm text-n-slate-11"
         >
-          <span class="text-n-slate-10">{{ $t('CONTACT_PANEL.LABEL_OVERLAY') }}</span>
+          <span class="text-n-slate-10">{{
+            $t('CONTACT_PANEL.LABEL_OVERLAY')
+          }}</span>
           <span
             v-tooltip.left="$t('CONTACT_PANEL.COPY_OVERLAY')"
             class="cursor-pointer hover:text-n-slate-12"
