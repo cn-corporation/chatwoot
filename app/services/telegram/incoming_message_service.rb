@@ -10,6 +10,7 @@ class Telegram::IncomingMessageService
     # chatwoot doesn't support group conversations at the moment
     transform_business_message!
     return unless private_message?
+    return if message_params? && audio_message?
 
     set_contact
     return if @contact.time_blocked?
