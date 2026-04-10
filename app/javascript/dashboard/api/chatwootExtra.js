@@ -524,6 +524,18 @@ class ChatwootExtraAPI {
     }
   }
 
+  async getTasksReportPaginated({ filters = {}, limit = 100, offset = 0 }) {
+    try {
+      const response = await axios.get(`${this.baseURL}/api/tasks/report`, {
+        params: { ...filters, limit, offset },
+        headers: this.headers,
+      });
+      return response.data?.data || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
   async getKBFiles(limit) {
     const params = {};
     if (limit) params.limit = limit;
