@@ -1,5 +1,5 @@
 <script setup>
-import { h, computed, ref, watch, onMounted, onUnmounted } from 'vue';
+import { h, computed, ref, onMounted, onUnmounted } from 'vue';
 import { provideSidebarContext } from './provider';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useKbd } from 'dashboard/composables/utils/useKbd';
@@ -93,7 +93,9 @@ const isTelegramOperator = useMapGetter(
 );
 // Removed unused custom views - simplified for poker operator UI
 
-const supportLine1Active = ref(false);
+const SUPPORT_LINE_COOLDOWN = 10000;
+let supportLine1LockedUntil = 0;
+const supportLine1Toggling = ref(false);
 
 const support247TeamId = computed(() => {
   const accountId = store.getters.getCurrentAccountId;
@@ -106,6 +108,7 @@ const showSupportLine1Toggle = computed(() => {
 });
 
 const canToggleSupportLine1 = computed(() => {
+  if (supportLine1Toggling.value) return false;
   const currentUserVal = store.getters.getCurrentUser;
   if (currentUserVal?.role === 'administrator') return true;
   const myTeamIds = (store.getters['teams/getMyTeams'] || []).map(
@@ -115,24 +118,34 @@ const canToggleSupportLine1 = computed(() => {
   return myTeamIds.includes(support247TeamId.value);
 });
 
-watch(
-  () => {
+const supportLine1Active = computed({
+  get() {
     const accountId = store.getters.getCurrentAccountId;
-    return store.getters['accounts/getAccount'](accountId)?.settings
+    return !!store.getters['accounts/getAccount'](accountId)?.settings
       ?.support_line_1_active;
   },
-  val => {
-    supportLine1Active.value = !!val;
-  },
-  { immediate: true }
-);
+  set() {},
+});
 
 const toggleSupportLine1 = async () => {
-  const desired = supportLine1Active.value;
+  if (Date.now() < supportLine1LockedUntil) return;
+  supportLine1LockedUntil = Date.now() + SUPPORT_LINE_COOLDOWN;
+  supportLine1Toggling.value = true;
+  const desired = !supportLine1Active.value;
   try {
     await store.dispatch('accounts/toggleSupportLine', { active: desired });
   } catch {
-    supportLine1Active.value = !desired;
+    supportLine1LockedUntil = 0;
+    supportLine1Toggling.value = false;
+    return;
+  }
+  const remaining = supportLine1LockedUntil - Date.now();
+  if (remaining > 0) {
+    setTimeout(() => {
+      supportLine1Toggling.value = false;
+    }, remaining);
+  } else {
+    supportLine1Toggling.value = false;
   }
 };
 

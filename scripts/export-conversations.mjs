@@ -7,7 +7,8 @@ const CLIENT = process.env.CLIENT;
 const UID = process.env.AUTH_UID;
 const API_ACCESS_TOKEN = process.env.API_ACCESS_TOKEN;
 const OUTPUT_FILE = process.env.OUTPUT_FILE || 'conversations_export.csv';
-const SINCE = new Date('2026-01-01T00:00:00Z');
+const SINCE = new Date(process.env.SINCE || '2026-01-01T00:00:00Z');
+const UNTIL = process.env.UNTIL ? new Date(process.env.UNTIL) : null;
 
 const hasDeviseAuth = ACCESS_TOKEN && CLIENT && UID;
 const hasApiToken = !!API_ACCESS_TOKEN;
@@ -176,13 +177,19 @@ async function main() {
     messages.forEach((msg) => {
       const ts = new Date(msg.created_at * 1000);
       if (ts < SINCE) return;
+      if (UNTIL && ts > UNTIL) return;
       if (msg.message_type === 2) return;
+
+      const supportName =
+        msg.message_type === 1 ? msg.sender?.name ?? '' : '';
 
       rows.push({
         message_type: MESSAGE_TYPES[msg.message_type] ?? String(msg.message_type),
         conversation_contact_name: contactName,
+        support_name: supportName,
         conversation_id: convId,
         message_text: msg.content ?? '',
+        message_date: ts.toISOString().slice(0, 10),
         message_timestamp: ts.toISOString(),
         inbox_source_name: inboxName,
       });
@@ -194,8 +201,10 @@ async function main() {
   const cols = [
     'message_type',
     'conversation_contact_name',
+    'support_name',
     'conversation_id',
     'message_text',
+    'message_date',
     'message_timestamp',
     'inbox_source_name',
   ];

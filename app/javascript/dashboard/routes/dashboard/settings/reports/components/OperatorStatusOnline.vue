@@ -11,9 +11,12 @@ let eventSource = null;
 const STATUS_ORDER = { online: 0, degraded: 1, offline: 2 };
 
 const sortedOperators = computed(() => {
-  return [...operators.value].sort(
-    (a, b) => (STATUS_ORDER[a.status] ?? 3) - (STATUS_ORDER[b.status] ?? 3)
-  );
+  return [...operators.value].sort((a, b) => {
+    const statusDiff =
+      (STATUS_ORDER[a.status] ?? 3) - (STATUS_ORDER[b.status] ?? 3);
+    if (statusDiff !== 0) return statusDiff;
+    return (a.name || '').localeCompare(b.name || '');
+  });
 });
 
 const statusColor = status => {
@@ -54,7 +57,7 @@ const fetchOperators = async () => {
           operatorId: op.operatorId,
           name: op.name,
           status: online ? online.status : 'offline',
-          lastHeartbeat: online ? online.lastHeartbeat : null,
+          lastHeartbeat: online ? online.lastHeartbeat : op.lastSeen || null,
         };
       });
     }
@@ -87,7 +90,7 @@ const connectSSE = () => {
     }
   });
 
-  const handleStatusChange = (status) => (event) => {
+  const handleStatusChange = status => event => {
     const data = JSON.parse(event.data);
     operators.value = operators.value.map(op =>
       op.operatorId === data.operatorId
@@ -97,8 +100,14 @@ const connectSSE = () => {
   };
 
   eventSource.addEventListener('operator-online', handleStatusChange('online'));
-  eventSource.addEventListener('operator-degraded', handleStatusChange('degraded'));
-  eventSource.addEventListener('operator-offline', handleStatusChange('offline'));
+  eventSource.addEventListener(
+    'operator-degraded',
+    handleStatusChange('degraded')
+  );
+  eventSource.addEventListener(
+    'operator-offline',
+    handleStatusChange('offline')
+  );
 
   eventSource.onerror = () => {
     if (eventSource) {
@@ -133,9 +142,13 @@ onUnmounted(() => {
       <thead>
         <tr class="border-b border-n-slate-3">
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11">Status</th>
-          <th class="py-3 px-4 text-sm font-medium text-n-slate-11">Operator</th>
+          <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
+            Operator
+          </th>
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11">State</th>
-          <th class="py-3 px-4 text-sm font-medium text-n-slate-11">Last Seen</th>
+          <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
+            Last Seen
+          </th>
         </tr>
       </thead>
       <tbody>

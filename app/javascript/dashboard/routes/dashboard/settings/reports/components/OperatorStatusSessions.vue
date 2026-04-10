@@ -1,8 +1,7 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useStore } from 'dashboard/composables/store';
 import { format, subDays } from 'date-fns';
-import Multiselect from 'vue-multiselect';
 import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 
 const store = useStore();
@@ -16,6 +15,47 @@ const dateRange = ref({
   end: format(new Date(), 'yyyy-MM-dd'),
 });
 const expandedOperators = ref(new Set());
+const dropdownOpen = ref(false);
+const dropdownRef = ref(null);
+const dropdownSearch = ref('');
+
+const filteredOperatorOptions = computed(() => {
+  if (!dropdownSearch.value) return operatorOptions.value;
+  const q = dropdownSearch.value.toLowerCase();
+  return operatorOptions.value.filter(op => op.label.toLowerCase().includes(q));
+});
+
+const isSelected = op =>
+  selectedOperators.value.some(s => s.value === op.value);
+
+const toggleOperator = op => {
+  if (isSelected(op)) {
+    selectedOperators.value = selectedOperators.value.filter(
+      s => s.value !== op.value
+    );
+  } else {
+    selectedOperators.value = [...selectedOperators.value, op];
+  }
+};
+
+const operatorButtonLabel = computed(() => {
+  if (!selectedOperators.value.length) return 'All operators';
+  if (selectedOperators.value.length === 1)
+    return selectedOperators.value[0].label;
+  return `${selectedOperators.value.length} operators`;
+});
+
+const handleClickOutside = e => {
+  if (dropdownRef.value && !dropdownRef.value.contains(e.target)) {
+    dropdownOpen.value = false;
+    dropdownSearch.value = '';
+  }
+};
+
+onMounted(() => document.addEventListener('mousedown', handleClickOutside));
+onUnmounted(() =>
+  document.removeEventListener('mousedown', handleClickOutside)
+);
 
 const toggleExpand = operatorId => {
   const next = new Set(expandedOperators.value);
@@ -43,6 +83,12 @@ const formatDate = iso => {
   if (!iso) return '—';
   return format(new Date(iso), 'MMM dd, yyyy');
 };
+
+const sortedReportData = computed(() => {
+  return [...reportData.value].sort((a, b) =>
+    (a.operatorName || '').localeCompare(b.operatorName || '')
+  );
+});
 
 const summaryMetrics = computed(() => {
   if (!reportData.value.length) return null;
@@ -102,69 +148,101 @@ onMounted(async () => {
 
 <template>
   <div class="flex flex-col gap-6">
-    <div class="flex flex-wrap items-end gap-4 p-4 rounded-lg bg-n-slate-2">
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-n-slate-11">Start Date</label>
+    <div class="flex flex-col gap-3 p-4 rounded-lg bg-n-slate-2">
+      <div class="flex flex-wrap items-end gap-4">
+      <div>
+        <label class="block mb-1 text-xs font-medium text-n-slate-11">
+          Start Date
+        </label>
         <input
           v-model="dateRange.start"
           type="date"
-          class="px-3 py-1.5 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
+          class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
         />
       </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-n-slate-11">End Date</label>
+      <div>
+        <label class="block mb-1 text-xs font-medium text-n-slate-11">
+          End Date
+        </label>
         <input
           v-model="dateRange.end"
           type="date"
-          class="px-3 py-1.5 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
+          class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
         />
       </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-n-slate-11">Operators</label>
-        <div class="min-w-[250px]">
-          <Multiselect
-            v-model="selectedOperators"
-            :options="operatorOptions"
-            :multiple="true"
-            :close-on-select="false"
-            :clear-on-select="false"
-            :preserve-search="true"
-            placeholder="Select operators..."
-            label="label"
-            track-by="value"
-            :preselect-first="false"
-          >
-            <template #selection="{ values, isOpen }">
-              <span v-if="values.length && !isOpen" class="multiselect__single">
-                {{ values.length }} operator{{ values.length > 1 ? 's' : '' }} selected
+      <div ref="dropdownRef" class="relative">
+        <label class="block mb-1 text-xs font-medium text-n-slate-11">
+          Operators
+        </label>
+        <button
+          type="button"
+          class="flex items-center justify-between h-9 w-[220px] px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
+          @click="dropdownOpen = !dropdownOpen"
+        >
+          <span class="truncate">{{ operatorButtonLabel }}</span>
+          <span class="ml-2 text-n-slate-9">▾</span>
+        </button>
+        <div
+          v-if="dropdownOpen"
+          class="absolute z-50 mt-1 w-[220px] rounded-md border border-n-slate-4 bg-n-background shadow-lg"
+        >
+          <div class="p-1.5 border-b border-n-slate-3">
+            <input
+              v-model="dropdownSearch"
+              type="text"
+              placeholder="Search..."
+              class="w-full px-2 py-1 text-sm border rounded border-n-slate-4 bg-n-background text-n-slate-12"
+            />
+          </div>
+          <ul class="max-h-[200px] overflow-y-auto py-1">
+            <li
+              v-for="op in filteredOperatorOptions"
+              :key="op.value"
+              class="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-n-slate-2 text-n-slate-12"
+              @click="toggleOperator(op)"
+            >
+              <span
+                class="flex items-center justify-center w-4 h-4 border rounded border-n-slate-6"
+                :class="{ 'bg-woot-500 border-woot-500': isSelected(op) }"
+              >
+                <span v-if="isSelected(op)" class="text-white text-xs">✓</span>
               </span>
-            </template>
-          </Multiselect>
+              <span class="truncate">{{ op.label }}</span>
+            </li>
+            <li
+              v-if="!filteredOperatorOptions.length"
+              class="px-3 py-1.5 text-sm text-n-slate-9"
+            >
+              No results
+            </li>
+          </ul>
         </div>
       </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-n-slate-11">Min Hours</label>
+      <div>
+        <label class="block mb-1 text-xs font-medium text-n-slate-11">
+          Min Hours
+        </label>
         <input
           v-model="minHours"
           type="number"
           min="0"
           step="0.5"
           placeholder="0"
-          class="px-3 py-1.5 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12 w-20"
+          class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12 w-20"
         />
       </div>
-      <button
-        class="px-4 py-1.5 text-sm font-medium text-white rounded-md bg-woot-500 hover:bg-woot-600"
-        @click="fetchReport"
-      >
-        Apply
-      </button>
+      </div>
+      <div>
+        <button
+          class="h-9 px-4 text-sm font-medium text-white rounded-md bg-woot-500 hover:bg-woot-600"
+          @click="fetchReport"
+        >
+          Apply
+        </button>
+      </div>
     </div>
 
-    <div
-      v-if="!isLoading && summaryMetrics"
-      class="grid grid-cols-3 gap-4"
-    >
+    <div v-if="!isLoading && summaryMetrics" class="grid grid-cols-3 gap-4">
       <div class="p-4 rounded-lg bg-n-slate-2">
         <p class="text-xs text-n-slate-11">Total Hours</p>
         <p class="text-xl font-semibold text-n-slate-12">
@@ -208,7 +286,7 @@ onMounted(async () => {
         </tr>
       </thead>
       <tbody>
-        <template v-for="op in reportData" :key="op.operatorId">
+        <template v-for="op in sortedReportData" :key="op.operatorId">
           <tr
             class="border-b border-n-slate-2 cursor-pointer hover:bg-n-slate-1"
             @click="toggleExpand(op.operatorId)"
@@ -248,7 +326,9 @@ onMounted(async () => {
                   v-else
                   class="inline-flex items-center gap-1 text-green-600"
                 >
-                  <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <span
+                    class="inline-block w-1.5 h-1.5 rounded-full bg-green-500"
+                  />
                   Active
                 </span>
               </td>
@@ -261,10 +341,7 @@ onMounted(async () => {
       </tbody>
     </table>
 
-    <div
-      v-else-if="!isLoading"
-      class="flex items-center justify-center py-16"
-    >
+    <div v-else-if="!isLoading" class="flex items-center justify-center py-16">
       <span class="text-n-slate-11">No data for the selected filters.</span>
     </div>
   </div>
