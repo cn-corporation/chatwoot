@@ -57,19 +57,30 @@ const actions = {
   },
 
   fetchAllConversationsForCounts: async ({ commit }) => {
-    try {
-      const [meResponse, unassignedResponse] = await Promise.all([
-        ConversationApi.get({ page: 1, status: 'all', assigneeType: 'me' }),
-        ConversationApi.get({
-          page: 1,
-          status: 'all',
-          assigneeType: 'unassigned',
-        }),
-      ]);
+    const PAGE_SIZE = 25;
+    const MAX_PAGES = 25;
 
-      const meConversations = meResponse.data.data.payload || [];
-      const unassignedConversations =
-        unassignedResponse.data.data.payload || [];
+    const fetchAllPages = async params => {
+      const results = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore && page <= MAX_PAGES) {
+        const response = await ConversationApi.get({ ...params, page });
+        const payload = response.data.data.payload || [];
+        results.push(...payload);
+        hasMore = payload.length >= PAGE_SIZE;
+        page += 1;
+      }
+
+      return results;
+    };
+
+    try {
+      const [meConversations, unassignedConversations] = await Promise.all([
+        fetchAllPages({ status: 'all', assigneeType: 'me' }),
+        fetchAllPages({ status: 'all', assigneeType: 'unassigned' }),
+      ]);
 
       const allConversations = [...meConversations, ...unassignedConversations];
 
