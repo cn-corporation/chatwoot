@@ -1,37 +1,59 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store';
+import { useStore } from 'vuex';
 import { format, subDays } from 'date-fns';
 import Multiselect from 'vue-multiselect';
+import { RecycleScroller } from 'vue-virtual-scroller';
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 import ReportHeader from './ReportHeader.vue';
 import MetricCard from './overview/MetricCard.vue';
 import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 import { conversationUrl, frontendURL } from 'dashboard/helper/URLHelper';
 
+const PAGE_SIZE = 100;
+const ROW_HEIGHT = 44;
+
 const { t } = useI18n();
+const store = useStore();
 
 const isLoading = ref(false);
+const isLoadingMore = ref(false);
 const tasks = ref([]);
+const hasMore = ref(true);
+const offset = ref(0);
+const sentinelRef = ref(null);
+let observer = null;
+
+const allOperatorsOption = {
+  value: '',
+  label: t('TASKS_REPORT.FILTERS.OPERATOR_ALL'),
+};
+
 const dateRange = ref({
   start: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
   end: format(new Date(), 'yyyy-MM-dd'),
 });
-const selectedOperator = ref(null);
-const selectedCompletedOption = ref(null);
+const selectedOperator = ref(allOperatorsOption);
+const selectedCompletedOption = ref({
+  value: '',
+  label: t('TASKS_REPORT.FILTERS.COMPLETED_ALL'),
+});
 
 const agents = useMapGetter('agents/getAgents');
 const accountId = useMapGetter('getCurrentAccountId');
 
-const operatorOptions = computed(() =>
-  agents.value.map(agent => ({
+const operatorOptions = computed(() => [
+  allOperatorsOption,
+  ...agents.value.map(agent => ({
     value: agent.id,
     label:
       agent.name ||
       agent.email ||
       t('TASKS_REPORT.FILTERS.OPERATOR_ID', { id: agent.id }),
-  }))
-);
+  })),
+]);
 
 const completedOptions = computed(() => [
   { value: '', label: t('TASKS_REPORT.FILTERS.COMPLETED_ALL') },
@@ -65,14 +87,67 @@ const buildFilters = () => {
   return filters;
 };
 
+const normalizeTask = task => ({
+  id: task.id,
+  conversationId: task.conversationId ?? task.conversation_id,
+  message: task.message ?? '',
+  operatorName: task.operatorName ?? task.operator_name ?? '—',
+  completed: task.completed ?? false,
+  completedByName: task.completedByName ?? task.completed_by_name ?? null,
+  completedAt: task.completedAt ?? task.completed_at ?? null,
+  createdAt: task.createdAt ?? task.created_at ?? null,
+});
+
+const normalizedTasks = computed(() => tasks.value.map(normalizeTask));
+
 const fetchReport = async () => {
   isLoading.value = true;
+  offset.value = 0;
+  hasMore.value = true;
   try {
-    const data = await ChatwootExtraAPI.getTasksReport(buildFilters());
+    const data = await ChatwootExtraAPI.getTasksReportPaginated({
+      filters: buildFilters(),
+      limit: PAGE_SIZE,
+      offset: 0,
+    });
     tasks.value = Array.isArray(data) ? data : [];
+    hasMore.value = data.length >= PAGE_SIZE;
+    offset.value = data.length;
   } finally {
     isLoading.value = false;
+    await nextTick();
+    setupObserver();
   }
+};
+
+const loadMore = async () => {
+  if (isLoadingMore.value || !hasMore.value) return;
+  isLoadingMore.value = true;
+  try {
+    const data = await ChatwootExtraAPI.getTasksReportPaginated({
+      filters: buildFilters(),
+      limit: PAGE_SIZE,
+      offset: offset.value,
+    });
+    const newTasks = Array.isArray(data) ? data : [];
+    tasks.value = [...tasks.value, ...newTasks];
+    hasMore.value = newTasks.length >= PAGE_SIZE;
+    offset.value += newTasks.length;
+  } finally {
+    isLoadingMore.value = false;
+  }
+};
+
+const setupObserver = () => {
+  if (observer) observer.disconnect();
+  if (!sentinelRef.value) return;
+  observer = new IntersectionObserver(
+    entries => {
+      if (entries[0].isIntersecting) loadMore();
+    },
+    { rootMargin: '200px' }
+  );
+  observer.observe(sentinelRef.value);
 };
 
 const formatDateTime = iso => {
@@ -84,20 +159,8 @@ const formatDateTime = iso => {
   }
 };
 
-const normalizedTask = task => ({
-  id: task.id,
-  conversationId: task.conversationId ?? task.conversation_id,
-  message: task.message ?? '',
-  operatorName: task.operatorName ?? task.operator_name ?? '—',
-  completed: task.completed ?? false,
-  completedByName: task.completedByName ?? task.completed_by_name ?? null,
-  completedAt: task.completedAt ?? task.completed_at ?? null,
-  createdAt: task.createdAt ?? task.created_at ?? null,
-});
-
-const normalizedTasks = computed(() => tasks.value.map(normalizedTask));
-
 onMounted(() => {
+  store.dispatch('agents/get');
   fetchReport();
 });
 </script>
@@ -179,92 +242,134 @@ onMounted(() => {
       :loading-message="t('TASKS_REPORT.LOADING')"
     >
       <div v-if="normalizedTasks.length" class="overflow-x-auto w-full">
-        <table class="w-full">
-          <thead>
-            <tr class="border-b border-n-slate-6">
-              <th
-                class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-              >
-                {{ t('TASKS_REPORT.TABLE.CONVERSATION') }}
-              </th>
-              <th
-                class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-              >
-                {{ t('TASKS_REPORT.TABLE.MESSAGE') }}
-              </th>
-              <th
-                class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-              >
-                {{ t('TASKS_REPORT.TABLE.CREATED_BY') }}
-              </th>
-              <th
-                class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-              >
-                {{ t('TASKS_REPORT.TABLE.STATUS') }}
-              </th>
-              <th
-                class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-              >
-                {{ t('TASKS_REPORT.TABLE.COMPLETED_BY') }}
-              </th>
-              <th
-                class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-              >
-                {{ t('TASKS_REPORT.TABLE.CREATED_AT') }}
-              </th>
-              <th
-                class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
-              >
-                {{ t('TASKS_REPORT.TABLE.COMPLETED_AT') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="task in normalizedTasks"
-              :key="task.id"
-              class="border-b border-n-slate-6 hover:bg-n-solid-2"
-            >
-              <td class="py-3 px-4 text-sm text-n-slate-12">
-                <a
-                  :href="conversationLink(task.conversationId)"
-                  class="text-n-primary hover:underline"
+        <div class="min-w-[1100px]">
+          <table class="w-full">
+            <colgroup>
+              <col class="w-[100px]" />
+              <col />
+              <col class="w-[140px]" />
+              <col class="w-[100px]" />
+              <col class="w-[140px]" />
+              <col class="w-[170px]" />
+              <col class="w-[170px]" />
+            </colgroup>
+            <thead>
+              <tr class="border-b border-n-slate-6">
+                <th
+                  class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
                 >
-                  {{ '#' + task.conversationId }}
-                </a>
-              </td>
-              <td
-                class="py-3 px-4 text-sm text-n-slate-12 max-w-xs truncate"
-                :title="task.message"
-              >
-                {{ task.message }}
-              </td>
-              <td class="py-3 px-4 text-sm text-n-slate-12">
-                {{ task.operatorName }}
-              </td>
-              <td class="py-3 px-4 text-sm text-n-slate-12">
-                <span
-                  :class="task.completed ? 'text-green-600' : 'text-n-slate-11'"
+                  {{ t('TASKS_REPORT.TABLE.CONVERSATION') }}
+                </th>
+                <th
+                  class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
                 >
-                  {{
-                    task.completed
-                      ? t('TASKS_REPORT.STATUS_COMPLETED')
-                      : t('TASKS_REPORT.STATUS_OPEN')
-                  }}
-                </span>
-              </td>
-              <td class="py-3 px-4 text-sm text-n-slate-12">
-                {{ task.completedByName ?? '—' }}
-              </td>
-              <td class="py-3 px-4 text-sm text-n-slate-12">
-                {{ formatDateTime(task.createdAt) }}
-              </td>
-              <td class="py-3 px-4 text-sm text-n-slate-12">
-                {{ formatDateTime(task.completedAt) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  {{ t('TASKS_REPORT.TABLE.MESSAGE') }}
+                </th>
+                <th
+                  class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
+                >
+                  {{ t('TASKS_REPORT.TABLE.CREATED_BY') }}
+                </th>
+                <th
+                  class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
+                >
+                  {{ t('TASKS_REPORT.TABLE.STATUS') }}
+                </th>
+                <th
+                  class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
+                >
+                  {{ t('TASKS_REPORT.TABLE.COMPLETED_BY') }}
+                </th>
+                <th
+                  class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
+                >
+                  {{ t('TASKS_REPORT.TABLE.CREATED_AT') }}
+                </th>
+                <th
+                  class="text-left py-3 px-4 text-sm font-medium text-n-slate-11"
+                >
+                  {{ t('TASKS_REPORT.TABLE.COMPLETED_AT') }}
+                </th>
+              </tr>
+            </thead>
+          </table>
+          <RecycleScroller
+            :items="normalizedTasks"
+            :item-size="ROW_HEIGHT"
+            key-field="id"
+            class="max-h-[70vh]"
+          >
+            <template #default="{ item: task }">
+              <table class="w-full" :style="{ height: ROW_HEIGHT + 'px' }">
+                <colgroup>
+                  <col class="w-[100px]" />
+                  <col />
+                  <col class="w-[140px]" />
+                  <col class="w-[100px]" />
+                  <col class="w-[140px]" />
+                  <col class="w-[170px]" />
+                  <col class="w-[170px]" />
+                </colgroup>
+                <tbody>
+                  <tr class="border-b border-n-slate-6 hover:bg-n-solid-2">
+                    <td class="py-3 px-4 text-sm text-n-slate-12">
+                      <a
+                        :href="conversationLink(task.conversationId)"
+                        class="text-n-primary hover:underline"
+                      >
+                        {{ '#' + task.conversationId }}
+                      </a>
+                    </td>
+                    <td
+                      class="py-3 px-4 text-sm text-n-slate-12 max-w-0 truncate"
+                      :title="task.message"
+                    >
+                      {{ task.message }}
+                    </td>
+                    <td class="py-3 px-4 text-sm text-n-slate-12 truncate">
+                      {{ task.operatorName }}
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                      <span
+                        :class="
+                          task.completed ? 'text-green-600' : 'text-n-slate-11'
+                        "
+                      >
+                        {{
+                          task.completed
+                            ? t('TASKS_REPORT.STATUS_COMPLETED')
+                            : t('TASKS_REPORT.STATUS_OPEN')
+                        }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-n-slate-12 truncate">
+                      {{ task.completedByName ?? '—' }}
+                    </td>
+                    <td
+                      class="py-3 px-4 text-sm text-n-slate-12 whitespace-nowrap"
+                    >
+                      {{ formatDateTime(task.createdAt) }}
+                    </td>
+                    <td
+                      class="py-3 px-4 text-sm text-n-slate-12 whitespace-nowrap"
+                    >
+                      {{ formatDateTime(task.completedAt) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </template>
+            <template #after>
+              <div ref="sentinelRef" class="h-px" />
+              <div
+                v-if="isLoadingMore"
+                class="flex items-center justify-center py-4 text-n-slate-11"
+              >
+                {{ t('TASKS_REPORT.LOADING') }}
+              </div>
+            </template>
+          </RecycleScroller>
+        </div>
       </div>
       <div
         v-else
