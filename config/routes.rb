@@ -115,6 +115,7 @@ Rails.application.routes.draw do
             collection do
               get :meta
               get :search
+              get :sidebar_counts
               post :filter
             end
             scope module: :conversations do
