@@ -7,7 +7,7 @@ defineProps({
   activeChatId: { type: Number, default: null },
 });
 
-const emit = defineEmits(['select']);
+const emit = defineEmits(['select', 'archive']);
 const store = useStore();
 
 const activeGroupChatId = computed(
@@ -53,8 +53,20 @@ const loadUntilScrollable = () => {
   }
 };
 
+const archivedChats = computed(
+  () => store.getters['telegramDialogues/getArchivedChats']
+);
+
 const goBack = () => {
   store.commit('telegramDialogues/SET_ACTIVE_GROUP_CHAT_ID', null);
+};
+
+const openArchive = () => {
+  store.dispatch('telegramDialogues/toggleArchiveView');
+};
+
+const onArchive = chat => {
+  emit('archive', chat);
 };
 
 onMounted(() => {
@@ -105,6 +117,7 @@ watch(
         :chat="chat"
         :active="chat.id === activeChatId"
         @select="emit('select', chat)"
+        @archive="onArchive"
       />
     </div>
     <div v-show="!activeGroupChatId" ref="sentinelRef" class="h-4" />
@@ -117,5 +130,16 @@ watch(
     >
       {{ activeGroupChatId ? 'No topics found' : 'No chats found' }}
     </div>
+    <button
+      v-if="!activeGroupChatId && archivedChats.length > 0"
+      class="flex items-center gap-2 w-full px-4 py-2.5 text-left border-t border-n-weak hover:bg-n-alpha-1 transition-colors"
+      @click="openArchive"
+    >
+      <span class="i-lucide-archive size-4 text-n-slate-10" />
+      <span class="text-sm text-n-slate-10"> Archive </span>
+      <span class="text-xs text-n-slate-9 ml-auto">
+        {{ archivedChats.length }}
+      </span>
+    </button>
   </div>
 </template>

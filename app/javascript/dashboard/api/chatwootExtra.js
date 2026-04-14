@@ -713,6 +713,31 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async getArchivedTelegramChats(sourceId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/archived-chats`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async archiveTelegramChat(sourceId, chatDbId, chatData) {
+    const response = await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats/${chatDbId}/archive`,
+      chatData,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async unarchiveTelegramChat(sourceId, chatDbId) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats/${chatDbId}/archive`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   getTelegramSSEUrl(sourceId) {
     const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
     return `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/sse?apiKey=${apiKey}`;

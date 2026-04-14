@@ -4,6 +4,8 @@ const CHATS_PAGE_SIZE = 50;
 const MESSAGES_PAGE_SIZE = 50;
 
 function handleSSEEvent(commit, s, eventType, data, dispatch) {
+  const isArchived = s.archivedChatDbIds.has(data.chatDbId);
+
   if (eventType === 'new_message') {
     const chatExists = s.chats.some(c => c.id === data.chatDbId);
     if (chatExists) {
@@ -12,11 +14,11 @@ function handleSSEEvent(commit, s, eventType, data, dispatch) {
         text: data.text,
         createdAt: data.createdAt,
       });
-    } else {
+    } else if (!isArchived) {
       dispatch('fetchChats');
     }
 
-    if (s.activeChatId && s.activeChatId === data.chatDbId) {
+    if (!isArchived && s.activeChatId && s.activeChatId === data.chatDbId) {
       commit('APPEND_MESSAGE', {
         id: data.messageDbId,
         chatId: data.chatDbId,
@@ -70,6 +72,9 @@ const state = {
   sseConnection: null,
   sseInitialized: false,
   unreadCounts: {},
+  archivedChatDbIds: new Set(),
+  archivedChats: [],
+  showArchive: false,
 };
 
 const getters = {
@@ -77,11 +82,15 @@ const getters = {
   getActiveSourceId: s => s.activeSourceId,
   getActiveSource: s => s.sources.find(src => src.id === s.activeSourceId),
   getChats: s =>
-    [...s.chats].sort((a, b) => {
-      const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-      const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-      return dateB - dateA;
-    }),
+    [...s.chats]
+      .filter(c => !s.archivedChatDbIds.has(c.id))
+      .sort((a, b) => {
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dateB - dateA;
+      }),
+  getArchivedChats: s => s.archivedChats,
+  getShowArchive: s => s.showArchive,
   getGroupedChats: (s, g) => {
     const sorted = g.getChats;
     const groups = new Map();
@@ -126,7 +135,10 @@ const getters = {
   },
   getTopicsForGroup: s => chatId =>
     s.chats
-      .filter(c => String(c.chatId) === String(chatId))
+      .filter(
+        c =>
+          String(c.chatId) === String(chatId) && !s.archivedChatDbIds.has(c.id)
+      )
       .sort((a, b) => {
         const dA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
         const dB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
@@ -144,7 +156,9 @@ const getters = {
   getUnreadCounts: s => s.unreadCounts,
   getUnreadCountForChat: s => chatId => s.unreadCounts[chatId] || 0,
   getTotalUnreadCount: s =>
-    Object.values(s.unreadCounts).reduce((sum, c) => sum + c, 0),
+    Object.entries(s.unreadCounts)
+      .filter(([chatDbId]) => !s.archivedChatDbIds.has(Number(chatDbId)))
+      .reduce((sum, [, c]) => sum + c, 0),
 };
 
 const mutations = {
@@ -225,6 +239,25 @@ const mutations = {
       s.unreadCounts = rest;
     }
   },
+  SET_ARCHIVED_CHAT_DB_IDS(s, ids) {
+    s.archivedChatDbIds = new Set(ids);
+  },
+  SET_ARCHIVED_CHATS(s, chats) {
+    s.archivedChats = chats;
+  },
+  ADD_ARCHIVED_CHAT(s, { chatDbId, archivedChat }) {
+    s.archivedChatDbIds = new Set([...s.archivedChatDbIds, chatDbId]);
+    s.archivedChats = [...s.archivedChats, archivedChat];
+  },
+  REMOVE_ARCHIVED_CHAT(s, chatDbId) {
+    const newSet = new Set(s.archivedChatDbIds);
+    newSet.delete(chatDbId);
+    s.archivedChatDbIds = newSet;
+    s.archivedChats = s.archivedChats.filter(c => c.chatDbId !== chatDbId);
+  },
+  SET_SHOW_ARCHIVE(s, show) {
+    s.showArchive = show;
+  },
   UPDATE_CHAT_WITH_LAST_MESSAGE(s, { chatDbId, text, createdAt }) {
     const idx = s.chats.findIndex(c => c.id === chatDbId);
     if (idx === -1) return;
@@ -259,6 +292,8 @@ const actions = {
     commit('SET_ACTIVE_CHAT_ID', null);
     commit('SET_ACTIVE_GROUP_CHAT_ID', null);
     commit('SET_MESSAGES', []);
+    commit('SET_SHOW_ARCHIVE', false);
+    await dispatch('fetchArchivedChats');
     await dispatch('fetchChats');
     if (!s.sseInitialized) {
       dispatch('connectSSE', sourceId);
@@ -413,6 +448,66 @@ const actions = {
     }
   },
 
+  async fetchArchivedChats({ commit, state: s }) {
+    if (!s.activeSourceId) return;
+    try {
+      const archived = await ChatwootExtraAPI.getArchivedTelegramChats(
+        s.activeSourceId
+      );
+      commit('SET_ARCHIVED_CHATS', archived);
+      commit(
+        'SET_ARCHIVED_CHAT_DB_IDS',
+        archived.map(c => c.chatDbId)
+      );
+    } catch (error) {
+      console.error(
+        '[TelegramDialogues] Failed to fetch archived chats:',
+        error
+      );
+    }
+  },
+
+  async archiveChat({ commit, state: s }, chat) {
+    if (!s.activeSourceId) return;
+    try {
+      const archivedChat = await ChatwootExtraAPI.archiveTelegramChat(
+        s.activeSourceId,
+        chat.id,
+        {
+          chatId: String(chat.chatId),
+          chatName: chat.name || chat.topicName || `Chat #${chat.chatId}`,
+          chatType: chat.type || 'personal',
+          topicId: chat.topicId || undefined,
+          topicName: chat.topicName || undefined,
+        }
+      );
+      commit('ADD_ARCHIVED_CHAT', { chatDbId: chat.id, archivedChat });
+      if (s.activeChatId === chat.id) {
+        commit('SET_ACTIVE_CHAT_ID', null);
+        commit('SET_MESSAGES', []);
+      }
+    } catch (error) {
+      console.error('[TelegramDialogues] Failed to archive chat:', error);
+    }
+  },
+
+  async unarchiveChat({ commit, state: s }, chatDbId) {
+    if (!s.activeSourceId) return;
+    try {
+      await ChatwootExtraAPI.unarchiveTelegramChat(s.activeSourceId, chatDbId);
+      commit('REMOVE_ARCHIVED_CHAT', chatDbId);
+    } catch (error) {
+      console.error('[TelegramDialogues] Failed to unarchive chat:', error);
+    }
+  },
+
+  toggleArchiveView({ commit, state: s }) {
+    commit('SET_SHOW_ARCHIVE', !s.showArchive);
+    commit('SET_ACTIVE_CHAT_ID', null);
+    commit('SET_ACTIVE_GROUP_CHAT_ID', null);
+    commit('SET_MESSAGES', []);
+  },
+
   async initGlobalSSE({ commit, dispatch, state: s }) {
     if (s.sseInitialized) return;
     try {
@@ -420,6 +515,7 @@ const actions = {
       if (sources.length > 0) {
         commit('SET_ACTIVE_SOURCE_ID', sources[0].id);
         dispatch('connectSSE', sources[0].id);
+        await dispatch('fetchArchivedChats');
         dispatch('fetchChats');
       }
     } catch (_) {

@@ -3,7 +3,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   include DateRangeHelper
   include HmacConcern
 
-  before_action :conversation, except: [:index, :meta, :search, :create, :filter]
+  before_action :conversation, except: [:index, :meta, :search, :create, :filter, :sidebar_counts]
   before_action :inbox, :contact, :contact_inbox, only: [:create]
 
   ATTACHMENT_RESULTS_PER_PAGE = 100
@@ -23,6 +23,40 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     result = conversation_finder.perform
     @conversations = result[:conversations]
     @conversations_count = result[:count]
+  end
+
+  def sidebar_counts
+    inbox_ids = Current.user.assigned_inboxes.pluck(:id)
+    scope = Current.account.conversations
+                   .where(inbox_id: inbox_ids)
+                   .where(status: %i[open pending stand_by])
+
+    scope = Conversations::PermissionFilterService.new(scope, Current.user, Current.account).perform
+
+    unread_sql = Arel.sql(
+      'COALESCE((SELECT COUNT(*) FROM messages m WHERE m.conversation_id = conversations.id ' \
+      'AND m.message_type = 0 ' \
+      'AND (conversations.agent_last_seen_at IS NULL OR m.created_at > conversations.agent_last_seen_at)), 0)'
+    )
+
+    records = scope.pluck(
+      :display_id, :status, :inbox_id, :team_id, :assignee_id,
+      :first_reply_created_at, :waiting_since, :cached_label_list, unread_sql
+    )
+
+    render json: records.map { |row|
+      {
+        id: row[0],
+        status: row[1].is_a?(Integer) ? Conversation.statuses.key(row[1]) : row[1],
+        inbox_id: row[2],
+        team_id: row[3],
+        assignee_id: row[4],
+        first_reply_created_at: row[5],
+        waiting_since: row[6],
+        labels: (row[7] || '').split(',').map(&:strip).reject(&:empty?),
+        unread_count: row[8].to_i
+      }
+    }
   end
 
   def attachments
