@@ -104,6 +104,15 @@
           "ERROR": "Failed to update dialogue segregation settings"
         }
       },
+      "SUPPORT_247_TEAM": {
+        "TITLE": "Support 24/7 team",
+        "NOTE": "Select the team that will receive all incoming conversations by default when dialogue segregation is active.",
+        "PLACEHOLDER": "Select team",
+        "API": {
+          "SUCCESS": "Support 24/7 team updated successfully",
+          "ERROR": "Failed to update Support 24/7 team"
+        }
+      },
       "ASSIGNABLE_AGENTS": {
         "TITLE": "Assignable agents",
         "NOTE": "Select which agents can be assigned to conversations. If none selected, all agents will be available.",

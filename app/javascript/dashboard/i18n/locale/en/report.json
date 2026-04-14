@@ -715,5 +715,54 @@
     "EMPTY_STATE": "No data available",
     "EMPTY_VALUE": "--",
     "OPERATOR_ID": "Operator {id}"
+  },
+  "QUALITY_REVIEW": {
+    "HEADER": "AI Quality Review",
+    "DESCRIPTION": "AI-powered analysis of operator performance per resolution, compared with customer CSAT ratings",
+    "LOADING": "Loading...",
+    "NO_DATA": "No quality review data available",
+    "RATINGS": {
+      "AWESOME": "Awesome",
+      "GOOD": "Good",
+      "BAD": "Bad",
+      "TERRIBLE": "Terrible"
+    },
+    "OVERVIEW": {
+      "TOTAL_REVIEWS": "Total Reviews",
+      "UNIQUE_CONVERSATIONS": "Unique Conversations",
+      "UNIQUE_OPERATORS": "Unique Operators",
+      "POSITIVE_SCORE": "Positive Score"
+    },
+    "CHARTS": {
+      "AI_RATINGS": "AI Ratings",
+      "RATING_DISTRIBUTION": "Rating Distribution",
+      "POSITIVE_RATE": "Positive Rate %",
+      "OPERATOR_POSITIVE_RATE": "Operator Positive Rate (Top 10)"
+    },
+    "TABLE": {
+      "CONVERSATION": "Conversation",
+      "OPERATOR": "Operator",
+      "AI_RATING": "AI Rating",
+      "CSAT_RATING": "CSAT Rating",
+      "DATE": "Resolved At"
+    }
+  },
+  "MY_REPORTS": {
+    "RESPONSE_STATISTICS": {
+      "HEADER": "My Response Time Statistics",
+      "DESCRIPTION": "Your personal response time metrics and performance"
+    },
+    "RESOLUTION_STATISTICS": {
+      "HEADER": "My Resolution Statistics",
+      "DESCRIPTION": "Your personal resolution volumes and trends"
+    },
+    "CSAT_STATISTICS": {
+      "HEADER": "My CSAT Statistics",
+      "DESCRIPTION": "Your personal customer satisfaction ratings and trends"
+    },
+    "QUALITY_REVIEW": {
+      "HEADER": "My AI Quality Review",
+      "DESCRIPTION": "AI-powered analysis of your conversation quality"
+    }
   }
 }

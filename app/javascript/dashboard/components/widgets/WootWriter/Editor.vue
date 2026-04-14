@@ -161,7 +161,20 @@ const imageUpload = useTemplateRef('imageUpload');
 const editor = useTemplateRef('editor');
 
 const contentFromEditor = () => {
-  return MessageMarkdownSerializer.serialize(editorView.state.doc);
+  const doc = editorView.state.doc;
+  const parts = [];
+  doc.forEach(node => {
+    if (node.type.name === 'paragraph' && node.content.size === 0) {
+      parts.push('\u200B');
+    } else {
+      parts.push(
+        MessageMarkdownSerializer.serialize(
+          doc.type.schema.nodes.doc.create(null, node)
+        ).replace(/\n$/, '')
+      );
+    }
+  });
+  return parts.join('\n\n');
 };
 
 const shouldShowVariables = computed(() => {

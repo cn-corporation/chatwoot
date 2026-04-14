@@ -15,6 +15,8 @@ import { useAccount } from 'dashboard/composables/useAccount';
 import { useFontSize } from 'dashboard/composables/useFontSize';
 import ReconnectService from 'dashboard/helper/ReconnectService';
 import { useUISettings } from 'dashboard/composables/useUISettings';
+import { useOperatorStatusHeartbeat } from 'dashboard/composables/useOperatorStatusHeartbeat';
+import { useOperatorStatusSSE } from 'dashboard/composables/useOperatorStatusSSE';
 
 export default {
   name: 'App',
@@ -34,6 +36,8 @@ export default {
     // Use the font size composable (it automatically sets up the watcher)
     const { currentFontSize } = useFontSize();
     const { uiSettings } = useUISettings();
+    useOperatorStatusHeartbeat();
+    useOperatorStatusSSE();
 
     return {
       router,

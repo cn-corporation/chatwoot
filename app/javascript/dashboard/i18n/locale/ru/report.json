@@ -715,5 +715,23 @@
     "EMPTY_STATE": "Нет данных",
     "EMPTY_VALUE": "--",
     "OPERATOR_ID": "Оператор {id}"
+  },
+  "MY_REPORTS": {
+    "RESPONSE_STATISTICS": {
+      "HEADER": "Моя статистика времени ответа",
+      "DESCRIPTION": "Ваши персональные метрики времени ответа и эффективности"
+    },
+    "RESOLUTION_STATISTICS": {
+      "HEADER": "Моя статистика решений",
+      "DESCRIPTION": "Ваши персональные показатели объёмов и динамики решений"
+    },
+    "CSAT_STATISTICS": {
+      "HEADER": "Моя статистика CSAT",
+      "DESCRIPTION": "Ваши персональные оценки удовлетворённости клиентов и тренды"
+    },
+    "QUALITY_REVIEW": {
+      "HEADER": "Мой AI обзор качества",
+      "DESCRIPTION": "AI-анализ качества ваших диалогов"
+    }
   }
 }

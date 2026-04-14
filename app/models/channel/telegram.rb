@@ -129,6 +129,8 @@ class Channel::Telegram < ApplicationRecord
   def convert_markdown_to_telegram_html(text)
     # ref: https://core.telegram.org/bots/api#html-style
 
+    text = text.tr("\u00A0", ' ').delete("\u200B")
+
     # escape html tags in text. We are subbing \n to <br> since commonmark will strip exta '\n'
     text = CGI.escapeHTML(text.gsub("\n", '<br>'))
 

@@ -5,6 +5,16 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
     @messages = message_finder.perform
   end
 
+  def recent
+    limit = [(params[:limit] || 100).to_i, 100].min
+    @messages = @conversation.messages
+                             .where.not(message_type: [2, 3])
+                             .where.not(private: true)
+                             .reorder(created_at: :desc)
+                             .limit(limit)
+                             .reverse
+  end
+
   def create
     user = Current.user || @resource
     mb = Messages::MessageBuilder.new(user, @conversation, params)

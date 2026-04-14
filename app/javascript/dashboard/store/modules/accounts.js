@@ -81,6 +81,31 @@ export const actions = {
       throw new Error(error);
     }
   },
+  toggleSupportLine: async ({ commit, state: localState }, { active }) => {
+    const response = await AccountAPI.toggleSupportLine(active);
+    const confirmed = response.data.support_line_1_active;
+    localState.records.forEach(account => {
+      if (account.settings) {
+        commit(types.default.EDIT_ACCOUNT, {
+          ...account,
+          settings: { ...account.settings, support_line_1_active: confirmed },
+        });
+      }
+    });
+  },
+  applySupportLineChange: (
+    { commit, state: localState },
+    { support_line_1_active: active }
+  ) => {
+    localState.records.forEach(account => {
+      if (account.settings) {
+        commit(types.default.EDIT_ACCOUNT, {
+          ...account,
+          settings: { ...account.settings, support_line_1_active: active },
+        });
+      }
+    });
+  },
   delete: async ({ commit }, { id }) => {
     commit(types.default.SET_ACCOUNT_UI_FLAG, { isUpdating: true });
     try {

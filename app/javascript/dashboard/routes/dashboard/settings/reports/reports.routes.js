@@ -24,6 +24,8 @@ import ResponseStatistics from './ResponseStatistics.vue';
 import ResolutionStatistics from './ResolutionStatistics.vue';
 import TasksReports from './TasksReports.vue';
 import CsatStatistics from './CsatStatistics.vue';
+import QualityReviewStatistics from './QualityReviewStatistics.vue';
+import OperatorStatus from './OperatorStatus.vue';
 
 const meta = {
   featureFlag: FEATURE_FLAGS.REPORTS,
@@ -174,6 +176,18 @@ export default {
           name: 'csat_statistics',
           meta,
           component: CsatStatistics,
+        },
+        {
+          path: 'quality_review',
+          name: 'quality_review_statistics',
+          meta,
+          component: QualityReviewStatistics,
+        },
+        {
+          path: 'operator_status',
+          name: 'operator_status',
+          meta,
+          component: OperatorStatus,
         },
       ],
     },

@@ -18,16 +18,18 @@ class AutomationRuleListener < BaseListener
   def message_created(event)
     message = event.data[:message]
 
-    return if ignore_message_created_event?(event)
+    return if message.activity? || message.auto_reply_email?
 
     account = message.try(:account)
     changed_attributes = event.data[:changed_attributes]
+    originating_rule = performed_by_automation?(event) ? event.data[:performed_by] : nil
 
     return unless rule_present?('message_created', account)
 
     rules = current_account_rules('message_created', account)
 
     rules.each do |rule|
+      next if originating_rule && rule.id == originating_rule.id
       next unless automation_sources_match?(rule, message.conversation)
 
       conditions_match = ::AutomationRules::ConditionsFilterService.new(rule, message.conversation,
@@ -81,11 +83,6 @@ class AutomationRuleListener < BaseListener
   def ignore_auto_reply_event?(event)
     conversation = event.data[:conversation]
     conversation.additional_attributes['auto_reply'].present?
-  end
-
-  def ignore_message_created_event?(event)
-    message = event.data[:message]
-    performed_by_automation?(event) || message.activity? || message.auto_reply_email?
   end
 
   def automation_sources_match?(rule, conversation)

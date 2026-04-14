@@ -57,6 +57,13 @@ class Api::V1::AccountsController < Api::BaseController
     head :ok
   end
 
+  def toggle_support_line
+    @account.settings['support_line_1_active'] = params[:active]
+    @account.save!
+    broadcast_support_line_change
+    render json: { support_line_1_active: @account.settings['support_line_1_active'] }
+  end
+
   private
 
   def ensure_account_name
@@ -93,7 +100,7 @@ class Api::V1::AccountsController < Api::BaseController
 
   def settings_params
     params.permit(:auto_resolve_after, :auto_resolve_message, :auto_resolve_ignore_waiting, :audio_transcriptions, :auto_resolve_label,
-                  :dialogue_segregation_enabled, assignable_agent_ids: [], hidden_contact_fields: [])
+                  :support_247_team_id, :support_line_1_active, assignable_agent_ids: [])
   end
 
   def check_signup_enabled
@@ -102,6 +109,12 @@ class Api::V1::AccountsController < Api::BaseController
 
   def validate_captcha
     raise ActionController::InvalidAuthenticityToken, 'Invalid Captcha' unless ChatwootCaptcha.new(params[:h_captcha_client_response]).valid?
+  end
+
+  def broadcast_support_line_change
+    tokens = @account.users.pluck(:pubsub_token)
+    payload = { account_id: @account.id, support_line_1_active: @account.settings['support_line_1_active'] }
+    ::ActionCableBroadcastJob.perform_later(tokens.uniq, 'support_line.changed', payload)
   end
 
   def pundit_user

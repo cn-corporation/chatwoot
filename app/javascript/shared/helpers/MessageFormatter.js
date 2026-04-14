@@ -85,7 +85,11 @@ class MessageFormatter {
         TWITTER_HASH_REPLACEMENT
       );
     }
-    return this.md.render(updatedMessage);
+    updatedMessage = updatedMessage.replace(/\n([ \t]*\n){2,}/g, match => {
+      const lineCount = match.split('\n').length - 1;
+      return '\n' + '\u200B\n'.repeat(lineCount - 2) + '\n';
+    });
+    return this.md.render(updatedMessage).replace(/ {2}/g, ' \u00A0');
   }
 
   get formattedMessage() {

@@ -369,6 +369,11 @@
     "RESPONSE_STATISTICS": "Статистика ответов",
     "RESOLUTION_STATISTICS": "Статистика решений",
     "CSAT_STATISTICS": "Статистика CSAT",
+    "MY_REPORTS": "Мои отчёты",
+    "MY_RESPONSE_STATISTICS": "Моя статистика ответов",
+    "MY_RESOLUTION_STATISTICS": "Моя статистика решений",
+    "MY_CSAT_STATISTICS": "Моя статистика CSAT",
+    "MY_QUALITY_REVIEW": "Мой AI обзор качества",
     "REAUTHORIZE": "Срок действия вашего источника истек, пожалуйста, переподключите\n чтобы снова получать и отправлять сообщения",
     "HELP_CENTER": {
       "TITLE": "Центр поддержки",

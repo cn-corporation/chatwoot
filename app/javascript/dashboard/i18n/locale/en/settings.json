@@ -369,6 +369,13 @@
     "RESPONSE_STATISTICS": "Response Statistics",
     "RESOLUTION_STATISTICS": "Resolution Statistics",
     "CSAT_STATISTICS": "CSAT Statistics",
+    "QUALITY_REVIEW": "AI Quality Review",
+    "OPERATOR_STATUS": "Operator Status",
+    "MY_REPORTS": "My Reports",
+    "MY_RESPONSE_STATISTICS": "My Response Statistics",
+    "MY_RESOLUTION_STATISTICS": "My Resolution Statistics",
+    "MY_CSAT_STATISTICS": "My CSAT Statistics",
+    "MY_QUALITY_REVIEW": "My AI Quality Review",
     "REAUTHORIZE": "Your inbox connection has expired, please reconnect\n to continue receiving and sending messages",
     "HELP_CENTER": {
       "TITLE": "Help Center",
@@ -386,7 +393,8 @@
     "DOCS": "Read docs",
     "SECURITY": "Security",
     "KNOWLEDGE_BASE": "Knowledge Base",
-    "TELEGRAM_DIALOGUES": "Telegram"
+    "TELEGRAM_DIALOGUES": "Telegram",
+    "SUPPORT_LINE_1": "Support Line 1"
   },
   "BILLING_SETTINGS": {
     "TITLE": "Billing",

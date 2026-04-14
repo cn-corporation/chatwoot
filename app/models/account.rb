@@ -40,6 +40,8 @@ class Account < ApplicationRecord
         'auto_resolve_label': { 'type': %w[string null] },
         'dialogue_segregation_enabled': { 'type': %w[boolean null] },
         'assignable_agent_ids': { 'type': %w[array null], 'items': { 'type': 'integer' } },
+        'support_247_team_id': { 'type': %w[integer null] },
+        'support_line_1_active': { 'type': %w[boolean null] },
         'hidden_contact_fields': { 'type': %w[array null], 'items': { 'type': 'string' } }
       },
     'required': [],
@@ -58,7 +60,8 @@ class Account < ApplicationRecord
 
   store_accessor :settings, :auto_resolve_after, :auto_resolve_message, :auto_resolve_ignore_waiting
   store_accessor :settings, :audio_transcriptions, :auto_resolve_label
-  store_accessor :settings, :dialogue_segregation_enabled, :assignable_agent_ids
+  store_accessor :settings, :assignable_agent_ids
+  store_accessor :settings, :support_247_team_id, :support_line_1_active
   store_accessor :settings, :hidden_contact_fields
 
   has_many :account_users, dependent: :destroy_async

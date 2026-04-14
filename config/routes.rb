@@ -41,6 +41,7 @@ Rails.application.routes.draw do
         member do
           post :update_active_at
           get :cache_keys
+          post :toggle_support_line
         end
 
         scope module: :accounts do
@@ -118,6 +119,9 @@ Rails.application.routes.draw do
             end
             scope module: :conversations do
               resources :messages, only: [:index, :create, :destroy, :update] do
+                collection do
+                  get :recent
+                end
                 member do
                   post :translate
                   post :retry
