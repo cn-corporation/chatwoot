@@ -25,6 +25,8 @@ export const hasMessageFailedWithExternalError = pendingMessage => {
   return status === MESSAGE_STATUS.FAILED && externalError !== '';
 };
 
+let fetchCountsInFlight = null;
+
 // actions
 const actions = {
   getConversation: async ({ commit }, conversationId) => {
@@ -57,39 +59,23 @@ const actions = {
   },
 
   fetchAllConversationsForCounts: async ({ commit }) => {
-    const PAGE_SIZE = 25;
-    const MAX_PAGES = 25;
+    if (fetchCountsInFlight) return fetchCountsInFlight;
 
-    const fetchAllPages = async params => {
-      const results = [];
-      let page = 1;
-      let hasMore = true;
-
-      while (hasMore && page <= MAX_PAGES) {
-        const response = await ConversationApi.get({ ...params, page });
-        const payload = response.data.data.payload || [];
-        results.push(...payload);
-        hasMore = payload.length >= PAGE_SIZE;
-        page += 1;
+    fetchCountsInFlight = (async () => {
+      try {
+        const response = await ConversationApi.sidebarCounts();
+        const payload = response.data || [];
+        if (payload.length > 0) {
+          commit(types.UPDATE_CONVERSATIONS_FOR_COUNTS, payload);
+        }
+      } catch (error) {
+        // Handle error silently - counts are not critical
+      } finally {
+        fetchCountsInFlight = null;
       }
+    })();
 
-      return results;
-    };
-
-    try {
-      const [meConversations, unassignedConversations] = await Promise.all([
-        fetchAllPages({ status: 'all', assigneeType: 'me' }),
-        fetchAllPages({ status: 'all', assigneeType: 'unassigned' }),
-      ]);
-
-      const allConversations = [...meConversations, ...unassignedConversations];
-
-      if (allConversations.length > 0) {
-        commit(types.UPDATE_CONVERSATIONS_FOR_COUNTS, allConversations);
-      }
-    } catch (error) {
-      // Handle error silently - counts are not critical
-    }
+    return fetchCountsInFlight;
   },
 
   cleanupInboxCounts: ({ commit, state }, inboxId) => {

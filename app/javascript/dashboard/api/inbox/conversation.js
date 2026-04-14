@@ -32,6 +32,10 @@ class ConversationApi extends ApiClient {
     });
   }
 
+  sidebarCounts() {
+    return axios.get(`${this.url}/sidebar_counts`);
+  }
+
   filter(payload) {
     return axios.post(`${this.url}/filter`, payload.queryData, {
       params: {
