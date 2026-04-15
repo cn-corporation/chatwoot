@@ -598,6 +598,8 @@ class ChatwootExtraAPI {
   async searchMessages({
     query,
     userId,
+    participatedByUserId,
+    resolvedByUserId,
     dateFrom,
     dateTo,
     accountId,
@@ -606,6 +608,9 @@ class ChatwootExtraAPI {
   }) {
     const params = { query, accountId, limit, offset };
     if (userId) params.userId = userId;
+    if (participatedByUserId)
+      params.participatedByUserId = participatedByUserId;
+    if (resolvedByUserId) params.resolvedByUserId = resolvedByUserId;
     if (dateFrom) params.dateFrom = dateFrom;
     if (dateTo) params.dateTo = dateTo;
 

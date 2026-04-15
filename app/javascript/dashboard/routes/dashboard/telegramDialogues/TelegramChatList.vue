@@ -42,14 +42,15 @@ const hasMore = computed(
 const sentinelRef = ref(null);
 let observer = null;
 
-const loadUntilScrollable = () => {
+const loadUntilScrollable = async () => {
   if (!sentinelRef.value || loading.value || !hasMore.value) return;
   const container = sentinelRef.value.parentElement?.parentElement;
   if (!container) return;
   if (container.scrollHeight <= container.clientHeight) {
-    store.dispatch('telegramDialogues/fetchMoreChats').then(() => {
-      requestAnimationFrame(loadUntilScrollable);
-    });
+    const before = displayedChats.value.length;
+    await store.dispatch('telegramDialogues/fetchMoreChats');
+    if (displayedChats.value.length === before) return;
+    requestAnimationFrame(loadUntilScrollable);
   }
 };
 
@@ -71,11 +72,12 @@ const onArchive = chat => {
 
 onMounted(() => {
   observer = new IntersectionObserver(
-    entries => {
+    async entries => {
       if (entries[0].isIntersecting && hasMore.value && !loading.value) {
-        store.dispatch('telegramDialogues/fetchMoreChats').then(() => {
-          requestAnimationFrame(loadUntilScrollable);
-        });
+        const before = displayedChats.value.length;
+        await store.dispatch('telegramDialogues/fetchMoreChats');
+        if (displayedChats.value.length === before) return;
+        requestAnimationFrame(loadUntilScrollable);
       }
     },
     { threshold: 0.1 }

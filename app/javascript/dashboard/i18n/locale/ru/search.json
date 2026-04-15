@@ -16,6 +16,11 @@
     "FILTERS": {
       "AGENT_LABEL": "Оператор",
       "AGENT_PLACEHOLDER": "Все",
+      "PARTICIPATED_BY_LABEL": "Участвовал в диалоге",
+      "PARTICIPATED_BY_PLACEHOLDER": "Любой оператор",
+      "RESOLVED_BY_LABEL": "Завершил диалог",
+      "RESOLVED_BY_PLACEHOLDER": "Любой оператор",
+      "SEARCH_BUTTON": "Поиск",
       "DATE_FROM_LABEL": "От",
       "DATE_FROM_PLACEHOLDER": "Начало",
       "DATE_TO_LABEL": "До",
