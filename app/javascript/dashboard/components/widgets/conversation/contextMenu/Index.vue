@@ -222,7 +222,10 @@ export default {
       ];
     },
     assignableTeams() {
-      return [{ name: 'None', id: 0 }, ...this.teams];
+      return [
+        { name: this.$t('TEAMS_SETTINGS.LIST.NONE'), id: 0 },
+        ...this.teams,
+      ];
     },
     isContactBlocked() {
       if (!this.contactBlockedUntil) return false;
