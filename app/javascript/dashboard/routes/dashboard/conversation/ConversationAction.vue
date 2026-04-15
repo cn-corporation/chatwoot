@@ -32,7 +32,20 @@ export default {
     ...mapGetters({
       currentChat: 'getSelectedChat',
       teams: 'teams/getTeams',
+      currentAccountId: 'getCurrentAccountId',
     }),
+    currentAccountSettings() {
+      return (
+        this.$store.getters['accounts/getAccount'](this.currentAccountId)
+          ?.settings || {}
+      );
+    },
+    support247TeamId() {
+      return this.currentAccountSettings.support_247_team_id || null;
+    },
+    supportLine1Active() {
+      return !!this.currentAccountSettings.support_line_1_active;
+    },
     hasAnAssignedTeam() {
       return !!this.currentChat?.meta?.team;
     },
@@ -70,8 +83,21 @@ export default {
       set(team) {
         if (!this.currentChat) return;
         const conversationId = this.currentChat.id;
-        const teamId = team ? team.id : 0;
-        this.$store.dispatch('setCurrentChatTeam', { team, conversationId });
+        let resolvedTeam = team;
+        let teamId = team ? team.id : 0;
+        if (
+          teamId === 0 &&
+          !this.supportLine1Active &&
+          this.support247TeamId
+        ) {
+          resolvedTeam =
+            this.teams.find(t => t.id === this.support247TeamId) || team;
+          teamId = this.support247TeamId;
+        }
+        this.$store.dispatch('setCurrentChatTeam', {
+          team: resolvedTeam,
+          conversationId,
+        });
         this.$store
           .dispatch('assignTeam', { conversationId, teamId })
           .then(() => {
@@ -130,7 +156,7 @@ export default {
         :options="teamsList"
         :selected-item="assignedTeam"
         :multiselector-title="$t('AGENT_MGMT.MULTI_SELECTOR.TITLE.TEAM')"
-        :multiselector-placeholder="$t('AGENT_MGMT.MULTI_SELECTOR.PLACEHOLDER')"
+        :multiselector-placeholder="$t('TEAMS_SETTINGS.LIST.NONE')"
         :no-search-result="
           $t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.NO_RESULTS.TEAM')
         "

@@ -206,6 +206,19 @@ class ActionCableConnector extends BaseActionCableConnector {
 
   onSupportLineChanged = data => {
     this.app.$store.dispatch('accounts/applySupportLineChange', data);
+    if (data.support_line_1_active === false) {
+      const accountId = this.app.$store.getters.getCurrentAccountId;
+      const account = this.app.$store.getters['accounts/getAccount'](accountId);
+      const support247TeamId = account?.settings?.support_247_team_id;
+      if (support247TeamId) {
+        const team = this.app.$store.getters['teams/getTeam'](support247TeamId);
+        if (team?.id) {
+          this.app.$store.dispatch('backfillTeamForUnassignedConversations', {
+            team,
+          });
+        }
+      }
+    }
     this.fetchConversationStats();
   };
 
