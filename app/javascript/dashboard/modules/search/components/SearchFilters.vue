@@ -126,11 +126,11 @@ watch(
 
     <div class="w-48">
       <p class="mb-1 text-xs font-medium text-n-slate-11">
-        Participated by
+        {{ t('SEARCH.FILTERS.PARTICIPATED_BY_LABEL') }}
       </p>
       <multiselect
         v-model="selectedParticipatedAgent"
-        placeholder="Any agent"
+        :placeholder="t('SEARCH.FILTERS.PARTICIPATED_BY_PLACEHOLDER')"
         label="name"
         track-by="id"
         :options="agentOptions"
@@ -172,11 +172,11 @@ watch(
 
     <div class="w-48">
       <p class="mb-1 text-xs font-medium text-n-slate-11">
-        Resolved by
+        {{ t('SEARCH.FILTERS.RESOLVED_BY_LABEL') }}
       </p>
       <multiselect
         v-model="selectedResolvedAgent"
-        placeholder="Any agent"
+        :placeholder="t('SEARCH.FILTERS.RESOLVED_BY_PLACEHOLDER')"
         label="name"
         track-by="id"
         :options="agentOptions"
@@ -245,7 +245,7 @@ watch(
     </div>
 
     <NextButton
-      label="Search"
+      :label="t('SEARCH.FILTERS.SEARCH_BUTTON')"
       icon="i-lucide-search"
       solid
       blue
