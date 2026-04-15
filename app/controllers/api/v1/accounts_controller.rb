@@ -60,6 +60,7 @@ class Api::V1::AccountsController < Api::BaseController
   def toggle_support_line
     @account.settings['support_line_1_active'] = params[:active]
     @account.save!
+    backfill_support_247_team unless @account.settings['support_line_1_active']
     broadcast_support_line_change
     render json: { support_line_1_active: @account.settings['support_line_1_active'] }
   end
@@ -109,6 +110,15 @@ class Api::V1::AccountsController < Api::BaseController
 
   def validate_captcha
     raise ActionController::InvalidAuthenticityToken, 'Invalid Captcha' unless ChatwootCaptcha.new(params[:h_captcha_client_response]).valid?
+  end
+
+  def backfill_support_247_team
+    support_team_id = @account.settings['support_247_team_id']
+    return if support_team_id.blank?
+
+    # rubocop:disable Rails/SkipsModelValidations
+    @account.conversations.where(team_id: nil, status: %i[open pending]).update_all(team_id: support_team_id)
+    # rubocop:enable Rails/SkipsModelValidations
   end
 
   def broadcast_support_line_change
