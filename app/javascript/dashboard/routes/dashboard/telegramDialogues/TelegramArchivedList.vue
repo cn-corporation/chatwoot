@@ -8,6 +8,9 @@ const archivedChats = computed(
   () => store.getters['telegramDialogues/getArchivedChats']
 );
 
+const unreadFor = chatDbId =>
+  store.getters['telegramDialogues/getUnreadCountForChat'](chatDbId);
+
 const goBack = () => {
   store.dispatch('telegramDialogues/toggleArchiveView');
 };
@@ -40,9 +43,17 @@ const unarchive = chat => {
           class="size-5 flex-shrink-0 text-n-slate-11"
         />
         <div class="flex-1 min-w-0">
-          <span class="font-medium text-sm truncate text-n-slate-12 block">
-            {{ chat.topicName || chat.chatName }}
-          </span>
+          <div class="flex items-center gap-1.5">
+            <span class="font-medium text-sm truncate text-n-slate-12">
+              {{ chat.topicName || chat.chatName }}
+            </span>
+            <span
+              v-if="unreadFor(chat.chatDbId) > 0"
+              class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-n-ruby-9 text-white min-w-[20px] text-center flex-shrink-0"
+            >
+              {{ unreadFor(chat.chatDbId) > 99 ? '99+' : unreadFor(chat.chatDbId) }}
+            </span>
+          </div>
           <span
             v-if="chat.topicName"
             class="text-xs text-n-slate-10 truncate block"
