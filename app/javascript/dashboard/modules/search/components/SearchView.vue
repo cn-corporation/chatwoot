@@ -32,6 +32,7 @@ const { t } = useI18n();
 const PER_PAGE = 15; // Results per page
 const selectedTab = ref(route.params.tab || 'all');
 const query = ref(route.query.q || '');
+const filterSearchActive = ref(false);
 const pages = ref({
   contacts: 1,
   conversations: 1,
@@ -211,7 +212,8 @@ const showResultsSection = computed(
   () =>
     (uiFlags.value.isSearchCompleted && totalSearchResultsCount.value !== 0) ||
     isFetchingAny.value ||
-    (!isSelectedTabAll.value && query.value && !isFetchingAny.value)
+    (!isSelectedTabAll.value && query.value && !isFetchingAny.value) ||
+    (filterSearchActive.value && !isFetchingAny.value)
 );
 
 const showLoadMore = computed(() => {
@@ -246,6 +248,7 @@ const showViewMore = computed(() => ({
 
 const clearSearchResult = () => {
   pages.value = { contacts: 1, conversations: 1, messages: 1, articles: 1 };
+  filterSearchActive.value = false;
   store.dispatch('conversationSearch/clearSearchResults');
 };
 
@@ -320,6 +323,18 @@ const onFiltersChanged = () => {
   });
 };
 
+const onFilterSearch = () => {
+  store.dispatch('conversationSearch/clearMessageResults');
+  pages.value.messages = 1;
+  selectedTab.value = 'messages';
+  filterSearchActive.value = true;
+  updateURL();
+  store.dispatch('conversationSearch/messageSearch', {
+    q: query.value,
+    page: 1,
+  });
+};
+
 const loadMoreMessages = () => {
   if (uiFlags.value.message.isFetching) return;
   pages.value.messages += 1;
@@ -363,9 +378,10 @@ onUnmounted(() => {
           <SearchFilters
             :visible="showMessageFilters"
             @filters-changed="onFiltersChanged"
+            @search="onFilterSearch"
           />
           <SearchTabs
-            v-if="query"
+            v-if="query || filterSearchActive"
             :tabs="tabs"
             :selected-tab="activeTabIndex"
             @tab-change="onTabChange"
