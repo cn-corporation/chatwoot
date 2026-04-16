@@ -621,6 +621,15 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async translateText({ text, targetLang }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/translate`,
+      { text, targetLang },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   async getTelegramDialoguesOperators() {
     const response = await axios.get(
       `${this.baseURL}/api/telegram-dialogues/operators`,

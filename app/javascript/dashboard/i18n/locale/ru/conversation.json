@@ -209,6 +209,18 @@
       "TASK_COMPLETED": "Задача выполнена",
       "TASK_COMPLETED_BY": "Выполнено: {name}",
       "TASK_COMPLETE_ERROR": "Ошибка при выполнении задачи",
+      "TRANSLATOR": {
+        "TAB": "Перевод",
+        "FROM_LABEL": "С",
+        "TO_LABEL": "На",
+        "AUTO_DETECT": "Авто",
+        "LAST_MESSAGE": "Последнее сообщение",
+        "COPY": "Копировать",
+        "COPIED": "Скопировано!",
+        "LANG_RU": "Русский",
+        "LANG_KZ": "Казахский",
+        "LANG_UA": "Украинский"
+      },
       "INSERT_READ_MORE": "Читать далее",
       "DISMISS_REPLY": "Удалить ответ",
       "REPLYING_TO": "Ответить:",

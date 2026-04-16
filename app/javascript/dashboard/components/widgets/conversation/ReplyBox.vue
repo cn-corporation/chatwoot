@@ -20,6 +20,7 @@ import QuotedEmailPreview from './QuotedEmailPreview.vue';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import AudioRecorder from 'dashboard/components/widgets/WootWriter/AudioRecorder.vue';
+import ConversationTranslator from 'dashboard/routes/dashboard/conversation/ConversationTranslator.vue';
 import { AUDIO_FORMATS } from 'shared/constants/messages';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import {
@@ -60,6 +61,7 @@ export default {
     ArticleSearchPopover,
     AttachmentPreview,
     AudioRecorder,
+    ConversationTranslator,
     CannedResponse,
     EmojiInput,
     MessageSignatureMissingAlert,
@@ -317,6 +319,9 @@ export default {
     },
     isOnTask() {
       return this.replyType === REPLY_EDITOR_MODES.TASK;
+    },
+    isOnTranslate() {
+      return this.replyType === REPLY_EDITOR_MODES.TRANSLATE;
     },
     isOnExpandedLayout() {
       const {
@@ -1305,8 +1310,9 @@ export default {
         v-model:to-emails="toEmails"
         :disabled="isInputDisabled"
       />
+      <ConversationTranslator v-if="isOnTranslate" />
       <AudioRecorder
-        v-if="showAudioRecorderEditor"
+        v-else-if="showAudioRecorderEditor"
         ref="audioRecorderInput"
         :audio-record-format="audioRecordFormat"
         @recorder-progress-changed="onRecordProgressChanged"
