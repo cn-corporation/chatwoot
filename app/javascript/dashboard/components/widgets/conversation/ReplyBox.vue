@@ -467,7 +467,7 @@ export default {
         this.setCCAndToEmailsFromLastChat();
       }
 
-      if (this.isOnPrivateNote) {
+      if (this.isOnPrivateNote || this.isOnTask || this.isOnTranslate) {
         return;
       }
 
