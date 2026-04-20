@@ -51,6 +51,7 @@ Rails.application.routes.draw do
           resource :bulk_actions, only: [:create]
           resources :agents, only: [:index, :create, :update, :destroy] do
             post :bulk_create, on: :collection
+            post :force_logout, on: :member
           end
           namespace :captain do
             resources :assistants do

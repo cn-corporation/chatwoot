@@ -956,6 +956,15 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async kickOperator(chatwootUserId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-status/kick`,
+      { chatwootUserId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   getOperatorStatusStreamURL() {
     const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
     return `${this.baseURL}/api/operator-status/stream?apiKey=${apiKey}`;

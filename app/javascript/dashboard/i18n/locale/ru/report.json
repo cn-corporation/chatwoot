@@ -124,6 +124,58 @@
     "PAGINATION": {
       "RESULTS": "Показаны {start} - {end} из {total} результатов",
       "PER_PAGE_TEMPLATE": "{size} / page"
+    },
+    "OPERATOR_STATUS_PAGE": {
+      "HEADER": "Статус операторов",
+      "DESCRIPTION": "Отслеживайте онлайн-статус операторов и историю рабочих сессий.",
+      "TAB_ONLINE": "Онлайн сейчас",
+      "TAB_SESSIONS": "Рабочие сессии",
+      "LOADING": "Загрузка...",
+      "STATE": {
+        "ONLINE": "В сети",
+        "DEGRADED": "Нестабильно",
+        "OFFLINE": "Не в сети"
+      },
+      "ONLINE_TABLE": {
+        "STATUS": "Статус",
+        "OPERATOR": "Оператор",
+        "STATE": "Состояние",
+        "LAST_SEEN": "Последний раз",
+        "ACTION": "Действие",
+        "NOW": "Сейчас"
+      },
+      "FILTERS": {
+        "START_DATE": "Начальная дата",
+        "END_DATE": "Конечная дата",
+        "OPERATORS": "Операторы",
+        "MIN_HOURS": "Мин. часов",
+        "ALL_OPERATORS": "Все операторы",
+        "N_OPERATORS": "Операторов: {count}",
+        "SEARCH_PLACEHOLDER": "Поиск...",
+        "NO_RESULTS": "Ничего не найдено",
+        "APPLY": "Применить"
+      },
+      "METRICS": {
+        "TOTAL_HOURS": "Всего часов",
+        "ACTIVE_OPERATORS": "Активных операторов",
+        "AVG_PER_OPERATOR": "Среднее на оператора"
+      },
+      "SESSIONS_TABLE": {
+        "OPERATOR": "Оператор",
+        "TOTAL_TIME": "Всего времени",
+        "ACTIVE_DAYS": "Активных дней",
+        "SESSIONS": "Сессий",
+        "ACTIVE": "Активна",
+        "NO_DATA": "Нет данных по выбранным фильтрам."
+      },
+      "KICK": {
+        "ACTION_ONLINE": "Завершить сессию",
+        "ACTION_OFFLINE": "Отозвать токены",
+        "CONFIRM": "Завершить сессию пользователя {name}? Он будет немедленно отключён.",
+        "SUCCESS": "Сессия пользователя {name} завершена.",
+        "PARTIAL": "Пользователь {name} отключён, но обновление статуса в панели может занять до 90 секунд.",
+        "ERROR_GENERIC": "Не удалось завершить сессию. Попробуйте ещё раз."
+      }
     }
   },
   "AGENT_REPORTS": {

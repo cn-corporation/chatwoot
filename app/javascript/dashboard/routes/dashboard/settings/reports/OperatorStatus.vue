@@ -1,23 +1,25 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ReportHeader from './components/ReportHeader.vue';
 import OperatorStatusOnline from './components/OperatorStatusOnline.vue';
 import OperatorStatusSessions from './components/OperatorStatusSessions.vue';
 
+const { t } = useI18n();
 const activeTab = ref('online');
 const sessionsKey = ref(0);
 
-const tabs = [
-  { key: 'online', label: 'Online Now' },
-  { key: 'sessions', label: 'Work Sessions' },
-];
+const tabs = computed(() => [
+  { key: 'online', label: t('REPORT.OPERATOR_STATUS_PAGE.TAB_ONLINE') },
+  { key: 'sessions', label: t('REPORT.OPERATOR_STATUS_PAGE.TAB_SESSIONS') },
+]);
 </script>
 
 <template>
   <div class="flex flex-col gap-6 pb-6">
     <ReportHeader
-      header-title="Operator Status"
-      header-description="Track operator online status and work session history."
+      :header-title="t('REPORT.OPERATOR_STATUS_PAGE.HEADER')"
+      :header-description="t('REPORT.OPERATOR_STATUS_PAGE.DESCRIPTION')"
     />
 
     <div class="flex gap-1 border-b border-n-slate-3">

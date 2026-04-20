@@ -12,6 +12,10 @@ class Agents extends ApiClient {
       emails,
     });
   }
+
+  forceLogout(agentId) {
+    return axios.post(`${this.url}/${agentId}/force_logout`);
+  }
 }
 
 export default new Agents();
