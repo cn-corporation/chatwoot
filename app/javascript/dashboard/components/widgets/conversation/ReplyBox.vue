@@ -1341,7 +1341,7 @@ export default {
         v-model="message"
         :editor-id="editorStateId"
         class="input"
-        :is-private="isOnPrivateNote"
+        :is-private="isPrivate"
         :placeholder="messagePlaceHolder"
         :update-selection-with="updateEditorSelectionWith"
         :min-height="4"

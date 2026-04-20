@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useStore } from 'dashboard/composables/store';
+import { useStore, useMapGetter } from 'dashboard/composables/store';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -21,6 +21,7 @@ import ReportHeader from '../settings/reports/components/ReportHeader.vue';
 import MetricCard from '../settings/reports/components/overview/MetricCard.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import csatStatisticsAPI from 'dashboard/api/csatStatistics';
+import { conversationUrl, frontendURL } from 'dashboard/helper/URLHelper';
 
 ChartJS.register(
   CategoryScale,
@@ -36,6 +37,12 @@ ChartJS.register(
 
 const { t } = useI18n();
 const store = useStore();
+const accountId = useMapGetter('getCurrentAccountId');
+
+const conversationLink = id => {
+  if (!accountId.value) return '#';
+  return frontendURL(conversationUrl({ accountId: accountId.value, id }));
+};
 
 const isLoading = ref(false);
 const aggregatedData = ref(null);
@@ -363,7 +370,12 @@ onMounted(() => {
               class="border-b border-n-slate-6 hover:bg-n-solid-2"
             >
               <td class="py-3 px-4 text-sm text-n-slate-12">
-                #{{ row.conversationId }}
+                <a
+                  :href="conversationLink(row.conversationId)"
+                  class="text-n-primary hover:underline"
+                >
+                  {{ '#' + row.conversationId }}
+                </a>
               </td>
               <td class="py-3 px-4 text-sm">{{ row.rating }}</td>
               <td class="py-3 px-4 text-sm text-n-slate-12">
