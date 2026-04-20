@@ -1,9 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useStore } from 'dashboard/composables/store';
 import { format, subDays } from 'date-fns';
 import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 
+const { t } = useI18n();
 const store = useStore();
 const isLoading = ref(false);
 const reportData = ref([]);
@@ -39,10 +41,13 @@ const toggleOperator = op => {
 };
 
 const operatorButtonLabel = computed(() => {
-  if (!selectedOperators.value.length) return 'All operators';
+  if (!selectedOperators.value.length)
+    return t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.ALL_OPERATORS');
   if (selectedOperators.value.length === 1)
     return selectedOperators.value[0].label;
-  return `${selectedOperators.value.length} operators`;
+  return t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.N_OPERATORS', {
+    count: selectedOperators.value.length,
+  });
 });
 
 const handleClickOutside = e => {
@@ -152,7 +157,7 @@ onMounted(async () => {
       <div class="flex flex-wrap items-end gap-4">
       <div>
         <label class="block mb-1 text-xs font-medium text-n-slate-11">
-          Start Date
+          {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.START_DATE') }}
         </label>
         <input
           v-model="dateRange.start"
@@ -162,7 +167,7 @@ onMounted(async () => {
       </div>
       <div>
         <label class="block mb-1 text-xs font-medium text-n-slate-11">
-          End Date
+          {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.END_DATE') }}
         </label>
         <input
           v-model="dateRange.end"
@@ -172,7 +177,7 @@ onMounted(async () => {
       </div>
       <div ref="dropdownRef" class="relative">
         <label class="block mb-1 text-xs font-medium text-n-slate-11">
-          Operators
+          {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.OPERATORS') }}
         </label>
         <button
           type="button"
@@ -190,7 +195,9 @@ onMounted(async () => {
             <input
               v-model="dropdownSearch"
               type="text"
-              placeholder="Search..."
+              :placeholder="
+                t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.SEARCH_PLACEHOLDER')
+              "
               class="w-full px-2 py-1 text-sm border rounded border-n-slate-4 bg-n-background text-n-slate-12"
             />
           </div>
@@ -213,14 +220,14 @@ onMounted(async () => {
               v-if="!filteredOperatorOptions.length"
               class="px-3 py-1.5 text-sm text-n-slate-9"
             >
-              No results
+              {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.NO_RESULTS') }}
             </li>
           </ul>
         </div>
       </div>
       <div>
         <label class="block mb-1 text-xs font-medium text-n-slate-11">
-          Min Hours
+          {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.MIN_HOURS') }}
         </label>
         <input
           v-model="minHours"
@@ -237,26 +244,32 @@ onMounted(async () => {
           class="h-9 px-4 text-sm font-medium text-white rounded-md bg-woot-500 hover:bg-woot-600"
           @click="fetchReport"
         >
-          Apply
+          {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.APPLY') }}
         </button>
       </div>
     </div>
 
     <div v-if="!isLoading && summaryMetrics" class="grid grid-cols-3 gap-4">
       <div class="p-4 rounded-lg bg-n-slate-2">
-        <p class="text-xs text-n-slate-11">Total Hours</p>
+        <p class="text-xs text-n-slate-11">
+          {{ t('REPORT.OPERATOR_STATUS_PAGE.METRICS.TOTAL_HOURS') }}
+        </p>
         <p class="text-xl font-semibold text-n-slate-12">
           {{ formatMs(summaryMetrics.totalMs) }}
         </p>
       </div>
       <div class="p-4 rounded-lg bg-n-slate-2">
-        <p class="text-xs text-n-slate-11">Active Operators</p>
+        <p class="text-xs text-n-slate-11">
+          {{ t('REPORT.OPERATOR_STATUS_PAGE.METRICS.ACTIVE_OPERATORS') }}
+        </p>
         <p class="text-xl font-semibold text-n-slate-12">
           {{ summaryMetrics.totalOperators }}
         </p>
       </div>
       <div class="p-4 rounded-lg bg-n-slate-2">
-        <p class="text-xs text-n-slate-11">Average per Operator</p>
+        <p class="text-xs text-n-slate-11">
+          {{ t('REPORT.OPERATOR_STATUS_PAGE.METRICS.AVG_PER_OPERATOR') }}
+        </p>
         <p class="text-xl font-semibold text-n-slate-12">
           {{ formatMs(summaryMetrics.avgMs) }}
         </p>
@@ -264,7 +277,9 @@ onMounted(async () => {
     </div>
 
     <div v-if="isLoading" class="flex items-center justify-center py-16">
-      <span class="text-n-slate-11">Loading...</span>
+      <span class="text-n-slate-11">
+        {{ t('REPORT.OPERATOR_STATUS_PAGE.LOADING') }}
+      </span>
     </div>
 
     <table v-else-if="reportData.length" class="w-full text-left">
@@ -272,16 +287,16 @@ onMounted(async () => {
         <tr class="border-b border-n-slate-3">
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11 w-8" />
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
-            Operator
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.SESSIONS_TABLE.OPERATOR') }}
           </th>
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
-            Total Time
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.SESSIONS_TABLE.TOTAL_TIME') }}
           </th>
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
-            Active Days
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.SESSIONS_TABLE.ACTIVE_DAYS') }}
           </th>
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
-            Sessions
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.SESSIONS_TABLE.SESSIONS') }}
           </th>
         </tr>
       </thead>
@@ -329,7 +344,7 @@ onMounted(async () => {
                   <span
                     class="inline-block w-1.5 h-1.5 rounded-full bg-green-500"
                   />
-                  Active
+                  {{ t('REPORT.OPERATOR_STATUS_PAGE.SESSIONS_TABLE.ACTIVE') }}
                 </span>
               </td>
               <td class="py-2 px-4 text-xs text-n-slate-11" colspan="2">
@@ -342,7 +357,9 @@ onMounted(async () => {
     </table>
 
     <div v-else-if="!isLoading" class="flex items-center justify-center py-16">
-      <span class="text-n-slate-11">No data for the selected filters.</span>
+      <span class="text-n-slate-11">
+        {{ t('REPORT.OPERATOR_STATUS_PAGE.SESSIONS_TABLE.NO_DATA') }}
+      </span>
     </div>
   </div>
 </template>

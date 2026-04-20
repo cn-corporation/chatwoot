@@ -124,6 +124,58 @@
     "PAGINATION": {
       "RESULTS": "Showing {start} to {end} of {total} results",
       "PER_PAGE_TEMPLATE": "{size} / page"
+    },
+    "OPERATOR_STATUS_PAGE": {
+      "HEADER": "Operator Status",
+      "DESCRIPTION": "Track operator online status and work session history.",
+      "TAB_ONLINE": "Online Now",
+      "TAB_SESSIONS": "Work Sessions",
+      "LOADING": "Loading...",
+      "STATE": {
+        "ONLINE": "Online",
+        "DEGRADED": "Degraded",
+        "OFFLINE": "Offline"
+      },
+      "ONLINE_TABLE": {
+        "STATUS": "Status",
+        "OPERATOR": "Operator",
+        "STATE": "State",
+        "LAST_SEEN": "Last Seen",
+        "ACTION": "Action",
+        "NOW": "Now"
+      },
+      "FILTERS": {
+        "START_DATE": "Start Date",
+        "END_DATE": "End Date",
+        "OPERATORS": "Operators",
+        "MIN_HOURS": "Min Hours",
+        "ALL_OPERATORS": "All operators",
+        "N_OPERATORS": "{count} operators",
+        "SEARCH_PLACEHOLDER": "Search...",
+        "NO_RESULTS": "No results",
+        "APPLY": "Apply"
+      },
+      "METRICS": {
+        "TOTAL_HOURS": "Total Hours",
+        "ACTIVE_OPERATORS": "Active Operators",
+        "AVG_PER_OPERATOR": "Average per Operator"
+      },
+      "SESSIONS_TABLE": {
+        "OPERATOR": "Operator",
+        "TOTAL_TIME": "Total Time",
+        "ACTIVE_DAYS": "Active Days",
+        "SESSIONS": "Sessions",
+        "ACTIVE": "Active",
+        "NO_DATA": "No data for the selected filters."
+      },
+      "KICK": {
+        "ACTION_ONLINE": "Kill Session",
+        "ACTION_OFFLINE": "Revoke Tokens",
+        "CONFIRM": "Kill session for {name}? This will log them out immediately.",
+        "SUCCESS": "Session killed for {name}.",
+        "PARTIAL": "{name} was logged out, but the dashboard may take up to 90s to reflect offline status.",
+        "ERROR_GENERIC": "Failed to kill session. Please try again."
+      }
     }
   },
   "AGENT_REPORTS": {

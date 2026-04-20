@@ -3,6 +3,10 @@ import BaseActionCableConnector from '../../shared/helpers/BaseActionCableConnec
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { emitter } from 'shared/helpers/mitt';
 import { useImpersonation } from 'dashboard/composables/useImpersonation';
+import {
+  clearCookiesOnLogout,
+  deleteIndexedDBOnLogout,
+} from '../store/utils/api';
 
 const { isImpersonating } = useImpersonation();
 
@@ -94,7 +98,15 @@ class ActionCableConnector extends BaseActionCableConnector {
   };
 
   // eslint-disable-next-line class-methods-use-this
-  onLogout = () => AuthAPI.logout();
+  onLogout = () => {
+    AuthAPI.logout().catch(() => {});
+    try {
+      deleteIndexedDBOnLogout();
+      clearCookiesOnLogout();
+    } finally {
+      window.location.replace('/app/login');
+    }
+  };
 
   onMessageCreated = data => {
     const {

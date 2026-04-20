@@ -3,6 +3,7 @@ class Api::V1::Accounts::AgentsController < Api::V1::Accounts::BaseController
   before_action :check_authorization
   before_action :validate_limit, only: [:create]
   before_action :validate_limit_for_bulk_create, only: [:bulk_create]
+  before_action :prevent_self_logout, only: [:force_logout]
 
   def index
     @agents = agents
@@ -57,6 +58,23 @@ class Api::V1::Accounts::AgentsController < Api::V1::Accounts::BaseController
     head :ok
   end
 
+  def force_logout
+    log_payload = build_force_logout_log_payload(@agent)
+
+    ActionCable.server.broadcast(
+      @agent.pubsub_token,
+      { event: 'user:logout', data: { account_id: Current.account.id } }
+    )
+
+    @agent.tokens = {}
+    @agent.regenerate_pubsub_token
+    @agent.save!
+    @agent.access_token&.regenerate_token
+    unassign_open_conversations_for(@agent, log_payload)
+
+    head :ok
+  end
+
   private
 
   def check_authorization
@@ -103,6 +121,48 @@ class Api::V1::Accounts::AgentsController < Api::V1::Accounts::BaseController
 
   def can_add_agent?
     available_agent_count.positive?
+  end
+
+  def prevent_self_logout
+    return unless @agent.id == Current.user.id
+
+    render json: { error: 'You cannot force-logout yourself' }, status: :unprocessable_entity
+  end
+
+  def unassign_open_conversations_for(agent, log_payload)
+    conversations_to_unassign = agent.assigned_conversations.open
+    conversation_ids = conversations_to_unassign.pluck(:id)
+
+    if conversation_ids.any? && defined?(AGENT_ASSIGNMENT_LOGGER)
+      AGENT_ASSIGNMENT_LOGGER.info(JSON.pretty_generate(
+        log_payload.merge(
+          conversation_ids: conversation_ids,
+          conversation_count: conversation_ids.size
+        )
+      ))
+    end
+
+    conversations_to_unassign.update_all(assignee_id: nil)
+  end
+
+  def build_force_logout_log_payload(agent)
+    {
+      timestamp: Time.current.iso8601,
+      source: 'Api::V1::Accounts::AgentsController#force_logout',
+      triggered_by: {
+        user_id: Current.user.id,
+        user_name: Current.user.name,
+        user_email: Current.user.email
+      },
+      operation: 'bulk_unassignment',
+      trigger: 'admin_force_logout',
+      logout_user_id: agent.id,
+      logout_user_name: agent.name,
+      logout_user_email: agent.email,
+      assignee_before: { id: agent.id, name: agent.name, email: agent.email },
+      assignee_after: nil,
+      backtrace: caller(2, 15)
+    }
   end
 
   def delete_user_record(agent)

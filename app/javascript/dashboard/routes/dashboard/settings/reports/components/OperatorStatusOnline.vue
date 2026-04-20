@@ -1,10 +1,19 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { formatDistanceToNow } from 'date-fns';
+import { useI18n } from 'vue-i18n';
+import { useStore } from 'dashboard/composables/store';
+import { useAlert } from 'dashboard/composables';
 import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
+import AgentsAPI from 'dashboard/api/agents';
+
+const { t } = useI18n();
+const store = useStore();
+const currentUserId = computed(() => store.getters.getCurrentUserID);
 
 const operators = ref([]);
 const isLoading = ref(true);
+const kickingIds = ref(new Set());
 let refreshInterval = null;
 let eventSource = null;
 
@@ -26,14 +35,56 @@ const statusColor = status => {
 };
 
 const statusLabel = status => {
-  if (status === 'online') return 'Online';
-  if (status === 'degraded') return 'Degraded';
-  return 'Offline';
+  if (status === 'online') return t('REPORT.OPERATOR_STATUS_PAGE.STATE.ONLINE');
+  if (status === 'degraded')
+    return t('REPORT.OPERATOR_STATUS_PAGE.STATE.DEGRADED');
+  return t('REPORT.OPERATOR_STATUS_PAGE.STATE.OFFLINE');
 };
 
 const formatLastSeen = lastHeartbeat => {
   if (!lastHeartbeat) return '';
   return formatDistanceToNow(new Date(lastHeartbeat), { addSuffix: true });
+};
+
+const actionLabel = status =>
+  status === 'offline'
+    ? t('REPORT.OPERATOR_STATUS_PAGE.KICK.ACTION_OFFLINE')
+    : t('REPORT.OPERATOR_STATUS_PAGE.KICK.ACTION_ONLINE');
+
+const isSelf = op => op.operatorId === currentUserId.value;
+
+const kickOperator = async op => {
+  if (isSelf(op)) return;
+  // eslint-disable-next-line no-alert
+  const confirmed = window.confirm(
+    t('REPORT.OPERATOR_STATUS_PAGE.KICK.CONFIRM', { name: op.name })
+  );
+  if (!confirmed) return;
+
+  kickingIds.value.add(op.operatorId);
+  try {
+    await AgentsAPI.forceLogout(op.operatorId);
+    if (op.status !== 'offline') {
+      try {
+        await ChatwootExtraAPI.kickOperator(op.operatorId);
+        useAlert(
+          t('REPORT.OPERATOR_STATUS_PAGE.KICK.SUCCESS', { name: op.name })
+        );
+      } catch {
+        useAlert(
+          t('REPORT.OPERATOR_STATUS_PAGE.KICK.PARTIAL', { name: op.name })
+        );
+      }
+    } else {
+      useAlert(
+        t('REPORT.OPERATOR_STATUS_PAGE.KICK.SUCCESS', { name: op.name })
+      );
+    }
+  } catch {
+    useAlert(t('REPORT.OPERATOR_STATUS_PAGE.KICK.ERROR_GENERIC'));
+  } finally {
+    kickingIds.value.delete(op.operatorId);
+  }
 };
 
 const fetchOperators = async () => {
@@ -136,18 +187,27 @@ onUnmounted(() => {
 <template>
   <div>
     <div v-if="isLoading" class="flex items-center justify-center py-16">
-      <span class="text-n-slate-11">Loading...</span>
+      <span class="text-n-slate-11">
+        {{ t('REPORT.OPERATOR_STATUS_PAGE.LOADING') }}
+      </span>
     </div>
     <table v-else class="w-full text-left">
       <thead>
         <tr class="border-b border-n-slate-3">
-          <th class="py-3 px-4 text-sm font-medium text-n-slate-11">Status</th>
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
-            Operator
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.ONLINE_TABLE.STATUS') }}
           </th>
-          <th class="py-3 px-4 text-sm font-medium text-n-slate-11">State</th>
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
-            Last Seen
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.ONLINE_TABLE.OPERATOR') }}
+          </th>
+          <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.ONLINE_TABLE.STATE') }}
+          </th>
+          <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.ONLINE_TABLE.LAST_SEEN') }}
+          </th>
+          <th class="py-3 px-4 text-sm font-medium text-n-slate-11 text-right">
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.ONLINE_TABLE.ACTION') }}
           </th>
         </tr>
       </thead>
@@ -171,11 +231,28 @@ onUnmounted(() => {
             {{ statusLabel(op.status) }}
           </td>
           <td class="py-3 px-4 text-sm text-n-slate-11">
-            <template v-if="op.status === 'online'">Now</template>
+            <template v-if="op.status === 'online'">
+              {{ t('REPORT.OPERATOR_STATUS_PAGE.ONLINE_TABLE.NOW') }}
+            </template>
             <template v-else-if="op.lastHeartbeat">
               {{ formatLastSeen(op.lastHeartbeat) }}
             </template>
             <template v-else>—</template>
+          </td>
+          <td class="py-3 px-4 text-right">
+            <button
+              v-if="!isSelf(op)"
+              class="px-3 py-1.5 text-xs font-medium rounded border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              :class="
+                op.status === 'offline'
+                  ? 'border-n-slate-6 text-n-slate-11 hover:bg-n-slate-3'
+                  : 'border-red-500 text-red-500 hover:bg-red-500 hover:text-white'
+              "
+              :disabled="kickingIds.has(op.operatorId)"
+              @click="kickOperator(op)"
+            >
+              {{ actionLabel(op.status) }}
+            </button>
           </td>
         </tr>
       </tbody>
