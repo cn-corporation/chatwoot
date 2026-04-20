@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useStore } from 'dashboard/composables/store';
+import { useStore, useMapGetter } from 'dashboard/composables/store';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -20,6 +20,7 @@ import ReportHeader from '../settings/reports/components/ReportHeader.vue';
 import MetricCard from '../settings/reports/components/overview/MetricCard.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import resolutionStatisticsAPI from 'dashboard/api/resolutionStatistics';
+import { conversationUrl, frontendURL } from 'dashboard/helper/URLHelper';
 
 ChartJS.register(
   CategoryScale,
@@ -44,9 +45,16 @@ const dateRange = ref({
   end: format(new Date(), 'yyyy-MM-dd'),
 });
 
+const accountId = useMapGetter('getCurrentAccountId');
+
 const currentUserId = computed(() => {
   return String(store.getters.getCurrentUser.id);
 });
+
+const conversationLink = id => {
+  if (!accountId.value) return '#';
+  return frontendURL(conversationUrl({ accountId: accountId.value, id }));
+};
 
 const resolutionTopicLabels = {
   deposits_withdrawals: () => t('CLOSE_TOPICS.TOPIC_DEPOSITS_WITHDRAWALS'),
@@ -285,7 +293,12 @@ onMounted(() => {
               class="border-b border-n-slate-6 hover:bg-n-solid-2"
             >
               <td class="py-3 px-4 text-sm text-n-slate-12">
-                #{{ row.conversationId }}
+                <a
+                  :href="conversationLink(row.conversationId)"
+                  class="text-n-primary hover:underline"
+                >
+                  {{ '#' + row.conversationId }}
+                </a>
               </td>
               <td class="py-3 px-4 text-sm text-n-slate-12">
                 {{ row.topics }}
