@@ -3,13 +3,14 @@ import types from '../mutation-types';
 import ChatwootExtraAPI from '../../api/chatwootExtra';
 import { throwErrorMessage } from '../utils/api';
 import { encrypt } from '../../helper/encryption';
-import Auth from '../../api/auth';
 
 export const state = {
   records: [],
   sendOperations: {},
   sendOperationsHistory: {},
   errorLogs: {},
+  activeSchedules: {},
+  scheduleHistory: {},
   uiFlags: {
     isFetchingItem: false,
     isFetching: false,
@@ -25,6 +26,10 @@ export const state = {
     isFetchingOperations: false,
     isDeletingSentMessages: false,
     isFetchingErrorLogs: false,
+    isSchedulingSend: false,
+    isReschedulingSend: false,
+    isCancellingSchedule: false,
+    isFetchingSchedules: false,
   },
 };
 
@@ -44,6 +49,8 @@ export const getters = {
   getErrorLogs: $state => adId => {
     return $state.errorLogs[adId] || [];
   },
+  getActiveSchedule: $state => adId => $state.activeSchedules[adId],
+  getScheduleHistory: $state => adId => $state.scheduleHistory[adId] || [],
   getUIFlags($state) {
     return $state.uiFlags;
   },
@@ -148,25 +155,14 @@ export const actions = {
     commit(types.SET_ADS_UI_FLAG, { isStartingSend: true });
     try {
       const accountId = rootGetters.getCurrentAccountId;
-      const authData = Auth.getAuthData();
-
-      if (!authData || !authData['access-token']) {
-        throw new Error('Authentication data not found. Please log in again.');
+      const currentUser = rootGetters.getCurrentUser;
+      if (!currentUser?.access_token) {
+        throw new Error('Current user access token is not available.');
       }
 
-      const bearerTokenData = {
-        'access-token': authData['access-token'],
-        'token-type': authData['token-type'] || 'Bearer',
-        client: authData.client,
-        expiry: authData.expiry,
-        uid: authData.uid,
-      };
-
-      const bearerToken = btoa(JSON.stringify(bearerTokenData));
-
       const payload = {
-        bearerToken: bearerToken,
-        accountId: accountId,
+        bearerToken: currentUser.access_token,
+        accountId,
       };
 
       const bearerTokenHash = await encrypt(JSON.stringify(payload));
@@ -188,6 +184,132 @@ export const actions = {
       return null;
     } finally {
       commit(types.SET_ADS_UI_FLAG, { isStartingSend: false });
+    }
+  },
+  getActiveScheduledSends: async ({ commit }) => {
+    commit(types.SET_ADS_UI_FLAG, { isFetchingSchedules: true });
+    try {
+      const response = await ChatwootExtraAPI.getActiveScheduledSends();
+      if (response.success && response.data) {
+        commit(types.SET_ACTIVE_SCHEDULES, response.data);
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isFetchingSchedules: false });
+    }
+  },
+  getScheduledSendsForAd: async ({ commit }, adId) => {
+    commit(types.SET_ADS_UI_FLAG, { isFetchingSchedules: true });
+    try {
+      const response = await ChatwootExtraAPI.getScheduledSendsForAd(adId);
+      if (response.success && response.data) {
+        commit(types.SET_SCHEDULE_HISTORY, { adId, schedules: response.data });
+        return response.data;
+      }
+      return [];
+    } catch (error) {
+      throwErrorMessage(error);
+      return [];
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isFetchingSchedules: false });
+    }
+  },
+  scheduleSend: async (
+    { commit, rootGetters },
+    { adId, scheduledAt, scheduledTz }
+  ) => {
+    commit(types.SET_ADS_UI_FLAG, { isSchedulingSend: true });
+    try {
+      const accountId = rootGetters.getCurrentAccountId;
+      const currentUser = rootGetters.getCurrentUser;
+      if (!currentUser?.access_token) {
+        throw new Error('Current user access token is not available.');
+      }
+      const payload = {
+        bearerToken: currentUser.access_token,
+        accountId,
+      };
+      const bearerTokenHash = await encrypt(JSON.stringify(payload));
+      const chatwootApiUrl = window.location.origin;
+
+      const response = await ChatwootExtraAPI.createScheduledSend({
+        adId,
+        scheduledAt,
+        scheduledTz,
+        bearerTokenHash,
+        chatwootApiUrl,
+        createdByUserId: currentUser.id,
+      });
+      if (response.success && response.data) {
+        commit(types.SET_ACTIVE_SCHEDULE_FOR_AD, {
+          adId,
+          schedule: response.data,
+        });
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isSchedulingSend: false });
+    }
+  },
+  rescheduleSend: async (
+    { commit, dispatch },
+    { adId, scheduleId, scheduledAt, scheduledTz }
+  ) => {
+    commit(types.SET_ADS_UI_FLAG, { isReschedulingSend: true });
+    try {
+      const response = await ChatwootExtraAPI.rescheduleScheduledSend(
+        scheduleId,
+        { scheduledAt, scheduledTz }
+      );
+      if (response.success && response.data) {
+        commit(types.SET_ACTIVE_SCHEDULE_FOR_AD, {
+          adId,
+          schedule: response.data,
+        });
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      if (error?.response?.status === 409) {
+        // Schedule already fired or was cancelled — refresh active schedules
+        // to clear the stale pill and swallow the error without the generic toast.
+        commit(types.REMOVE_ACTIVE_SCHEDULE_FOR_AD, adId);
+        dispatch('getActiveScheduledSends');
+        return null;
+      }
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isReschedulingSend: false });
+    }
+  },
+  cancelScheduledSend: async ({ commit, dispatch }, { adId, scheduleId }) => {
+    commit(types.SET_ADS_UI_FLAG, { isCancellingSchedule: true });
+    try {
+      const response = await ChatwootExtraAPI.cancelScheduledSend(scheduleId);
+      if (response.success) {
+        commit(types.REMOVE_ACTIVE_SCHEDULE_FOR_AD, adId);
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      if (error?.response?.status === 409) {
+        commit(types.REMOVE_ACTIVE_SCHEDULE_FOR_AD, adId);
+        dispatch('getActiveScheduledSends');
+        return null;
+      }
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isCancellingSchedule: false });
     }
   },
   testSend: async ({ commit }, { adId, telegramId }) => {
@@ -331,6 +453,20 @@ export const mutations = {
       ...$state.errorLogs,
       [adId]: errorLogs,
     };
+  },
+  [types.SET_ACTIVE_SCHEDULES]($state, map) {
+    $state.activeSchedules = { ...map };
+  },
+  [types.SET_ACTIVE_SCHEDULE_FOR_AD]($state, { adId, schedule }) {
+    $state.activeSchedules = { ...$state.activeSchedules, [adId]: schedule };
+  },
+  [types.REMOVE_ACTIVE_SCHEDULE_FOR_AD]($state, adId) {
+    const next = { ...$state.activeSchedules };
+    delete next[adId];
+    $state.activeSchedules = next;
+  },
+  [types.SET_SCHEDULE_HISTORY]($state, { adId, schedules }) {
+    $state.scheduleHistory = { ...$state.scheduleHistory, [adId]: schedules };
   },
   [types.ADD_AD]: MutationHelpers.setSingleRecord,
   [types.SET_ADS]: MutationHelpers.set,
