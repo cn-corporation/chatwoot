@@ -129,7 +129,7 @@ const cancelSchedule = async () => {
     class="fixed inset-0 z-40 flex items-center justify-center bg-black/40"
   >
     <div
-      class="bg-white dark:bg-n-slate-2 rounded-lg p-6 w-full max-w-md shadow-xl"
+      class="bg-white dark:bg-n-slate-2 rounded-lg p-6 w-full max-w-xl shadow-xl"
     >
       <h2 class="text-lg font-semibold mb-4 text-n-slate-12">
         {{ isEdit ? t('ADS.SCHEDULE.EDIT_TITLE') : t('ADS.SCHEDULE.TITLE') }}
