@@ -8,6 +8,7 @@ import { useRouter } from 'vue-router';
 import Button from 'dashboard/components-next/button/Button.vue';
 import { emitter } from 'shared/helpers/mitt';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
+import ScheduleSendDialog from './ScheduleSendDialog.vue';
 
 const getters = useStoreGetters();
 const store = useStore();
@@ -22,6 +23,9 @@ const showOperationsHistoryDialog = ref(false);
 const showErrorLogsDialog = ref(false);
 const selectedAd = ref({});
 const testTelegramId = ref('');
+const showScheduleDialog = ref(false);
+const scheduleDialogAd = ref(null);
+const historyTab = ref('operations');
 
 const records = computed(() => getters['ads/getAds'].value);
 const uiFlags = computed(() => getters['ads/getUIFlags'].value);
@@ -36,7 +40,85 @@ const getSendOperation = adId => {
 onMounted(async () => {
   await Promise.all([store.dispatch('inboxes/get'), store.dispatch('ads/get')]);
   await store.dispatch('ads/getLatestSendOperations');
+  await store.dispatch('ads/getActiveScheduledSends');
 });
+
+const viewerTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+const PILL_STALE_GRACE_MS = 30_000;
+
+const getActiveSchedule = adId => {
+  const schedule = getters['ads/getActiveSchedule'].value(adId);
+  if (!schedule) return null;
+  // Hide the pill once the fire time is past + a grace window — the poller
+  // should have transitioned the row to 'fired' by then. Protects against
+  // the Vuex cache being stale between `getActiveScheduledSends` calls.
+  const fireTime = new Date(schedule.scheduledAt).getTime();
+  if (fireTime < Date.now() - PILL_STALE_GRACE_MS) return null;
+  return schedule;
+};
+
+const formatScheduleLabel = (iso, scheduledTz) => {
+  const d = new Date(iso);
+  const local = d.toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+  if (!scheduledTz || scheduledTz === viewerTz) {
+    return local;
+  }
+  const inCreatorTz = d.toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: scheduledTz,
+  });
+  return `${local} · ${inCreatorTz} ${scheduledTz}`;
+};
+
+const openScheduleDialog = async ad => {
+  // Refresh active schedules before opening so a just-fired schedule
+  // doesn't hand the dialog a stale row.
+  await store.dispatch('ads/getActiveScheduledSends');
+  scheduleDialogAd.value = ad;
+  showScheduleDialog.value = true;
+};
+
+const closeScheduleDialog = async () => {
+  showScheduleDialog.value = false;
+  scheduleDialogAd.value = null;
+  await store.dispatch('ads/getActiveScheduledSends');
+};
+
+const getScheduleHistoryForSelected = computed(() => {
+  if (!selectedAd.value?.id) return [];
+  return getters['ads/getScheduleHistory'].value(selectedAd.value.id);
+});
+
+const selectSchedulesTab = async () => {
+  historyTab.value = 'schedules';
+  if (selectedAd.value?.id) {
+    await store.dispatch('ads/getScheduledSendsForAd', selectedAd.value.id);
+  }
+};
+
+const selectOperationsTab = () => {
+  historyTab.value = 'operations';
+};
+
+const formatScheduleStatus = status => {
+  switch (status) {
+    case 'scheduled':
+      return t('ADS.SCHEDULE.STATUS_SCHEDULED');
+    case 'fired':
+      return t('ADS.SCHEDULE.STATUS_FIRED');
+    case 'cancelled':
+      return t('ADS.SCHEDULE.STATUS_CANCELLED');
+    case 'skipped':
+      return t('ADS.SCHEDULE.STATUS_SKIPPED');
+    default:
+      return status;
+  }
+};
 
 const deleteAd = async id => {
   try {
@@ -198,6 +280,7 @@ const refreshStatus = async () => {
 };
 
 const openOperationsHistoryDialog = async ad => {
+  historyTab.value = 'operations';
   selectedAd.value = ad;
   await store.dispatch('ads/getSendOperations', ad.id);
   showOperationsHistoryDialog.value = true;
@@ -366,6 +449,20 @@ const exportErrorLogsToExcel = () => {
               <span v-else class="text-xs text-n-slate-10">
                 {{ $t('ADS.FILTER_SUMMARY.ALL_CONTACTS') }}
               </span>
+              <button
+                v-if="getActiveSchedule(ad.id)"
+                type="button"
+                class="ml-2 px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded inline-flex items-center gap-1 hover:bg-blue-100"
+                @click="openScheduleDialog(ad)"
+              >
+                <span class="i-lucide-calendar-clock" aria-hidden="true" />
+                {{
+                  formatScheduleLabel(
+                    getActiveSchedule(ad.id).scheduledAt,
+                    getActiveSchedule(ad.id).scheduledTz
+                  )
+                }}
+              </button>
             </td>
             <td class="py-4 ltr:pr-4 rtl:pl-4">
               {{ formatDate(ad.createdAt) }}
@@ -396,6 +493,14 @@ const exportErrorLogsToExcel = () => {
                   color-scheme="warning"
                   :disabled="uiFlags.isStoppingSend"
                   @click="stopSendAd(ad)"
+                />
+                <Button
+                  v-tooltip.top="$t('ADS.ACTIONS.SCHEDULE_SEND')"
+                  variant="ghost"
+                  size="small"
+                  icon="i-lucide-calendar-clock"
+                  :disabled="uiFlags.isSchedulingSend"
+                  @click="openScheduleDialog(ad)"
                 />
                 <Button
                   v-tooltip.top="$t('ADS.ACTIONS.TEST_AD')"
@@ -598,99 +703,166 @@ const exportErrorLogsToExcel = () => {
           <h2 class="text-lg font-semibold">
             {{ $t('ADS.OPERATIONS_HISTORY.TITLE') }}
           </h2>
-          <div
-            v-if="uiFlags.isFetchingOperations"
-            class="flex justify-center py-8"
-          >
-            <p class="text-sm text-n-slate-11">
-              {{ $t('ADS.OPERATIONS_HISTORY.LOADING') }}
-            </p>
+          <div class="flex gap-2 mb-3">
+            <Button
+              :variant="historyTab === 'operations' ? 'solid' : 'ghost'"
+              size="small"
+              :label="$t('ADS.SCHEDULE.OPERATIONS_TAB')"
+              @click="selectOperationsTab"
+            />
+            <Button
+              :variant="historyTab === 'schedules' ? 'solid' : 'ghost'"
+              size="small"
+              :label="$t('ADS.SCHEDULE.HISTORY_TAB')"
+              @click="selectSchedulesTab"
+            />
           </div>
-          <div
-            v-else-if="!getSendOperationsHistory.length"
-            class="flex justify-center py-8"
-          >
-            <p class="text-sm text-n-slate-11">
-              {{ $t('ADS.OPERATIONS_HISTORY.EMPTY') }}
-            </p>
-          </div>
-          <div v-else class="max-h-96 overflow-y-auto space-y-4">
+          <div v-if="historyTab === 'operations'">
             <div
-              v-for="operation in getSendOperationsHistory"
-              :key="operation.id"
-              class="border border-n-weak rounded-lg p-4"
+              v-if="uiFlags.isFetchingOperations"
+              class="flex justify-center py-8"
             >
-              <div class="flex justify-between items-start mb-3">
-                <div>
-                  <p class="text-sm font-semibold">
-                    {{ formatDate(operation.createdAt) }}
-                  </p>
-                  <p
-                    class="text-xs mt-1"
-                    :class="{
-                      'text-green-600': operation.isRunning,
-                      'text-orange-600': operation.cancelled,
-                      'text-gray-600':
-                        !operation.isRunning && !operation.cancelled,
-                    }"
-                  >
-                    {{
-                      operation.isRunning
-                        ? $t('ADS.STATUS.RUNNING')
-                        : operation.cancelled
-                          ? $t('ADS.STATUS.CANCELLED')
-                          : $t('ADS.STATUS.COMPLETED')
-                    }}
-                  </p>
+              <p class="text-sm text-n-slate-11">
+                {{ $t('ADS.OPERATIONS_HISTORY.LOADING') }}
+              </p>
+            </div>
+            <div
+              v-else-if="!getSendOperationsHistory.length"
+              class="flex justify-center py-8"
+            >
+              <p class="text-sm text-n-slate-11">
+                {{ $t('ADS.OPERATIONS_HISTORY.EMPTY') }}
+              </p>
+            </div>
+            <div v-else class="max-h-96 overflow-y-auto space-y-4">
+              <div
+                v-for="operation in getSendOperationsHistory"
+                :key="operation.id"
+                class="border border-n-weak rounded-lg p-4"
+              >
+                <div class="flex justify-between items-start mb-3">
+                  <div>
+                    <p class="text-sm font-semibold">
+                      {{ formatDate(operation.createdAt) }}
+                    </p>
+                    <p
+                      class="text-xs mt-1"
+                      :class="{
+                        'text-green-600': operation.isRunning,
+                        'text-orange-600': operation.cancelled,
+                        'text-gray-600':
+                          !operation.isRunning && !operation.cancelled,
+                      }"
+                    >
+                      {{
+                        operation.isRunning
+                          ? $t('ADS.STATUS.RUNNING')
+                          : operation.cancelled
+                            ? $t('ADS.STATUS.CANCELLED')
+                            : $t('ADS.STATUS.COMPLETED')
+                      }}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div class="grid grid-cols-3 gap-3">
-                <div>
-                  <p class="text-xs text-n-slate-11">
-                    {{ $t('ADS.STATUS.TOTAL') }}
-                  </p>
-                  <p class="text-sm font-semibold">
-                    {{ operation.totalCount }}
-                  </p>
-                </div>
-                <div>
-                  <p class="text-xs text-n-slate-11">
-                    {{ $t('ADS.STATUS.SENT') }}
-                  </p>
-                  <p class="text-sm font-semibold">{{ operation.sentCount }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-n-slate-11">
-                    {{ $t('ADS.STATUS.SUCCESS') }}
-                  </p>
-                  <p class="text-sm font-semibold text-green-600">
-                    {{ operation.successCount }}
-                  </p>
-                </div>
-                <div>
-                  <p class="text-xs text-n-slate-11">
-                    {{ $t('ADS.STATUS.FAILED') }}
-                  </p>
-                  <p class="text-sm font-semibold text-red-600">
-                    {{ operation.failedCount }}
-                  </p>
-                </div>
-                <div>
-                  <p class="text-xs text-n-slate-11">
-                    {{ $t('ADS.STATUS.DELETED') }}
-                  </p>
-                  <p class="text-sm font-semibold text-orange-600">
-                    {{ operation.deletedCount }}
-                  </p>
-                </div>
-                <div>
-                  <p class="text-xs text-n-slate-11">
-                    {{ $t('ADS.STATUS.LEFT') }}
-                  </p>
-                  <p class="text-sm font-semibold">{{ operation.leftCount }}</p>
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <p class="text-xs text-n-slate-11">
+                      {{ $t('ADS.STATUS.TOTAL') }}
+                    </p>
+                    <p class="text-sm font-semibold">
+                      {{ operation.totalCount }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-n-slate-11">
+                      {{ $t('ADS.STATUS.SENT') }}
+                    </p>
+                    <p class="text-sm font-semibold">
+                      {{ operation.sentCount }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-n-slate-11">
+                      {{ $t('ADS.STATUS.SUCCESS') }}
+                    </p>
+                    <p class="text-sm font-semibold text-green-600">
+                      {{ operation.successCount }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-n-slate-11">
+                      {{ $t('ADS.STATUS.FAILED') }}
+                    </p>
+                    <p class="text-sm font-semibold text-red-600">
+                      {{ operation.failedCount }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-n-slate-11">
+                      {{ $t('ADS.STATUS.DELETED') }}
+                    </p>
+                    <p class="text-sm font-semibold text-orange-600">
+                      {{ operation.deletedCount }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-n-slate-11">
+                      {{ $t('ADS.STATUS.LEFT') }}
+                    </p>
+                    <p class="text-sm font-semibold">
+                      {{ operation.leftCount }}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+          <div v-else-if="historyTab === 'schedules'">
+            <p
+              v-if="!getScheduleHistoryForSelected.length"
+              class="text-n-slate-10 text-sm py-4"
+            >
+              {{ $t('ADS.SCHEDULE.NO_HISTORY') }}
+            </p>
+            <table v-else class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-n-slate-10 border-b border-n-slate-5">
+                  <th class="py-2 pr-4">
+                    {{ $t('ADS.SCHEDULE.PICKER_LABEL') }}
+                  </th>
+                  <th class="py-2 pr-4">
+                    {{ $t('ADS.SCHEDULE.HISTORY_TAB') }}
+                  </th>
+                  <th class="py-2">{{ $t('ADS.SCHEDULE.VIEW_SEND') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="row in getScheduleHistoryForSelected"
+                  :key="row.id"
+                  class="border-b border-n-slate-4"
+                >
+                  <td class="py-2 pr-4 text-n-slate-12">
+                    {{ formatScheduleLabel(row.scheduledAt, row.scheduledTz) }}
+                  </td>
+                  <td class="py-2 pr-4 text-n-slate-11">
+                    {{ formatScheduleStatus(row.status) }}
+                    <span
+                      v-if="row.status === 'skipped' && row.skipReason"
+                      class="text-xs text-n-slate-10"
+                    >
+                      ({{ row.skipReason }})
+                    </span>
+                  </td>
+                  <td class="py-2 text-n-slate-11">
+                    <span v-if="row.sendOpId" class="text-blue-600">
+                      {{ row.sendOpId.slice(0, 8) }}
+                    </span>
+                    <span v-else class="text-n-slate-9"> - </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <div class="flex gap-2 justify-end">
             <Button
@@ -780,6 +952,13 @@ const exportErrorLogsToExcel = () => {
           </div>
         </div>
       </woot-modal>
+      <ScheduleSendDialog
+        v-if="showScheduleDialog && scheduleDialogAd"
+        :show="showScheduleDialog"
+        :ad="scheduleDialogAd"
+        :existing-schedule="getActiveSchedule(scheduleDialogAd.id)"
+        @close="closeScheduleDialog"
+      />
     </template>
   </SettingsLayout>
 </template>

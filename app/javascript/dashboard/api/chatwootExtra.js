@@ -440,6 +440,49 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  // Ads Scheduled Send API
+  async createScheduledSend(payload) {
+    const response = await axios.post(
+      `${this.baseURL}/api/ads-scheduled-send`,
+      payload,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getActiveScheduledSends() {
+    const response = await axios.get(
+      `${this.baseURL}/api/ads-scheduled-send/active`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getScheduledSendsForAd(adId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/ads-scheduled-send/ad/${adId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async rescheduleScheduledSend(id, { scheduledAt, scheduledTz }) {
+    const response = await axios.patch(
+      `${this.baseURL}/api/ads-scheduled-send/${id}`,
+      { scheduledAt, scheduledTz },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async cancelScheduledSend(id) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/ads-scheduled-send/${id}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   // Ads Log API
   async deleteSentAds(adId) {
     const response = await axios.delete(
