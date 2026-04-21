@@ -7,6 +7,7 @@ import BackButton from '../BackButton.vue';
 import InboxName from '../InboxName.vue';
 import MoreActions from './MoreActions.vue';
 import OperatorPresenceDropdown from './OperatorPresenceDropdown.vue';
+import WaitingToggle from './WaitingToggle.vue';
 import Avatar from 'next/avatar/Avatar.vue';
 import SLACardLabel from './components/SLACardLabel.vue';
 import wootConstants from 'dashboard/constants/globals';
@@ -156,6 +157,7 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
         v-if="currentChat.id"
         :conversation-id="currentChat.id"
       />
+      <WaitingToggle v-if="currentChat.id" />
       <MoreActions :conversation-id="currentChat.id" />
     </div>
   </div>
