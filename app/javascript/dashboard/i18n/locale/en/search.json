@@ -16,6 +16,11 @@
     "FILTERS": {
       "AGENT_LABEL": "Agent",
       "AGENT_PLACEHOLDER": "All agents",
+      "PARTICIPATED_BY_LABEL": "Participated by",
+      "PARTICIPATED_BY_PLACEHOLDER": "Any agent",
+      "RESOLVED_BY_LABEL": "Resolved by",
+      "RESOLVED_BY_PLACEHOLDER": "Any agent",
+      "SEARCH_BUTTON": "Search",
       "DATE_FROM_LABEL": "From",
       "DATE_FROM_PLACEHOLDER": "Start",
       "DATE_TO_LABEL": "To",

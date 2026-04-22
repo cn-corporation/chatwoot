@@ -8,7 +8,7 @@ const props = defineProps({
   active: { type: Boolean, default: false },
 });
 
-defineEmits(['select']);
+defineEmits(['select', 'archive']);
 
 const store = useStore();
 
@@ -92,7 +92,7 @@ const previewHasFormatting = computed(() => {
 
 <template>
   <button
-    class="flex items-start gap-3 w-full px-3 py-2.5 text-left rounded-lg transition-colors"
+    class="flex items-start gap-3 w-full px-3 py-2.5 text-left rounded-lg transition-colors group/chat"
     :class="active ? 'bg-n-alpha-2' : 'hover:bg-n-alpha-1'"
     @click="$emit('select', chat)"
   >
@@ -115,6 +115,14 @@ const previewHasFormatting = computed(() => {
           <span class="text-xs text-n-slate-10">
             {{ timeDisplay }}
           </span>
+          <button
+            v-if="!isForumGroup"
+            class="opacity-0 group-hover/chat:opacity-100 transition-opacity p-0.5 rounded hover:bg-n-alpha-2"
+            title="Archive"
+            @click.stop="$emit('archive', chat)"
+          >
+            <span class="i-lucide-archive size-3.5 text-n-slate-10" />
+          </button>
           <span
             v-if="isForumGroup"
             class="i-lucide-chevron-right size-4 text-n-slate-9"

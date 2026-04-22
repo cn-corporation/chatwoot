@@ -177,7 +177,37 @@
       "DELETE_SENT": "Delete sent messages",
       "VIEW_ERRORS": "View error logs",
       "EDIT": "Edit ad",
-      "DELETE": "Delete ad"
+      "DELETE": "Delete ad",
+      "SCHEDULE_SEND": "Schedule send"
+    },
+    "SCHEDULE": {
+      "TITLE": "Schedule send",
+      "EDIT_TITLE": "Reschedule send",
+      "PICKER_LABEL": "Send at",
+      "TIMEZONE_NOTE": "Interpreted in your browser's timezone",
+      "SUBMIT": "Schedule",
+      "UPDATE": "Update",
+      "CANCEL_BTN": "Cancel schedule",
+      "CANCEL_CONFIRM": "Are you sure you want to cancel this scheduled send?",
+      "PAST_TIME_ERROR": "Please pick a time in the future",
+      "CLOSE": "Close",
+      "NO_HISTORY": "No scheduled sends yet",
+      "HISTORY_TAB": "Schedules",
+      "OPERATIONS_TAB": "Send operations",
+      "STATUS_SCHEDULED": "Scheduled",
+      "STATUS_FIRED": "Fired",
+      "STATUS_CANCELLED": "Cancelled",
+      "STATUS_SKIPPED": "Skipped",
+      "VIEW_SEND": "View send",
+      "CREATOR_SUFFIX": "scheduled",
+      "API": {
+        "SUCCESS_CREATE": "Scheduled.",
+        "SUCCESS_UPDATE": "Schedule updated.",
+        "SUCCESS_CANCEL": "Schedule cancelled.",
+        "ERROR_CREATE": "Could not schedule.",
+        "ERROR_UPDATE": "Could not update the schedule.",
+        "ERROR_CANCEL": "Could not cancel the schedule."
+      }
     },
     "ERROR_LOGS": {
       "TITLE": "Error Logs",

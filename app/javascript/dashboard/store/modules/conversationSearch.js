@@ -11,6 +11,8 @@ export const initialState = {
   articleRecords: [],
   messageFilters: {
     userId: null,
+    participatedByUserId: null,
+    resolvedByUserId: null,
     dateFrom: null,
     dateTo: null,
   },
@@ -122,11 +124,19 @@ export const actions = {
     commit(types.MESSAGE_SEARCH_SET_UI_FLAG, { isFetching: true });
     try {
       const accountId = rootGetters.getCurrentAccountId;
-      const { userId, dateFrom, dateTo } = state.messageFilters;
+      const {
+        userId,
+        participatedByUserId,
+        resolvedByUserId,
+        dateFrom,
+        dateTo,
+      } = state.messageFilters;
 
       const response = await ChatwootExtraAPI.searchMessages({
         query: q,
         userId,
+        participatedByUserId,
+        resolvedByUserId,
         dateFrom,
         dateTo,
         accountId,

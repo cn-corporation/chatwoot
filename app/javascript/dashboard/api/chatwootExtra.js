@@ -440,6 +440,49 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  // Ads Scheduled Send API
+  async createScheduledSend(payload) {
+    const response = await axios.post(
+      `${this.baseURL}/api/ads-scheduled-send`,
+      payload,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getActiveScheduledSends() {
+    const response = await axios.get(
+      `${this.baseURL}/api/ads-scheduled-send/active`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getScheduledSendsForAd(adId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/ads-scheduled-send/ad/${adId}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async rescheduleScheduledSend(id, { scheduledAt, scheduledTz }) {
+    const response = await axios.patch(
+      `${this.baseURL}/api/ads-scheduled-send/${id}`,
+      { scheduledAt, scheduledTz },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async cancelScheduledSend(id) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/ads-scheduled-send/${id}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   // Ads Log API
   async deleteSentAds(adId) {
     const response = await axios.delete(
@@ -598,6 +641,8 @@ class ChatwootExtraAPI {
   async searchMessages({
     query,
     userId,
+    participatedByUserId,
+    resolvedByUserId,
     dateFrom,
     dateTo,
     accountId,
@@ -606,6 +651,9 @@ class ChatwootExtraAPI {
   }) {
     const params = { query, accountId, limit, offset };
     if (userId) params.userId = userId;
+    if (participatedByUserId)
+      params.participatedByUserId = participatedByUserId;
+    if (resolvedByUserId) params.resolvedByUserId = resolvedByUserId;
     if (dateFrom) params.dateFrom = dateFrom;
     if (dateTo) params.dateTo = dateTo;
 
@@ -613,6 +661,15 @@ class ChatwootExtraAPI {
       params,
       headers: this.headers,
     });
+    return response.data;
+  }
+
+  async translateText({ text, targetLang }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/translate`,
+      { text, targetLang },
+      { headers: this.headers }
+    );
     return response.data;
   }
 
@@ -709,6 +766,31 @@ class ChatwootExtraAPI {
     const response = await axios.get(
       `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/media/${mediaPath}`,
       { headers: this.headers, responseType: 'blob' }
+    );
+    return response.data;
+  }
+
+  async getArchivedTelegramChats(sourceId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/archived-chats`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async archiveTelegramChat(sourceId, chatDbId, chatData) {
+    const response = await axios.post(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats/${chatDbId}/archive`,
+      chatData,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async unarchiveTelegramChat(sourceId, chatDbId) {
+    const response = await axios.delete(
+      `${this.baseURL}/api/telegram-dialogues/sources/${sourceId}/chats/${chatDbId}/archive`,
+      { headers: this.headers }
     );
     return response.data;
   }
@@ -869,6 +951,15 @@ class ChatwootExtraAPI {
   async getOperatorsList() {
     const response = await axios.get(
       `${this.baseURL}/api/operator-status/operators`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async kickOperator(chatwootUserId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-status/kick`,
+      { chatwootUserId },
       { headers: this.headers }
     );
     return response.data;

@@ -9,6 +9,7 @@ import TelegramSourceSelector from './TelegramSourceSelector.vue';
 import TelegramChatList from './TelegramChatList.vue';
 import TelegramMessagePanel from './TelegramMessagePanel.vue';
 import TelegramChatInfo from './TelegramChatInfo.vue';
+import TelegramArchivedList from './TelegramArchivedList.vue';
 
 const STORAGE_KEY = 'telegram_splitpane_sizes';
 
@@ -30,6 +31,9 @@ const activeChatId = computed(
 );
 const activeChat = computed(
   () => store.getters['telegramDialogues/getActiveChat']
+);
+const showArchive = computed(
+  () => store.getters['telegramDialogues/getShowArchive']
 );
 
 const splitpaneSizes = ref({
@@ -78,6 +82,10 @@ const onSelectSource = sourceId => {
   router.push(accountScopedRoute('telegram_dialogues'));
 };
 
+const onArchiveChat = chat => {
+  store.dispatch('telegramDialogues/archiveChat', chat);
+};
+
 const onSelectChat = chat => {
   if (chat.isForumGroup) {
     store.commit('telegramDialogues/SET_ACTIVE_GROUP_CHAT_ID', chat.chatId);
@@ -112,8 +120,13 @@ onMounted(async () => {
         'telegramDialogues/setActiveSource',
         targetSourceId
       );
-    } else if (!store.state.telegramDialogues.chats.length) {
-      await store.dispatch('telegramDialogues/fetchChats');
+    } else {
+      if (!store.state.telegramDialogues.chats.length) {
+        await store.dispatch('telegramDialogues/fetchChats');
+      }
+      if (!store.state.telegramDialogues.archivedChats.length) {
+        await store.dispatch('telegramDialogues/fetchArchivedChats');
+      }
     }
     if (props.chatId) {
       store.dispatch('telegramDialogues/setActiveChat', props.chatId);
@@ -141,9 +154,12 @@ onMounted(async () => {
             :active-source-id="activeSourceId"
             @select="onSelectSource"
           />
+          <TelegramArchivedList v-if="showArchive" />
           <TelegramChatList
+            v-else
             :active-chat-id="activeChatId"
             @select="onSelectChat"
+            @archive="onArchiveChat"
           />
         </div>
       </Pane>
@@ -154,12 +170,12 @@ onMounted(async () => {
         class="flex h-full"
       >
         <div class="flex flex-col flex-1 min-w-0 h-full">
-          <TelegramMessagePanel v-if="activeChatId" />
+          <TelegramMessagePanel v-if="activeChatId && !showArchive" />
           <div
             v-else
             class="flex items-center justify-center h-full text-n-slate-11"
           >
-            Select a chat to start messaging
+            {{ showArchive ? 'Archived chats — select a chat to unarchive' : 'Select a chat to start messaging' }}
           </div>
         </div>
       </Pane>

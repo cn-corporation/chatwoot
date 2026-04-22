@@ -18,4 +18,8 @@ class UserPolicy < ApplicationPolicy
   def bulk_create?
     @account_user.administrator?
   end
+
+  def force_logout?
+    @account_user.administrator?
+  end
 end

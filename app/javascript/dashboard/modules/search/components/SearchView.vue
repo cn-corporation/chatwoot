@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useMapGetter, useStore } from 'dashboard/composables/store.js';
 import { useRouter, useRoute } from 'vue-router';
 import { useTrack } from 'dashboard/composables';
@@ -32,6 +32,7 @@ const { t } = useI18n();
 const PER_PAGE = 15; // Results per page
 const selectedTab = ref(route.params.tab || 'all');
 const query = ref(route.query.q || '');
+const filterSearchActive = ref(false);
 const pages = ref({
   contacts: 1,
   conversations: 1,
@@ -211,7 +212,8 @@ const showResultsSection = computed(
   () =>
     (uiFlags.value.isSearchCompleted && totalSearchResultsCount.value !== 0) ||
     isFetchingAny.value ||
-    (!isSelectedTabAll.value && query.value && !isFetchingAny.value)
+    (!isSelectedTabAll.value && query.value && !isFetchingAny.value) ||
+    (filterSearchActive.value && !isFetchingAny.value)
 );
 
 const showLoadMore = computed(() => {
@@ -246,6 +248,7 @@ const showViewMore = computed(() => ({
 
 const clearSearchResult = () => {
   pages.value = { contacts: 1, conversations: 1, messages: 1, articles: 1 };
+  filterSearchActive.value = false;
   store.dispatch('conversationSearch/clearSearchResults');
 };
 
@@ -320,14 +323,57 @@ const onFiltersChanged = () => {
   });
 };
 
+const onFilterSearch = () => {
+  store.dispatch('conversationSearch/clearMessageResults');
+  pages.value.messages = 1;
+  selectedTab.value = 'messages';
+  filterSearchActive.value = true;
+  updateURL();
+  store.dispatch('conversationSearch/messageSearch', {
+    q: query.value,
+    page: 1,
+  });
+};
+
 const loadMoreMessages = () => {
   if (uiFlags.value.message.isFetching) return;
+  if (!hasMoreMessages.value) return;
   pages.value.messages += 1;
   store.dispatch('conversationSearch/messageSearch', {
     q: query.value,
     page: pages.value.messages,
   });
 };
+
+const messagesSentinel = ref(null);
+let messagesObserver = null;
+
+const canPaginateMessages = computed(
+  () =>
+    (query.value || filterSearchActive.value) &&
+    (selectedTab.value === 'messages' || isSelectedTabAll.value) &&
+    hasMoreMessages.value
+);
+
+watch(
+  [messagesSentinel, canPaginateMessages],
+  ([el, canPaginate]) => {
+    if (messagesObserver) {
+      messagesObserver.disconnect();
+      messagesObserver = null;
+    }
+    if (!el || !canPaginate) return;
+    messagesObserver = new IntersectionObserver(
+      entries => {
+        if (entries.some(e => e.isIntersecting)) {
+          loadMoreMessages();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    messagesObserver.observe(el);
+  }
+);
 
 onMounted(() => {
   store.dispatch('conversationSearch/clearSearchResults');
@@ -339,6 +385,10 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  if (messagesObserver) {
+    messagesObserver.disconnect();
+    messagesObserver = null;
+  }
   query.value = '';
   store.dispatch('conversationSearch/clearSearchResults');
 });
@@ -363,9 +413,10 @@ onUnmounted(() => {
           <SearchFilters
             :visible="showMessageFilters"
             @filters-changed="onFiltersChanged"
+            @search="onFilterSearch"
           />
           <SearchTabs
-            v-if="query"
+            v-if="query || filterSearchActive"
             :tabs="tabs"
             :selected-tab="activeTabIndex"
             @tab-change="onTabChange"
@@ -417,14 +468,10 @@ onUnmounted(() => {
                 outline
                 @click="selectedTab = 'messages'"
               />
-              <NextButton
-                v-if="showLoadMoreMessages"
-                :label="t(`SEARCH.LOAD_MORE`)"
-                icon="i-lucide-cloud-download"
-                slate
-                sm
-                faded
-                @click="loadMoreMessages"
+              <div
+                v-if="canPaginateMessages"
+                ref="messagesSentinel"
+                class="h-4"
               />
             </Policy>
 

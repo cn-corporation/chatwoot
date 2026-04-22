@@ -19,10 +19,12 @@ defineEmits(['selectMode']);
 const wootEditorReplyMode = useTemplateRef('wootEditorReplyMode');
 const wootEditorPrivateMode = useTemplateRef('wootEditorPrivateMode');
 const wootEditorTaskMode = useTemplateRef('wootEditorTaskMode');
+const wootEditorTranslateMode = useTemplateRef('wootEditorTranslateMode');
 
 const replyModeSize = useElementSize(wootEditorReplyMode);
 const privateModeSize = useElementSize(wootEditorPrivateMode);
 const taskModeSize = useElementSize(wootEditorTaskMode);
+const translateModeSize = useElementSize(wootEditorTranslateMode);
 
 /**
  * Computed boolean indicating if the editor is in private note mode
@@ -42,13 +44,23 @@ const isTask = computed(() => {
 });
 
 /**
+ * Computed boolean indicating if the editor is in translate mode
+ * @type {ComputedRef<boolean>}
+ */
+const isTranslate = computed(() => {
+  return props.mode === REPLY_EDITOR_MODES.TRANSLATE;
+});
+
+/**
  * Computes the width of the sliding background chip in pixels
  * Includes 16px of padding in the calculation
  * @type {ComputedRef<string>}
  */
 const width = computed(() => {
   let widthToUse;
-  if (isTask.value) {
+  if (isTranslate.value) {
+    widthToUse = translateModeSize.width.value;
+  } else if (isTask.value) {
     widthToUse = taskModeSize.width.value;
   } else if (isPrivate.value) {
     widthToUse = privateModeSize.width.value;
@@ -67,7 +79,13 @@ const width = computed(() => {
  */
 const translateValue = computed(() => {
   let xTranslate = 0;
-  if (isTask.value) {
+  if (isTranslate.value) {
+    xTranslate =
+      replyModeSize.width.value +
+      privateModeSize.width.value +
+      taskModeSize.width.value +
+      48;
+  } else if (isTask.value) {
     xTranslate = replyModeSize.width.value + privateModeSize.width.value + 32;
   } else if (isPrivate.value) {
     xTranslate = replyModeSize.width.value + 16;
@@ -116,6 +134,17 @@ const translateValue = computed(() => {
       @click="!disabled && $emit('selectMode', REPLY_EDITOR_MODES.TASK)"
     >
       {{ $t('CONVERSATION.REPLYBOX.TASK') }}
+    </button>
+    <button
+      ref="wootEditorTranslateMode"
+      class="flex items-center gap-1 px-2 z-20 relative"
+      :disabled="disabled"
+      :class="{
+        'cursor-not-allowed': disabled,
+      }"
+      @click="!disabled && $emit('selectMode', REPLY_EDITOR_MODES.TRANSLATE)"
+    >
+      {{ $t('CONVERSATION.REPLYBOX.TRANSLATOR.TAB') }}
     </button>
     <div
       class="absolute shadow-sm rounded-full h-6 w-[var(--chip-width)] ease-in-out translate-x-[var(--translate-x)] rtl:translate-x-[var(--rtl-translate-x)] bg-n-solid-1"
