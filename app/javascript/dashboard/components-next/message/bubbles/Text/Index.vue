@@ -5,6 +5,7 @@ import BaseBubble from 'next/message/bubbles/Base.vue';
 import FormattedContent from './FormattedContent.vue';
 import AttachmentChips from 'next/message/chips/AttachmentChips.vue';
 import TranslationToggle from 'dashboard/components-next/message/TranslationToggle.vue';
+import VoiceIndicator from 'dashboard/components-next/message/VoiceIndicator.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import { MESSAGE_TYPES } from '../../constants';
 import { useMessageContext } from '../../provider.js';
@@ -68,6 +69,10 @@ const isTemplate = computed(() => {
 
 const isEmpty = computed(() => {
   return !content.value && !attachments.value?.length;
+});
+
+const voiceStatus = computed(() => {
+  return contentAttributes.value?.voice_transcription?.status ?? null;
 });
 
 const handleSeeOriginal = () => {
@@ -152,6 +157,7 @@ watch(taskId, () => {
 <template>
   <BaseBubble class="px-4 py-3" data-bubble-name="text">
     <div class="gap-3 flex flex-col">
+      <VoiceIndicator v-if="voiceStatus" :status="voiceStatus" />
       <span v-if="isEmpty" class="text-n-slate-11">
         {{ $t('CONVERSATION.NO_CONTENT') }}
       </span>

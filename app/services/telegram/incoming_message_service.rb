@@ -10,6 +10,12 @@ class Telegram::IncomingMessageService
     # chatwoot doesn't support group conversations at the moment
     transform_business_message!
     return unless private_message?
+
+    if message_params? && voice_message?
+      handle_voice_message
+      return
+    end
+
     return if message_params? && audio_message?
 
     set_contact
@@ -151,6 +157,94 @@ class Telegram::IncomingMessageService
     attach_contact
   end
 
+  def handle_voice_message
+    return if business_message_outgoing?
+
+    set_contact
+    return if @contact.time_blocked?
+
+    update_contact_avatar
+    set_conversation
+
+    if voice_too_long?
+      create_voice_skipped_message
+    else
+      enqueue_voice_forward
+    end
+  end
+
+  def voice_too_long?
+    duration = params[:message][:voice][:duration].to_i
+    duration > ENV.fetch('TELEGRAM_MAX_VOICE_SECONDS', 180).to_i
+  end
+
+  def create_voice_skipped_message
+    @message = @conversation.messages.build(
+      content: 'Voice message too long, not transcribed',
+      account_id: @inbox.account_id,
+      inbox_id: @inbox.id,
+      message_type: :incoming,
+      sender: @contact,
+      content_attributes: voice_skipped_content_attributes,
+      source_id: params[:message][:message_id].to_s
+    )
+    attach_voice_file
+    @message.save!
+  end
+
+  def voice_skipped_content_attributes
+    {
+      voice_transcription: {
+        status: 'skipped',
+        reason: 'too_long',
+        duration_seconds: params[:message][:voice][:duration].to_i,
+        telegram_message_id: params[:message][:message_id]
+      }
+    }
+  end
+
+  def attach_voice_file
+    file_url = inbox.channel.get_telegram_file_path(params[:message][:voice][:file_id])
+    if file_url.blank?
+      Rails.logger.info("Telegram voice file path blank for message #{params[:message][:message_id]}")
+      return
+    end
+
+    attachment_file = Down.download(file_url)
+    @message.attachments.new(
+      account_id: @message.account_id,
+      file_type: :audio,
+      file: {
+        io: attachment_file,
+        filename: attachment_file.original_filename,
+        content_type: attachment_file.content_type
+      }
+    )
+  end
+
+  def enqueue_voice_forward
+    file_url = inbox.channel.get_telegram_file_path(params[:message][:voice][:file_id])
+    if file_url.blank?
+      Rails.logger.info("Telegram voice file path blank for message #{params[:message][:message_id]}; skipping forward")
+      return
+    end
+
+    Webhooks::TelegramVoiceForwardJob.perform_later(voice_forward_payload(file_url))
+  end
+
+  def voice_forward_payload(file_url)
+    {
+      account_id: @inbox.account_id,
+      conversation_id: @conversation.display_id,
+      contact_id: @contact.id,
+      inbox_id: @inbox.id,
+      telegram_file_url: file_url,
+      telegram_message_id: params[:message][:message_id],
+      telegram_language_hint: params.dig(:message, :from, :language_code),
+      sent_at: Time.at(params[:message][:date].to_i).utc.iso8601
+    }
+  end
+
   def update_contact_avatar
     return if @contact.avatar.attached?
 
@@ -222,7 +316,11 @@ class Telegram::IncomingMessageService
   end
 
   def audio_message?
-    params[:message][:voice].present? || params[:message][:audio].present?
+    params[:message][:audio].present?
+  end
+
+  def voice_message?
+    params[:message][:voice].present?
   end
 
   def video_message?
