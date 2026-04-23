@@ -129,6 +129,7 @@ Rails.application.routes.draw do
                   post :retry
                 end
               end
+              resources :voice_transcription_messages, only: [:create]
               resources :assignments, only: [:create]
               resources :labels, only: [:create, :index]
               resource :participants, only: [:show, :create, :update, :destroy]

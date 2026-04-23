@@ -513,5 +513,12 @@
     "YOU": "You",
     "VIEWING": "Currently viewing",
     "CONNECTING": "Connecting..."
+  },
+  "VOICE_TRANSCRIPTION": {
+    "INDICATOR": {
+      "SUCCESS": "Transcribed voice message",
+      "FAILED": "Transcription failed",
+      "SKIPPED": "Voice message too long — not transcribed"
+    }
   }
 }
