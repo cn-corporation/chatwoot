@@ -1,23 +1,7 @@
 import Auth from '../api/auth';
-import {
-  clearCookiesOnLogout,
-  deleteIndexedDBOnLogout,
-} from '../store/utils/api';
 
 const REQUEST_TIMEOUT_MS = 20000;
 const CACHE_DURATION_MS = 3000;
-
-let forcedLogoutInProgress = false;
-const forceLogoutRedirect = () => {
-  if (forcedLogoutInProgress) return;
-  forcedLogoutInProgress = true;
-  try {
-    deleteIndexedDBOnLogout();
-    clearCookiesOnLogout();
-  } finally {
-    window.location.replace('/app/login');
-  }
-};
 
 const pendingRequests = new Map();
 const responseCache = new Map();
@@ -88,14 +72,6 @@ export default axios => {
       const { requestKey } = error.config || {};
       if (requestKey) {
         pendingRequests.delete(requestKey);
-      }
-
-      const status = error.response?.status;
-      const url = error.config?.url || '';
-      const isAuthEndpoint =
-        url.includes('/auth/sign_in') || url.includes('/auth/sign_out');
-      if (status === 401 && !isAuthEndpoint && Auth.hasAuthCookie()) {
-        forceLogoutRedirect();
       }
 
       return parseErrorCode(error);
