@@ -30,7 +30,8 @@ const { hasTranslations, translationContent } =
 
 const store = useStore();
 const { t } = useI18n();
-const renderOriginal = ref(false);
+const renderOriginal = ref(true);
+const isTranslating = ref(false);
 const taskData = ref(null);
 const isLoadingTask = ref(false);
 const isCompletingTask = ref(false);
@@ -52,16 +53,13 @@ const completedByName = computed(() => {
 });
 
 const renderContent = computed(() => {
-  if (renderOriginal.value) {
-    return content.value;
-  }
-
-  if (hasTranslations.value) {
+  if (!renderOriginal.value && hasTranslations.value) {
     return translationContent.value;
   }
-
   return content.value;
 });
+
+const hasContent = computed(() => !!content.value);
 
 const isTemplate = computed(() => {
   return messageType.value === MESSAGE_TYPES.TEMPLATE;
@@ -75,7 +73,22 @@ const voiceStatus = computed(() => {
   return contentAttributes.value?.voice_transcription?.status ?? null;
 });
 
-const handleSeeOriginal = () => {
+const handleSeeOriginal = async () => {
+  if (renderOriginal.value && !hasTranslations.value) {
+    if (isTranslating.value) return;
+    isTranslating.value = true;
+    try {
+      const accountId = store.getters.getCurrentAccountId;
+      const account = store.getters['accounts/getAccount'](accountId);
+      await store.dispatch('translateMessage', {
+        conversationId: conversationId.value,
+        messageId: id.value,
+        targetLanguage: account?.locale || 'en',
+      });
+    } finally {
+      isTranslating.value = false;
+    }
+  }
   renderOriginal.value = !renderOriginal.value;
 };
 
@@ -187,9 +200,10 @@ watch(taskId, () => {
       </div>
       <FormattedContent v-else-if="renderContent" :content="renderContent" />
       <TranslationToggle
-        v-if="hasTranslations"
+        v-if="hasContent"
         class="-mt-3"
         :showing-original="renderOriginal"
+        :is-loading="isTranslating"
         @toggle="handleSeeOriginal"
       />
       <template v-if="isTemplate">
