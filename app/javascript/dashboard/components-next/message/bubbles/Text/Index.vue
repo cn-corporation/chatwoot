@@ -32,6 +32,7 @@ const store = useStore();
 const { t } = useI18n();
 const renderOriginal = ref(true);
 const isTranslating = ref(false);
+const localTranslation = ref(null);
 const taskData = ref(null);
 const isLoadingTask = ref(false);
 const isCompletingTask = ref(false);
@@ -52,9 +53,17 @@ const completedByName = computed(() => {
   return taskData.value?.completedByName || null;
 });
 
+const effectiveTranslation = computed(
+  () => localTranslation.value || translationContent.value
+);
+
+const hasAnyTranslation = computed(
+  () => !!localTranslation.value || hasTranslations.value
+);
+
 const renderContent = computed(() => {
-  if (!renderOriginal.value && hasTranslations.value) {
-    return translationContent.value;
+  if (!renderOriginal.value && effectiveTranslation.value) {
+    return effectiveTranslation.value;
   }
   return content.value;
 });
@@ -74,17 +83,27 @@ const voiceStatus = computed(() => {
 });
 
 const handleSeeOriginal = async () => {
-  if (renderOriginal.value && !hasTranslations.value) {
-    if (isTranslating.value) return;
+  if (renderOriginal.value && !hasAnyTranslation.value) {
+    if (isTranslating.value || !content.value) return;
     isTranslating.value = true;
     try {
       const accountId = store.getters.getCurrentAccountId;
       const account = store.getters['accounts/getAccount'](accountId);
-      await store.dispatch('translateMessage', {
-        conversationId: conversationId.value,
-        messageId: id.value,
-        targetLanguage: account?.locale || 'en',
+      const supported = ['ru', 'kk', 'uk'];
+      const targetLang = supported.includes(account?.locale)
+        ? account.locale
+        : 'ru';
+      const result = await ChatwootExtraAPI.translateText({
+        text: content.value,
+        targetLang,
       });
+      if (result?.translatedText) {
+        localTranslation.value = result.translatedText;
+      } else {
+        return;
+      }
+    } catch (error) {
+      return;
     } finally {
       isTranslating.value = false;
     }
