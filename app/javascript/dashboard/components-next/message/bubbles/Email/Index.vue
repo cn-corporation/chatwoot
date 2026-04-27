@@ -15,14 +15,23 @@ import TranslationToggle from 'dashboard/components-next/message/TranslationTogg
 import { useMessageContext } from '../../provider.js';
 import { MESSAGE_TYPES } from 'next/message/constants.js';
 import { useTranslations } from 'dashboard/composables/useTranslations';
+import { useStore } from 'vuex';
 
-const { content, contentAttributes, attachments, messageType } =
-  useMessageContext();
+const {
+  id,
+  content,
+  contentAttributes,
+  attachments,
+  messageType,
+  conversationId,
+} = useMessageContext();
 
+const store = useStore();
 const isExpandable = ref(false);
 const isExpanded = ref(false);
 const showQuotedMessage = ref(false);
-const renderOriginal = ref(false);
+const renderOriginal = ref(true);
+const isTranslating = ref(false);
 const contentContainer = useTemplateRef('contentContainer');
 
 onMounted(() => {
@@ -97,7 +106,24 @@ const translationKeySuffix = computed(() => {
   return 'original';
 });
 
-const handleSeeOriginal = () => {
+const hasContent = computed(() => !!(content.value || hasEmailContent.value));
+
+const handleSeeOriginal = async () => {
+  if (renderOriginal.value && !hasTranslations.value) {
+    if (isTranslating.value) return;
+    isTranslating.value = true;
+    try {
+      const accountId = store.getters.getCurrentAccountId;
+      const account = store.getters['accounts/getAccount'](accountId);
+      await store.dispatch('translateMessage', {
+        conversationId: conversationId.value,
+        messageId: id.value,
+        targetLanguage: account?.locale || 'en',
+      });
+    } finally {
+      isTranslating.value = false;
+    }
+  }
   renderOriginal.value = !renderOriginal.value;
 };
 </script>
@@ -196,9 +222,10 @@ const handleSeeOriginal = () => {
       </div>
     </section>
     <TranslationToggle
-      v-if="hasTranslations"
+      v-if="hasContent"
       class="py-2 px-3"
       :showing-original="renderOriginal"
+      :is-loading="isTranslating"
       @toggle="handleSeeOriginal"
     />
     <section
