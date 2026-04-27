@@ -16,6 +16,7 @@ import { useMessageContext } from '../../provider.js';
 import { MESSAGE_TYPES } from 'next/message/constants.js';
 import { useTranslations } from 'dashboard/composables/useTranslations';
 import { useStore } from 'vuex';
+import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 
 const {
   id,
@@ -32,6 +33,7 @@ const isExpanded = ref(false);
 const showQuotedMessage = ref(false);
 const renderOriginal = ref(true);
 const isTranslating = ref(false);
+const localTranslation = ref(null);
 const contentContainer = useTemplateRef('contentContainer');
 
 onMounted(() => {
@@ -63,30 +65,32 @@ const hasEmailContent = computed(() => {
   );
 });
 
+const effectiveTranslation = computed(
+  () => localTranslation.value || translationContent.value
+);
+
+const hasAnyTranslation = computed(
+  () => !!localTranslation.value || hasTranslations.value
+);
+
 const messageContent = computed(() => {
-  // If translations exist and we're showing translations (not original)
-  if (hasTranslations.value && !renderOriginal.value) {
-    return translationContent.value;
+  if (!renderOriginal.value && effectiveTranslation.value) {
+    return effectiveTranslation.value;
   }
-  // Otherwise show original content
   return content.value;
 });
 
 const textToShow = computed(() => {
-  // If translations exist and we're showing translations (not original)
-  if (hasTranslations.value && !renderOriginal.value) {
-    return translationContent.value;
+  if (!renderOriginal.value && effectiveTranslation.value) {
+    return effectiveTranslation.value;
   }
-  // Otherwise show original text
   return originalEmailText.value;
 });
 
 const fullHTML = computed(() => {
-  // If translations exist and we're showing translations (not original)
-  if (hasTranslations.value && !renderOriginal.value) {
-    return translationContent.value;
+  if (!renderOriginal.value && effectiveTranslation.value) {
+    return effectiveTranslation.value;
   }
-  // Otherwise show original HTML
   return originalEmailHtml.value;
 });
 
@@ -102,24 +106,40 @@ const hasQuotedMessage = computed(() =>
 // This forces Vue to re-render the component and update content correctly.
 const translationKeySuffix = computed(() => {
   if (renderOriginal.value) return 'original';
-  if (hasTranslations.value) return 'translated';
+  if (hasAnyTranslation.value) return 'translated';
   return 'original';
 });
 
 const hasContent = computed(() => !!(content.value || hasEmailContent.value));
 
+const sourceTextForTranslate = computed(() => {
+  return (
+    contentAttributes?.value?.email?.textContent?.full || content.value || ''
+  );
+});
+
 const handleSeeOriginal = async () => {
-  if (renderOriginal.value && !hasTranslations.value) {
-    if (isTranslating.value) return;
+  if (renderOriginal.value && !hasAnyTranslation.value) {
+    if (isTranslating.value || !sourceTextForTranslate.value) return;
     isTranslating.value = true;
     try {
       const accountId = store.getters.getCurrentAccountId;
       const account = store.getters['accounts/getAccount'](accountId);
-      await store.dispatch('translateMessage', {
-        conversationId: conversationId.value,
-        messageId: id.value,
-        targetLanguage: account?.locale || 'en',
+      const supported = ['ru', 'kk', 'uk'];
+      const targetLang = supported.includes(account?.locale)
+        ? account.locale
+        : 'ru';
+      const result = await ChatwootExtraAPI.translateText({
+        text: sourceTextForTranslate.value,
+        targetLang,
       });
+      if (result?.translatedText) {
+        localTranslation.value = result.translatedText;
+      } else {
+        return;
+      }
+    } catch (error) {
+      return;
     } finally {
       isTranslating.value = false;
     }
