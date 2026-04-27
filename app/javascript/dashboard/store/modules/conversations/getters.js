@@ -153,7 +153,7 @@ const getters = {
         const shouldFilter = applyPageFilters(conversation, activeFilters);
         return isResolved && shouldFilter;
       })
-      .sort((a, b) => sortComparator(a, b, _state.chatSortFilter));
+      .sort((a, b) => sortComparator(a, b, 'last_activity_at_desc'));
   },
   getAllStatusChats: (_state, _, __, rootGetters) => activeFilters => {
     const currentUser = rootGetters.getCurrentUser;
