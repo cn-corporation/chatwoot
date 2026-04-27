@@ -28,6 +28,17 @@ module SortHandler
       order('grouped_conversations.message_type', 'grouped_conversations.created_at ASC')
     end
 
+    def sort_on_last_resolved_at(sort_direction = :desc)
+      direction = sort_direction.to_s.upcase
+      latest_resolved_subquery = ReportingEvent
+                                 .where(name: 'conversation_resolved')
+                                 .select('conversation_id, MAX(event_end_time) AS resolved_at')
+                                 .group(:conversation_id)
+                                 .to_sql
+      joins("LEFT JOIN (#{latest_resolved_subquery}) latest_resolved ON latest_resolved.conversation_id = conversations.id")
+        .order(generate_sql_query("latest_resolved.resolved_at #{direction} NULLS LAST, conversations.updated_at #{direction}"))
+    end
+
     private
 
     def generate_sql_query(query)

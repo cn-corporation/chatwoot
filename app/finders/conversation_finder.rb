@@ -176,10 +176,10 @@ class ConversationFinder
     user_team_ids = current_user.teams.where(account_id: current_account.id).pluck(:id)
 
     @conversations = if user_team_ids.present?
-                        @conversations.where(team_id: user_team_ids)
-                      else
-                        @conversations.where(team_id: nil)
-                      end
+                       @conversations.where(team_id: user_team_ids)
+                     else
+                       @conversations.where(team_id: nil)
+                     end
   end
 
   def filter_by_team
@@ -214,7 +214,12 @@ class ConversationFinder
   def conversations
     @conversations = conversations_base_query
 
-    sort_by, sort_order = SORT_OPTIONS[params[:sort_by]] || SORT_OPTIONS['last_activity_at_desc']
+    if @assignee_type == 'resolved'
+      sort_by = 'sort_on_last_resolved_at'
+      sort_order = 'desc'
+    else
+      sort_by, sort_order = SORT_OPTIONS[params[:sort_by]] || SORT_OPTIONS['last_activity_at_desc']
+    end
     @conversations = @conversations.send(sort_by, sort_order)
 
     if params[:updated_within].present?
