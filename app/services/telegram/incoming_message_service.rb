@@ -175,7 +175,7 @@ class Telegram::IncomingMessageService
 
   def voice_too_long?
     duration = params[:message][:voice][:duration].to_i
-    duration > ENV.fetch('TELEGRAM_MAX_VOICE_SECONDS', 180).to_i
+    duration > ENV.fetch('TELEGRAM_MAX_VOICE_SECONDS', 60).to_i
   end
 
   def create_voice_skipped_message
