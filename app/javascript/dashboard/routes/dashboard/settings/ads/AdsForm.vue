@@ -402,8 +402,8 @@ const sanitizedHtml = computed(() => {
       <textarea
         v-if="!showPreview"
         v-model="htmlText"
-        rows="10"
-        class="px-3 py-2 border border-n-slate-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-woot-500 font-mono text-sm"
+        rows="18"
+        class="px-3 py-2 border border-n-slate-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-woot-500 font-mono text-sm resize-y min-h-[18rem]"
         :placeholder="$t('ADS.FORM.HTML_TEXT.PLACEHOLDER')"
         required
       />

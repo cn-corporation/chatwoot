@@ -9,6 +9,8 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import { emitter } from 'shared/helpers/mitt';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import ScheduleSendDialog from './ScheduleSendDialog.vue';
+import InboxesAPI from 'dashboard/api/inboxes';
+import { encrypt } from 'dashboard/helper/encryption';
 
 const getters = useStoreGetters();
 const store = useStore();
@@ -26,6 +28,10 @@ const testTelegramId = ref('');
 const showScheduleDialog = ref(false);
 const scheduleDialogAd = ref(null);
 const historyTab = ref('operations');
+const showDuplicateDialog = ref(false);
+const duplicateName = ref('');
+const duplicateSourceId = ref('');
+const isDuplicating = ref(false);
 
 const records = computed(() => getters['ads/getAds'].value);
 const uiFlags = computed(() => getters['ads/getUIFlags'].value);
@@ -300,6 +306,63 @@ const getErrorLogs = computed(() => {
   return getters['ads/getErrorLogs'].value(selectedAd.value.id);
 });
 
+const openDuplicateDialog = async ad => {
+  selectedAd.value = ad;
+  duplicateName.value = `${ad.name} - ${t('ADS.DUPLICATE.NAME_SUFFIX')}`;
+  duplicateSourceId.value = '';
+  showDuplicateDialog.value = true;
+};
+
+const closeDuplicateDialog = () => {
+  showDuplicateDialog.value = false;
+  duplicateName.value = '';
+  duplicateSourceId.value = '';
+};
+
+const confirmDuplicate = async () => {
+  if (!duplicateName.value || !duplicateSourceId.value) {
+    return;
+  }
+  isDuplicating.value = true;
+  try {
+    const fullAd = await store.dispatch('ads/getSingleAd', selectedAd.value.id);
+    if (!fullAd) {
+      throw new Error('source ad not found');
+    }
+
+    const tokenResponse = await InboxesAPI.getBotToken(duplicateSourceId.value);
+    const encryptedBotToken = await encrypt(tokenResponse.data.bot_token);
+
+    const payload = {
+      name: duplicateName.value,
+      chatwootSourceId: parseInt(duplicateSourceId.value, 10),
+      encryptedBotToken,
+      htmlText: fullAd.htmlText,
+      jsonFilter: fullAd.jsonFilter || null,
+    };
+    if (fullAd.mediaId) {
+      payload.mediaId = fullAd.mediaId;
+    }
+
+    const created = await store.dispatch('ads/create', payload);
+    if (!created) {
+      throw new Error('create failed');
+    }
+
+    emitter.emit(BUS_EVENTS.SHOW_TOAST, {
+      message: t('ADS.DUPLICATE.API.SUCCESS_MESSAGE'),
+    });
+    closeDuplicateDialog();
+    await store.dispatch('ads/get');
+  } catch (error) {
+    emitter.emit(BUS_EVENTS.SHOW_TOAST, {
+      message: t('ADS.DUPLICATE.API.ERROR_MESSAGE'),
+    });
+  } finally {
+    isDuplicating.value = false;
+  }
+};
+
 const tableHeaders = computed(() => {
   return [
     t('ADS.LIST.TABLE_HEADER.NAME'),
@@ -533,6 +596,13 @@ const exportErrorLogsToExcel = () => {
                   @click="editAd(ad.id)"
                 />
                 <Button
+                  v-tooltip.top="$t('ADS.ACTIONS.DUPLICATE')"
+                  variant="ghost"
+                  size="small"
+                  icon="i-lucide-copy"
+                  @click="openDuplicateDialog(ad)"
+                />
+                <Button
                   v-tooltip.top="$t('ADS.ACTIONS.DELETE')"
                   variant="ghost"
                   size="small"
@@ -579,6 +649,64 @@ const exportErrorLogsToExcel = () => {
               :label="$t('ADS.SEND.TEST.SEND')"
               :disabled="uiFlags.isTestingSend"
               @click="testSendAd"
+            />
+          </div>
+        </div>
+      </woot-modal>
+      <woot-modal
+        v-model:show="showDuplicateDialog"
+        :on-close="closeDuplicateDialog"
+      >
+        <div class="flex flex-col gap-4 p-6">
+          <h2 class="text-lg font-semibold">
+            {{ $t('ADS.DUPLICATE.TITLE') }}
+          </h2>
+          <p class="text-sm text-n-slate-11">
+            {{ $t('ADS.DUPLICATE.DESCRIPTION') }}
+          </p>
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-n-slate-12">
+              {{ $t('ADS.DUPLICATE.NAME_LABEL') }}
+            </label>
+            <input
+              v-model="duplicateName"
+              type="text"
+              :placeholder="$t('ADS.DUPLICATE.NAME_PLACEHOLDER')"
+              class="px-3 py-2 border border-n-slate-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-woot-500"
+              @keydown.enter.prevent
+            />
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-n-slate-12">
+              {{ $t('ADS.DUPLICATE.SOURCE_LABEL') }}
+            </label>
+            <select
+              v-model="duplicateSourceId"
+              class="px-3 py-2 pr-2 border border-n-slate-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-woot-500"
+            >
+              <option value="">
+                {{ $t('ADS.DUPLICATE.SOURCE_PLACEHOLDER') }}
+              </option>
+              <option
+                v-for="inbox in inboxes"
+                :key="inbox.id"
+                :value="inbox.id"
+              >
+                {{ inbox.name }}
+              </option>
+            </select>
+          </div>
+          <div class="flex gap-2 justify-end">
+            <Button
+              variant="ghost"
+              :label="$t('ADS.DUPLICATE.CANCEL')"
+              @click="closeDuplicateDialog"
+            />
+            <Button
+              :label="$t('ADS.DUPLICATE.SUBMIT')"
+              :is-loading="isDuplicating"
+              :is-disabled="!duplicateName || !duplicateSourceId"
+              @click="confirmDuplicate"
             />
           </div>
         </div>

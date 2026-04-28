@@ -47,9 +47,9 @@
 ## Project-Specific
 
 - **Translations**:
-  - Only update `en.yml` and `en.json`
-  - Other languages are handled by the community
-  - Backend i18n → `en.yml`, Frontend i18n → `en.json`
+  - Always update both `en` and `ru` locale files in lockstep — every new key added to `en.yml`/`en.json` must have a matching `ru.yml`/`ru.json` entry with a Russian translation
+  - Backend i18n → `en.yml` + `ru.yml`, Frontend i18n → `en.json` + `ru.json`
+  - Other languages remain handled by the community
 - **Frontend**:
   - Use `components-next/` for message bubbles (the rest is being deprecated)
 
