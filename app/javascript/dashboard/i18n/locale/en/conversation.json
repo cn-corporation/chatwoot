@@ -206,6 +206,7 @@
     },
     "REPLYBOX": {
       "REPLY": "Reply",
+      "RESIZE": "Drag to resize. Double-click to reset.",
       "PRIVATE_NOTE": "Private Note",
       "SEND": "Send",
       "CREATE": "Add Note",
