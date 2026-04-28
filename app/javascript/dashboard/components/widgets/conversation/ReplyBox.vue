@@ -132,6 +132,8 @@ export default {
       newConversationModalActive: false,
       showArticleSearchPopover: false,
       hasRecordedAudio: false,
+      editorHeight: null,
+      isResizingEditor: false,
     };
   },
   computed: {
@@ -300,7 +302,13 @@ export default {
         'is-private': this.isPrivate && !this.isOnTask,
         'is-task': this.isOnTask,
         'is-focused': this.isFocused || this.hasAttachments,
+        'is-resized': this.editorHeight !== null && !this.popOutReplyBox,
+        'is-resizing': this.isResizingEditor,
       };
+    },
+    editorHeightStyle() {
+      if (this.editorHeight === null || this.popOutReplyBox) return null;
+      return { '--reply-editor-height': `${this.editorHeight}px` };
     },
     hasAttachments() {
       return this.attachedFiles.length;
@@ -527,6 +535,7 @@ export default {
   },
 
   mounted() {
+    this.loadEditorHeight();
     this.getFromDraft();
     // Don't use the keyboard listener mixin here as the events here are supposed to be
     // working even if input/textarea is focussed.
@@ -564,6 +573,50 @@ export default {
     );
   },
   methods: {
+    startResizeEditor(event) {
+      if (this.popOutReplyBox) return;
+      event.preventDefault();
+      const topEl = this.$refs.replyEditor?.querySelector('.reply-box__top');
+      if (!topEl) return;
+
+      const startY = event.clientY;
+      const startHeight =
+        this.editorHeight !== null ? this.editorHeight : topEl.offsetHeight;
+
+      this.isResizingEditor = true;
+
+      const onMouseMove = e => {
+        const delta = startY - e.clientY;
+        const next = Math.max(
+          80,
+          Math.min(window.innerHeight - 200, startHeight + delta)
+        );
+        this.editorHeight = next;
+      };
+      const onMouseUp = () => {
+        this.isResizingEditor = false;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        if (this.editorHeight !== null) {
+          LocalStorage.set(
+            LOCAL_STORAGE_KEYS.REPLY_BOX_HEIGHT,
+            this.editorHeight
+          );
+        }
+      };
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    },
+    resetEditorHeight() {
+      this.editorHeight = null;
+      LocalStorage.remove(LOCAL_STORAGE_KEYS.REPLY_BOX_HEIGHT);
+    },
+    loadEditorHeight() {
+      const stored = LocalStorage.get(LOCAL_STORAGE_KEYS.REPLY_BOX_HEIGHT);
+      if (typeof stored === 'number' && stored > 0) {
+        this.editorHeight = stored;
+      }
+    },
     handleInsert(article) {
       const { url, title } = article;
       if (this.isRichEditorEnabled) {
@@ -1267,7 +1320,19 @@ export default {
 </script>
 
 <template>
-  <div ref="replyEditor" class="reply-box" :class="replyBoxClass">
+  <div
+    ref="replyEditor"
+    class="reply-box"
+    :class="replyBoxClass"
+    :style="editorHeightStyle"
+  >
+    <div
+      v-if="!popOutReplyBox"
+      class="reply-box__resize-handle"
+      :title="$t('CONVERSATION.REPLYBOX.RESIZE')"
+      @mousedown="startResizeEditor"
+      @dblclick="resetEditorHeight"
+    />
     <ReplyTopPanel
       :mode="replyType"
       :is-message-length-reaching-threshold="isMessageLengthReachingThreshold"
@@ -1450,6 +1515,35 @@ export default {
 
   &.is-task {
     @apply bg-n-teal-3 dark:border-n-teal-3/10 border-n-teal-12/5;
+  }
+
+  &.is-resized {
+    .reply-box__top {
+      min-height: var(--reply-editor-height);
+
+      textarea {
+        max-height: var(--reply-editor-height);
+        min-height: var(--reply-editor-height);
+      }
+
+      :deep(.ProseMirror-woot-style) {
+        max-height: var(--reply-editor-height);
+        min-height: var(--reply-editor-height);
+      }
+    }
+  }
+
+  &.is-resizing {
+    user-select: none;
+  }
+}
+
+.reply-box__resize-handle {
+  @apply absolute -top-1 left-1/2 -translate-x-1/2 w-16 h-2 cursor-ns-resize z-10 flex items-center justify-center;
+
+  &::before {
+    content: '';
+    @apply w-10 h-1 rounded-full bg-n-slate-5 hover:bg-n-slate-7 transition-colors;
   }
 }
 
