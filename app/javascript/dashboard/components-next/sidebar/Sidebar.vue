@@ -409,6 +409,12 @@ const menuItems = computed(() => {
       icon: 'i-lucide-user-check',
       to: accountScopedRoute('operator_status'),
     });
+    reportsChildren.push({
+      name: 'Reports Operator Breaks',
+      label: t('SIDEBAR.OPERATOR_BREAKS'),
+      icon: 'i-lucide-coffee',
+      to: accountScopedRoute('operator_breaks'),
+    });
   }
 
   const operatorReportsChildren = [
