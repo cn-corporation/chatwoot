@@ -16,6 +16,7 @@
     "SEARCH_MESSAGES": "Search for messages in conversations",
     "VIEW_ORIGINAL": "View original",
     "VIEW_TRANSLATED": "View translated",
+    "TRANSLATING": "Translating…",
     "EMPTY_STATE": {
       "CMD_BAR": "to open command menu",
       "KEYBOARD_SHORTCUTS": "to view keyboard shortcuts"
@@ -205,6 +206,7 @@
     },
     "REPLYBOX": {
       "REPLY": "Reply",
+      "RESIZE": "Drag to resize. Double-click to reset.",
       "PRIVATE_NOTE": "Private Note",
       "SEND": "Send",
       "CREATE": "Add Note",
@@ -513,5 +515,12 @@
     "YOU": "You",
     "VIEWING": "Currently viewing",
     "CONNECTING": "Connecting..."
+  },
+  "VOICE_TRANSCRIPTION": {
+    "INDICATOR": {
+      "SUCCESS": "Transcribed voice message",
+      "FAILED": "Transcription failed",
+      "SKIPPED": "Voice message too long — not transcribed"
+    }
   }
 }

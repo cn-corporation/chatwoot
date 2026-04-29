@@ -178,7 +178,23 @@
       "VIEW_ERRORS": "View error logs",
       "EDIT": "Edit ad",
       "DELETE": "Delete ad",
+      "DUPLICATE": "Duplicate ad",
       "SCHEDULE_SEND": "Schedule send"
+    },
+    "DUPLICATE": {
+      "TITLE": "Duplicate Ad",
+      "DESCRIPTION": "Create a copy of this ad with a different source channel. The HTML, media and filters will be copied over.",
+      "NAME_LABEL": "New Ad Name",
+      "NAME_PLACEHOLDER": "Enter a name for the duplicated ad",
+      "NAME_SUFFIX": "Copy",
+      "SOURCE_LABEL": "New Source Channel",
+      "SOURCE_PLACEHOLDER": "Select a channel",
+      "SUBMIT": "Duplicate",
+      "CANCEL": "Cancel",
+      "API": {
+        "SUCCESS_MESSAGE": "Ad duplicated successfully",
+        "ERROR_MESSAGE": "Unable to duplicate ad. Please try again later"
+      }
     },
     "SCHEDULE": {
       "TITLE": "Schedule send",

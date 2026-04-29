@@ -5,6 +5,7 @@ import BaseBubble from 'next/message/bubbles/Base.vue';
 import FormattedContent from './FormattedContent.vue';
 import AttachmentChips from 'next/message/chips/AttachmentChips.vue';
 import TranslationToggle from 'dashboard/components-next/message/TranslationToggle.vue';
+import VoiceIndicator from 'dashboard/components-next/message/VoiceIndicator.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import { MESSAGE_TYPES } from '../../constants';
 import { useMessageContext } from '../../provider.js';
@@ -29,7 +30,9 @@ const { hasTranslations, translationContent } =
 
 const store = useStore();
 const { t } = useI18n();
-const renderOriginal = ref(false);
+const renderOriginal = ref(true);
+const isTranslating = ref(false);
+const localTranslation = ref(null);
 const taskData = ref(null);
 const isLoadingTask = ref(false);
 const isCompletingTask = ref(false);
@@ -50,17 +53,22 @@ const completedByName = computed(() => {
   return taskData.value?.completedByName || null;
 });
 
+const effectiveTranslation = computed(
+  () => localTranslation.value || translationContent.value
+);
+
+const hasAnyTranslation = computed(
+  () => !!localTranslation.value || hasTranslations.value
+);
+
 const renderContent = computed(() => {
-  if (renderOriginal.value) {
-    return content.value;
+  if (!renderOriginal.value && effectiveTranslation.value) {
+    return effectiveTranslation.value;
   }
-
-  if (hasTranslations.value) {
-    return translationContent.value;
-  }
-
   return content.value;
 });
+
+const hasContent = computed(() => !!content.value);
 
 const isTemplate = computed(() => {
   return messageType.value === MESSAGE_TYPES.TEMPLATE;
@@ -70,7 +78,36 @@ const isEmpty = computed(() => {
   return !content.value && !attachments.value?.length;
 });
 
-const handleSeeOriginal = () => {
+const voiceStatus = computed(() => {
+  return contentAttributes.value?.voice_transcription?.status ?? null;
+});
+
+const handleSeeOriginal = async () => {
+  if (renderOriginal.value && !hasAnyTranslation.value) {
+    if (isTranslating.value || !content.value) return;
+    isTranslating.value = true;
+    try {
+      const accountId = store.getters.getCurrentAccountId;
+      const account = store.getters['accounts/getAccount'](accountId);
+      const supported = ['ru', 'kk', 'uk'];
+      const targetLang = supported.includes(account?.locale)
+        ? account.locale
+        : 'ru';
+      const result = await ChatwootExtraAPI.translateText({
+        text: content.value,
+        targetLang,
+      });
+      if (result?.translatedText) {
+        localTranslation.value = result.translatedText;
+      } else {
+        return;
+      }
+    } catch (error) {
+      return;
+    } finally {
+      isTranslating.value = false;
+    }
+  }
   renderOriginal.value = !renderOriginal.value;
 };
 
@@ -152,6 +189,7 @@ watch(taskId, () => {
 <template>
   <BaseBubble class="px-4 py-3" data-bubble-name="text">
     <div class="gap-3 flex flex-col">
+      <VoiceIndicator v-if="voiceStatus" :status="voiceStatus" />
       <span v-if="isEmpty" class="text-n-slate-11">
         {{ $t('CONVERSATION.NO_CONTENT') }}
       </span>
@@ -181,9 +219,10 @@ watch(taskId, () => {
       </div>
       <FormattedContent v-else-if="renderContent" :content="renderContent" />
       <TranslationToggle
-        v-if="hasTranslations"
+        v-if="hasContent"
         class="-mt-3"
         :showing-original="renderOriginal"
+        :is-loading="isTranslating"
         @toggle="handleSeeOriginal"
       />
       <template v-if="isTemplate">

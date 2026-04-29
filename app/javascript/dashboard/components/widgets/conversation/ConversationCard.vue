@@ -1,8 +1,10 @@
 <script setup>
 import { computed, ref, onMounted, inject, toValue } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { getLastMessage } from 'dashboard/helper/conversationHelper';
+import { getTypingUsersText } from 'dashboard/helper/commons';
 import { frontendURL, conversationUrl } from 'dashboard/helper/URLHelper';
 import { calculateTimePriority } from 'dashboard/helper/conversationPriority';
 import Avatar from 'next/avatar/Avatar.vue';
@@ -56,6 +58,7 @@ const emit = defineEmits([
 
 const router = useRouter();
 const store = useStore();
+const { t } = useI18n();
 
 const hovered = ref(false);
 const showContextMenu = ref(false);
@@ -149,6 +152,20 @@ const topicEmoji = computed(() => {
 const isInboxNameVisible = computed(() => !activeInbox.value);
 
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
+
+const typingOperators = computed(() => {
+  const users =
+    store.getters['conversationTypingStatus/getUserList'](props.chat.id) || [];
+  return users.filter(user => user.type === 'user');
+});
+
+const isOperatorTyping = computed(() => typingOperators.value.length > 0);
+
+const typingText = computed(() => {
+  if (!isOperatorTyping.value) return '';
+  const [i18nKey, params] = getTypingUsersText(typingOperators.value);
+  return t(i18nKey, params);
+});
 
 const inboxId = computed(() => props.chat.inbox_id);
 
@@ -429,8 +446,14 @@ const onUnblockContact = () => {
           class="text-n-ruby-9 flex-shrink-0"
         />
       </h4>
+      <p
+        v-if="isOperatorTyping"
+        class="text-n-teal-10 italic text-sm my-0 mx-2 leading-6 h-6 flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-medium"
+      >
+        {{ typingText }}
+      </p>
       <MessagePreview
-        v-if="lastMessageInChat"
+        v-else-if="lastMessageInChat"
         :message="lastMessageInChat"
         class="my-0 mx-2 leading-6 h-6 flex-1 min-w-0 text-sm"
         :class="messagePreviewClass"
