@@ -15,6 +15,7 @@ import {
 import Icon from 'next/icon/Icon.vue';
 import Button from 'next/button/Button.vue';
 import ToggleSwitch from 'dashboard/components-next/switch/Switch.vue';
+import { useOperatorBreak } from 'dashboard/composables/useOperatorBreak';
 
 const { t } = useI18n();
 const store = useStore();
@@ -58,6 +59,33 @@ const autoOfflineToggle = computed({
     });
   },
 });
+
+const { startBreak, isLoading: isBreakLoading } = useOperatorBreak();
+
+const breakOptions = computed(() => [
+  {
+    value: 'smoke',
+    label: t('BREAKS.SMOKE'),
+    icon: 'i-lucide-cigarette',
+  },
+  {
+    value: 'lunch',
+    label: t('BREAKS.LUNCH'),
+    icon: 'i-lucide-utensils',
+  },
+]);
+
+async function takeBreak(breakType) {
+  if (isImpersonating.value) {
+    useAlert(t('PROFILE_SETTINGS.FORM.AVAILABILITY.IMPERSONATING_ERROR'));
+    return;
+  }
+  try {
+    await startBreak(breakType);
+  } catch (error) {
+    useAlert(t('BREAKS.START_ERROR'));
+  }
+}
 
 function changeAvailabilityStatus(availability) {
   if (isImpersonating.value) {
@@ -123,6 +151,41 @@ function changeAvailabilityStatus(availability) {
           />
         </div>
         <ToggleSwitch v-model="autoOfflineToggle" />
+      </DropdownItem>
+      <DropdownItem preserve-open>
+        <div class="flex-grow flex items-center gap-1">
+          {{ $t('BREAKS.MENU_LABEL') }}
+        </div>
+        <DropdownContainer>
+          <template #trigger="{ toggle }">
+            <Button
+              size="sm"
+              color="slate"
+              variant="faded"
+              class="min-w-[96px]"
+              icon="i-lucide-chevron-down"
+              trailing-icon
+              :is-loading="isBreakLoading"
+              :disabled="isBreakLoading"
+              @click="toggle"
+            >
+              <div class="flex gap-1 items-center flex-grow text-sm">
+                <span class="i-lucide-coffee size-4 flex-shrink-0" />
+                <span>{{ $t('BREAKS.TAKE') }}</span>
+              </div>
+            </Button>
+          </template>
+          <DropdownBody class="min-w-32 z-20">
+            <DropdownItem
+              v-for="option in breakOptions"
+              :key="option.value"
+              :label="option.label"
+              :icon="option.icon"
+              class="cursor-pointer"
+              @click="takeBreak(option.value)"
+            />
+          </DropdownBody>
+        </DropdownContainer>
       </DropdownItem>
     </div>
   </DropdownSection>

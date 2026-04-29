@@ -593,6 +593,10 @@
         "ENABLED": "Enabled",
         "DISABLED": "Disabled"
       },
+      "BREAK_FLOW_ENABLED": {
+        "ENABLED": "Enabled",
+        "DISABLED": "Disabled"
+      },
       "BOT_FLOW_LANG": {
         "DEFAULT": "Default (from server config)",
         "RU": "Russian",
@@ -731,6 +735,8 @@
       "CSAT_ENABLED_SUB_TEXT": "When enabled, a CSAT survey will be sent after conversation is resolved",
       "AUTO_CLOSE_ENABLED": "Inactivity auto-close",
       "AUTO_CLOSE_ENABLED_SUB_TEXT": "When enabled, inactive conversations will be automatically closed after a timeout",
+      "BREAK_FLOW_ENABLED": "Bot break flow",
+      "BREAK_FLOW_ENABLED_SUB_TEXT": "When at least one operator is on a coffee break and a conversation is unanswered, the bot will greet the customer 1m30s after the conversation opens, and send a waiting message 1 minute after that.",
       "BOT_FLOW_LANG": "Bot flow language",
       "BOT_FLOW_LANG_SUB_TEXT": "Language for bot flow messages, CSAT surveys and auto-close prompts in this inbox. Default uses the server-level setting.",
       "INBOX_UPDATE_TITLE": "Inbox Settings",
