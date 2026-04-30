@@ -10,13 +10,16 @@ import TelegramChatList from './TelegramChatList.vue';
 import TelegramMessagePanel from './TelegramMessagePanel.vue';
 import TelegramChatInfo from './TelegramChatInfo.vue';
 import TelegramArchivedList from './TelegramArchivedList.vue';
-
-const STORAGE_KEY = 'telegram_splitpane_sizes';
+import { useIsMobile } from 'dashboard/composables/useIsMobile';
 
 const props = defineProps({
   sourceId: { type: String, default: '' },
   chatId: { type: Number, default: 0 },
 });
+
+const { isMobile } = useIsMobile();
+
+const STORAGE_KEY = 'telegram_splitpane_sizes';
 
 const store = useStore();
 const router = useRouter();
@@ -116,10 +119,7 @@ onMounted(async () => {
   if (fetchedSources.length > 0) {
     const targetSourceId = props.sourceId || fetchedSources[0].id;
     if (activeSourceId.value !== targetSourceId) {
-      await store.dispatch(
-        'telegramDialogues/setActiveSource',
-        targetSourceId
-      );
+      await store.dispatch('telegramDialogues/setActiveSource', targetSourceId);
     } else {
       if (!store.state.telegramDialogues.chats.length) {
         await store.dispatch('telegramDialogues/fetchChats');
@@ -138,6 +138,7 @@ onMounted(async () => {
 <template>
   <section class="flex w-full h-full min-w-0 relative">
     <Splitpanes
+      v-if="!isMobile"
       class="w-full h-full"
       :class="{ 'splitpanes-locked': isLayoutLocked }"
       @resized="onSplitpaneResize"
@@ -148,7 +149,9 @@ onMounted(async () => {
         max-size="30"
         class="flex h-full chat-list-pane"
       >
-        <div class="flex flex-col w-full h-full border-r border-n-weak bg-n-background">
+        <div
+          class="flex flex-col w-full h-full border-r border-n-weak bg-n-background"
+        >
           <TelegramSourceSelector
             :sources="sources"
             :active-source-id="activeSourceId"
@@ -175,7 +178,11 @@ onMounted(async () => {
             v-else
             class="flex items-center justify-center h-full text-n-slate-11"
           >
-            {{ showArchive ? 'Archived chats — select a chat to unarchive' : 'Select a chat to start messaging' }}
+            {{
+              showArchive
+                ? 'Archived chats — select a chat to unarchive'
+                : 'Select a chat to start messaging'
+            }}
           </div>
         </div>
       </Pane>
@@ -192,8 +199,34 @@ onMounted(async () => {
         />
       </Pane>
     </Splitpanes>
+    <div v-else class="flex w-full h-full">
+      <div
+        v-show="!activeChatId"
+        class="flex flex-col w-full h-full border-r border-n-weak bg-n-background"
+      >
+        <TelegramSourceSelector
+          :sources="sources"
+          :active-source-id="activeSourceId"
+          @select="onSelectSource"
+        />
+        <TelegramArchivedList v-if="showArchive" />
+        <TelegramChatList
+          v-else
+          :active-chat-id="activeChatId"
+          @select="onSelectChat"
+          @archive="onArchiveChat"
+        />
+      </div>
+      <div
+        v-show="activeChatId && !showArchive"
+        class="flex flex-col w-full h-full"
+      >
+        <TelegramMessagePanel v-if="activeChatId && !showArchive" />
+      </div>
+    </div>
 
     <button
+      v-if="!isMobile"
       type="button"
       class="absolute top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors outline-none"
       :class="{ 'border-woot-500 dark:border-woot-400': isLayoutLocked }"
