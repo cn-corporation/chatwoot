@@ -121,7 +121,9 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-grow overflow-hidden text-n-slate-12 h-dvh md:h-auto">
+  <div
+    class="flex flex-grow overflow-hidden text-n-slate-12 h-dvh md:h-auto pt-[env(safe-area-inset-top)] ltr:pl-[env(safe-area-inset-left)] ltr:pr-[env(safe-area-inset-right)] rtl:pr-[env(safe-area-inset-left)] rtl:pl-[env(safe-area-inset-right)]"
+  >
     <NextSidebar
       :is-mobile-sidebar-open="isMobileSidebarOpen"
       @toggle-account-modal="toggleAccountModal"
