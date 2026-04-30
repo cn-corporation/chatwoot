@@ -145,8 +145,8 @@ const tableHeaders = computed(() => {
       >
         {{ $t('CANNED_MGMT.LIST.404') }}
       </p>
-      <table v-else class="min-w-full overflow-x-auto divide-y divide-n-weak">
-        <thead>
+      <table v-else class="block md:table w-full divide-y divide-n-weak">
+        <thead class="hidden md:table-header-group">
           <th
             v-for="thHeader in tableHeaders"
             :key="thHeader"
@@ -170,21 +170,34 @@ const tableHeaders = computed(() => {
             </button>
           </th>
         </thead>
-        <tbody class="divide-y divide-n-weak text-n-slate-11">
+        <tbody
+          class="block md:table-row-group divide-y divide-n-weak text-n-slate-11"
+        >
           <tr
             v-for="(cannedItem, index) in records"
             :key="cannedItem.short_code"
+            class="flex md:table-row gap-2 py-3 md:py-0 items-start"
           >
             <td
-              class="py-4 ltr:pr-4 rtl:pl-4 truncate max-w-xs font-medium"
+              class="py-0 md:py-4 ltr:pr-4 rtl:pl-4 md:max-w-xs md:truncate font-medium flex-1 min-w-0 md:flex-initial"
               :title="cannedItem.short_code"
             >
-              {{ cannedItem.short_code }}
+              <div class="md:hidden">
+                <div class="font-semibold truncate">
+                  /{{ cannedItem.short_code }}
+                </div>
+                <div class="text-xs text-n-slate-10 mt-0.5 line-clamp-2">
+                  {{ cannedItem.content }}
+                </div>
+              </div>
+              <span class="hidden md:inline">{{ cannedItem.short_code }}</span>
             </td>
-            <td class="py-4 ltr:pr-4 rtl:pl-4 md:break-all whitespace-normal">
+            <td
+              class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4 md:break-all whitespace-normal"
+            >
               {{ cannedItem.content }}
             </td>
-            <td class="py-4 flex justify-end gap-1">
+            <td class="py-0 md:py-4 flex justify-end gap-1 flex-shrink-0">
               <Button
                 v-tooltip.top="$t('CANNED_MGMT.EDIT.BUTTON_TEXT')"
                 icon="i-lucide-pen"
