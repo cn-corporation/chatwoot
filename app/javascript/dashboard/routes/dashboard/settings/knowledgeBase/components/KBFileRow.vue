@@ -33,22 +33,37 @@ const statusColor = computed(() => {
 </script>
 
 <template>
-  <tr>
-    <td class="py-4 ltr:pr-4 rtl:pl-4 truncate max-w-xs font-medium" :title="file.name">
-      {{ file.name }}
+  <tr class="flex md:table-row gap-2 py-3 md:py-0 items-center">
+    <td
+      class="py-0 md:py-4 ltr:pr-4 rtl:pl-4 font-medium flex-1 min-w-0 md:flex-initial md:max-w-xs md:truncate"
+      :title="file.name"
+    >
+      <div class="truncate">{{ file.name }}</div>
+      <div class="block md:hidden text-xs text-n-slate-10 mt-0.5">
+        {{ formattedSize }} · {{ file.mimeType }} ·
+        <span
+          class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
+          :class="statusColor"
+        >
+          {{ file.status }}
+        </span>
+      </div>
     </td>
-    <td class="py-4 ltr:pr-4 rtl:pl-4">
+    <td class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4">
       {{ formattedSize }}
     </td>
-    <td class="py-4 ltr:pr-4 rtl:pl-4">
+    <td class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4">
       {{ file.mimeType }}
     </td>
-    <td class="py-4 ltr:pr-4 rtl:pl-4">
-      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" :class="statusColor">
+    <td class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4">
+      <span
+        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+        :class="statusColor"
+      >
         {{ file.status }}
       </span>
     </td>
-    <td class="py-4 flex justify-end gap-1">
+    <td class="py-0 md:py-4 flex justify-end gap-1 flex-shrink-0">
       <Button
         v-tooltip.top="$t('KNOWLEDGE_BASE.ACTIONS.VIEW')"
         icon="i-lucide-eye"
