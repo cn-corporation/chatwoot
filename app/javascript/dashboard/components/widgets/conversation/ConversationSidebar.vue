@@ -35,11 +35,17 @@ const closeContactPanel = () => {
     is_copilot_panel_open: false,
   });
 };
+
+const closeOnClickOutside = () => {
+  if (isSmallScreen.value && uiSettings.value?.is_contact_sidebar_open) {
+    closeContactPanel();
+  }
+};
 </script>
 
 <template>
   <div
-    v-on-click-outside="() => closeContactPanel()"
+    v-on-click-outside="closeOnClickOutside"
     class="bg-n-background h-full overflow-visible flex flex-col fixed top-0 z-40 w-full max-w-sm transition-transform duration-300 ease-in-out ltr:right-0 rtl:left-0 md:static md:w-full md:max-w-none ltr:border-l rtl:border-r border-n-weak shadow-lg md:shadow-none"
     :class="[
       {
