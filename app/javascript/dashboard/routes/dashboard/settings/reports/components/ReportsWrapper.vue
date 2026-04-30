@@ -1,6 +1,6 @@
 <template>
   <div
-    class="reports--wrapper overflow-x-hidden overflow-y-auto bg-n-background w-full px-6 pb-24 md:pb-0"
+    class="reports--wrapper overflow-x-hidden md:overflow-x-auto overflow-y-auto bg-n-background w-full px-6 pb-24 md:pb-0"
   >
     <div class="max-w-[60rem] mx-auto pb-12">
       <router-view />

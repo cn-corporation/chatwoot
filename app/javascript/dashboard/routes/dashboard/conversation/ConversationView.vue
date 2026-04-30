@@ -154,6 +154,9 @@ export default {
       this.setActiveChat();
     });
   },
+  beforeUnmount() {
+    this.detachSwipeBack();
+  },
 
   methods: {
     onConversationLoad() {
@@ -288,6 +291,13 @@ export default {
       };
       el.addEventListener('touchstart', this.onTouchStart, { passive: true });
       el.addEventListener('touchend', this.onTouchEnd, { passive: true });
+    },
+    detachSwipeBack() {
+      const el = this.$refs.mobileLayoutRef;
+      if (!el) return;
+      if (this.onTouchStart)
+        el.removeEventListener('touchstart', this.onTouchStart);
+      if (this.onTouchEnd) el.removeEventListener('touchend', this.onTouchEnd);
     },
     handleSwipeBack() {
       if (!this.isMobileView) return;
