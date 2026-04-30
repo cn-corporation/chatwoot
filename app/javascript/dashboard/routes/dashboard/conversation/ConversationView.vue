@@ -95,7 +95,7 @@ export default {
     },
     showMessageView() {
       if (this.isMobileView) {
-        return this.conversationId && !this.shouldShowSidebar;
+        return !!this.conversationId;
       }
       return this.conversationId ? true : !this.isOnExpandedLayout;
     },
@@ -214,11 +214,12 @@ export default {
           })
           .then(() => {
             emitter.emit(BUS_EVENTS.SCROLL_TO_MESSAGE, { messageId });
-            // Auto-open contact sidebar when selecting a conversation
-            this.updateUISettings({
-              is_contact_sidebar_open: true,
-              is_copilot_panel_open: false,
-            });
+            if (!this.isMobileView) {
+              this.updateUISettings({
+                is_contact_sidebar_open: true,
+                is_copilot_panel_open: false,
+              });
+            }
           });
       } else {
         this.$store.dispatch('clearSelectedState');
