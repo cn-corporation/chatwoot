@@ -52,15 +52,17 @@ export const getLastMessage = m => {
   const nonActivityMessages = m.messages.filter(
     message =>
       message.message_type !== 2 &&
-      !message.content_attributes?.bot_system_message
+      (!message.content_attributes?.bot_system_message ||
+        message.content_attributes?.bot_break_message)
   );
   const lastNonActivityMessageInStore =
     nonActivityMessages[nonActivityMessages.length - 1];
 
-  const lastNonActivityMessageFromAPI = m.last_non_activity_message
-    ?.content_attributes?.bot_system_message
-    ? null
-    : m.last_non_activity_message;
+  const lastNonActivityMessageFromAPI =
+    m.last_non_activity_message?.content_attributes?.bot_system_message &&
+    !m.last_non_activity_message?.content_attributes?.bot_break_message
+      ? null
+      : m.last_non_activity_message;
 
   if (!lastNonActivityMessageInStore && !lastNonActivityMessageFromAPI) {
     return lastMessageIncludingActivity;

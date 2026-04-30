@@ -969,6 +969,61 @@ class ChatwootExtraAPI {
     const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
     return `${this.baseURL}/api/operator-status/stream?apiKey=${apiKey}`;
   }
+
+  // Operator Breaks API
+  async startOperatorBreak({ chatwootUserId, operatorName, breakType }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-breaks/start`,
+      { chatwootUserId, operatorName, breakType },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async endOperatorBreak(chatwootUserId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-breaks/end`,
+      { chatwootUserId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getMyActiveOperatorBreak(chatwootUserId) {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/api/operator-breaks/me`,
+        {
+          params: { chatwootUserId },
+          headers: this.headers,
+        }
+      );
+      return response.data?.data || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async getCurrentOperatorBreaks() {
+    const response = await axios.get(
+      `${this.baseURL}/api/operator-breaks/current`,
+      {
+        headers: this.headers,
+      }
+    );
+    return response.data?.data || [];
+  }
+
+  async getOperatorBreaksReport(params = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/operator-breaks/report`,
+      {
+        params,
+        headers: this.headers,
+      }
+    );
+    return response.data;
+  }
 }
 
 export default new ChatwootExtraAPI();

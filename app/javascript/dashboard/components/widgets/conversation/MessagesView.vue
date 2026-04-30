@@ -210,7 +210,9 @@ export default {
         filteredMessages = filterDuplicateSourceMessages(messages);
       }
       filteredMessages = filteredMessages.filter(
-        m => !m.content_attributes?.bot_system_message
+        m =>
+          !m.content_attributes?.bot_system_message ||
+          m.content_attributes?.bot_break_message
       );
       if (this.linkedMessages.length > 0) {
         return [...this.linkedMessages, ...filteredMessages];

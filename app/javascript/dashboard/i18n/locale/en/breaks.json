@@ -1,0 +1,51 @@
+{
+  "BREAKS": {
+    "MENU_LABEL": "Coffee break",
+    "TAKE": "Take a break",
+    "SMOKE": "Smoke break",
+    "LUNCH": "Lunch",
+    "START_ERROR": "Could not start the break, please try again.",
+    "OVERLAY": {
+      "HEADING": "You are on a break",
+      "SUBHEADING": "Click the button below when you are back at your desk.",
+      "IM_BACK": "I'm back"
+    },
+    "REPORT": {
+      "HEADER": "Operator Breaks",
+      "DESCRIPTION": "Track current and historical smoke / lunch breaks taken by operators.",
+      "TAB_LIVE": "Currently on break",
+      "TAB_HISTORY": "History",
+      "LOADING": "Loading…",
+      "NO_ACTIVE": "No operators are currently on a break.",
+      "FILTERS": {
+        "START_DATE": "Start date",
+        "END_DATE": "End date",
+        "OPERATORS": "Operators",
+        "BREAK_TYPE": "Break type",
+        "ANY_TYPE": "Any",
+        "ALL_OPERATORS": "All operators",
+        "N_OPERATORS": "{count} selected",
+        "SEARCH_PLACEHOLDER": "Search…",
+        "NO_RESULTS": "No matches",
+        "APPLY": "Apply"
+      },
+      "METRICS": {
+        "TOTAL": "Total time on breaks",
+        "SMOKE": "Smoke breaks",
+        "LUNCH": "Lunches"
+      },
+      "TABLE": {
+        "OPERATOR": "Operator",
+        "TYPE": "Type",
+        "STARTED_AT": "Started",
+        "ELAPSED": "Elapsed",
+        "TOTAL": "Total",
+        "SMOKE": "Smoke",
+        "LUNCH": "Lunch",
+        "SESSIONS": "Sessions",
+        "ACTIVE": "in progress",
+        "NO_DATA": "No breaks recorded for the selected filters."
+      }
+    }
+  }
+}

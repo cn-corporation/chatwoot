@@ -26,6 +26,7 @@ import TasksReports from './TasksReports.vue';
 import CsatStatistics from './CsatStatistics.vue';
 import QualityReviewStatistics from './QualityReviewStatistics.vue';
 import OperatorStatus from './OperatorStatus.vue';
+import OperatorBreaks from './OperatorBreaks.vue';
 
 const meta = {
   featureFlag: FEATURE_FLAGS.REPORTS,
@@ -188,6 +189,12 @@ export default {
           name: 'operator_status',
           meta,
           component: OperatorStatus,
+        },
+        {
+          path: 'operator_breaks',
+          name: 'operator_breaks',
+          meta,
+          component: OperatorBreaks,
         },
       ],
     },
