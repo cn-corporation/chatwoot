@@ -159,11 +159,19 @@ const confirmDeletion = () => {
       </BaseSettingsHeader>
     </template>
     <template #body>
-      <table class="divide-y divide-n-weak">
-        <tbody class="divide-y divide-n-weak text-n-slate-11">
-          <tr v-for="(agent, index) in agentList" :key="agent.email">
-            <td class="py-4 ltr:pr-4 rtl:pl-4">
-              <div class="flex flex-row items-center gap-4">
+      <table class="block md:table w-full divide-y divide-n-weak">
+        <tbody
+          class="block md:table-row-group divide-y divide-n-weak text-n-slate-11"
+        >
+          <tr
+            v-for="(agent, index) in agentList"
+            :key="agent.email"
+            class="flex md:table-row gap-2 py-3 md:py-0 items-center"
+          >
+            <td
+              class="py-0 md:py-4 ltr:pr-4 rtl:pl-4 flex-1 min-w-0 md:flex-initial"
+            >
+              <div class="flex flex-row items-center gap-3 md:gap-4 min-w-0">
                 <Avatar
                   :src="agent.thumbnail"
                   :name="agent.name"
@@ -172,16 +180,27 @@ const confirmDeletion = () => {
                   hide-offline-status
                   rounded-full
                 />
-                <div>
-                  <span class="block font-medium capitalize">
+                <div class="min-w-0 flex-1">
+                  <span class="block font-medium capitalize truncate">
                     {{ agent.name }}
                   </span>
-                  <span>{{ agent.email }}</span>
+                  <span class="block truncate text-xs md:text-sm">
+                    {{ agent.email }}
+                  </span>
+                  <span class="block md:hidden text-xs text-n-slate-10">
+                    {{ getAgentRoleName(agent) }}
+                    <span v-if="agent.confirmed">
+                      · {{ $t('AGENT_MGMT.LIST.VERIFIED') }}
+                    </span>
+                    <span v-else>
+                      · {{ $t('AGENT_MGMT.LIST.VERIFICATION_PENDING') }}
+                    </span>
+                  </span>
                 </div>
               </div>
             </td>
 
-            <td class="relative py-4 ltr:pr-4 rtl:pl-4">
+            <td class="hidden md:table-cell relative py-4 ltr:pr-4 rtl:pl-4">
               <span
                 class="block font-medium w-fit"
                 :class="{
@@ -216,7 +235,7 @@ const confirmDeletion = () => {
                 </div>
               </span>
             </td>
-            <td class="py-4 ltr:pr-4 rtl:pl-4">
+            <td class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4">
               <span v-if="agent.confirmed">
                 {{ $t('AGENT_MGMT.LIST.VERIFIED') }}
               </span>
@@ -224,7 +243,7 @@ const confirmDeletion = () => {
                 {{ $t('AGENT_MGMT.LIST.VERIFICATION_PENDING') }}
               </span>
             </td>
-            <td class="py-4">
+            <td class="py-0 md:py-4 flex-shrink-0">
               <div class="flex justify-end gap-1">
                 <Button
                   v-if="showEditAction(agent)"
