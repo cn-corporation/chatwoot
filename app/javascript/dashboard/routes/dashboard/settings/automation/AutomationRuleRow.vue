@@ -35,19 +35,33 @@ const automationActive = computed({
 </script>
 
 <template>
-  <tr>
-    <td class="py-4 ltr:pr-4 rtl:pl-4 min-w-[200px]">{{ automation.name }}</td>
-    <td class="py-4 ltr:pr-4 rtl:pl-4">{{ automation.description }}</td>
-    <td class="py-4 ltr:pr-4 rtl:pl-4">
+  <tr class="flex md:table-row gap-2 py-3 md:py-0 items-center">
+    <td
+      class="py-0 md:py-4 ltr:pr-4 rtl:pl-4 md:min-w-[200px] flex-1 min-w-0 md:flex-initial"
+    >
+      <div class="font-medium md:font-normal truncate">
+        {{ automation.name }}
+      </div>
+      <div class="block md:hidden text-xs text-n-slate-10 mt-0.5 line-clamp-2">
+        {{ automation.description }}
+      </div>
+      <div class="block md:hidden text-[10px] text-n-slate-9 mt-0.5">
+        {{ readableDate(automation.created_on) }}
+      </div>
+    </td>
+    <td class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4">
+      {{ automation.description }}
+    </td>
+    <td class="py-0 md:py-4 ltr:pr-4 rtl:pl-4 flex-shrink-0">
       <ToggleSwitch v-model="automationActive" />
     </td>
     <td
-      class="py-4 ltr:pr-4 rtl:pl-4 min-w-[12px]"
+      class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4 min-w-[12px]"
       :title="readableDateWithTime(automation.created_on)"
     >
       {{ readableDate(automation.created_on) }}
     </td>
-    <td class="py-4 min-w-xs">
+    <td class="py-0 md:py-4 md:min-w-xs flex-shrink-0">
       <div class="flex gap-1 justify-end flex-shrink-0">
         <Button
           v-tooltip.top="$t('AUTOMATION.FORM.EDIT')"

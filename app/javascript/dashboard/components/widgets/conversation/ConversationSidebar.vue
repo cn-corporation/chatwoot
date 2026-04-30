@@ -30,12 +30,10 @@ const isSmallScreen = computed(
 );
 
 const closeContactPanel = () => {
-  if (isSmallScreen.value && uiSettings.value?.is_contact_sidebar_open) {
-    updateUISettings({
-      is_contact_sidebar_open: false,
-      is_copilot_panel_open: false,
-    });
-  }
+  updateUISettings({
+    is_contact_sidebar_open: false,
+    is_copilot_panel_open: false,
+  });
 };
 </script>
 
@@ -50,6 +48,22 @@ const closeContactPanel = () => {
       },
     ]"
   >
+    <div
+      v-if="isSmallScreen"
+      class="flex items-center gap-2 h-12 px-2 border-b border-n-weak flex-shrink-0"
+    >
+      <button
+        type="button"
+        class="flex items-center justify-center h-10 w-10 rounded-lg text-n-slate-12 hover:bg-n-alpha-2"
+        :aria-label="$t('CONVERSATION.CLOSE_CONTACT_PANEL')"
+        @click="closeContactPanel"
+      >
+        <span class="i-lucide-arrow-left size-5" />
+      </button>
+      <span class="text-sm font-medium text-n-slate-12 truncate">
+        {{ $t('CONVERSATION.CONTACT_PANEL_HEADER') }}
+      </span>
+    </div>
     <div
       class="flex flex-1 overflow-x-visible overflow-y-auto relative z-[100]"
     >

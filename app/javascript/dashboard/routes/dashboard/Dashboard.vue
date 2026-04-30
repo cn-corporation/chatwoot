@@ -20,6 +20,7 @@ import CopilotLauncher from 'dashboard/components-next/copilot/CopilotLauncher.v
 import CopilotContainer from 'dashboard/components/copilot/CopilotContainer.vue';
 
 import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSidebarLauncher.vue';
+import InstallHint from 'dashboard/components-next/install-hint/InstallHint.vue';
 
 export default {
   components: {
@@ -31,6 +32,7 @@ export default {
     CopilotLauncher,
     CopilotContainer,
     MobileSidebarLauncher,
+    InstallHint,
   },
   setup() {
     const upgradePageRef = ref(null);
@@ -121,7 +123,9 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-grow overflow-hidden text-n-slate-12">
+  <div
+    class="flex flex-grow overflow-hidden text-n-slate-12 h-dvh md:h-auto pt-[env(safe-area-inset-top)] ltr:pl-[env(safe-area-inset-left)] ltr:pr-[env(safe-area-inset-right)] rtl:pr-[env(safe-area-inset-left)] rtl:pl-[env(safe-area-inset-right)]"
+  >
     <NextSidebar
       :is-mobile-sidebar-open="isMobileSidebarOpen"
       @toggle-account-modal="toggleAccountModal"
@@ -161,6 +165,7 @@ export default {
         @close="closeKeyShortcutModal"
         @clickaway="closeKeyShortcutModal"
       />
+      <InstallHint />
     </main>
   </div>
 </template>

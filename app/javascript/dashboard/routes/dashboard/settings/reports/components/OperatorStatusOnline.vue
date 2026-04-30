@@ -191,8 +191,8 @@ onUnmounted(() => {
         {{ t('REPORT.OPERATOR_STATUS_PAGE.LOADING') }}
       </span>
     </div>
-    <table v-else class="w-full text-left">
-      <thead>
+    <table v-else class="block md:table w-full text-left">
+      <thead class="hidden md:table-header-group">
         <tr class="border-b border-n-slate-3">
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
             {{ t('REPORT.OPERATOR_STATUS_PAGE.ONLINE_TABLE.STATUS') }}
@@ -211,26 +211,38 @@ onUnmounted(() => {
           </th>
         </tr>
       </thead>
-      <tbody>
+      <tbody class="block md:table-row-group">
         <tr
           v-for="op in sortedOperators"
           :key="op.operatorId"
-          class="border-b border-n-slate-2"
+          class="flex md:table-row gap-2 py-3 px-2 md:py-0 md:px-0 items-center border-b border-n-slate-2"
           :class="{ 'opacity-40': op.status === 'offline' }"
         >
-          <td class="py-3 px-4">
+          <td class="py-0 md:py-3 md:px-4 flex-shrink-0">
             <span
               class="inline-block w-2.5 h-2.5 rounded-full"
               :class="statusColor(op.status)"
             />
           </td>
-          <td class="py-3 px-4 text-sm font-medium text-n-slate-12">
-            {{ op.name }}
+          <td
+            class="py-0 md:py-3 md:px-4 text-sm font-medium text-n-slate-12 flex-1 min-w-0 md:flex-initial"
+          >
+            <div class="truncate">{{ op.name }}</div>
+            <div class="block md:hidden text-xs text-n-slate-10 mt-0.5">
+              {{ statusLabel(op.status) }} ·
+              <template v-if="op.status === 'online'">
+                {{ t('REPORT.OPERATOR_STATUS_PAGE.ONLINE_TABLE.NOW') }}
+              </template>
+              <template v-else-if="op.lastHeartbeat">
+                {{ formatLastSeen(op.lastHeartbeat) }}
+              </template>
+              <template v-else>—</template>
+            </div>
           </td>
-          <td class="py-3 px-4 text-sm text-n-slate-11">
+          <td class="hidden md:table-cell py-3 px-4 text-sm text-n-slate-11">
             {{ statusLabel(op.status) }}
           </td>
-          <td class="py-3 px-4 text-sm text-n-slate-11">
+          <td class="hidden md:table-cell py-3 px-4 text-sm text-n-slate-11">
             <template v-if="op.status === 'online'">
               {{ t('REPORT.OPERATOR_STATUS_PAGE.ONLINE_TABLE.NOW') }}
             </template>
@@ -239,7 +251,7 @@ onUnmounted(() => {
             </template>
             <template v-else>—</template>
           </td>
-          <td class="py-3 px-4 text-right">
+          <td class="py-0 md:py-3 md:px-4 text-right flex-shrink-0">
             <button
               v-if="!isSelf(op)"
               class="px-3 py-1.5 text-xs font-medium rounded border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

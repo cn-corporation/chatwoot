@@ -21,7 +21,9 @@ const showContentModal = ref(false);
 const fileInputRef = ref(null);
 
 const records = computed(() => store.getters['knowledgeBase/getFiles']);
-const fileContent = computed(() => store.getters['knowledgeBase/getFileContent']);
+const fileContent = computed(
+  () => store.getters['knowledgeBase/getFileContent']
+);
 const uiFlags = computed(() => store.getters['knowledgeBase/getUIFlags']);
 
 const filteredRecords = computed(() => {
@@ -122,11 +124,8 @@ const deleteFile = async file => {
       >
         {{ $t('KNOWLEDGE_BASE.EMPTY') }}
       </p>
-      <table
-        v-else
-        class="min-w-full overflow-x-auto divide-y divide-n-weak"
-      >
-        <thead>
+      <table v-else class="block md:table w-full divide-y divide-n-weak">
+        <thead class="hidden md:table-header-group">
           <th
             v-for="header in [
               $t('KNOWLEDGE_BASE.TABLE.NAME'),
@@ -141,7 +140,9 @@ const deleteFile = async file => {
             {{ header }}
           </th>
         </thead>
-        <tbody class="divide-y divide-n-weak text-n-slate-11">
+        <tbody
+          class="block md:table-row-group divide-y divide-n-weak text-n-slate-11"
+        >
           <KBFileRow
             v-for="file in filteredRecords"
             :key="file.id"

@@ -88,13 +88,17 @@ export default {
 </script>
 
 <template>
-  <div class="flex justify-between h-[3.25rem] gap-2 ltr:pl-3 rtl:pr-3">
-    <EditorModeToggle
-      :mode="mode"
-      class="mt-3"
-      @select-mode="handleSelectMode"
-    />
-    <div class="flex items-center mx-4 my-0">
+  <div
+    class="flex justify-between items-center gap-2 ltr:pl-3 rtl:pr-3 min-h-[3.25rem]"
+  >
+    <div class="flex-1 min-w-0 overflow-x-auto no-scrollbar">
+      <EditorModeToggle
+        :mode="mode"
+        class="mt-3 whitespace-nowrap"
+        @select-mode="handleSelectMode"
+      />
+    </div>
+    <div class="flex items-center mx-4 my-0 flex-shrink-0">
       <div v-if="isMessageLengthReachingThreshold" class="text-xs">
         <span :class="charLengthClass">
           {{ characterLengthWarning }}

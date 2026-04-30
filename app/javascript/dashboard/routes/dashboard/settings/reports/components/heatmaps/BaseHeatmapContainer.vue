@@ -302,12 +302,20 @@ onMounted(() => {
           @click="downloadHeatmapData"
         />
       </template>
-      <BaseHeatmap
-        :heatmap-data="heatmapData"
-        :number-of-rows="numberOfRows"
-        :is-loading="isLoading"
-        :color-scheme="colorScheme"
-      />
+      <div
+        class="relative w-full overflow-x-auto overscroll-x-contain touch-pan-x [-webkit-overflow-scrolling:touch]"
+      >
+        <BaseHeatmap
+          :heatmap-data="heatmapData"
+          :number-of-rows="numberOfRows"
+          :is-loading="isLoading"
+          :color-scheme="colorScheme"
+        />
+        <div
+          aria-hidden="true"
+          class="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-n-solid-2 to-transparent md:hidden"
+        />
+      </div>
     </MetricCard>
   </div>
 </template>

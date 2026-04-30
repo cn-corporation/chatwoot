@@ -166,7 +166,8 @@
         "ACTIVE_DAYS": "Active Days",
         "SESSIONS": "Sessions",
         "ACTIVE": "Active",
-        "NO_DATA": "No data for the selected filters."
+        "NO_DATA": "No data for the selected filters.",
+        "MOBILE_SUMMARY": "{total} · {days}d · {sessions} sessions"
       },
       "KICK": {
         "ACTION_ONLINE": "Kill Session",

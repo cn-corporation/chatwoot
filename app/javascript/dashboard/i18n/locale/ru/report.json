@@ -166,7 +166,8 @@
         "ACTIVE_DAYS": "Активных дней",
         "SESSIONS": "Сессий",
         "ACTIVE": "Активна",
-        "NO_DATA": "Нет данных по выбранным фильтрам."
+        "NO_DATA": "Нет данных по выбранным фильтрам.",
+        "MOBILE_SUMMARY": "{total} · {days}д · {sessions} сессий"
       },
       "KICK": {
         "ACTION_ONLINE": "Завершить сессию",
