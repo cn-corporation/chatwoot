@@ -157,6 +157,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     last_incoming_message = @conversation.messages.incoming.last
     last_seen_at = last_incoming_message.created_at - 1.second if last_incoming_message.present?
     update_last_seen_on_conversation(last_seen_at, true)
+    propagate_unread_to_chatwoot_extra
   end
 
   def custom_attributes
@@ -179,6 +180,12 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def attachment_params
     params.permit(:page)
+  end
+
+  def propagate_unread_to_chatwoot_extra
+    ChatwootExtra::ApiClient.new.mark_conversation_unread(Current.account.id, @conversation.display_id)
+  rescue StandardError => e
+    Rails.logger.warn("[ChatwootExtra] Failed to propagate mark-unread for conversation #{@conversation.display_id}: #{e.message}")
   end
 
   def update_last_seen_on_conversation(last_seen_at, update_assignee)
