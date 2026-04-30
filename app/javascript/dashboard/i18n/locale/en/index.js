@@ -41,6 +41,7 @@ import teamsSettings from './teamsSettings.json';
 import todo from './todo.json';
 import whatsappTemplates from './whatsappTemplates.json';
 import knowledgeBase from './knowledgeBase.json';
+import mobile from './mobile.json';
 
 export default {
   ...ads,
@@ -86,4 +87,5 @@ export default {
   ...todo,
   ...whatsappTemplates,
   ...knowledgeBase,
+  ...mobile,
 };

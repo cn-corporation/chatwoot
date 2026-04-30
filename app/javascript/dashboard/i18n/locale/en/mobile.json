@@ -1,0 +1,9 @@
+{
+  "MOBILE": {
+    "INSTALL_HINT": {
+      "TITLE": "Add to Home Screen",
+      "BODY": "Tap the Share icon, then \"Add to Home Screen\" for a full-screen experience.",
+      "DISMISS": "Dismiss"
+    }
+  }
+}

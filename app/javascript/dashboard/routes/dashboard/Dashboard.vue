@@ -20,6 +20,7 @@ import CopilotLauncher from 'dashboard/components-next/copilot/CopilotLauncher.v
 import CopilotContainer from 'dashboard/components/copilot/CopilotContainer.vue';
 
 import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSidebarLauncher.vue';
+import InstallHint from 'dashboard/components-next/install-hint/InstallHint.vue';
 
 export default {
   components: {
@@ -31,6 +32,7 @@ export default {
     CopilotLauncher,
     CopilotContainer,
     MobileSidebarLauncher,
+    InstallHint,
   },
   setup() {
     const upgradePageRef = ref(null);
@@ -163,6 +165,7 @@ export default {
         @close="closeKeyShortcutModal"
         @clickaway="closeKeyShortcutModal"
       />
+      <InstallHint />
     </main>
   </div>
 </template>
