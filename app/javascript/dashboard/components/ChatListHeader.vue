@@ -83,8 +83,8 @@ const formattedAllCount = computed(() => formatNumber(allCount.value));
           />
           <div
             id="saveFilterTeleportTarget"
-            class="absolute z-50 mt-2"
-            :class="{ 'ltr:right-0 rtl:left-0': isOnExpandedLayout }"
+            class="fixed inset-x-2 top-12 z-50 md:absolute md:inset-x-auto md:top-auto md:mt-2"
+            :class="{ 'md:ltr:right-0 md:rtl:left-0': isOnExpandedLayout }"
           />
         </div>
         <NextButton
@@ -111,8 +111,8 @@ const formattedAllCount = computed(() => formatNumber(allCount.value));
           />
           <div
             id="conversationFilterTeleportTarget"
-            class="absolute z-50 mt-2"
-            :class="{ 'ltr:right-0 rtl:left-0': isOnExpandedLayout }"
+            class="fixed inset-x-2 top-12 z-50 md:absolute md:inset-x-auto md:top-auto md:mt-2"
+            :class="{ 'md:ltr:right-0 md:rtl:left-0': isOnExpandedLayout }"
           />
         </div>
         <NextButton
@@ -139,8 +139,8 @@ const formattedAllCount = computed(() => formatNumber(allCount.value));
         />
         <div
           id="conversationFilterTeleportTarget"
-          class="absolute z-50 mt-2"
-          :class="{ 'ltr:right-0 rtl:left-0': isOnExpandedLayout }"
+          class="fixed inset-x-2 top-12 z-50 md:absolute md:inset-x-auto md:top-auto md:mt-2"
+          :class="{ 'md:ltr:right-0 md:rtl:left-0': isOnExpandedLayout }"
         />
       </div>
       <ConversationBasicFilter

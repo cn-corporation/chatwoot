@@ -166,13 +166,25 @@ const emptyMessage = computed(() => {
 
 const tableHeaders = computed(() => {
   const headers = [
-    t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.SHORT_CODE'),
-    t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.CONTENT'),
+    {
+      label: t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.SHORT_CODE'),
+      class: '',
+    },
+    {
+      label: t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.CONTENT'),
+      class: '',
+    },
   ];
   if (isAdmin.value) {
-    headers.push(t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.OWNER'));
+    headers.push({
+      label: t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.OWNER'),
+      class: 'hidden md:table-cell',
+    });
   }
-  headers.push(t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.ACTIONS'));
+  headers.push({
+    label: t('PERSONAL_CANNED_MGMT.LIST.TABLE_HEADER.ACTIONS'),
+    class: '',
+  });
   return headers;
 });
 </script>
@@ -197,15 +209,16 @@ const tableHeaders = computed(() => {
       >
         {{ emptyMessage }}
       </p>
-      <table v-else class="min-w-full overflow-x-auto divide-y divide-n-weak">
+      <table v-else class="w-full table-fixed divide-y divide-n-weak">
         <thead>
           <th
-            v-for="thHeader in tableHeaders"
-            :key="thHeader"
+            v-for="(thHeader, idx) in tableHeaders"
+            :key="thHeader.label"
             class="py-4 ltr:pr-4 rtl:pl-4 text-left font-semibold text-n-slate-11 last:text-right"
+            :class="thHeader.class"
           >
-            <span v-if="thHeader !== tableHeaders[0]">
-              {{ thHeader }}
+            <span v-if="idx !== 0">
+              {{ thHeader.label }}
             </span>
             <button
               v-else
@@ -213,7 +226,7 @@ const tableHeaders = computed(() => {
               @click="toggleSort"
             >
               <span class="mb-0">
-                {{ thHeader }}
+                {{ thHeader.label }}
               </span>
               <fluent-icon
                 class="ml-2 size-4"
@@ -225,22 +238,25 @@ const tableHeaders = computed(() => {
         <tbody class="divide-y divide-n-weak text-n-slate-11">
           <tr v-for="cannedItem in records" :key="cannedItem.id">
             <td
-              class="py-4 ltr:pr-4 rtl:pl-4 truncate max-w-xs font-medium"
+              class="py-4 ltr:pr-4 rtl:pl-4 truncate w-20 md:w-auto md:max-w-xs font-medium"
               :title="cannedItem.command"
             >
               {{ cannedItem.command }}
             </td>
-            <td class="py-4 ltr:pr-4 rtl:pl-4 md:break-all whitespace-normal">
+            <td
+              class="py-4 ltr:pr-4 rtl:pl-4 truncate md:break-all md:whitespace-normal md:truncate-none"
+              :title="cannedItem.text"
+            >
               {{ cannedItem.text }}
             </td>
             <td
               v-if="isAdmin"
-              class="py-4 ltr:pr-4 rtl:pl-4 truncate max-w-xs"
+              class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4 truncate max-w-xs"
               :title="cannedItem.ownerName"
             >
               {{ cannedItem.ownerName || '-' }}
             </td>
-            <td class="py-4 flex justify-end gap-1">
+            <td class="py-4 w-20 flex justify-end gap-1">
               <Button
                 v-tooltip.top="$t('PERSONAL_CANNED_MGMT.EDIT.BUTTON_TEXT')"
                 icon="i-lucide-pen"

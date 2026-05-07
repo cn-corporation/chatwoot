@@ -233,7 +233,7 @@ export default {
 }
 
 .filter-inputs {
-  @apply flex gap-1;
+  @apply flex flex-wrap md:flex-nowrap gap-1;
 }
 
 .filter-error {
@@ -246,7 +246,7 @@ export default {
 }
 
 .action__question {
-  @apply max-w-[50%];
+  @apply basis-full md:basis-auto md:max-w-[50%];
 }
 
 .action__question.full-width {
@@ -254,7 +254,7 @@ export default {
 }
 
 .filter__answer--wrap {
-  @apply max-w-[50%] flex-grow mr-1 flex w-full items-center justify-start;
+  @apply basis-[calc(100%-3rem)] md:basis-auto md:max-w-[50%] flex-grow mr-1 flex w-full items-center justify-start;
 
   input {
     @apply mb-0;
