@@ -13,7 +13,7 @@ import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 import { conversationUrl, frontendURL } from 'dashboard/helper/URLHelper';
 
 const PAGE_SIZE = 100;
-const ROW_HEIGHT = 44;
+const ROW_HEIGHT = 56;
 
 const { t } = useI18n();
 const store = useStore();
@@ -100,26 +100,6 @@ const normalizeTask = task => ({
 
 const normalizedTasks = computed(() => tasks.value.map(normalizeTask));
 
-const fetchReport = async () => {
-  isLoading.value = true;
-  offset.value = 0;
-  hasMore.value = true;
-  try {
-    const data = await ChatwootExtraAPI.getTasksReportPaginated({
-      filters: buildFilters(),
-      limit: PAGE_SIZE,
-      offset: 0,
-    });
-    tasks.value = Array.isArray(data) ? data : [];
-    hasMore.value = data.length >= PAGE_SIZE;
-    offset.value = data.length;
-  } finally {
-    isLoading.value = false;
-    await nextTick();
-    setupObserver();
-  }
-};
-
 const loadMore = async () => {
   if (isLoadingMore.value || !hasMore.value) return;
   isLoadingMore.value = true;
@@ -150,12 +130,41 @@ const setupObserver = () => {
   observer.observe(sentinelRef.value);
 };
 
-const formatDateTime = iso => {
-  if (!iso) return '—';
+const fetchReport = async () => {
+  isLoading.value = true;
+  offset.value = 0;
+  hasMore.value = true;
   try {
-    return format(new Date(iso), 'MMM dd, yyyy HH:mm');
+    const data = await ChatwootExtraAPI.getTasksReportPaginated({
+      filters: buildFilters(),
+      limit: PAGE_SIZE,
+      offset: 0,
+    });
+    tasks.value = Array.isArray(data) ? data : [];
+    hasMore.value = data.length >= PAGE_SIZE;
+    offset.value = data.length;
+  } finally {
+    isLoading.value = false;
+    await nextTick();
+    setupObserver();
+  }
+};
+
+const formatDatePart = iso => {
+  if (!iso) return '';
+  try {
+    return format(new Date(iso), 'MMM dd, yyyy');
   } catch {
     return iso;
+  }
+};
+
+const formatTimePart = iso => {
+  if (!iso) return '';
+  try {
+    return format(new Date(iso), 'HH:mm');
+  } catch {
+    return '';
   }
 };
 
@@ -166,7 +175,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 pb-6">
+  <div class="flex flex-col gap-6 pb-6 lg:-mx-6 xl:-mx-12 2xl:-mx-24">
     <ReportHeader :header-title="t('TASKS_REPORT.HEADER')" />
 
     <div class="flex flex-wrap gap-4 items-start">
@@ -242,16 +251,16 @@ onMounted(() => {
       :loading-message="t('TASKS_REPORT.LOADING')"
     >
       <div v-if="normalizedTasks.length" class="overflow-x-auto w-full">
-        <div class="min-w-[1100px]">
+        <div class="min-w-[720px]">
           <table class="w-full">
             <colgroup>
-              <col class="w-[100px]" />
+              <col class="w-[64px]" />
               <col />
-              <col class="w-[140px]" />
-              <col class="w-[100px]" />
-              <col class="w-[140px]" />
-              <col class="w-[170px]" />
-              <col class="w-[170px]" />
+              <col class="w-[120px]" />
+              <col class="w-[90px]" />
+              <col class="w-[120px]" />
+              <col class="w-[120px]" />
+              <col class="w-[120px]" />
             </colgroup>
             <thead>
               <tr class="border-b border-n-slate-6">
@@ -302,13 +311,13 @@ onMounted(() => {
             <template #default="{ item: task }">
               <table class="w-full" :style="{ height: ROW_HEIGHT + 'px' }">
                 <colgroup>
-                  <col class="w-[100px]" />
+                  <col class="w-[64px]" />
                   <col />
-                  <col class="w-[140px]" />
-                  <col class="w-[100px]" />
-                  <col class="w-[140px]" />
-                  <col class="w-[170px]" />
-                  <col class="w-[170px]" />
+                  <col class="w-[120px]" />
+                  <col class="w-[90px]" />
+                  <col class="w-[120px]" />
+                  <col class="w-[120px]" />
+                  <col class="w-[120px]" />
                 </colgroup>
                 <tbody>
                   <tr class="border-b border-n-slate-6 hover:bg-n-solid-2">
@@ -346,14 +355,26 @@ onMounted(() => {
                       {{ task.completedByName ?? '—' }}
                     </td>
                     <td
-                      class="py-3 px-4 text-sm text-n-slate-12 whitespace-nowrap"
+                      class="py-2 px-4 text-sm text-n-slate-12 whitespace-nowrap"
                     >
-                      {{ formatDateTime(task.createdAt) }}
+                      <template v-if="task.createdAt">
+                        <div>{{ formatDatePart(task.createdAt) }}</div>
+                        <div class="text-xs text-n-slate-11">
+                          {{ formatTimePart(task.createdAt) }}
+                        </div>
+                      </template>
+                      <template v-else>—</template>
                     </td>
                     <td
-                      class="py-3 px-4 text-sm text-n-slate-12 whitespace-nowrap"
+                      class="py-2 px-4 text-sm text-n-slate-12 whitespace-nowrap"
                     >
-                      {{ formatDateTime(task.completedAt) }}
+                      <template v-if="task.completedAt">
+                        <div>{{ formatDatePart(task.completedAt) }}</div>
+                        <div class="text-xs text-n-slate-11">
+                          {{ formatTimePart(task.completedAt) }}
+                        </div>
+                      </template>
+                      <template v-else>—</template>
                     </td>
                   </tr>
                 </tbody>
