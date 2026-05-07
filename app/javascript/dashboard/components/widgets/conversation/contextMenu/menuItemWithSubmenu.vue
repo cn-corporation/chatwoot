@@ -15,20 +15,30 @@ defineProps({
 
 const menuRef = useTemplateRef('menuRef');
 const { width: windowWidth, height: windowHeight } = useWindowSize();
-const { bottom, right } = useElementBounding(menuRef);
+const { bottom, right, left } = useElementBounding(menuRef);
 
-// Vertical position
+const SUBMENU_HEIGHT = 240;
+const SUBMENU_WIDTH = 240;
+
+const fitsOnRight = computed(
+  () => windowWidth.value - right.value >= SUBMENU_WIDTH
+);
+const fitsOnLeft = computed(() => left.value >= SUBMENU_WIDTH);
+const fitsHorizontally = computed(() => fitsOnRight.value || fitsOnLeft.value);
+
 const verticalPosition = computed(() => {
-  const SUBMENU_HEIGHT = 240; // 15rem in pixels
   const spaceBelow = windowHeight.value - bottom.value;
+  if (!fitsHorizontally.value) {
+    return 'top-full';
+  }
   return spaceBelow < SUBMENU_HEIGHT ? 'bottom-0' : 'top-0';
 });
 
-// Horizontal position
 const horizontalPosition = computed(() => {
-  const SUBMENU_WIDTH = 240;
-  const spaceRight = windowWidth.value - right.value;
-  return spaceRight < SUBMENU_WIDTH ? 'right-full' : 'left-full';
+  if (!fitsHorizontally.value) {
+    return 'left-0 right-0';
+  }
+  return fitsOnRight.value ? 'left-full' : 'right-full';
 });
 
 const submenuPosition = computed(() => [
@@ -50,7 +60,7 @@ const submenuPosition = computed(() => [
     <fluent-icon icon="chevron-right" size="12" />
     <div
       v-if="subMenuAvailable"
-      class="submenu bg-n-solid-1 p-1 shadow-lg rounded-md absolute hidden max-h-[15rem] overflow-y-auto overflow-x-hidden cursor-pointer outline-1 outline outline-n-weak"
+      class="submenu bg-n-solid-1 p-1 shadow-lg rounded-md absolute hidden max-h-[15rem] overflow-y-auto overflow-x-hidden cursor-pointer outline-1 outline outline-n-weak z-10"
       :class="submenuPosition"
     >
       <slot />

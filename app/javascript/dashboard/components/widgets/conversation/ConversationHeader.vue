@@ -167,7 +167,7 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
         :conversation-id="currentChat.id"
         class="hidden md:flex"
       />
-      <WaitingToggle v-if="currentChat.id" class="hidden md:flex" />
+      <WaitingToggle v-if="currentChat.id" />
       <MoreActions :conversation-id="currentChat.id" />
     </div>
   </div>
