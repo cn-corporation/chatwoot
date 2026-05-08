@@ -330,12 +330,15 @@ onMounted(() => {
                       </a>
                     </td>
                     <td
-                      class="py-3 px-4 text-sm text-n-slate-12 max-w-0 truncate"
-                      :title="task.message"
+                      v-tooltip="task.message"
+                      class="py-3 px-4 text-sm text-n-slate-12 max-w-0 truncate [-webkit-touch-callout:none]"
                     >
                       {{ task.message }}
                     </td>
-                    <td class="py-3 px-4 text-sm text-n-slate-12 truncate">
+                    <td
+                      v-tooltip="task.operatorName"
+                      class="py-3 px-4 text-sm text-n-slate-12 truncate [-webkit-touch-callout:none]"
+                    >
                       {{ task.operatorName }}
                     </td>
                     <td class="py-3 px-4 text-sm">
@@ -351,7 +354,10 @@ onMounted(() => {
                         }}
                       </span>
                     </td>
-                    <td class="py-3 px-4 text-sm text-n-slate-12 truncate">
+                    <td
+                      v-tooltip="task.completedByName ?? ''"
+                      class="py-3 px-4 text-sm text-n-slate-12 truncate [-webkit-touch-callout:none]"
+                    >
                       {{ task.completedByName ?? '—' }}
                     </td>
                     <td
