@@ -113,6 +113,9 @@ onMounted(() => {
         handle=".drag-handle"
         item-key="name"
         class="sidebar-grid gap-3 overflow-x-visible"
+        :delay="200"
+        :delay-on-touch-only="true"
+        :touch-start-threshold="5"
         @start="dragging = true"
         @end="onDragEnd"
       >
