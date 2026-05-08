@@ -78,7 +78,6 @@ const formattedAllCount = computed(() => formatNumber(allCount.value));
             slate
             xs
             faded
-            class="!h-10 !w-10 md:!h-7 md:!w-7"
             @click="emit('addFolders')"
           />
           <div
@@ -93,7 +92,6 @@ const formattedAllCount = computed(() => formatNumber(allCount.value));
           ruby
           faded
           xs
-          class="!h-10 !w-10 md:!h-7 md:!w-7"
           @click="emit('resetFilters')"
         />
       </template>
@@ -106,7 +104,6 @@ const formattedAllCount = computed(() => formatNumber(allCount.value));
             slate
             xs
             faded
-            class="!h-10 !w-10 md:!h-7 md:!w-7"
             @click="emit('filtersModal')"
           />
           <div
@@ -122,7 +119,6 @@ const formattedAllCount = computed(() => formatNumber(allCount.value));
           ruby
           xs
           faded
-          class="!h-10 !w-10 md:!h-7 md:!w-7"
           @click="emit('deleteFolders')"
         />
       </template>
@@ -134,7 +130,6 @@ const formattedAllCount = computed(() => formatNumber(allCount.value));
           slate
           xs
           faded
-          class="!h-10 !w-10 md:!h-7 md:!w-7"
           @click="emit('filtersModal')"
         />
         <div
@@ -151,7 +146,6 @@ const formattedAllCount = computed(() => formatNumber(allCount.value));
       <NextButton
         v-tooltip.top-end="$t('BULK_ACTION.BULK_MESSAGE_MODE.TOGGLE_TOOLTIP')"
         :icon="isBulkMessageMode ? 'i-lucide-mail-check' : 'i-lucide-mail-plus'"
-        class="!h-10 !w-10 md:!h-7 md:!w-7"
         :class="[isBulkMessageMode ? 'bg-n-brand text-white' : '']"
         slate
         xs
