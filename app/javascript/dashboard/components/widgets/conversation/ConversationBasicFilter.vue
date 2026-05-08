@@ -146,7 +146,11 @@ const handleSortChange = value => {
     />
     <div
       v-if="showActionsDropdown"
-      v-on-click-outside="() => toggleDropdown()"
+      class="fixed inset-0 z-30"
+      @click="toggleDropdown()"
+    />
+    <div
+      v-if="showActionsDropdown"
       class="mt-1 bg-n-alpha-3 backdrop-blur-[100px] border border-n-weak w-72 rounded-xl p-4 absolute z-40 top-full"
       :class="{
         'ltr:left-0 rtl:right-0': !isOnExpandedLayout,

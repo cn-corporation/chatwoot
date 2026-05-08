@@ -32,11 +32,11 @@ const shouldRenderComponent = computed(() => {
     <component
       :is="to ? 'router-link' : 'div'"
       :to="to"
-      :title="label"
-      class="flex h-8 items-center gap-2 px-2 py-1 rounded-lg max-w-[9.438rem] hover:bg-gradient-to-r from-transparent via-n-slate-3/70 to-n-slate-3/70 group"
+      class="flex h-8 items-center gap-2 px-2 py-1 rounded-lg max-w-[9.438rem] hover:bg-gradient-to-r from-transparent via-n-slate-3/70 to-n-slate-3/70 group [-webkit-touch-callout:none]"
       :class="{
         'text-n-blue-text bg-n-alpha-2 active': active,
       }"
+      @contextmenu.prevent
     >
       <component
         :is="component"
@@ -49,7 +49,7 @@ const shouldRenderComponent = computed(() => {
       />
       <template v-else>
         <Icon v-if="icon" :icon="icon" class="size-4 inline-block" />
-        <div class="truncate min-w-0">{{ label }}</div>
+        <div v-tooltip="label" class="truncate min-w-0">{{ label }}</div>
         <span
           v-if="totalCount > 0"
           class="text-xs font-medium px-1 py-0.5 rounded bg-n-slate-3 text-n-slate-11 flex-shrink-0"

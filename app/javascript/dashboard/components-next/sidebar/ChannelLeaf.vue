@@ -37,7 +37,7 @@ const unreadCount = computed(() => {
   >
     <ChannelIcon :inbox="inbox" class="size-3" />
   </span>
-  <div class="flex-1 truncate min-w-0">{{ label }}</div>
+  <div v-tooltip="label" class="flex-1 truncate min-w-0">{{ label }}</div>
   <div class="flex items-center gap-1">
     <span
       v-if="unreadCount > 0"
