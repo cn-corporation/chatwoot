@@ -34,6 +34,7 @@ const chatSortFilter = useMapGetter('getChatSortFilter');
 const [showActionsDropdown, toggleDropdown] = useToggle();
 const triggerRef = ref(null);
 const dropdownPosition = ref({ top: 0, right: 0 });
+const docDir = ref('ltr');
 
 const updateDropdownPosition = () => {
   const el = triggerRef.value?.$el || triggerRef.value;
@@ -47,6 +48,8 @@ const updateDropdownPosition = () => {
 
 const handleToggle = async () => {
   if (!showActionsDropdown.value) {
+    docDir.value =
+      document.querySelector('[dir]')?.getAttribute('dir') || 'ltr';
     updateDropdownPosition();
   }
   toggleDropdown();
@@ -168,10 +171,14 @@ const handleSortChange = value => {
       @click="handleToggle"
     />
     <Teleport to="body">
-      <template v-if="showActionsDropdown">
-        <div class="fixed inset-0 z-[60]" @click="toggleDropdown()" />
+      <div v-if="showActionsDropdown" :dir="docDir">
         <div
-          class="bg-n-alpha-3 backdrop-blur-[100px] border border-n-weak w-72 rounded-xl p-4 fixed z-[70]"
+          data-test="sort-backdrop"
+          class="fixed inset-0 w-screen h-screen z-[9998]"
+          @click="toggleDropdown()"
+        />
+        <div
+          class="bg-n-alpha-3 backdrop-blur-[100px] border border-n-weak w-72 rounded-xl p-4 fixed z-[9999]"
           :style="{
             top: `${dropdownPosition.top}px`,
             right: `${dropdownPosition.right}px`,
@@ -208,7 +215,7 @@ const handleSortChange = value => {
             <Switch v-model="showConversationColor" />
           </div>
         </div>
-      </template>
+      </div>
     </Teleport>
   </div>
 </template>
