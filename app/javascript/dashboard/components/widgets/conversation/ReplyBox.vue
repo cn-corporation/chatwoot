@@ -468,14 +468,20 @@ export default {
   watch: {
     currentChat(conversation, oldConversation) {
       const { can_reply: canReply } = conversation;
-      if (oldConversation && oldConversation.id !== conversation.id) {
+      const isDifferentConversation =
+        oldConversation && oldConversation.id !== conversation.id;
+
+      if (isDifferentConversation) {
         // Only update email fields when switching to a completely different conversation (by ID)
         // This prevents overwriting user input (e.g., CC/BCC fields) when performing actions
         // like self-assign or other updates that do not actually change the conversation context
         this.setCCAndToEmailsFromLastChat();
       }
 
-      if (this.isOnPrivateNote || this.isOnTask || this.isOnTranslate) {
+      if (
+        !isDifferentConversation &&
+        (this.isOnPrivateNote || this.isOnTask || this.isOnTranslate)
+      ) {
         return;
       }
 
