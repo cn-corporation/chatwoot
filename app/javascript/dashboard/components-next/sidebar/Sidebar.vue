@@ -506,8 +506,7 @@ const menuItems = computed(() => {
       name: 'TelegramDialogues',
       label: t('SIDEBAR.TELEGRAM_DIALOGUES'),
       icon: 'i-lucide-send',
-      to: accountScopedRoute('telegram_dialogues'),
-      activeOn: ['telegram_dialogues', 'telegram_dialogues_chat'],
+      onClick: () => emitter.emit('open-telegram-dialogues-popup'),
       getterKeys: {
         count: 'telegramDialogues/getTotalUnreadCount',
         badge: 'telegramDialogues/getTotalUnreadCount',

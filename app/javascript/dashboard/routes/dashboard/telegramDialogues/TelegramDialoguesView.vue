@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { useAccount } from 'dashboard/composables/useAccount';
@@ -16,6 +16,8 @@ const props = defineProps({
   sourceId: { type: String, default: '' },
   chatId: { type: Number, default: 0 },
 });
+
+const isPopupMode = inject('telegramPopupMode', false);
 
 const { isMobile } = useIsMobile();
 
@@ -82,6 +84,7 @@ const toggleLayoutLock = () => {
 
 const onSelectSource = sourceId => {
   store.dispatch('telegramDialogues/setActiveSource', sourceId);
+  if (isPopupMode) return;
   router.push(accountScopedRoute('telegram_dialogues'));
 };
 
@@ -95,6 +98,7 @@ const onSelectChat = chat => {
     return;
   }
   store.dispatch('telegramDialogues/setActiveChat', chat.id);
+  if (isPopupMode) return;
   router.push(
     accountScopedRoute('telegram_dialogues_chat', {
       sourceId: activeSourceId.value,
@@ -228,8 +232,11 @@ onMounted(async () => {
     <button
       v-if="!isMobile"
       type="button"
-      class="absolute top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors outline-none"
-      :class="{ 'border-woot-500 dark:border-woot-400': isLayoutLocked }"
+      class="absolute top-4 z-50 flex items-center gap-2 px-3 py-1.5 text-xs font-medium whitespace-nowrap bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors outline-none"
+      :class="[
+        isLayoutLocked && 'border-woot-500 dark:border-woot-400',
+        isPopupMode ? 'right-14' : 'right-4',
+      ]"
       @click="toggleLayoutLock"
     >
       <span
