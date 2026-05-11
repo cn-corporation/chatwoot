@@ -80,18 +80,51 @@ provideSidebarContext({
 const inboxes = useMapGetter('inboxes/getInboxes');
 const allPortals = useMapGetter('portals/allPortals');
 
-const publicHelpCenterURL = computed(() => {
-  const portals = allPortals.value || [];
-  if (portals.length === 0) return null;
-  const lastSlug = uiSettings.value?.last_active_portal_slug;
-  const activePortal =
-    portals.find(portal => portal.slug === lastSlug) || portals[0];
-  if (!activePortal?.slug) return null;
+const publicViewPermissions = [
+  'administrator',
+  'agent',
+  'knowledge_base_manage',
+];
+
+const buildPublicViewItem = (portal, label) => {
+  if (!portal?.slug) return null;
   try {
-    return buildPortalURL(activePortal.slug, activePortal.custom_domain);
+    return {
+      name: `PublicView-${portal.slug}`,
+      label,
+      icon: 'i-lucide-external-link',
+      href: buildPortalURL(portal.slug, portal.custom_domain),
+      permissions: publicViewPermissions,
+    };
   } catch {
     return null;
   }
+};
+
+const publicHelpCenterItems = computed(() => {
+  const portals = allPortals.value || [];
+  if (portals.length === 0) return [];
+  if (portals.length === 1) {
+    const item = buildPublicViewItem(
+      portals[0],
+      t('SIDEBAR.HELP_CENTER.PUBLIC_VIEW')
+    );
+    return item ? [item] : [];
+  }
+  const lastSlug = uiSettings.value?.last_active_portal_slug;
+  const ordered = [...portals].sort((a, b) => {
+    if (a.slug === lastSlug) return -1;
+    if (b.slug === lastSlug) return 1;
+    return 0;
+  });
+  return ordered
+    .map(portal =>
+      buildPublicViewItem(
+        portal,
+        `${t('SIDEBAR.HELP_CENTER.PUBLIC_VIEW')} · ${portal.name || portal.slug}`
+      )
+    )
+    .filter(Boolean);
 });
 const labels = useMapGetter('labels/getLabelsOnSidebar');
 const teams = useMapGetter('teams/getMyTeams');
@@ -664,21 +697,7 @@ const menuItems = computed(() => {
             navigationPath: 'portals_settings_index',
           }),
         },
-        ...(publicHelpCenterURL.value
-          ? [
-              {
-                name: 'PublicView',
-                label: t('SIDEBAR.HELP_CENTER.PUBLIC_VIEW'),
-                icon: 'i-lucide-external-link',
-                href: publicHelpCenterURL.value,
-                permissions: [
-                  'administrator',
-                  'agent',
-                  'knowledge_base_manage',
-                ],
-              },
-            ]
-          : []),
+        ...publicHelpCenterItems.value,
       ],
     },
     {
