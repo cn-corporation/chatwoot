@@ -381,7 +381,8 @@
       "ARTICLES": "Статьи",
       "CATEGORIES": "Категории",
       "LOCALES": "Locales",
-      "SETTINGS": "Настройки"
+      "SETTINGS": "Настройки",
+      "PUBLIC_VIEW": "Публичный вид"
     },
     "CHANNELS": "Источники",
     "SET_AUTO_OFFLINE": {

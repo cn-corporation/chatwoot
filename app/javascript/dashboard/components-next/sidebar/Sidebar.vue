@@ -12,6 +12,9 @@ import { useAdmin } from 'dashboard/composables/useAdmin';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { emitter } from 'shared/helpers/mitt';
 
+import { buildPortalURL } from 'dashboard/helper/portalHelper';
+import { useUISettings } from 'dashboard/composables/useUISettings';
+
 import Button from 'dashboard/components-next/button/Button.vue';
 import SidebarGroup from './SidebarGroup.vue';
 import SidebarProfileMenu from './SidebarProfileMenu.vue';
@@ -37,6 +40,7 @@ const emit = defineEmits([
 ]);
 
 const { accountScopedRoute, isOnChatwootCloud } = useAccount();
+const { uiSettings } = useUISettings();
 const store = useStore();
 const searchShortcut = useKbd([`$mod`, 'k']);
 const { t } = useI18n();
@@ -74,6 +78,21 @@ provideSidebarContext({
 });
 
 const inboxes = useMapGetter('inboxes/getInboxes');
+const allPortals = useMapGetter('portals/allPortals');
+
+const publicHelpCenterURL = computed(() => {
+  const portals = allPortals.value || [];
+  if (portals.length === 0) return null;
+  const lastSlug = uiSettings.value?.last_active_portal_slug;
+  const activePortal =
+    portals.find(portal => portal.slug === lastSlug) || portals[0];
+  if (!activePortal?.slug) return null;
+  try {
+    return buildPortalURL(activePortal.slug, activePortal.custom_domain);
+  } catch {
+    return null;
+  }
+});
 const labels = useMapGetter('labels/getLabelsOnSidebar');
 const teams = useMapGetter('teams/getMyTeams');
 const standByUnreadCount = useMapGetter('getStandByOperatorUnreadCount');
@@ -162,6 +181,7 @@ onMounted(async () => {
     store.dispatch('macros/get'),
     store.dispatch('fetchAllConversationsForCounts'),
     store.dispatch('telegramDialoguesAccess/fetchOperators'),
+    store.dispatch('portals/index'),
   ]);
   if (isAdmin.value || isTelegramOperator.value) {
     store.dispatch('telegramDialogues/initGlobalSSE');
@@ -608,6 +628,7 @@ const menuItems = computed(() => {
             'portals_articles_new',
             'portals_articles_edit',
           ],
+          permissions: ['administrator', 'knowledge_base_manage'],
           to: accountScopedRoute('portals_index', {
             navigationPath: 'portals_articles_index',
           }),
@@ -620,6 +641,7 @@ const menuItems = computed(() => {
             'portals_categories_articles_index',
             'portals_categories_articles_edit',
           ],
+          permissions: ['administrator', 'knowledge_base_manage'],
           to: accountScopedRoute('portals_index', {
             navigationPath: 'portals_categories_index',
           }),
@@ -628,6 +650,7 @@ const menuItems = computed(() => {
           name: 'Locales',
           label: t('SIDEBAR.HELP_CENTER.LOCALES'),
           activeOn: ['portals_locales_index'],
+          permissions: ['administrator', 'knowledge_base_manage'],
           to: accountScopedRoute('portals_index', {
             navigationPath: 'portals_locales_index',
           }),
@@ -636,10 +659,26 @@ const menuItems = computed(() => {
           name: 'Settings',
           label: t('SIDEBAR.HELP_CENTER.SETTINGS'),
           activeOn: ['portals_settings_index'],
+          permissions: ['administrator', 'knowledge_base_manage'],
           to: accountScopedRoute('portals_index', {
             navigationPath: 'portals_settings_index',
           }),
         },
+        ...(publicHelpCenterURL.value
+          ? [
+              {
+                name: 'PublicView',
+                label: t('SIDEBAR.HELP_CENTER.PUBLIC_VIEW'),
+                icon: 'i-lucide-external-link',
+                href: publicHelpCenterURL.value,
+                permissions: [
+                  'administrator',
+                  'agent',
+                  'knowledge_base_manage',
+                ],
+              },
+            ]
+          : []),
       ],
     },
     {

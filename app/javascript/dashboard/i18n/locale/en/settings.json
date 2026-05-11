@@ -383,7 +383,8 @@
       "ARTICLES": "Articles",
       "CATEGORIES": "Categories",
       "LOCALES": "Locales",
-      "SETTINGS": "Settings"
+      "SETTINGS": "Settings",
+      "PUBLIC_VIEW": "Public View"
     },
     "CHANNELS": "Channels",
     "SET_AUTO_OFFLINE": {
