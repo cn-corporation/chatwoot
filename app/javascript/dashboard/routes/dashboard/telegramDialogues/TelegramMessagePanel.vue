@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -11,6 +11,8 @@ const store = useStore();
 const router = useRouter();
 const { t } = useI18n();
 const { accountScopedRoute } = useAccount();
+
+const isPopupMode = inject('telegramPopupMode', false);
 
 const activeChat = computed(
   () => store.getters['telegramDialogues/getActiveChat']
@@ -26,6 +28,7 @@ const chatTitle = computed(() => {
 
 const goBackToList = () => {
   store.commit('telegramDialogues/SET_ACTIVE_CHAT_ID', null);
+  if (isPopupMode) return;
   router.push(accountScopedRoute('telegram_dialogues'));
 };
 </script>

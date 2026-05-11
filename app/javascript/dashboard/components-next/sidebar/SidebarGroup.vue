@@ -16,6 +16,7 @@ const props = defineProps({
   activeOn: { type: Array, default: () => [] },
   children: { type: Array, default: undefined },
   getterKeys: { type: Object, default: () => ({}) },
+  onClick: { type: Function, default: null },
 });
 
 const {
@@ -119,6 +120,10 @@ const hasActiveChild = computed(() => {
 });
 
 const toggleTrigger = () => {
+  if (!hasChildren.value && typeof props.onClick === 'function') {
+    props.onClick();
+    return;
+  }
   if (
     hasAccessibleChildren.value &&
     !isExpanded.value &&

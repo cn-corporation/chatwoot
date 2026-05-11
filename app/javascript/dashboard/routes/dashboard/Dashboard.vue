@@ -21,6 +21,8 @@ import CopilotContainer from 'dashboard/components/copilot/CopilotContainer.vue'
 
 import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSidebarLauncher.vue';
 import InstallHint from 'dashboard/components-next/install-hint/InstallHint.vue';
+import TelegramDialoguesPopup from 'dashboard/routes/dashboard/telegramDialogues/TelegramDialoguesPopup.vue';
+import { emitter } from 'shared/helpers/mitt';
 
 export default {
   components: {
@@ -33,6 +35,7 @@ export default {
     CopilotContainer,
     MobileSidebarLauncher,
     InstallHint,
+    TelegramDialoguesPopup,
   },
   setup() {
     const upgradePageRef = ref(null);
@@ -54,6 +57,7 @@ export default {
       showCreateAccountModal: false,
       showShortcutModal: false,
       isMobileSidebarOpen: false,
+      showTelegramPopup: false,
     };
   },
   computed: {
@@ -95,6 +99,12 @@ export default {
       immediate: true,
     },
   },
+  mounted() {
+    emitter.on('open-telegram-dialogues-popup', this.openTelegramPopup);
+  },
+  beforeUnmount() {
+    emitter.off('open-telegram-dialogues-popup', this.openTelegramPopup);
+  },
   methods: {
     toggleMobileSidebar() {
       this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
@@ -117,6 +127,12 @@ export default {
     },
     closeKeyShortcutModal() {
       this.showShortcutModal = false;
+    },
+    openTelegramPopup() {
+      this.showTelegramPopup = true;
+    },
+    closeTelegramPopup() {
+      this.showTelegramPopup = false;
     },
   },
 };
@@ -167,5 +183,9 @@ export default {
       />
       <InstallHint />
     </main>
+    <TelegramDialoguesPopup
+      :show="showTelegramPopup"
+      @close="closeTelegramPopup"
+    />
   </div>
 </template>
