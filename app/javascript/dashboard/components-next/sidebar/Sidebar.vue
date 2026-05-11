@@ -118,12 +118,7 @@ const publicHelpCenterItems = computed(() => {
     return 0;
   });
   return ordered
-    .map(portal =>
-      buildPublicViewItem(
-        portal,
-        `${t('SIDEBAR.HELP_CENTER.PUBLIC_VIEW')} · ${portal.name || portal.slug}`
-      )
-    )
+    .map(portal => buildPublicViewItem(portal, portal.name || portal.slug))
     .filter(Boolean);
 });
 const labels = useMapGetter('labels/getLabelsOnSidebar');

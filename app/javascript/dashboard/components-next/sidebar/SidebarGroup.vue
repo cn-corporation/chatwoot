@@ -127,8 +127,6 @@ const toggleTrigger = () => {
     const firstItem = accessibleItems.value[0];
     if (firstItem.to) {
       router.push(firstItem.to);
-    } else if (firstItem.href) {
-      window.open(firstItem.href, '_blank', 'noopener,noreferrer');
     }
   }
   setExpandedItem(props.name);
