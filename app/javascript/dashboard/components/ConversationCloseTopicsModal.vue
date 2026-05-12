@@ -27,7 +27,9 @@ const selectedTopics = ref([]);
 const isSubmitting = ref(false);
 
 const LEGACY_LABEL_TO_VALUE = {
-  '💰 Пополнение / Вывод': 'deposits_withdrawals',
+  '💰 Пополнение / Вывод': 'deposits',
+  '💰 Пополнение': 'deposits',
+  '💸 Вывод': 'withdrawals',
   '📝 Регистрация и вход': 'registration_login',
   '🎁 Бонусы и рейкбек': 'bonuses_rakeback',
   '🚨 Жалоба / Нарушение': 'complaint',
@@ -36,8 +38,12 @@ const LEGACY_LABEL_TO_VALUE = {
 
 const closeTopics = computed(() => [
   {
-    value: 'deposits_withdrawals',
-    label: t('CLOSE_TOPICS.TOPIC_DEPOSITS_WITHDRAWALS'),
+    value: 'deposits',
+    label: t('CLOSE_TOPICS.TOPIC_DEPOSITS'),
+  },
+  {
+    value: 'withdrawals',
+    label: t('CLOSE_TOPICS.TOPIC_WITHDRAWALS'),
   },
   {
     value: 'registration_login',

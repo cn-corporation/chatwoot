@@ -476,6 +476,8 @@
   "CLOSE_TOPICS": {
     "TITLE": "Select Conversation Topics",
     "TOPICS_TITLE": "What was this conversation about?",
+    "TOPIC_DEPOSITS": "Deposits",
+    "TOPIC_WITHDRAWALS": "Withdrawals",
     "TOPIC_DEPOSITS_WITHDRAWALS": "Deposits/Withdrawals",
     "TOPIC_REGISTRATION_LOGIN": "Registration & Login",
     "TOPIC_BONUSES_RAKEBACK": "Bonuses & Rakeback",
