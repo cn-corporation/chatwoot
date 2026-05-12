@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import { useElementSize } from '@vueuse/core';
@@ -42,6 +42,51 @@ const openContactPanelOnMobile = () => {
   if (!isMobile.value) return;
   updateUISettings({ is_contact_sidebar_open: true });
 };
+
+const LONG_PRESS_MS = 450;
+const tooltipShown = ref(false);
+let pressTimer = null;
+let longPressTriggered = false;
+
+const clearPressTimer = () => {
+  if (pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+};
+
+const startPress = () => {
+  longPressTriggered = false;
+  tooltipShown.value = false;
+  clearPressTimer();
+  pressTimer = setTimeout(() => {
+    longPressTriggered = true;
+    tooltipShown.value = true;
+  }, LONG_PRESS_MS);
+};
+
+const endPress = () => {
+  clearPressTimer();
+  if (tooltipShown.value) {
+    setTimeout(() => {
+      tooltipShown.value = false;
+    }, 1500);
+  }
+};
+
+const handleHeaderClick = event => {
+  if (longPressTriggered) {
+    longPressTriggered = false;
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+  openContactPanelOnMobile();
+};
+
+onUnmounted(() => {
+  clearPressTimer();
+});
 
 const currentChat = computed(() => store.getters.getSelectedChat);
 const accountId = computed(() => store.getters.getCurrentAccountId);
@@ -109,10 +154,21 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
     class="flex flex-row items-center justify-between flex-1 w-full min-w-0 gap-2 px-3 py-2 border-b bg-n-background border-n-weak h-12"
   >
     <button
+      v-tooltip="{
+        content: currentContact.name,
+        placement: 'left',
+        triggers: [],
+        shown: tooltipShown,
+      }"
       type="button"
-      class="flex items-center min-w-0 flex-1 gap-2 text-left rounded-lg active:bg-n-alpha-2 md:cursor-default"
+      class="flex items-center min-w-0 flex-1 gap-2 text-left rounded-lg active:bg-n-alpha-2 md:cursor-default select-none"
       :aria-label="$t('CONVERSATION.OPEN_CONTACT_PANEL')"
-      @click="openContactPanelOnMobile"
+      @click="handleHeaderClick"
+      @pointerdown="startPress"
+      @pointerup="endPress"
+      @pointercancel="endPress"
+      @pointerleave="endPress"
+      @contextmenu.prevent
     >
       <BackButton
         v-if="showBackButton"
@@ -130,11 +186,7 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
       <div class="flex flex-col items-start min-w-0 overflow-hidden">
         <div class="flex flex-row items-center max-w-full gap-1">
           <span
-            v-tooltip="{
-              content: currentContact.name,
-              placement: 'left',
-            }"
-            class="text-sm font-medium truncate leading-tight text-n-slate-12 select-none"
+            class="text-sm font-medium truncate leading-tight text-n-slate-12"
           >
             {{ currentContact.name }}
           </span>
