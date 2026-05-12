@@ -130,8 +130,11 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
       <div class="flex flex-col items-start min-w-0 overflow-hidden">
         <div class="flex flex-row items-center max-w-full gap-1">
           <span
-            v-tooltip="currentContact.name"
-            class="text-sm font-medium truncate leading-tight text-n-slate-12"
+            v-tooltip="{
+              content: currentContact.name,
+              placement: 'left',
+            }"
+            class="text-sm font-medium truncate leading-tight text-n-slate-12 select-none"
           >
             {{ currentContact.name }}
           </span>
