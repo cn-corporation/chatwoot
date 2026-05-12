@@ -134,6 +134,8 @@ const conversationColor = computed(() => {
 });
 
 const TOPIC_EMOJIS = {
+  deposits: '💰',
+  withdrawals: '💸',
   deposits_withdrawals: '💰',
   registration_login: '📝',
   bonuses_rakeback: '🎁',

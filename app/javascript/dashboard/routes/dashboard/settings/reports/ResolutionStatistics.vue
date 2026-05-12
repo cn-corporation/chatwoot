@@ -58,6 +58,8 @@ const agentsMap = computed(() => {
 });
 
 const resolutionTopicLabels = {
+  deposits: () => t('CLOSE_TOPICS.TOPIC_DEPOSITS'),
+  withdrawals: () => t('CLOSE_TOPICS.TOPIC_WITHDRAWALS'),
   deposits_withdrawals: () => t('CLOSE_TOPICS.TOPIC_DEPOSITS_WITHDRAWALS'),
   registration_login: () => t('CLOSE_TOPICS.TOPIC_REGISTRATION_LOGIN'),
   bonuses_rakeback: () => t('CLOSE_TOPICS.TOPIC_BONUSES_RAKEBACK'),

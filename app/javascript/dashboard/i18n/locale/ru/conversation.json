@@ -470,6 +470,8 @@
   "CLOSE_TOPICS": {
     "TITLE": "Выберите тему диалога",
     "TOPICS_TITLE": "О чём был диалог?",
+    "TOPIC_DEPOSITS": "Пополнение средств",
+    "TOPIC_WITHDRAWALS": "Вывод средств",
     "TOPIC_DEPOSITS_WITHDRAWALS": "Пополнение / Вывод средств",
     "TOPIC_REGISTRATION_LOGIN": "Регистрация и вход",
     "TOPIC_BONUSES_RAKEBACK": "Бонусы и рейкбек",
