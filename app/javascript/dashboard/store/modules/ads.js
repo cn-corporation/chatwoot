@@ -19,6 +19,7 @@ export const state = {
     isUpdating: false,
     isUploadingMedia: false,
     isDeletingMedia: false,
+    isUploadingPlayerList: false,
     isStartingSend: false,
     isTestingSend: false,
     isStoppingSend: false,
@@ -139,6 +140,21 @@ export const actions = {
       return null;
     } finally {
       commit(types.SET_ADS_UI_FLAG, { isUploadingMedia: false });
+    }
+  },
+  uploadPlayerListCsv: async ({ commit }, file) => {
+    commit(types.SET_ADS_UI_FLAG, { isUploadingPlayerList: true });
+    try {
+      const response = await ChatwootExtraAPI.uploadPlayerListCsv(file);
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_ADS_UI_FLAG, { isUploadingPlayerList: false });
     }
   },
   deleteMedia: async ({ commit }, mediaId) => {

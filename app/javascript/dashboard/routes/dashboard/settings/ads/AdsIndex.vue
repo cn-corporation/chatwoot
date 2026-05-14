@@ -343,6 +343,9 @@ const confirmDuplicate = async () => {
     if (fullAd.mediaId) {
       payload.mediaId = fullAd.mediaId;
     }
+    if (fullAd.playerIds && fullAd.playerIds.length > 0) {
+      payload.playerIds = fullAd.playerIds;
+    }
 
     const created = await store.dispatch('ads/create', payload);
     if (!created) {
@@ -433,10 +436,11 @@ const exportErrorLogsToExcel = () => {
   }
 
   const csvContent = [
-    ['Telegram ID', 'Error Message', 'Timestamp'].join(','),
+    ['Telegram ID', 'Player ID', 'Error Message', 'Timestamp'].join(','),
     ...errorLogs.map(log =>
       [
-        log.tgid,
+        log.tgid ?? '',
+        log.playerId ?? '',
         `"${(log.tgErrorText || '').replace(/"/g, '""')}"`,
         formatDateTime(log.createdAt),
       ].join(',')
@@ -1060,11 +1064,15 @@ const exportErrorLogsToExcel = () => {
               <tbody class="divide-y divide-n-weak">
                 <tr
                   v-for="log in getErrorLogs"
-                  :key="`${log.tgid}-${log.createdAt}`"
+                  :key="`${log.tgid || log.playerId}-${log.createdAt}`"
                   class="hover:bg-n-slate-2"
                 >
                   <td class="py-3 px-4 text-sm">
-                    {{ log.tgid }}
+                    <span v-if="log.tgid">{{ log.tgid }}</span>
+                    <span v-else-if="log.playerId" class="text-n-slate-10">
+                      player_id: {{ log.playerId }}
+                    </span>
+                    <span v-else class="text-n-slate-9">—</span>
                   </td>
                   <td class="py-3 px-4 text-sm">
                     {{ log.tgErrorText }}
