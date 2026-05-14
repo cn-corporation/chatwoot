@@ -35,6 +35,11 @@ const uploadedMediaId = ref(props.adData.mediaId || undefined);
 const mediaInfo = ref(props.adData.media || null);
 const fileInputKey = ref(0);
 
+const playerIds = ref(props.adData.playerIds || null);
+const playerListUploadInfo = ref(null);
+const playerListInputKey = ref(0);
+const playerListError = ref('');
+
 const selectedLabels = ref([]);
 const selectedAttributes = ref({});
 
@@ -89,6 +94,8 @@ watch(
       sourceId.value = newData.sourceId || '';
       uploadedMediaId.value = newData.mediaId || null;
       mediaInfo.value = newData.media || null;
+      playerIds.value = newData.playerIds || null;
+      playerListUploadInfo.value = null;
 
       if (newData.jsonFilter) {
         selectedLabels.value = newData.jsonFilter.categories || [];
@@ -190,6 +197,47 @@ const handleFileChange = async event => {
   }
 };
 
+const handlePlayerListChange = async event => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  playerListError.value = '';
+
+  try {
+    const result = await store.dispatch('ads/uploadPlayerListCsv', file);
+    if (result) {
+      playerIds.value = result.playerIds;
+      playerListUploadInfo.value = {
+        originalFilename: result.originalFilename,
+        fileSize: result.fileSize,
+      };
+      emitter.emit(BUS_EVENTS.SHOW_TOAST, {
+        message: t('ADS.PLAYER_LIST.UPLOAD_SUCCESS', {
+          count: result.playerIds.length,
+        }),
+      });
+    }
+  } catch (error) {
+    const apiMessage =
+      error?.response?.data?.error ||
+      error?.response?.data?.message ||
+      error?.message;
+    playerListError.value = apiMessage || t('ADS.PLAYER_LIST.UPLOAD_ERROR');
+    emitter.emit(BUS_EVENTS.SHOW_TOAST, {
+      message: playerListError.value,
+    });
+  } finally {
+    playerListInputKey.value += 1;
+  }
+};
+
+const removePlayerList = () => {
+  playerIds.value = null;
+  playerListUploadInfo.value = null;
+  playerListError.value = '';
+  playerListInputKey.value += 1;
+};
+
 const removeMedia = async () => {
   if (uploadedMediaId.value) {
     try {
@@ -217,6 +265,9 @@ const handleSubmit = async () => {
   if (uploadedMediaId.value !== undefined && uploadedMediaId.value !== null) {
     formData.mediaId = uploadedMediaId.value;
   }
+
+  formData.playerIds =
+    playerIds.value && playerIds.value.length > 0 ? playerIds.value : null;
 
   const jsonFilter = buildJsonFilter();
   formData.jsonFilter = jsonFilter;
@@ -462,6 +513,65 @@ const sanitizedHtml = computed(() => {
         />
         <p v-if="uiFlags.isUploadingMedia" class="text-sm text-n-slate-10">
           {{ $t('ADS.MEDIA.UPLOADING') }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Player List CSV Section -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-n-slate-12">
+        {{ $t('ADS.PLAYER_LIST.LABEL') }}
+      </label>
+      <p class="text-xs text-n-slate-10">
+        {{ $t('ADS.PLAYER_LIST.DESCRIPTION') }}
+      </p>
+
+      <div
+        v-if="playerIds && playerIds.length"
+        class="flex items-center gap-4 p-4 bg-n-slate-2 rounded-lg"
+      >
+        <div class="flex-1">
+          <p class="text-sm font-medium text-n-slate-12">
+            {{
+              playerListUploadInfo
+                ? playerListUploadInfo.originalFilename
+                : $t('ADS.PLAYER_LIST.SAVED_LIST')
+            }}
+          </p>
+          <p class="text-xs text-n-slate-10">
+            <span v-if="playerListUploadInfo">
+              {{ formatFileSize(playerListUploadInfo.fileSize) }} ·
+            </span>
+            {{ playerIds.length }} {{ $t('ADS.PLAYER_LIST.PLAYERS') }}
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          size="small"
+          icon="i-lucide-trash-2"
+          color-scheme="alert"
+          type="button"
+          @click="removePlayerList"
+        />
+      </div>
+
+      <div v-else class="flex flex-col gap-2">
+        <input
+          :key="playerListInputKey"
+          type="file"
+          accept=".csv,text/csv"
+          class="block w-full text-sm text-n-slate-10 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-woot-50 file:text-woot-600 hover:file:bg-woot-100"
+          :disabled="uiFlags.isUploadingPlayerList"
+          @change="handlePlayerListChange"
+        />
+        <p v-if="uiFlags.isUploadingPlayerList" class="text-sm text-n-slate-10">
+          {{ $t('ADS.PLAYER_LIST.UPLOADING') }}
+        </p>
+        <p v-if="playerListError" class="text-sm text-red-600">
+          {{ playerListError }}
+        </p>
+        <p class="text-xs text-n-slate-10">
+          {{ $t('ADS.PLAYER_LIST.HELP_TEXT') }}
         </p>
       </div>
     </div>

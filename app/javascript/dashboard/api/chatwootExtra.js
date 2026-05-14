@@ -294,6 +294,23 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async uploadPlayerListCsv(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axios.post(
+      `${this.baseURL}/api/ads/player-list-csv`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'X-API-Key': CHATWOOT_EXTRA_API_KEY,
+        },
+      }
+    );
+    return response.data;
+  }
+
   // Media API
   async uploadMedia(file) {
     const formData = new FormData();
