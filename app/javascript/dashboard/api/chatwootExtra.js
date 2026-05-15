@@ -1029,6 +1029,62 @@ class ChatwootExtraAPI {
     );
     return response.data;
   }
+
+  async createConversationExport({
+    accountId,
+    dateFrom,
+    dateTo,
+    bearerTokenHash,
+    chatwootApiUrl,
+    createdByUserId,
+  }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/conversation-exports/start`,
+      {
+        accountId,
+        dateFrom,
+        dateTo,
+        bearerTokenHash,
+        chatwootApiUrl,
+        createdByUserId,
+      },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getConversationExports(accountId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/conversation-exports`,
+      { params: { accountId }, headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getConversationExportStatus(id) {
+    const response = await axios.get(
+      `${this.baseURL}/api/conversation-exports/${id}/status`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async stopConversationExport(id) {
+    const response = await axios.post(
+      `${this.baseURL}/api/conversation-exports/${id}/stop`,
+      {},
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async downloadConversationExport(id) {
+    const response = await axios.get(
+      `${this.baseURL}/api/conversation-exports/${id}/download`,
+      { headers: this.headers, responseType: 'blob' }
+    );
+    return response.data;
+  }
 }
 
 export default new ChatwootExtraAPI();
