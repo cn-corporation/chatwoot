@@ -314,6 +314,12 @@ const menuItems = computed(() => {
       to: accountScopedRoute('ads_wrapper'),
     });
     settingsChildren.push({
+      name: 'Settings Conversation Export',
+      label: t('SIDEBAR.CONVERSATION_EXPORT'),
+      icon: 'i-lucide-file-down',
+      to: accountScopedRoute('conversation_export_wrapper'),
+    });
+    settingsChildren.push({
       name: 'Settings Canned Responses',
       label: t('SIDEBAR.CANNED_RESPONSES'),
       icon: 'i-lucide-message-square-quote',

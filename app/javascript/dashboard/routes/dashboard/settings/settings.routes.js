@@ -29,6 +29,7 @@ import security from './security/security.routes';
 import knowledgeBase from './knowledgeBase/knowledgeBase.routes';
 import ragAdmin from './ragAdmin/ragAdmin.routes';
 import telegramDialoguesAccess from './telegramDialogues/telegramDialogues.routes';
+import conversationExport from './conversationExport/conversationExport.routes';
 
 export default {
   routes: [
@@ -73,5 +74,6 @@ export default {
     ...knowledgeBase.routes,
     ...ragAdmin.routes,
     ...telegramDialoguesAccess.routes,
+    ...conversationExport.routes,
   ],
 };

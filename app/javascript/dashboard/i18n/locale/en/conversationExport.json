@@ -1,0 +1,33 @@
+{
+  "CONVERSATION_EXPORT": {
+    "HEADER": "Conversation Export",
+    "DESCRIPTION": "Export all conversation messages within a date range to a CSV file.",
+    "DATE_FROM": "From date",
+    "DATE_TO": "To date",
+    "START": "Start export",
+    "STOP": "Stop",
+    "STARTED": "Export started",
+    "STOPPED": "Export stopped",
+    "DOWNLOAD": "Download CSV",
+    "VALIDATION": "Pick both a from and to date, with from on or before to.",
+    "EMPTY": "No exports yet.",
+    "STAGE": {
+      "preprocessing": "Preparing…",
+      "loading": "Loading messages…",
+      "finalizing": "Finalizing…"
+    },
+    "STATUS": {
+      "processing": "In progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "failed": "Failed"
+    },
+    "TABLE": {
+      "RANGE": "Date range",
+      "CREATED_AT": "Created",
+      "STATUS": "Status",
+      "MESSAGES": "Messages",
+      "ACTIONS": "Actions"
+    }
+  }
+}
