@@ -22,6 +22,7 @@ const { t } = useI18n();
 const isLoading = ref(false);
 const showCloseTopicsModal = ref(false);
 const closeConversationId = ref(null);
+const closeFromNoCategory = ref(false);
 
 const currentChat = computed(() => getters.getSelectedChat.value);
 
@@ -42,8 +43,10 @@ const isStandBy = computed(
 );
 
 const showOpenButton = computed(() => {
-  return isPending.value || isSnoozed.value || isStandBy.value;
+  return isSnoozed.value || isStandBy.value;
 });
+
+const showResolveButton = computed(() => isOpen.value || isPending.value);
 
 const getConversationParams = () => {
   const allConversations = document.querySelectorAll(
@@ -68,6 +71,7 @@ const getConversationParams = () => {
 const toggleStatus = (status, snoozedUntil) => {
   if (status === wootConstants.STATUS_TYPE.RESOLVED) {
     closeConversationId.value = currentChat.value.id;
+    closeFromNoCategory.value = isPending.value;
     showCloseTopicsModal.value = true;
     return;
   }
@@ -88,11 +92,13 @@ const toggleStatus = (status, snoozedUntil) => {
 const closeTopicsModal = () => {
   showCloseTopicsModal.value = false;
   closeConversationId.value = null;
+  closeFromNoCategory.value = false;
 };
 
 const onCloseTopicsSuccess = () => {
   showCloseTopicsModal.value = false;
   closeConversationId.value = null;
+  closeFromNoCategory.value = false;
   useAlert(t('CONVERSATION.CHANGE_STATUS'));
 };
 
@@ -135,7 +141,7 @@ useEmitter(CMD_RESOLVE_CONVERSATION, onCmdResolveConversation);
 <template>
   <div class="relative flex items-center justify-end resolve-actions">
     <Button
-      v-if="isOpen"
+      v-if="showResolveButton"
       :label="t('CONVERSATION.HEADER.RESOLVE_ACTION')"
       size="sm"
       color="slate"
@@ -162,6 +168,7 @@ useEmitter(CMD_RESOLVE_CONVERSATION, onCmdResolveConversation);
       v-if="showCloseTopicsModal"
       :show="showCloseTopicsModal"
       :conversation-id="closeConversationId"
+      :from-no-category="closeFromNoCategory"
       @close="closeTopicsModal"
       @success="onCloseTopicsSuccess"
     />
