@@ -58,11 +58,13 @@ class ConversationApi extends ApiClient {
     status,
     snoozedUntil = null,
     closeTopics = null,
+    closedFromNoCategory = false,
   }) {
     return axios.post(`${this.url}/${conversationId}/toggle_status`, {
       status,
       snoozed_until: snoozedUntil,
       close_topics: closeTopics,
+      closed_from_no_category: closedFromNoCategory,
     });
   }
 

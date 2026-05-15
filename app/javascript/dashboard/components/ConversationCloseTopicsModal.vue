@@ -15,6 +15,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  fromNoCategory: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['close', 'success']);
@@ -68,6 +72,10 @@ watch(
   newVal => {
     isOpen.value = newVal;
     if (newVal) {
+      if (props.fromNoCategory) {
+        selectedTopics.value = ['other'];
+        return;
+      }
       const conversation = store.getters.getConversationById(
         props.conversationId
       );
@@ -111,6 +119,7 @@ const submitTopics = async () => {
       status: 'resolved',
       closeTopics:
         selectedTopics.value.length > 0 ? selectedTopics.value : null,
+      closedFromNoCategory: props.fromNoCategory,
     });
 
     await store.dispatch('updateCustomAttributes', {

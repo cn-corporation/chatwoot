@@ -223,6 +223,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   def set_resolution_custom_attributes
     attrs = {}
     attrs['close_topics'] = params[:close_topics] if params[:close_topics].present?
+    attrs['closed_from_no_category'] = true if ActiveModel::Type::Boolean.new.cast(params[:closed_from_no_category])
     attrs['resolved_at'] = Time.current.iso8601 if attrs.any? || params[:resolution_reason].present? || params[:custom_resolution_reason].present?
     @conversation.custom_attributes = @conversation.custom_attributes.merge(attrs) if attrs.any?
   end
