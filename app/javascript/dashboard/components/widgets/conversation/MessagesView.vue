@@ -430,6 +430,15 @@ export default {
       const lastMessage = messages[messages.length - 1];
       const currentLastMessageId = lastMessage?.id;
 
+      // First time messages populate for this chat (cold cache / late websocket
+      // batch). The currentChat watcher's scrollToBottom fired against an empty
+      // panel, so re-pin now that we actually have content.
+      if (!this.lastMessageId && !this.hasUserScrolled) {
+        this.lastMessageId = currentLastMessageId;
+        this.$nextTick(() => this.scrollToBottom());
+        return;
+      }
+
       if (
         this.lastMessageId &&
         currentLastMessageId &&
@@ -666,34 +675,33 @@ export default {
       if (!this.conversationPanel) return;
 
       this.isProgrammaticScroll = true;
-      let relevantMessages = [];
 
       let labelSuggestions =
         this.conversationPanel.querySelector('.label-suggestion');
 
-      // if there are unread messages, scroll to the first unread message
+      // if there are unread messages, anchor on the first unread message so it
+      // sits in the viewport instead of pinning to the very bottom
       if (this.unreadMessageCount > 0) {
-        // capturing only the unread messages
-        relevantMessages =
+        const relevantMessages =
           this.conversationPanel.querySelectorAll('.message--unread');
-      } else if (labelSuggestions) {
-        // when scrolling to the bottom, the label suggestions is below the last message
-        // so we scroll there if there are no unread messages
-        // Unread messages always take the highest priority
-        relevantMessages = [labelSuggestions];
-      } else {
-        // if there are no unread messages or label suggestion, scroll to the last message
-        // capturing last message from the messages list
-        relevantMessages = Array.from(
-          this.conversationPanel.querySelectorAll('.message--read')
-        ).slice(-1);
+        this.conversationPanel.scrollTop = calculateScrollTop(
+          this.conversationPanel.scrollHeight,
+          this.$el.scrollHeight,
+          relevantMessages
+        );
+        return;
       }
 
-      this.conversationPanel.scrollTop = calculateScrollTop(
-        this.conversationPanel.scrollHeight,
-        this.$el.scrollHeight,
-        relevantMessages
-      );
+      if (labelSuggestions) {
+        this.conversationPanel.scrollTop = calculateScrollTop(
+          this.conversationPanel.scrollHeight,
+          this.$el.scrollHeight,
+          [labelSuggestions]
+        );
+        return;
+      }
+
+      this.conversationPanel.scrollTop = this.conversationPanel.scrollHeight;
     },
     setScrollParams() {
       this.heightBeforeLoad = this.conversationPanel.scrollHeight;
