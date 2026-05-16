@@ -16,6 +16,7 @@
 
 class Channel::Telegram < ApplicationRecord
   include Channelable
+  include Telegram::ApiConcern
 
   # TODO: Remove guard once encryption keys become mandatory (target 3-4 releases out).
   encrypts :bot_token, deterministic: true if Chatwoot.encryption_configured?
@@ -47,13 +48,17 @@ class Channel::Telegram < ApplicationRecord
     business_body = {}
     business_body[:business_connection_id] = business_connection_id if business_connection_id
 
-    HTTParty.post("#{telegram_api_url}/editMessageText",
-                  body: {
-                    chat_id: chat_id,
-                    message_id: message_id,
-                    text: text_payload,
-                    parse_mode: 'HTML'
-                  }.merge(business_body))
+    with_chat_throttle(chat_id) do
+      with_429_retry do
+        HTTParty.post("#{telegram_api_url}/editMessageText",
+                      body: {
+                        chat_id: chat_id,
+                        message_id: message_id,
+                        text: text_payload,
+                        parse_mode: 'HTML'
+                      }.merge(business_body))
+      end
+    end
   end
 
   def edit_message_caption_on_telegram(chat_id:, message_id:, caption:, business_connection_id: nil)
@@ -62,29 +67,37 @@ class Channel::Telegram < ApplicationRecord
     business_body = {}
     business_body[:business_connection_id] = business_connection_id if business_connection_id
 
-    HTTParty.post("#{telegram_api_url}/editMessageCaption",
-                  body: {
-                    chat_id: chat_id,
-                    message_id: message_id,
-                    caption: caption_payload,
-                    parse_mode: 'HTML'
-                  }.merge(business_body))
+    with_chat_throttle(chat_id) do
+      with_429_retry do
+        HTTParty.post("#{telegram_api_url}/editMessageCaption",
+                      body: {
+                        chat_id: chat_id,
+                        message_id: message_id,
+                        caption: caption_payload,
+                        parse_mode: 'HTML'
+                      }.merge(business_body))
+      end
+    end
   end
 
   def delete_message_on_telegram(chat_id:, message_id:, business_connection_id: nil)
     business_body = {}
     business_body[:business_connection_id] = business_connection_id if business_connection_id
 
-    HTTParty.post("#{telegram_api_url}/deleteMessage",
-                  body: {
-                    chat_id: chat_id,
-                    message_id: message_id
-                  }.merge(business_body))
+    with_chat_throttle(chat_id) do
+      with_429_retry do
+        HTTParty.post("#{telegram_api_url}/deleteMessage",
+                      body: {
+                        chat_id: chat_id,
+                        message_id: message_id
+                      }.merge(business_body))
+      end
+    end
   end
 
   def get_telegram_profile_image(user_id)
     # get profile image from telegram
-    response = HTTParty.get("#{telegram_api_url}/getUserProfilePhotos", query: { user_id: user_id })
+    response = with_429_retry { HTTParty.get("#{telegram_api_url}/getUserProfilePhotos", query: { user_id: user_id }) }
     return nil unless response.success?
 
     photos = response.parsed_response.dig('result', 'photos')
@@ -94,15 +107,17 @@ class Channel::Telegram < ApplicationRecord
   end
 
   def get_telegram_file_path(file_id)
-    response = HTTParty.get("#{telegram_api_url}/getFile", query: { file_id: file_id })
+    response = with_429_retry { HTTParty.get("#{telegram_api_url}/getFile", query: { file_id: file_id }) }
     return nil unless response.success?
 
     "https://api.telegram.org/file/bot#{bot_token}/#{response.parsed_response['result']['file_path']}"
   end
 
   def answer_callback_query(callback_query_id)
-    HTTParty.post("#{telegram_api_url}/answerCallbackQuery",
-                  body: { callback_query_id: callback_query_id })
+    with_429_retry do
+      HTTParty.post("#{telegram_api_url}/answerCallbackQuery",
+                    body: { callback_query_id: callback_query_id })
+    end
   end
 
   def process_error(message, response)
@@ -202,13 +217,17 @@ class Channel::Telegram < ApplicationRecord
     business_body = {}
     business_body[:business_connection_id] = business_connection_id if business_connection_id
 
-    HTTParty.post("#{telegram_api_url}/sendMessage",
-                  body: {
-                    chat_id: chat_id,
-                    text: text_payload,
-                    reply_markup: reply_markup,
-                    parse_mode: 'HTML',
-                    reply_to_message_id: reply_to_message_id
-                  }.merge(business_body))
+    with_chat_throttle(chat_id) do
+      with_429_retry do
+        HTTParty.post("#{telegram_api_url}/sendMessage",
+                      body: {
+                        chat_id: chat_id,
+                        text: text_payload,
+                        reply_markup: reply_markup,
+                        parse_mode: 'HTML',
+                        reply_to_message_id: reply_to_message_id
+                      }.merge(business_body))
+      end
+    end
   end
 end

@@ -10,6 +10,8 @@
 # The service will terminate if any of the attachment requests fail when the message has multiple attachments.
 # Each attachment is sent as its own Telegram message.
 class Telegram::SendAttachmentsService
+  include Telegram::ApiConcern
+
   pattr_initialize [:message!]
 
   def perform
@@ -67,8 +69,11 @@ class Telegram::SendAttachmentsService
       body[key.to_s] = value.to_s
     end
 
-    HTTParty.post("#{channel.telegram_api_url}/sendMediaGroup",
-                  body: body)
+    with_chat_throttle(chat_id) do
+      with_429_retry do
+        HTTParty.post("#{channel.telegram_api_url}/sendMediaGroup", body: body)
+      end
+    end
   end
 
   def photo_request(chat_id, photo_url, caption, reply_to_message_id)
@@ -84,7 +89,9 @@ class Telegram::SendAttachmentsService
       body[key.to_s] = value.to_s
     end
 
-    HTTParty.post("#{channel.telegram_api_url}/sendPhoto", body: body)
+    with_chat_throttle(chat_id) do
+      with_429_retry { HTTParty.post("#{channel.telegram_api_url}/sendPhoto", body: body) }
+    end
   end
 
   def video_request(chat_id, video_url, caption, reply_to_message_id)
@@ -100,7 +107,9 @@ class Telegram::SendAttachmentsService
       body[key.to_s] = value.to_s
     end
 
-    HTTParty.post("#{channel.telegram_api_url}/sendVideo", body: body)
+    with_chat_throttle(chat_id) do
+      with_429_retry { HTTParty.post("#{channel.telegram_api_url}/sendVideo", body: body) }
+    end
   end
 
   def audio_request(chat_id, audio_url, caption, reply_to_message_id)
@@ -116,7 +125,9 @@ class Telegram::SendAttachmentsService
       body[key.to_s] = value.to_s
     end
 
-    HTTParty.post("#{channel.telegram_api_url}/sendAudio", body: body)
+    with_chat_throttle(chat_id) do
+      with_429_retry { HTTParty.post("#{channel.telegram_api_url}/sendAudio", body: body) }
+    end
   end
 
   # Telegram picks up the file name from original field name, so we need to save the file with the original name.
@@ -150,9 +161,13 @@ class Telegram::SendAttachmentsService
     content_type = Marcel::MimeType.for(Pathname.new(file_path)) || 'application/octet-stream'
     body['document'] = UploadIO.new(file_path, content_type, filename)
 
-    HTTParty.post("#{channel.telegram_api_url}/sendDocument",
-                  body: body,
-                  multipart: true)
+    with_chat_throttle(chat_id) do
+      with_429_retry do
+        HTTParty.post("#{channel.telegram_api_url}/sendDocument",
+                      body: body,
+                      multipart: true)
+      end
+    end
   end
 
   def handle_response(response)
