@@ -5,10 +5,13 @@ import { encrypt } from '../../helper/encryption';
 
 export const state = {
   records: [],
+  analyses: {},
   uiFlags: {
     isFetching: false,
     isCreating: false,
     isStopping: false,
+    isFetchingAnalyses: false,
+    isCreatingAnalysis: false,
   },
 };
 
@@ -22,6 +25,9 @@ export const getters = {
   getUIFlags($state) {
     return $state.uiFlags;
   },
+  getAnalysesByExport: $state => exportId => $state.analyses[exportId] || [],
+  getActiveAnalysisByExport: $state => exportId =>
+    ($state.analyses[exportId] || []).find(a => a.status === 'processing'),
 };
 
 export const actions = {
@@ -103,6 +109,72 @@ export const actions = {
   download: async (_, id) => {
     return ChatwootExtraAPI.downloadConversationExport(id);
   },
+  fetchAnalyses: async ({ commit }, exportId) => {
+    commit(types.SET_CONVERSATION_EXPORT_UI_FLAG, {
+      isFetchingAnalyses: true,
+    });
+    try {
+      const response =
+        await ChatwootExtraAPI.getConversationExportAnalyses(exportId);
+      if (response.success) {
+        commit(types.SET_CONVERSATION_EXPORT_ANALYSES, {
+          exportId,
+          analyses: response.data || [],
+        });
+        return response.data || [];
+      }
+      return [];
+    } catch (error) {
+      throwErrorMessage(error);
+      return [];
+    } finally {
+      commit(types.SET_CONVERSATION_EXPORT_UI_FLAG, {
+        isFetchingAnalyses: false,
+      });
+    }
+  },
+  createAnalysis: async ({ commit, rootGetters }, { exportId, userPrompt }) => {
+    commit(types.SET_CONVERSATION_EXPORT_UI_FLAG, { isCreatingAnalysis: true });
+    try {
+      const currentUser = rootGetters.getCurrentUser;
+      const response = await ChatwootExtraAPI.createConversationExportAnalysis({
+        exportId,
+        userPrompt,
+        createdByUserId: currentUser?.id,
+      });
+      if (response.success && response.data) {
+        commit(types.SET_CONVERSATION_EXPORT_ANALYSIS, {
+          exportId,
+          analysis: response.data,
+        });
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_CONVERSATION_EXPORT_UI_FLAG, {
+        isCreatingAnalysis: false,
+      });
+    }
+  },
+  fetchAnalysis: async ({ commit }, { exportId, id }) => {
+    try {
+      const response = await ChatwootExtraAPI.getConversationExportAnalysis(id);
+      if (response.success && response.data) {
+        commit(types.SET_CONVERSATION_EXPORT_ANALYSIS, {
+          exportId,
+          analysis: response.data,
+        });
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    }
+  },
 };
 
 export const mutations = {
@@ -121,6 +193,20 @@ export const mutations = {
       next[index] = record;
       $state.records = next;
     }
+  },
+  [types.SET_CONVERSATION_EXPORT_ANALYSES]($state, { exportId, analyses }) {
+    $state.analyses = { ...$state.analyses, [exportId]: analyses };
+  },
+  [types.SET_CONVERSATION_EXPORT_ANALYSIS]($state, { exportId, analysis }) {
+    const existing = $state.analyses[exportId] || [];
+    const index = existing.findIndex(a => a.id === analysis.id);
+    const next = [...existing];
+    if (index === -1) next.unshift(analysis);
+    else next[index] = analysis;
+    $state.analyses = { ...$state.analyses, [exportId]: next };
+  },
+  [types.CLEAR_CONVERSATION_EXPORT_ANALYSES]($state) {
+    $state.analyses = {};
   },
 };
 

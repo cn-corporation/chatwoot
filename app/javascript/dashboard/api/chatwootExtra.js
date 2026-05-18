@@ -1085,6 +1085,35 @@ class ChatwootExtraAPI {
     );
     return response.data;
   }
+
+  async createConversationExportAnalysis({
+    exportId,
+    userPrompt,
+    createdByUserId,
+  }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/conversation-exports/${exportId}/analyses`,
+      { userPrompt, createdByUserId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getConversationExportAnalyses(exportId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/conversation-exports/${exportId}/analyses`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getConversationExportAnalysis(id) {
+    const response = await axios.get(
+      `${this.baseURL}/api/conversation-exports/analyses/${id}`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
 }
 
 export default new ChatwootExtraAPI();

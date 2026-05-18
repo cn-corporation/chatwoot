@@ -12,9 +12,14 @@ const store = useStore();
 const getters = useStoreGetters();
 const { t } = useI18n();
 
+const PROMPT_MAX_LENGTH = 4000;
+
 const dateFrom = ref('');
 const dateTo = ref('');
 const pollTimer = ref(null);
+const analysisExportId = ref(null);
+const analysisPrompt = ref('');
+const analysisPollTimer = ref(null);
 
 const records = computed(
   () => getters['conversationExport/getConversationExports'].value
@@ -155,6 +160,108 @@ const statusLabel = status => {
       return status;
   }
 };
+
+const analysisStatusLabel = status => {
+  switch (status) {
+    case 'processing':
+      return t('CONVERSATION_EXPORT.ANALYSIS.STATUS.processing');
+    case 'completed':
+      return t('CONVERSATION_EXPORT.ANALYSIS.STATUS.completed');
+    case 'failed':
+      return t('CONVERSATION_EXPORT.ANALYSIS.STATUS.failed');
+    default:
+      return status;
+  }
+};
+
+const analyses = computed(() =>
+  analysisExportId.value
+    ? getters['conversationExport/getAnalysesByExport'].value(
+        analysisExportId.value
+      )
+    : []
+);
+const activeAnalysis = computed(() =>
+  analysisExportId.value
+    ? getters['conversationExport/getActiveAnalysisByExport'].value(
+        analysisExportId.value
+      )
+    : null
+);
+
+const stopAnalysisPolling = () => {
+  if (analysisPollTimer.value) {
+    clearInterval(analysisPollTimer.value);
+    analysisPollTimer.value = null;
+  }
+};
+
+const startAnalysisPolling = () => {
+  if (analysisPollTimer.value || !analysisExportId.value) return;
+  analysisPollTimer.value = setInterval(async () => {
+    const active = activeAnalysis.value;
+    if (!active) {
+      stopAnalysisPolling();
+      return;
+    }
+    await store.dispatch('conversationExport/fetchAnalysis', {
+      exportId: analysisExportId.value,
+      id: active.id,
+    });
+    if (!activeAnalysis.value) stopAnalysisPolling();
+  }, 2000);
+};
+
+const openAnalyses = async record => {
+  analysisExportId.value = record.id;
+  analysisPrompt.value = '';
+  await store.dispatch('conversationExport/fetchAnalyses', record.id);
+  if (activeAnalysis.value) startAnalysisPolling();
+};
+
+const closeAnalyses = () => {
+  stopAnalysisPolling();
+  analysisExportId.value = null;
+  analysisPrompt.value = '';
+};
+
+const runAnalysis = async () => {
+  const prompt = analysisPrompt.value.trim();
+  if (!prompt) {
+    emitter.emit(BUS_EVENTS.SHOW_TOAST, {
+      message: t('CONVERSATION_EXPORT.ANALYSIS.VALIDATION'),
+    });
+    return;
+  }
+  const result = await store.dispatch('conversationExport/createAnalysis', {
+    exportId: analysisExportId.value,
+    userPrompt: prompt,
+  });
+  if (result) {
+    analysisPrompt.value = '';
+    if (result.status === 'processing') startAnalysisPolling();
+  }
+};
+
+const copyAnalysisResponse = async text => {
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    emitter.emit(BUS_EVENTS.SHOW_TOAST, {
+      message: t('CONVERSATION_EXPORT.ANALYSIS.COPIED'),
+    });
+  } catch (error) {
+    emitter.emit(BUS_EVENTS.SHOW_TOAST, { message: error.message });
+  }
+};
+
+const formatTokens = analysis =>
+  t('CONVERSATION_EXPORT.ANALYSIS.TOKENS_FORMAT', {
+    input: analysis.inputTokens ?? 0,
+    output: analysis.outputTokens ?? 0,
+  });
+
+onBeforeUnmount(stopAnalysisPolling);
 </script>
 
 <template>
@@ -257,6 +364,142 @@ const statusLabel = status => {
           </div>
         </div>
 
+        <div
+          v-if="analysisExportId"
+          class="flex flex-col gap-4 p-4 border border-n-weak rounded-lg"
+        >
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-n-slate-12">
+              {{ $t('CONVERSATION_EXPORT.ANALYSIS.TITLE') }}
+            </h3>
+            <Button
+              variant="ghost"
+              size="small"
+              icon="i-lucide-arrow-left"
+              :label="$t('CONVERSATION_EXPORT.ANALYSIS.BACK')"
+              @click="closeAnalyses"
+            />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-n-slate-12">
+              {{ $t('CONVERSATION_EXPORT.ANALYSIS.PROMPT_LABEL') }}
+            </label>
+            <textarea
+              v-model="analysisPrompt"
+              :placeholder="
+                $t('CONVERSATION_EXPORT.ANALYSIS.PROMPT_PLACEHOLDER')
+              "
+              :maxlength="PROMPT_MAX_LENGTH"
+              rows="3"
+              class="px-3 py-2 border border-n-slate-6 rounded-lg resize-y"
+            />
+            <div class="flex items-center justify-between">
+              <p class="text-xs text-n-slate-10">
+                {{
+                  $t('CONVERSATION_EXPORT.ANALYSIS.PROMPT_HINT', {
+                    max: PROMPT_MAX_LENGTH,
+                  })
+                }}
+              </p>
+              <Button
+                :label="
+                  uiFlags.isCreatingAnalysis || activeAnalysis
+                    ? $t('CONVERSATION_EXPORT.ANALYSIS.RUNNING')
+                    : $t('CONVERSATION_EXPORT.ANALYSIS.RUN')
+                "
+                icon="i-lucide-sparkles"
+                :is-disabled="
+                  uiFlags.isCreatingAnalysis ||
+                  !!activeAnalysis ||
+                  !analysisPrompt.trim()
+                "
+                @click="runAnalysis"
+              />
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-3">
+            <p
+              v-if="!analyses.length && !uiFlags.isFetchingAnalyses"
+              class="text-sm text-n-slate-10"
+            >
+              {{ $t('CONVERSATION_EXPORT.ANALYSIS.EMPTY') }}
+            </p>
+            <div
+              v-for="item in analyses"
+              :key="item.id"
+              class="flex flex-col gap-2 p-3 border border-n-weak rounded-lg"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <span
+                  class="text-xs font-semibold uppercase tracking-wide"
+                  :class="{
+                    'text-amber-600': item.status === 'processing',
+                    'text-green-600': item.status === 'completed',
+                    'text-red-600': item.status === 'failed',
+                  }"
+                >
+                  {{ analysisStatusLabel(item.status) }}
+                </span>
+                <span class="text-xs text-n-slate-10">
+                  {{ formatDateTime(item.createdAt) }}
+                </span>
+              </div>
+              <p class="text-sm text-n-slate-12 whitespace-pre-wrap">
+                <span class="font-medium">
+                  {{ $t('CONVERSATION_EXPORT.ANALYSIS.FIELDS.PROMPT') }}
+                </span>
+                {{ item.userPrompt }}
+              </p>
+              <div v-if="item.status === 'completed' && item.responseText">
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <span class="text-sm font-medium text-n-slate-12">
+                    {{ $t('CONVERSATION_EXPORT.ANALYSIS.FIELDS.RESPONSE') }}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    icon="i-lucide-copy"
+                    :label="$t('CONVERSATION_EXPORT.ANALYSIS.COPY')"
+                    @click="copyAnalysisResponse(item.responseText)"
+                  />
+                </div>
+                <div
+                  class="p-3 text-sm whitespace-pre-wrap bg-n-slate-2 rounded-md text-n-slate-12 font-mono"
+                >
+                  {{ item.responseText }}
+                </div>
+              </div>
+              <p
+                v-if="item.status === 'failed' && item.errorText"
+                class="text-sm text-red-600 whitespace-pre-wrap"
+              >
+                <span class="font-medium">
+                  {{ $t('CONVERSATION_EXPORT.ANALYSIS.FIELDS.ERROR') }}
+                </span>
+                {{ item.errorText }}
+              </p>
+              <div
+                class="flex flex-wrap items-center gap-3 text-xs text-n-slate-10"
+              >
+                <span>
+                  {{ $t('CONVERSATION_EXPORT.ANALYSIS.FIELDS.MODEL') }}
+                  {{ item.model }}
+                </span>
+                <span v-if="item.inputTokens !== null">
+                  {{ $t('CONVERSATION_EXPORT.ANALYSIS.FIELDS.TOKENS') }}
+                  {{ formatTokens(item) }}
+                </span>
+                <span v-if="item.finishedAt">
+                  {{ $t('CONVERSATION_EXPORT.ANALYSIS.FIELDS.FINISHED_AT') }}
+                  {{ formatDateTime(item.finishedAt) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <table class="w-full divide-y divide-n-weak text-n-slate-11">
           <thead>
             <tr>
@@ -292,14 +535,24 @@ const statusLabel = status => {
               </td>
               <td class="py-3 text-sm">{{ record.messageCount }}</td>
               <td class="py-3 text-sm">
-                <Button
-                  v-if="record.status === 'completed'"
-                  variant="ghost"
-                  size="small"
-                  icon="i-lucide-download"
-                  :label="$t('CONVERSATION_EXPORT.DOWNLOAD')"
-                  @click="downloadExport(record)"
-                />
+                <div class="flex flex-wrap items-center gap-2">
+                  <Button
+                    v-if="record.status === 'completed'"
+                    variant="ghost"
+                    size="small"
+                    icon="i-lucide-download"
+                    :label="$t('CONVERSATION_EXPORT.DOWNLOAD')"
+                    @click="downloadExport(record)"
+                  />
+                  <Button
+                    v-if="record.status === 'completed'"
+                    variant="ghost"
+                    size="small"
+                    icon="i-lucide-sparkles"
+                    :label="$t('CONVERSATION_EXPORT.ANALYSIS.OPEN')"
+                    @click="openAnalyses(record)"
+                  />
+                </div>
               </td>
             </tr>
             <tr v-if="!records.length">

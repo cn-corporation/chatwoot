@@ -28,6 +28,35 @@
       "STATUS": "Status",
       "MESSAGES": "Messages",
       "ACTIONS": "Actions"
+    },
+    "ANALYSIS": {
+      "TITLE": "Analyses",
+      "OPEN": "Analyze",
+      "BACK": "Back to exports",
+      "PROMPT_LABEL": "Ask Claude about this export",
+      "PROMPT_PLACEHOLDER": "e.g. Summarise the most common complaints from operators",
+      "PROMPT_HINT": "Up to {max} characters. The exported CSV is sent to Claude along with your prompt.",
+      "RUN": "Run analysis",
+      "RUNNING": "Running…",
+      "EMPTY": "No analyses yet. Ask a question above to create one.",
+      "VALIDATION": "Enter a prompt before running an analysis.",
+      "STATUS": {
+        "processing": "Running",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "FIELDS": {
+        "PROMPT": "Prompt:",
+        "RESPONSE": "Response",
+        "ERROR": "Error:",
+        "MODEL": "Model:",
+        "TOKENS": "Tokens:",
+        "CREATED_AT": "Created",
+        "FINISHED_AT": "Finished:"
+      },
+      "TOKENS_FORMAT": "{input} in / {output} out",
+      "COPY": "Copy response",
+      "COPIED": "Response copied to clipboard"
     }
   }
 }
