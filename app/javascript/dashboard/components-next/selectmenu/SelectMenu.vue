@@ -58,20 +58,19 @@ const handleSelect = value => {
     />
     <div
       v-if="isOpen"
-      class="absolute select-none max-w-64 flex flex-col gap-1 bg-n-alpha-3 backdrop-blur-[100px] p-1 top-0 shadow-lg z-40 rounded-lg border border-n-weak dark:border-n-strong/50"
+      class="absolute select-none max-w-64 flex flex-col gap-1 bg-n-alpha-3 backdrop-blur-[100px] p-1 shadow-lg z-40 rounded-lg border border-n-weak dark:border-n-strong/50 top-full mt-1 ltr:right-0 rtl:left-0"
       :class="{
-        'ltr:left-full rtl:right-full ltr:ml-1 rtl:mr-1':
+        'md:top-0 md:mt-0 md:ltr:left-full md:rtl:right-full md:ltr:ml-1 md:rtl:mr-1 md:ltr:right-auto md:rtl:left-auto':
           subMenuPosition === 'right',
-        'ltr:right-full rtl:left-full ltr:mr-1 rtl:ml-1':
+        'md:top-0 md:mt-0 md:ltr:right-full md:rtl:left-full md:ltr:mr-1 md:rtl:ml-1 md:ltr:left-auto md:rtl:right-auto':
           subMenuPosition === 'left',
-        'top-full mt-1 ltr:right-0 rtl:left-0': subMenuPosition === 'bottom',
       }"
     >
       <Button
         v-for="option in options"
         :key="option.value"
+        v-tooltip="option.label"
         :label="option.label"
-        :title="option.label"
         :icon="option.value === modelValue ? 'i-lucide-check' : ''"
         size="sm"
         variant="ghost"

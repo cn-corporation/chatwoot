@@ -104,8 +104,8 @@ onBeforeMount(() => {
       </BaseSettingsHeader>
     </template>
     <template #body>
-      <table class="min-w-full overflow-x-auto divide-y divide-n-weak">
-        <thead>
+      <table class="block md:table w-full divide-y divide-n-weak">
+        <thead class="hidden md:table-header-group">
           <th
             v-for="thHeader in tableHeaders"
             :key="thHeader"
@@ -114,15 +114,37 @@ onBeforeMount(() => {
             {{ thHeader }}
           </th>
         </thead>
-        <tbody class="flex-1 divide-y divide-n-weak text-n-slate-12">
-          <tr v-for="(label, index) in records" :key="label.title">
-            <td class="py-4 ltr:pr-4 rtl:pl-4">
-              <span class="mb-1 font-medium break-words text-n-slate-12">
-                {{ label.title }}
-              </span>
+        <tbody
+          class="block md:table-row-group flex-1 divide-y divide-n-weak text-n-slate-12"
+        >
+          <tr
+            v-for="(label, index) in records"
+            :key="label.title"
+            class="flex md:table-row gap-2 py-3 md:py-0 items-center"
+          >
+            <td
+              class="py-0 md:py-4 ltr:pr-4 rtl:pl-4 flex-1 min-w-0 md:flex-initial"
+            >
+              <div class="flex items-center gap-2 min-w-0">
+                <span
+                  class="w-3 h-3 rounded flex-shrink-0 md:hidden"
+                  :style="{ backgroundColor: label.color }"
+                />
+                <span class="font-medium break-words text-n-slate-12 truncate">
+                  {{ label.title }}
+                </span>
+              </div>
+              <div
+                v-if="label.description"
+                class="block md:hidden text-xs text-n-slate-10 mt-0.5 line-clamp-2"
+              >
+                {{ label.description }}
+              </div>
             </td>
-            <td class="py-4 ltr:pr-4 rtl:pl-4">{{ label.description }}</td>
-            <td class="py-4 leading-6 ltr:pr-4 rtl:pl-4">
+            <td class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4">
+              {{ label.description }}
+            </td>
+            <td class="hidden md:table-cell py-4 leading-6 ltr:pr-4 rtl:pl-4">
               <div class="flex items-center">
                 <span
                   class="w-4 h-4 mr-1 border border-solid rounded rtl:mr-0 rtl:ml-1 border-n-weak"
@@ -131,7 +153,7 @@ onBeforeMount(() => {
                 {{ label.color }}
               </div>
             </td>
-            <td class="py-4 min-w-xs">
+            <td class="py-0 md:py-4 md:min-w-xs flex-shrink-0">
               <div class="flex gap-1 justify-end">
                 <Button
                   v-tooltip.top="$t('LABEL_MGMT.FORM.EDIT')"

@@ -99,6 +99,8 @@ export default {
       originalCsatEnabled: true,
       autoCloseEnabled: true,
       originalAutoCloseEnabled: true,
+      breakFlowEnabled: true,
+      originalBreakFlowEnabled: true,
       sourceLang: null,
       originalSourceLang: null,
       healthData: null,
@@ -463,6 +465,8 @@ export default {
           this.originalCsatEnabled = this.csatEnabled;
           this.autoCloseEnabled = response.data.autoCloseEnabled !== false;
           this.originalAutoCloseEnabled = this.autoCloseEnabled;
+          this.breakFlowEnabled = response.data.breakFlowEnabled !== false;
+          this.originalBreakFlowEnabled = this.breakFlowEnabled;
           this.sourceLang = response.data.lang || null;
           this.originalSourceLang = this.sourceLang;
         } else {
@@ -477,6 +481,8 @@ export default {
           this.originalCsatEnabled = true;
           this.autoCloseEnabled = true;
           this.originalAutoCloseEnabled = true;
+          this.breakFlowEnabled = true;
+          this.originalBreakFlowEnabled = true;
           this.sourceLang = null;
           this.originalSourceLang = null;
         }
@@ -488,6 +494,8 @@ export default {
         this.originalSourceClubId = null;
         this.botFlowEnabled = true;
         this.originalBotFlowEnabled = true;
+        this.breakFlowEnabled = true;
+        this.originalBreakFlowEnabled = true;
         this.sourceLang = null;
         this.originalSourceLang = null;
       }
@@ -556,6 +564,11 @@ export default {
 
         if (this.autoCloseEnabled !== this.originalAutoCloseEnabled) {
           sourceChannelUpdate.autoCloseEnabled = this.autoCloseEnabled;
+          needsSourceChannelUpdate = true;
+        }
+
+        if (this.breakFlowEnabled !== this.originalBreakFlowEnabled) {
+          sourceChannelUpdate.breakFlowEnabled = this.breakFlowEnabled;
           needsSourceChannelUpdate = true;
         }
 
@@ -1023,6 +1036,21 @@ export default {
             </select>
             <p class="pb-1 text-sm not-italic text-n-slate-11">
               {{ $t('INBOX_MGMT.SETTINGS_POPUP.AUTO_CLOSE_ENABLED_SUB_TEXT') }}
+            </p>
+          </label>
+
+          <label v-if="isATelegramChannel" class="pb-4">
+            {{ $t('INBOX_MGMT.SETTINGS_POPUP.BREAK_FLOW_ENABLED') }}
+            <select v-model="breakFlowEnabled">
+              <option :value="true">
+                {{ $t('INBOX_MGMT.EDIT.BREAK_FLOW_ENABLED.ENABLED') }}
+              </option>
+              <option :value="false">
+                {{ $t('INBOX_MGMT.EDIT.BREAK_FLOW_ENABLED.DISABLED') }}
+              </option>
+            </select>
+            <p class="pb-1 text-sm not-italic text-n-slate-11">
+              {{ $t('INBOX_MGMT.SETTINGS_POPUP.BREAK_FLOW_ENABLED_SUB_TEXT') }}
             </p>
           </label>
 

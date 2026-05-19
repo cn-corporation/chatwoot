@@ -7,6 +7,12 @@ import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 
 const { t } = useI18n();
 const store = useStore();
+const caretDown = '▾';
+const checkMark = '✓';
+const caretExpanded = '▼';
+const caretCollapsed = '▶';
+const minHoursPlaceholder = '0';
+const rightArrow = '→';
 const isLoading = ref(false);
 const reportData = ref([]);
 const operatorOptions = ref([]);
@@ -155,89 +161,93 @@ onMounted(async () => {
   <div class="flex flex-col gap-6">
     <div class="flex flex-col gap-3 p-4 rounded-lg bg-n-slate-2">
       <div class="flex flex-wrap items-end gap-4">
-      <div>
-        <label class="block mb-1 text-xs font-medium text-n-slate-11">
-          {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.START_DATE') }}
-        </label>
-        <input
-          v-model="dateRange.start"
-          type="date"
-          class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
-        />
-      </div>
-      <div>
-        <label class="block mb-1 text-xs font-medium text-n-slate-11">
-          {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.END_DATE') }}
-        </label>
-        <input
-          v-model="dateRange.end"
-          type="date"
-          class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
-        />
-      </div>
-      <div ref="dropdownRef" class="relative">
-        <label class="block mb-1 text-xs font-medium text-n-slate-11">
-          {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.OPERATORS') }}
-        </label>
-        <button
-          type="button"
-          class="flex items-center justify-between h-9 w-[220px] px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
-          @click="dropdownOpen = !dropdownOpen"
-        >
-          <span class="truncate">{{ operatorButtonLabel }}</span>
-          <span class="ml-2 text-n-slate-9">▾</span>
-        </button>
-        <div
-          v-if="dropdownOpen"
-          class="absolute z-50 mt-1 w-[220px] rounded-md border border-n-slate-4 bg-n-background shadow-lg"
-        >
-          <div class="p-1.5 border-b border-n-slate-3">
-            <input
-              v-model="dropdownSearch"
-              type="text"
-              :placeholder="
-                t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.SEARCH_PLACEHOLDER')
-              "
-              class="w-full px-2 py-1 text-sm border rounded border-n-slate-4 bg-n-background text-n-slate-12"
-            />
-          </div>
-          <ul class="max-h-[200px] overflow-y-auto py-1">
-            <li
-              v-for="op in filteredOperatorOptions"
-              :key="op.value"
-              class="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-n-slate-2 text-n-slate-12"
-              @click="toggleOperator(op)"
-            >
-              <span
-                class="flex items-center justify-center w-4 h-4 border rounded border-n-slate-6"
-                :class="{ 'bg-woot-500 border-woot-500': isSelected(op) }"
-              >
-                <span v-if="isSelected(op)" class="text-white text-xs">✓</span>
-              </span>
-              <span class="truncate">{{ op.label }}</span>
-            </li>
-            <li
-              v-if="!filteredOperatorOptions.length"
-              class="px-3 py-1.5 text-sm text-n-slate-9"
-            >
-              {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.NO_RESULTS') }}
-            </li>
-          </ul>
+        <div>
+          <label class="block mb-1 text-xs font-medium text-n-slate-11">
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.START_DATE') }}
+          </label>
+          <input
+            v-model="dateRange.start"
+            type="date"
+            class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
+          />
         </div>
-      </div>
-      <div>
-        <label class="block mb-1 text-xs font-medium text-n-slate-11">
-          {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.MIN_HOURS') }}
-        </label>
-        <input
-          v-model="minHours"
-          type="number"
-          min="0"
-          step="0.5"
-          placeholder="0"
-          class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12 w-20"
-        />
-      </div>
+        <div>
+          <label class="block mb-1 text-xs font-medium text-n-slate-11">
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.END_DATE') }}
+          </label>
+          <input
+            v-model="dateRange.end"
+            type="date"
+            class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
+          />
+        </div>
+        <div ref="dropdownRef" class="relative">
+          <label class="block mb-1 text-xs font-medium text-n-slate-11">
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.OPERATORS') }}
+          </label>
+          <button
+            type="button"
+            class="flex items-center justify-between h-9 w-[220px] px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
+            @click="dropdownOpen = !dropdownOpen"
+          >
+            <span class="truncate">{{ operatorButtonLabel }}</span>
+            <span class="ml-2 text-n-slate-9" aria-hidden="true">{{
+              caretDown
+            }}</span>
+          </button>
+          <div
+            v-if="dropdownOpen"
+            class="absolute z-50 mt-1 w-[220px] rounded-md border border-n-slate-4 bg-n-background shadow-lg"
+          >
+            <div class="p-1.5 border-b border-n-slate-3">
+              <input
+                v-model="dropdownSearch"
+                type="text"
+                :placeholder="
+                  t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.SEARCH_PLACEHOLDER')
+                "
+                class="w-full px-2 py-1 text-sm border rounded border-n-slate-4 bg-n-background text-n-slate-12"
+              />
+            </div>
+            <ul class="max-h-[200px] overflow-y-auto py-1">
+              <li
+                v-for="op in filteredOperatorOptions"
+                :key="op.value"
+                class="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-n-slate-2 text-n-slate-12"
+                @click="toggleOperator(op)"
+              >
+                <span
+                  class="flex items-center justify-center w-4 h-4 border rounded border-n-slate-6"
+                  :class="{ 'bg-woot-500 border-woot-500': isSelected(op) }"
+                >
+                  <span v-if="isSelected(op)" class="text-white text-xs">{{
+                    checkMark
+                  }}</span>
+                </span>
+                <span class="truncate">{{ op.label }}</span>
+              </li>
+              <li
+                v-if="!filteredOperatorOptions.length"
+                class="px-3 py-1.5 text-sm text-n-slate-9"
+              >
+                {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.NO_RESULTS') }}
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div>
+          <label class="block mb-1 text-xs font-medium text-n-slate-11">
+            {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.MIN_HOURS') }}
+          </label>
+          <input
+            v-model="minHours"
+            type="number"
+            min="0"
+            step="0.5"
+            :placeholder="minHoursPlaceholder"
+            class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12 w-20"
+          />
+        </div>
       </div>
       <div>
         <button
@@ -282,8 +292,11 @@ onMounted(async () => {
       </span>
     </div>
 
-    <table v-else-if="reportData.length" class="w-full text-left">
-      <thead>
+    <table
+      v-else-if="reportData.length"
+      class="block md:table w-full text-left"
+    >
+      <thead class="hidden md:table-header-group">
         <tr class="border-b border-n-slate-3">
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11 w-8" />
           <th class="py-3 px-4 text-sm font-medium text-n-slate-11">
@@ -300,25 +313,45 @@ onMounted(async () => {
           </th>
         </tr>
       </thead>
-      <tbody>
+      <tbody class="block md:table-row-group">
         <template v-for="op in sortedReportData" :key="op.operatorId">
           <tr
-            class="border-b border-n-slate-2 cursor-pointer hover:bg-n-slate-1"
+            class="flex md:table-row gap-2 py-3 px-2 md:py-0 md:px-0 items-center border-b border-n-slate-2 cursor-pointer hover:bg-n-slate-1"
             @click="toggleExpand(op.operatorId)"
           >
-            <td class="py-3 px-4 text-sm text-n-slate-11">
-              {{ expandedOperators.has(op.operatorId) ? '▼' : '▶' }}
+            <td
+              class="py-0 md:py-3 md:px-4 text-sm text-n-slate-11 flex-shrink-0"
+            >
+              {{
+                expandedOperators.has(op.operatorId)
+                  ? caretExpanded
+                  : caretCollapsed
+              }}
             </td>
-            <td class="py-3 px-4 text-sm font-medium text-n-slate-12">
-              {{ op.operatorName }}
+            <td
+              class="py-0 md:py-3 md:px-4 text-sm font-medium text-n-slate-12 flex-1 min-w-0 md:flex-initial"
+            >
+              <div class="truncate">{{ op.operatorName }}</div>
+              <div class="block md:hidden text-xs text-n-slate-10 mt-0.5">
+                {{
+                  t(
+                    'REPORT.OPERATOR_STATUS_PAGE.SESSIONS_TABLE.MOBILE_SUMMARY',
+                    {
+                      total: formatMs(op.totalMs),
+                      days: op.activeDays,
+                      sessions: op.sessions.length,
+                    }
+                  )
+                }}
+              </div>
             </td>
-            <td class="py-3 px-4 text-sm text-n-slate-12">
+            <td class="hidden md:table-cell py-3 px-4 text-sm text-n-slate-12">
               {{ formatMs(op.totalMs) }}
             </td>
-            <td class="py-3 px-4 text-sm text-n-slate-12">
+            <td class="hidden md:table-cell py-3 px-4 text-sm text-n-slate-12">
               {{ op.activeDays }}
             </td>
-            <td class="py-3 px-4 text-sm text-n-slate-12">
+            <td class="hidden md:table-cell py-3 px-4 text-sm text-n-slate-12">
               {{ op.sessions.length }}
             </td>
           </tr>
@@ -326,14 +359,16 @@ onMounted(async () => {
             <tr
               v-for="(session, idx) in op.sessions"
               :key="`${op.operatorId}-${idx}`"
-              class="bg-n-slate-1 border-b border-n-slate-2"
+              class="flex flex-wrap md:table-row gap-x-2 gap-y-0 px-2 md:px-0 bg-n-slate-1 border-b border-n-slate-2"
             >
-              <td class="py-2 px-4" />
-              <td class="py-2 px-4 text-xs text-n-slate-11 pl-10">
+              <td class="hidden md:table-cell py-2 px-4" />
+              <td
+                class="py-2 md:px-4 text-xs text-n-slate-11 md:pl-10 flex-shrink-0"
+              >
                 {{ formatDate(session.startedAt) }}
               </td>
-              <td class="py-2 px-4 text-xs text-n-slate-11">
-                {{ formatTime(session.startedAt) }} →
+              <td class="py-2 md:px-4 text-xs text-n-slate-11 flex-1 min-w-0">
+                {{ formatTime(session.startedAt) }} {{ rightArrow }}
                 <template v-if="session.endedAt">
                   {{ formatTime(session.endedAt) }}
                 </template>
@@ -347,7 +382,10 @@ onMounted(async () => {
                   {{ t('REPORT.OPERATOR_STATUS_PAGE.SESSIONS_TABLE.ACTIVE') }}
                 </span>
               </td>
-              <td class="py-2 px-4 text-xs text-n-slate-11" colspan="2">
+              <td
+                class="py-2 md:px-4 text-xs text-n-slate-11 flex-shrink-0"
+                colspan="2"
+              >
                 {{ formatMs(session.durationMs) }}
               </td>
             </tr>

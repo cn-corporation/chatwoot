@@ -11,7 +11,9 @@ import { useSidebarKeyboardShortcuts } from './useSidebarKeyboardShortcuts';
 import { useAdmin } from 'dashboard/composables/useAdmin';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { emitter } from 'shared/helpers/mitt';
-import { vOnClickOutside } from '@vueuse/components';
+
+import { buildPortalURL } from 'dashboard/helper/portalHelper';
+import { useUISettings } from 'dashboard/composables/useUISettings';
 
 import Button from 'dashboard/components-next/button/Button.vue';
 import SidebarGroup from './SidebarGroup.vue';
@@ -38,6 +40,7 @@ const emit = defineEmits([
 ]);
 
 const { accountScopedRoute, isOnChatwootCloud } = useAccount();
+const { uiSettings } = useUISettings();
 const store = useStore();
 const searchShortcut = useKbd([`$mod`, 'k']);
 const { t } = useI18n();
@@ -75,6 +78,49 @@ provideSidebarContext({
 });
 
 const inboxes = useMapGetter('inboxes/getInboxes');
+const allPortals = useMapGetter('portals/allPortals');
+
+const publicViewPermissions = [
+  'administrator',
+  'agent',
+  'knowledge_base_manage',
+];
+
+const buildPublicViewItem = (portal, label) => {
+  if (!portal?.slug) return null;
+  try {
+    return {
+      name: `PublicView-${portal.slug}`,
+      label,
+      icon: 'i-lucide-external-link',
+      href: buildPortalURL(portal.slug, portal.custom_domain),
+      permissions: publicViewPermissions,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const publicHelpCenterItems = computed(() => {
+  const portals = allPortals.value || [];
+  if (portals.length === 0) return [];
+  if (portals.length === 1) {
+    const item = buildPublicViewItem(
+      portals[0],
+      t('SIDEBAR.HELP_CENTER.PUBLIC_VIEW')
+    );
+    return item ? [item] : [];
+  }
+  const lastSlug = uiSettings.value?.last_active_portal_slug;
+  const ordered = [...portals].sort((a, b) => {
+    if (a.slug === lastSlug) return -1;
+    if (b.slug === lastSlug) return 1;
+    return 0;
+  });
+  return ordered
+    .map(portal => buildPublicViewItem(portal, portal.name || portal.slug))
+    .filter(Boolean);
+});
 const labels = useMapGetter('labels/getLabelsOnSidebar');
 const teams = useMapGetter('teams/getMyTeams');
 const standByUnreadCount = useMapGetter('getStandByOperatorUnreadCount');
@@ -163,6 +209,7 @@ onMounted(async () => {
     store.dispatch('macros/get'),
     store.dispatch('fetchAllConversationsForCounts'),
     store.dispatch('telegramDialoguesAccess/fetchOperators'),
+    store.dispatch('portals/index'),
   ]);
   if (isAdmin.value || isTelegramOperator.value) {
     store.dispatch('telegramDialogues/initGlobalSSE');
@@ -265,6 +312,12 @@ const menuItems = computed(() => {
       label: t('SIDEBAR.ADS'),
       icon: 'i-lucide-megaphone',
       to: accountScopedRoute('ads_wrapper'),
+    });
+    settingsChildren.push({
+      name: 'Settings Conversation Export',
+      label: t('SIDEBAR.CONVERSATION_EXPORT'),
+      icon: 'i-lucide-file-down',
+      to: accountScopedRoute('conversation_export_wrapper'),
     });
     settingsChildren.push({
       name: 'Settings Canned Responses',
@@ -409,6 +462,12 @@ const menuItems = computed(() => {
       icon: 'i-lucide-user-check',
       to: accountScopedRoute('operator_status'),
     });
+    reportsChildren.push({
+      name: 'Reports Operator Breaks',
+      label: t('SIDEBAR.OPERATOR_BREAKS'),
+      icon: 'i-lucide-coffee',
+      to: accountScopedRoute('operator_breaks'),
+    });
   }
 
   const operatorReportsChildren = [
@@ -453,8 +512,7 @@ const menuItems = computed(() => {
       name: 'TelegramDialogues',
       label: t('SIDEBAR.TELEGRAM_DIALOGUES'),
       icon: 'i-lucide-send',
-      to: accountScopedRoute('telegram_dialogues'),
-      activeOn: ['telegram_dialogues', 'telegram_dialogues_chat'],
+      onClick: () => emitter.emit('open-telegram-dialogues-popup'),
       getterKeys: {
         count: 'telegramDialogues/getTotalUnreadCount',
         badge: 'telegramDialogues/getTotalUnreadCount',
@@ -603,6 +661,7 @@ const menuItems = computed(() => {
             'portals_articles_new',
             'portals_articles_edit',
           ],
+          permissions: ['administrator', 'knowledge_base_manage'],
           to: accountScopedRoute('portals_index', {
             navigationPath: 'portals_articles_index',
           }),
@@ -615,6 +674,7 @@ const menuItems = computed(() => {
             'portals_categories_articles_index',
             'portals_categories_articles_edit',
           ],
+          permissions: ['administrator', 'knowledge_base_manage'],
           to: accountScopedRoute('portals_index', {
             navigationPath: 'portals_categories_index',
           }),
@@ -623,6 +683,7 @@ const menuItems = computed(() => {
           name: 'Locales',
           label: t('SIDEBAR.HELP_CENTER.LOCALES'),
           activeOn: ['portals_locales_index'],
+          permissions: ['administrator', 'knowledge_base_manage'],
           to: accountScopedRoute('portals_index', {
             navigationPath: 'portals_locales_index',
           }),
@@ -631,10 +692,12 @@ const menuItems = computed(() => {
           name: 'Settings',
           label: t('SIDEBAR.HELP_CENTER.SETTINGS'),
           activeOn: ['portals_settings_index'],
+          permissions: ['administrator', 'knowledge_base_manage'],
           to: accountScopedRoute('portals_index', {
             navigationPath: 'portals_settings_index',
           }),
         },
+        ...publicHelpCenterItems.value,
       ],
     },
     {
@@ -648,11 +711,13 @@ const menuItems = computed(() => {
 </script>
 
 <template>
+  <div
+    v-if="isMobileSidebarOpen"
+    data-test="sidebar-backdrop"
+    class="fixed inset-0 w-screen h-screen z-30 md:hidden"
+    @click="closeMobileSidebar"
+  />
   <aside
-    v-on-click-outside="[
-      closeMobileSidebar,
-      { ignore: ['#mobile-sidebar-launcher'] },
-    ]"
     class="bg-n-solid-2 rtl:border-l ltr:border-r border-n-weak flex flex-col text-sm pb-1 fixed top-0 ltr:left-0 rtl:right-0 h-full z-40 transition-transform duration-200 ease-in-out md:static w-[200px] basis-[200px] md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:-translate-x-0"
     :class="[
       {

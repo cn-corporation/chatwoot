@@ -172,7 +172,7 @@ class Conversation < ApplicationRecord
     resolution_reason_will_change!
     self.resolution_reason = nil
     custom_attributes_will_change!
-    self.custom_attributes = custom_attributes&.except('custom_resolution_reason', 'close_topics', 'resolved_at') || {}
+    self.custom_attributes = custom_attributes&.except('custom_resolution_reason', 'close_topics', 'resolved_at', 'closed_from_no_category') || {}
   end
 
   def toggle_priority(priority = nil)

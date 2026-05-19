@@ -278,7 +278,13 @@ const actions = {
 
   toggleStatus: async (
     { commit, dispatch },
-    { conversationId, status, snoozedUntil = null, closeTopics = null }
+    {
+      conversationId,
+      status,
+      snoozedUntil = null,
+      closeTopics = null,
+      closedFromNoCategory = false,
+    }
   ) => {
     try {
       const {
@@ -293,6 +299,7 @@ const actions = {
         status,
         snoozedUntil,
         closeTopics,
+        closedFromNoCategory,
       });
       commit(types.CHANGE_CONVERSATION_STATUS, {
         conversationId,
@@ -641,27 +648,11 @@ const actions = {
     }
   },
 
-  markConversationAsUnreadForOperator: async (
-    { commit, rootGetters },
-    conversationId
-  ) => {
-    const operatorId = rootGetters.getCurrentUser?.id;
-    if (!operatorId) return;
-
-    try {
-      commit(types.SET_OPERATOR_NOTIFICATION_COUNT, {
-        conversationId,
-        unreadCount: 1,
-      });
-
-      await ChatwootExtraAPI.markConversationAsUnread(
-        conversationId,
-        operatorId
-      );
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('[OperatorNotifications] Failed to mark as unread', error);
-    }
+  markConversationAsUnreadForOperator: ({ commit }, conversationId) => {
+    commit(types.SET_OPERATOR_NOTIFICATION_COUNT, {
+      conversationId,
+      unreadCount: 1,
+    });
   },
 
   ...messageReadActions,

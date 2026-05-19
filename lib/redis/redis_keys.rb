@@ -47,4 +47,7 @@ module Redis::RedisKeys
   # Track conversation assignments to agents for rate limiting
   ASSIGNMENT_KEY = 'ASSIGNMENT::%<inbox_id>d::AGENT::%<agent_id>d::CONVERSATION::%<conversation_id>d'.freeze
   ASSIGNMENT_KEY_PATTERN = 'ASSIGNMENT::%<inbox_id>d::AGENT::%<agent_id>d::*'.freeze
+
+  ## Telegram per-chat send throttle (1s slot per chat to stay under per-chat limit)
+  TELEGRAM_CHAT_THROTTLE = 'TELEGRAM_CHAT_THROTTLE::%<chat_id>s'.freeze
 end

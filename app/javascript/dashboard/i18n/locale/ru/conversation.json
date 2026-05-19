@@ -6,6 +6,9 @@
     "SWITCH_VIEW_LAYOUT": "Переключить вид",
     "DASHBOARD_APP_TAB_MESSAGES": "Сообщения",
     "UNVERIFIED_SESSION": "Подлинность этого пользователя не подтверждена",
+    "CONTACT_PANEL_HEADER": "Контакт",
+    "CLOSE_CONTACT_PANEL": "Закрыть данные контакта",
+    "OPEN_CONTACT_PANEL": "Открыть данные контакта",
     "NO_MESSAGE_1": "Ой! Похоже, сообщений от клиентов нет.",
     "NO_MESSAGE_2": " чтобы отправить сообщение на вашу страницу!",
     "NO_INBOX_1": "Алоха! Похоже, вы еще не добавили ни одного источника.",
@@ -467,6 +470,8 @@
   "CLOSE_TOPICS": {
     "TITLE": "Выберите тему диалога",
     "TOPICS_TITLE": "О чём был диалог?",
+    "TOPIC_DEPOSITS": "Пополнение средств",
+    "TOPIC_WITHDRAWALS": "Вывод средств",
     "TOPIC_DEPOSITS_WITHDRAWALS": "Пополнение / Вывод средств",
     "TOPIC_REGISTRATION_LOGIN": "Регистрация и вход",
     "TOPIC_BONUSES_RAKEBACK": "Бонусы и рейкбек",

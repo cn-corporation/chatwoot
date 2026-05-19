@@ -16,6 +16,7 @@ const props = defineProps({
   activeOn: { type: Array, default: () => [] },
   children: { type: Array, default: undefined },
   getterKeys: { type: Object, default: () => ({}) },
+  onClick: { type: Function, default: null },
 });
 
 const {
@@ -25,7 +26,17 @@ const {
   resolvePermissions,
   resolveFeatureFlag,
   isAllowed,
+  shouldShow,
 } = useSidebarContext();
+
+const isChildAllowed = child => {
+  if (!child) return false;
+  if (child.permissions) {
+    return shouldShow('', child.permissions, []);
+  }
+  if (child.href) return true;
+  return isAllowed(child.to);
+};
 
 const navigableChildren = computed(() => {
   return props.children?.flatMap(child => child.children || child) || [];
@@ -45,7 +56,8 @@ const accessibleItems = computed(() => {
     // If a item has no link, it means it's just a subgroup header
     // So we don't need to check for permissions here, because there's nothing to
     // access here anyway
-    return child.to && isAllowed(child.to);
+    if (!child.to && !child.href) return false;
+    return isChildAllowed(child);
   });
 });
 
@@ -108,14 +120,19 @@ const hasActiveChild = computed(() => {
 });
 
 const toggleTrigger = () => {
+  if (!hasChildren.value && typeof props.onClick === 'function') {
+    props.onClick();
+    return;
+  }
   if (
     hasAccessibleChildren.value &&
     !isExpanded.value &&
     !hasActiveChild.value
   ) {
-    // if not already expanded, navigate to the first child
     const firstItem = accessibleItems.value[0];
-    router.push(firstItem.to);
+    if (firstItem.to) {
+      router.push(firstItem.to);
+    }
   }
   setExpandedItem(props.name);
 };
@@ -164,7 +181,7 @@ onMounted(async () => {
           :active-child="activeChild"
         />
         <SidebarGroupLeaf
-          v-else-if="isAllowed(child.to)"
+          v-else-if="isChildAllowed(child)"
           v-show="isExpanded || activeChild?.name === child.name"
           v-bind="child"
           :active="activeChild?.name === child.name"

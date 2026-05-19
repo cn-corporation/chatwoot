@@ -75,6 +75,7 @@ export function useSidebarContext() {
     resolvePermissions,
     resolveFeatureFlag,
     isAllowed,
+    shouldShow,
   };
 }
 

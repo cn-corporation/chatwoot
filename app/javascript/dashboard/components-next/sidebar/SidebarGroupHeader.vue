@@ -26,17 +26,17 @@ const count = computed(() =>
 <template>
   <component
     :is="to ? 'router-link' : 'div'"
-    class="flex items-center gap-2 px-2 py-1.5 rounded-lg h-8 min-w-0"
+    class="flex items-center gap-2 px-2 py-1.5 rounded-lg h-8 min-w-0 [-webkit-touch-callout:none]"
     role="button"
     draggable="false"
     :to="to"
-    :title="label"
     :class="{
       'text-n-blue-text bg-n-alpha-2 font-medium': isActive && !hasActiveChild,
       'text-n-slate-12 font-medium': hasActiveChild,
       'text-n-slate-11 hover:bg-n-alpha-2': !isActive && !hasActiveChild,
     }"
     @click.stop="emit('toggle')"
+    @contextmenu.prevent
   >
     <div v-if="icon" class="relative flex items-center gap-2">
       <Icon v-if="icon" :icon="icon" class="size-4" />
@@ -46,7 +46,7 @@ const count = computed(() =>
       />
     </div>
     <div class="flex items-center gap-1.5 flex-grow min-w-0">
-      <span class="text-sm font-medium leading-5 truncate">
+      <span v-tooltip="label" class="text-sm font-medium leading-5 truncate">
         {{ label }}
       </span>
       <span

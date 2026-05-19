@@ -90,8 +90,8 @@ const tableHeaders = computed(() => {
 
 <template>
   <div class="flex flex-col">
-    <table class="min-w-full overflow-x-auto">
-      <thead>
+    <table class="block md:table w-full">
+      <thead class="hidden md:table-header-group">
         <th
           v-for="tableHeader in tableHeaders"
           :key="tableHeader"
@@ -100,18 +100,40 @@ const tableHeaders = computed(() => {
           {{ tableHeader }}
         </th>
       </thead>
-      <tbody class="divide-y divide-n-weak flex-1 text-n-slate-12">
-        <tr v-for="attribute in attributes" :key="attribute.attribute_key">
+      <tbody
+        class="block md:table-row-group divide-y divide-n-weak flex-1 text-n-slate-12"
+      >
+        <tr
+          v-for="attribute in attributes"
+          :key="attribute.attribute_key"
+          class="flex md:table-row gap-2 py-3 md:py-0 items-center"
+        >
           <td
-            class="py-4 ltr:pr-4 rtl:pl-4 overflow-hidden whitespace-nowrap text-ellipsis"
+            class="py-0 md:py-4 ltr:pr-4 rtl:pl-4 md:overflow-hidden md:whitespace-nowrap md:text-ellipsis flex-1 min-w-0 md:flex-initial"
           >
-            {{ attribute.attribute_display_name }}
+            <div class="font-medium md:font-normal truncate">
+              {{ attribute.attribute_display_name }}
+            </div>
+            <div
+              v-if="attribute.attribute_description"
+              class="block md:hidden text-xs text-n-slate-10 mt-0.5 line-clamp-2"
+            >
+              {{ attribute.attribute_description }}
+            </div>
+            <div class="block md:hidden text-[10px] text-n-slate-9 mt-0.5">
+              {{
+                $t(
+                  `ATTRIBUTES_MGMT.ATTRIBUTE_TYPES.${attribute.attribute_display_type?.toUpperCase()}`
+                )
+              }}
+              · {{ attribute.attribute_key }}
+            </div>
           </td>
-          <td class="py-4 ltr:pr-4 rtl:pl-4">
+          <td class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4">
             {{ attribute.attribute_description }}
           </td>
           <td
-            class="py-4 ltr:pr-4 rtl:pl-4 overflow-hidden whitespace-nowrap text-ellipsis"
+            class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4 md:overflow-hidden md:whitespace-nowrap md:text-ellipsis"
           >
             {{
               $t(
@@ -120,11 +142,11 @@ const tableHeaders = computed(() => {
             }}
           </td>
           <td
-            class="py-4 ltr:pr-4 rtl:pl-4 attribute-key overflow-hidden whitespace-nowrap text-ellipsis"
+            class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4 attribute-key md:overflow-hidden md:whitespace-nowrap md:text-ellipsis"
           >
             {{ attribute.attribute_key }}
           </td>
-          <td class="py-4 min-w-xs">
+          <td class="py-0 md:py-4 md:min-w-xs flex-shrink-0">
             <div class="flex gap-1 justify-end">
               <Button
                 v-tooltip.top="$t('ATTRIBUTES_MGMT.LIST.BUTTONS.EDIT')"

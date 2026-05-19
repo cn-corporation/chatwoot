@@ -100,7 +100,10 @@ onMounted(() => {
 
 <template>
   <div class="w-full overflow-x-visible">
-    <SidebarActionsHeader :title="$t('CONVERSATION.SIDEBAR.CONTACT')" />
+    <SidebarActionsHeader
+      :title="$t('CONVERSATION.SIDEBAR.CONTACT')"
+      class="hidden md:block"
+    />
     <ContactInfo :contact="contact" :channel-type="channelType" />
     <div class="px-2 pb-8 list-group overflow-x-visible">
       <Draggable
@@ -110,6 +113,9 @@ onMounted(() => {
         handle=".drag-handle"
         item-key="name"
         class="sidebar-grid gap-3 overflow-x-visible"
+        :delay="200"
+        :delay-on-touch-only="true"
+        :touch-start-threshold="5"
         @start="dragging = true"
         @end="onDragEnd"
       >

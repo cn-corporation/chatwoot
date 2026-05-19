@@ -9,6 +9,7 @@ import vueActionCable from './helper/actionCable';
 import { useRouter } from 'vue-router';
 import { useStore } from 'dashboard/composables/store';
 import WootSnackbarBox from './components/SnackbarContainer.vue';
+import BreakOverlay from './components-next/break-overlay/BreakOverlay.vue';
 import { setColorTheme } from './helper/themeHelper';
 import { isOnOnboardingView } from 'v3/helpers/RouteHelper';
 import { useAccount } from 'dashboard/composables/useAccount';
@@ -28,6 +29,7 @@ export default {
     PaymentPendingBanner,
     WootSnackbarBox,
     PendingEmailVerificationBanner,
+    BreakOverlay,
   },
   setup() {
     const router = useRouter();
@@ -138,6 +140,7 @@ export default {
     </router-view>
     <WootSnackbarBox />
     <NetworkNotification />
+    <BreakOverlay />
   </div>
   <LoadingState v-else />
 </template>

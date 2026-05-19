@@ -20,6 +20,9 @@ import CopilotLauncher from 'dashboard/components-next/copilot/CopilotLauncher.v
 import CopilotContainer from 'dashboard/components/copilot/CopilotContainer.vue';
 
 import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSidebarLauncher.vue';
+import InstallHint from 'dashboard/components-next/install-hint/InstallHint.vue';
+import TelegramDialoguesPopup from 'dashboard/routes/dashboard/telegramDialogues/TelegramDialoguesPopup.vue';
+import { emitter } from 'shared/helpers/mitt';
 
 export default {
   components: {
@@ -31,6 +34,8 @@ export default {
     CopilotLauncher,
     CopilotContainer,
     MobileSidebarLauncher,
+    InstallHint,
+    TelegramDialoguesPopup,
   },
   setup() {
     const upgradePageRef = ref(null);
@@ -52,6 +57,7 @@ export default {
       showCreateAccountModal: false,
       showShortcutModal: false,
       isMobileSidebarOpen: false,
+      showTelegramPopup: false,
     };
   },
   computed: {
@@ -93,6 +99,12 @@ export default {
       immediate: true,
     },
   },
+  mounted() {
+    emitter.on('open-telegram-dialogues-popup', this.openTelegramPopup);
+  },
+  beforeUnmount() {
+    emitter.off('open-telegram-dialogues-popup', this.openTelegramPopup);
+  },
   methods: {
     toggleMobileSidebar() {
       this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
@@ -116,12 +128,20 @@ export default {
     closeKeyShortcutModal() {
       this.showShortcutModal = false;
     },
+    openTelegramPopup() {
+      this.showTelegramPopup = true;
+    },
+    closeTelegramPopup() {
+      this.showTelegramPopup = false;
+    },
   },
 };
 </script>
 
 <template>
-  <div class="flex flex-grow overflow-hidden text-n-slate-12">
+  <div
+    class="flex flex-grow overflow-hidden text-n-slate-12 h-dvh md:h-auto pt-[env(safe-area-inset-top)] ltr:pl-[env(safe-area-inset-left)] ltr:pr-[env(safe-area-inset-right)] rtl:pr-[env(safe-area-inset-left)] rtl:pl-[env(safe-area-inset-right)]"
+  >
     <NextSidebar
       :is-mobile-sidebar-open="isMobileSidebarOpen"
       @toggle-account-modal="toggleAccountModal"
@@ -161,6 +181,11 @@ export default {
         @close="closeKeyShortcutModal"
         @clickaway="closeKeyShortcutModal"
       />
+      <InstallHint />
     </main>
+    <TelegramDialoguesPopup
+      :show="showTelegramPopup"
+      @close="closeTelegramPopup"
+    />
   </div>
 </template>

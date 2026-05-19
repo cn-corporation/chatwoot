@@ -270,6 +270,9 @@ const evenClass = [
       item-key="key"
       class="last:rounded-b-lg"
       :class="evenClass"
+      :delay="200"
+      :delay-on-touch-only="true"
+      :touch-start-threshold="5"
       @start="dragging = true"
       @end="onDragEnd"
     >

@@ -335,6 +335,7 @@
     "AUTOMATION": "Automation",
     "MACROS": "Macros",
     "ADS": "Ads",
+    "CONVERSATION_EXPORT": "Conversation Export",
     "TEAMS": "Teams",
     "BILLING": "Billing",
     "CUSTOM_VIEWS_FOLDER": "Folders",
@@ -371,6 +372,7 @@
     "CSAT_STATISTICS": "CSAT Statistics",
     "QUALITY_REVIEW": "AI Quality Review",
     "OPERATOR_STATUS": "Operator Status",
+    "OPERATOR_BREAKS": "Operator Breaks",
     "MY_REPORTS": "My Reports",
     "MY_RESPONSE_STATISTICS": "My Response Statistics",
     "MY_RESOLUTION_STATISTICS": "My Resolution Statistics",
@@ -382,7 +384,8 @@
       "ARTICLES": "Articles",
       "CATEGORIES": "Categories",
       "LOCALES": "Locales",
-      "SETTINGS": "Settings"
+      "SETTINGS": "Settings",
+      "PUBLIC_VIEW": "Public View"
     },
     "CHANNELS": "Channels",
     "SET_AUTO_OFFLINE": {

@@ -134,6 +134,8 @@ const conversationColor = computed(() => {
 });
 
 const TOPIC_EMOJIS = {
+  deposits: '💰',
+  withdrawals: '💸',
   deposits_withdrawals: '💰',
   registration_login: '📝',
   bonuses_rakeback: '🎁',
@@ -241,6 +243,11 @@ const conversationPath = computed(() => {
 });
 
 const onCardClick = e => {
+  if (showContextMenu.value) {
+    e.preventDefault();
+    return;
+  }
+
   const path = conversationPath.value;
   if (!path) return;
 
@@ -294,6 +301,58 @@ const openContextMenu = e => {
   contextMenu.value.x = e.pageX || e.clientX;
   contextMenu.value.y = e.pageY || e.clientY;
   showContextMenu.value = true;
+};
+
+const LONG_PRESS_MS = 500;
+const LONG_PRESS_MOVE_TOLERANCE = 10;
+const longPressTimer = ref(null);
+const longPressTriggered = ref(false);
+const touchStart = ref({ x: 0, y: 0 });
+
+const clearLongPressTimer = () => {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value);
+    longPressTimer.value = null;
+  }
+};
+
+const onTouchStart = e => {
+  if (toValue(isBulkMessageMode) || !props.enableContextMenu) return;
+  if (e.touches.length !== 1) return;
+  longPressTriggered.value = false;
+  const touch = e.touches[0];
+  touchStart.value = { x: touch.clientX, y: touch.clientY };
+  clearLongPressTimer();
+  longPressTimer.value = setTimeout(() => {
+    longPressTriggered.value = true;
+    emit('contextMenuToggle', true);
+    contextMenu.value.x = touch.pageX || touch.clientX;
+    contextMenu.value.y = touch.pageY || touch.clientY;
+    showContextMenu.value = true;
+  }, LONG_PRESS_MS);
+};
+
+const onTouchMove = e => {
+  if (!longPressTimer.value) return;
+  const touch = e.touches[0];
+  const dx = Math.abs(touch.clientX - touchStart.value.x);
+  const dy = Math.abs(touch.clientY - touchStart.value.y);
+  if (dx > LONG_PRESS_MOVE_TOLERANCE || dy > LONG_PRESS_MOVE_TOLERANCE) {
+    clearLongPressTimer();
+  }
+};
+
+const onTouchEnd = e => {
+  clearLongPressTimer();
+  if (longPressTriggered.value) {
+    e.preventDefault();
+    longPressTriggered.value = false;
+  }
+};
+
+const onTouchCancel = () => {
+  clearLongPressTimer();
+  longPressTriggered.value = false;
 };
 
 const closeContextMenu = () => {
@@ -356,7 +415,7 @@ const onUnblockContact = () => {
 
 <template>
   <div
-    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 border-t-0 border-b-0 border-r-0 border-transparent border-solid cursor-pointer conversation hover:bg-n-alpha-1 dark:hover:bg-n-alpha-3 group"
+    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 border-t-0 border-b-0 border-r-0 border-transparent border-solid cursor-pointer conversation hover:bg-n-alpha-1 dark:hover:bg-n-alpha-3 group select-none [-webkit-touch-callout:none]"
     :class="{
       'active animate-card-select bg-n-alpha-1 dark:bg-n-alpha-3 border-n-weak border-l-4 !border-l-woot-500':
         isActiveChat,
@@ -367,6 +426,10 @@ const onUnblockContact = () => {
     }"
     @click="onCardClick"
     @contextmenu="openContextMenu($event)"
+    @touchstart.passive="onTouchStart"
+    @touchmove.passive="onTouchMove"
+    @touchend="onTouchEnd"
+    @touchcancel="onTouchCancel"
   >
     <div
       v-if="conversationColor"

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import { useElementSize } from '@vueuse/core';
@@ -14,6 +14,8 @@ import wootConstants from 'dashboard/constants/globals';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
 import { useInbox } from 'dashboard/composables/useInbox';
+import { useIsMobile } from 'dashboard/composables/useIsMobile';
+import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
@@ -33,6 +35,58 @@ const route = useRoute();
 const conversationHeader = ref(null);
 const { width } = useElementSize(conversationHeader);
 const { isAWebWidgetInbox } = useInbox();
+const { isMobile } = useIsMobile();
+const { updateUISettings } = useUISettings();
+
+const openContactPanelOnMobile = () => {
+  if (!isMobile.value) return;
+  updateUISettings({ is_contact_sidebar_open: true });
+};
+
+const LONG_PRESS_MS = 450;
+const tooltipShown = ref(false);
+let pressTimer = null;
+let longPressTriggered = false;
+
+const clearPressTimer = () => {
+  if (pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+};
+
+const startPress = () => {
+  longPressTriggered = false;
+  tooltipShown.value = false;
+  clearPressTimer();
+  pressTimer = setTimeout(() => {
+    longPressTriggered = true;
+    tooltipShown.value = true;
+  }, LONG_PRESS_MS);
+};
+
+const endPress = () => {
+  clearPressTimer();
+  if (tooltipShown.value) {
+    setTimeout(() => {
+      tooltipShown.value = false;
+    }, 1500);
+  }
+};
+
+const handleHeaderClick = event => {
+  if (longPressTriggered) {
+    longPressTriggered = false;
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+  openContactPanelOnMobile();
+};
+
+onUnmounted(() => {
+  clearPressTimer();
+});
 
 const currentChat = computed(() => store.getters.getSelectedChat);
 const accountId = computed(() => store.getters.getCurrentAccountId);
@@ -97,15 +151,29 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
 <template>
   <div
     ref="conversationHeader"
-    class="flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 py-2 border-b bg-n-background border-n-weak h-24 xl:h-12"
+    class="flex flex-row items-center justify-between flex-1 w-full min-w-0 gap-2 px-3 py-2 border-b bg-n-background border-n-weak h-12"
   >
-    <div
-      class="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1"
+    <button
+      v-tooltip="{
+        content: currentContact.name,
+        placement: 'left',
+        triggers: [],
+        shown: tooltipShown,
+      }"
+      type="button"
+      class="flex items-center min-w-0 flex-1 gap-2 text-left rounded-lg active:bg-n-alpha-2 md:cursor-default select-none"
+      :aria-label="$t('CONVERSATION.OPEN_CONTACT_PANEL')"
+      @click="handleHeaderClick"
+      @pointerdown="startPress"
+      @pointerup="endPress"
+      @pointercancel="endPress"
+      @pointerleave="endPress"
+      @contextmenu.prevent
     >
       <BackButton
         v-if="showBackButton"
         :back-url="backButtonUrl"
-        class="ltr:mr-2 rtl:ml-2"
+        class="ltr:mr-1 rtl:ml-1 flex-shrink-0"
       />
       <Avatar
         :name="currentContact.name"
@@ -115,10 +183,8 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
         hide-offline-status
         rounded-full
       />
-      <div
-        class="flex flex-col items-start min-w-0 ml-2 overflow-hidden rtl:ml-0 rtl:mr-2"
-      >
-        <div class="flex flex-row items-center max-w-full gap-1 p-0 m-0">
+      <div class="flex flex-col items-start min-w-0 overflow-hidden">
+        <div class="flex flex-row items-center max-w-full gap-1">
           <span
             class="text-sm font-medium truncate leading-tight text-n-slate-12"
           >
@@ -132,7 +198,6 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
             icon="warning"
           />
         </div>
-
         <div
           class="flex items-center gap-2 overflow-hidden text-xs conversation--header--actions text-ellipsis whitespace-nowrap"
         >
@@ -142,9 +207,9 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
           </span>
         </div>
       </div>
-    </div>
+    </button>
     <div
-      class="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap"
+      class="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap"
     >
       <SLACardLabel
         v-if="hasSlaPolicyId"
@@ -156,6 +221,7 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
       <OperatorPresenceDropdown
         v-if="currentChat.id"
         :conversation-id="currentChat.id"
+        class="hidden md:flex"
       />
       <WaitingToggle v-if="currentChat.id" />
       <MoreActions :conversation-id="currentChat.id" />

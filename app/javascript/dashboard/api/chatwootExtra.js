@@ -250,18 +250,6 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
-  async markConversationAsUnread(conversationId, operatorId) {
-    const response = await axios.post(
-      `${this.baseURL}/api/operator-notifications/mark-unread`,
-      {
-        conversationId: String(conversationId),
-        operatorId: String(operatorId),
-      },
-      { headers: this.headers }
-    );
-    return response.data;
-  }
-
   // Ads API
   async createAd(data) {
     const response = await axios.post(`${this.baseURL}/api/ads`, data, {
@@ -303,6 +291,23 @@ class ChatwootExtraAPI {
     const response = await axios.delete(`${this.baseURL}/api/ads/${id}`, {
       headers: this.headers,
     });
+    return response.data;
+  }
+
+  async uploadPlayerListCsv(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axios.post(
+      `${this.baseURL}/api/ads/player-list-csv`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'X-API-Key': CHATWOOT_EXTRA_API_KEY,
+        },
+      }
+    );
     return response.data;
   }
 
@@ -968,6 +973,117 @@ class ChatwootExtraAPI {
   getOperatorStatusStreamURL() {
     const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
     return `${this.baseURL}/api/operator-status/stream?apiKey=${apiKey}`;
+  }
+
+  // Operator Breaks API
+  async startOperatorBreak({ chatwootUserId, operatorName, breakType }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-breaks/start`,
+      { chatwootUserId, operatorName, breakType },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async endOperatorBreak(chatwootUserId) {
+    const response = await axios.post(
+      `${this.baseURL}/api/operator-breaks/end`,
+      { chatwootUserId },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getMyActiveOperatorBreak(chatwootUserId) {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/api/operator-breaks/me`,
+        {
+          params: { chatwootUserId },
+          headers: this.headers,
+        }
+      );
+      return response.data?.data || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async getCurrentOperatorBreaks() {
+    const response = await axios.get(
+      `${this.baseURL}/api/operator-breaks/current`,
+      {
+        headers: this.headers,
+      }
+    );
+    return response.data?.data || [];
+  }
+
+  async getOperatorBreaksReport(params = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/operator-breaks/report`,
+      {
+        params,
+        headers: this.headers,
+      }
+    );
+    return response.data;
+  }
+
+  async createConversationExport({
+    accountId,
+    dateFrom,
+    dateTo,
+    bearerTokenHash,
+    chatwootApiUrl,
+    createdByUserId,
+  }) {
+    const response = await axios.post(
+      `${this.baseURL}/api/conversation-exports/start`,
+      {
+        accountId,
+        dateFrom,
+        dateTo,
+        bearerTokenHash,
+        chatwootApiUrl,
+        createdByUserId,
+      },
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getConversationExports(accountId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/conversation-exports`,
+      { params: { accountId }, headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async getConversationExportStatus(id) {
+    const response = await axios.get(
+      `${this.baseURL}/api/conversation-exports/${id}/status`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async stopConversationExport(id) {
+    const response = await axios.post(
+      `${this.baseURL}/api/conversation-exports/${id}/stop`,
+      {},
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async downloadConversationExport(id) {
+    const response = await axios.get(
+      `${this.baseURL}/api/conversation-exports/${id}/download`,
+      { headers: this.headers, responseType: 'blob' }
+    );
+    return response.data;
   }
 }
 

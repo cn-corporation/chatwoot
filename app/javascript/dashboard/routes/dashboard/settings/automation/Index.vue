@@ -255,8 +255,8 @@ const tableHeaders = computed(() => {
       </BaseSettingsHeader>
     </template>
     <template #body>
-      <table class="min-w-full divide-y divide-n-weak">
-        <thead>
+      <table class="block md:table w-full divide-y divide-n-weak">
+        <thead class="hidden md:table-header-group">
           <th
             v-for="thHeader in tableHeaders"
             :key="thHeader"
@@ -265,7 +265,9 @@ const tableHeaders = computed(() => {
             {{ thHeader }}
           </th>
         </thead>
-        <tbody class="divide-y divide-n-weak text-n-slate-11">
+        <tbody
+          class="block md:table-row-group divide-y divide-n-weak text-n-slate-11"
+        >
           <AutomationRuleRow
             v-for="automation in records"
             :key="automation.id"

@@ -218,6 +218,9 @@ onMounted(async () => {
       ghost-class="ghost"
       handle=".drag-handle"
       item-key="id"
+      :delay="200"
+      :delay-on-touch-only="true"
+      :touch-start-threshold="5"
       @start="dragging = true"
       @end="onDragEnd"
     >

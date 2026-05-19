@@ -343,6 +343,9 @@ const confirmDuplicate = async () => {
     if (fullAd.mediaId) {
       payload.mediaId = fullAd.mediaId;
     }
+    if (fullAd.playerIds && fullAd.playerIds.length > 0) {
+      payload.playerIds = fullAd.playerIds;
+    }
 
     const created = await store.dispatch('ads/create', payload);
     if (!created) {
@@ -433,10 +436,11 @@ const exportErrorLogsToExcel = () => {
   }
 
   const csvContent = [
-    ['Telegram ID', 'Error Message', 'Timestamp'].join(','),
+    ['Telegram ID', 'Player ID', 'Error Message', 'Timestamp'].join(','),
     ...errorLogs.map(log =>
       [
-        log.tgid,
+        log.tgid ?? '',
+        log.playerId ?? '',
         `"${(log.tgErrorText || '').replace(/"/g, '""')}"`,
         formatDateTime(log.createdAt),
       ].join(',')
@@ -484,8 +488,8 @@ const exportErrorLogsToExcel = () => {
       </BaseSettingsHeader>
     </template>
     <template #body>
-      <table class="min-w-full divide-y divide-n-weak">
-        <thead>
+      <table class="block md:table w-full divide-y divide-n-weak">
+        <thead class="hidden md:table-header-group">
           <th
             v-for="thHeader in tableHeaders"
             :key="thHeader"
@@ -494,15 +498,26 @@ const exportErrorLogsToExcel = () => {
             {{ thHeader }}
           </th>
         </thead>
-        <tbody class="divide-y divide-n-weak text-n-slate-11">
-          <tr v-for="ad in records" :key="ad.id" class="hover:bg-n-slate-2">
-            <td class="py-4 ltr:pr-4 rtl:pl-4">
+        <tbody
+          class="block md:table-row-group divide-y divide-n-weak text-n-slate-11"
+        >
+          <tr
+            v-for="ad in records"
+            :key="ad.id"
+            class="flex flex-col md:table-row gap-1 py-3 md:py-0 hover:bg-n-slate-2"
+          >
+            <td class="py-0 md:py-4 ltr:pr-4 rtl:pl-4">
               <span class="font-medium">{{ ad.name }}</span>
+              <div class="block md:hidden text-xs text-n-slate-10 mt-0.5">
+                {{ getSourceChannelName(ad.chatwootSourceId || ad.sourceId) }}
+                ·
+                {{ formatDate(ad.createdAt) }}
+              </div>
             </td>
-            <td class="py-4 ltr:pr-4 rtl:pl-4">
+            <td class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4">
               {{ getSourceChannelName(ad.chatwootSourceId || ad.sourceId) }}
             </td>
-            <td class="py-4 ltr:pr-4 rtl:pl-4">
+            <td class="py-0 md:py-4 ltr:pr-4 rtl:pl-4">
               <span
                 v-if="getFilterSummary(ad)"
                 class="px-2 py-1 text-xs bg-woot-50 text-woot-600 rounded"
@@ -527,10 +542,10 @@ const exportErrorLogsToExcel = () => {
                 }}
               </button>
             </td>
-            <td class="py-4 ltr:pr-4 rtl:pl-4">
+            <td class="hidden md:table-cell py-4 ltr:pr-4 rtl:pl-4">
               {{ formatDate(ad.createdAt) }}
             </td>
-            <td class="py-4 ltr:pr-4 rtl:pl-4">
+            <td class="py-0 md:py-4 ltr:pr-4 rtl:pl-4">
               <div class="flex gap-2 flex-wrap">
                 <Button
                   v-tooltip.top="$t('ADS.ACTIONS.VIEW_STATUS')"
@@ -1049,11 +1064,15 @@ const exportErrorLogsToExcel = () => {
               <tbody class="divide-y divide-n-weak">
                 <tr
                   v-for="log in getErrorLogs"
-                  :key="`${log.tgid}-${log.createdAt}`"
+                  :key="`${log.tgid || log.playerId}-${log.createdAt}`"
                   class="hover:bg-n-slate-2"
                 >
                   <td class="py-3 px-4 text-sm">
-                    {{ log.tgid }}
+                    <span v-if="log.tgid">{{ log.tgid }}</span>
+                    <span v-else-if="log.playerId" class="text-n-slate-10">
+                      player_id: {{ log.playerId }}
+                    </span>
+                    <span v-else class="text-n-slate-9">—</span>
                   </td>
                   <td class="py-3 px-4 text-sm">
                     {{ log.tgErrorText }}

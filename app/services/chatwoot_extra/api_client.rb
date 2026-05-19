@@ -25,11 +25,28 @@ module ChatwootExtra
       get('/api/automations')
     end
 
+    def mark_conversation_unread(account_id, conversation_id)
+      bearer_token = ChatwootExtra::BearerTokenService.encrypted_token_for_account(account_id)
+      return if bearer_token.blank?
+
+      post(
+        '/api/operator-notifications/mark-unread',
+        { conversationId: conversation_id.to_s },
+        { 'X-Chatwoot-Bearer-Token' => bearer_token }
+      )
+    end
+
     private
 
     def get(path)
       full_url = URI.join(@base_uri, path).to_s
       response = self.class.get(full_url, headers: headers)
+      handle_response(response)
+    end
+
+    def post(path, body, extra_headers = {})
+      full_url = URI.join(@base_uri, path).to_s
+      response = self.class.post(full_url, headers: headers.merge(extra_headers), body: body.to_json)
       handle_response(response)
     end
 

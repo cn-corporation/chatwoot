@@ -78,8 +78,8 @@ watch(
     </button>
     <ul
       ref="tabsList"
-      class="border-r-0 border-l-0 border-t-0 flex py-0 px-0 list-none mb-0 max-w-[calc(100%-80px)] sm:max-w-[calc(100%-64px)]"
-      :class="hasScroll ? 'overflow-hidden' : ''"
+      class="border-r-0 border-l-0 border-t-0 flex py-0 px-0 list-none mb-0 max-w-[calc(100%-80px)] sm:max-w-[calc(100%-64px)] scroll-smooth [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      :class="hasScroll ? 'overflow-x-auto overflow-y-hidden' : ''"
     >
       <slot />
     </ul>

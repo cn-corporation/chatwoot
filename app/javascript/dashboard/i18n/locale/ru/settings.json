@@ -335,6 +335,7 @@
     "AUTOMATION": "Автоматизация",
     "MACROS": "Макрос",
     "ADS": "Рассылка",
+    "CONVERSATION_EXPORT": "Экспорт разговоров",
     "TEAMS": "Команды",
     "BILLING": "Платёж",
     "CUSTOM_VIEWS_FOLDER": "Папки",
@@ -369,6 +370,7 @@
     "RESPONSE_STATISTICS": "Статистика ответов",
     "RESOLUTION_STATISTICS": "Статистика решений",
     "CSAT_STATISTICS": "Статистика CSAT",
+    "OPERATOR_BREAKS": "Перерывы операторов",
     "MY_REPORTS": "Мои отчёты",
     "MY_RESPONSE_STATISTICS": "Моя статистика ответов",
     "MY_RESOLUTION_STATISTICS": "Моя статистика решений",
@@ -380,7 +382,8 @@
       "ARTICLES": "Статьи",
       "CATEGORIES": "Категории",
       "LOCALES": "Locales",
-      "SETTINGS": "Настройки"
+      "SETTINGS": "Настройки",
+      "PUBLIC_VIEW": "Публичный вид"
     },
     "CHANNELS": "Источники",
     "SET_AUTO_OFFLINE": {

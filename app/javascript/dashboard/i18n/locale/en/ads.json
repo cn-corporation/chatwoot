@@ -112,6 +112,16 @@
       "REMOVE_ERROR": "Failed to remove media. Please try again",
       "UPLOADING": "Uploading media..."
     },
+    "PLAYER_LIST": {
+      "LABEL": "Player ID list (CSV)",
+      "DESCRIPTION": "Optionally upload a CSV of specific player IDs to target. When attached, recipients are resolved from the player_overall table instead of contacts.",
+      "HELP_TEXT": "Strict format: one column named \"player_id\". Each row must match the pattern xxxx-xxxx (digits only). Duplicates and extra columns are rejected.",
+      "PLAYERS": "players",
+      "SAVED_LIST": "Saved player list",
+      "UPLOADING": "Uploading player list...",
+      "UPLOAD_SUCCESS": "Player list parsed: {count} players ready",
+      "UPLOAD_ERROR": "Failed to upload player list. Please check the file format."
+    },
     "SEND": {
       "START": {
         "SUCCESS_MESSAGE": "Ad sending started successfully",

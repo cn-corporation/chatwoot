@@ -1,4 +1,5 @@
 <script>
+import { ref } from 'vue';
 import { mapGetters } from 'vuex';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAccount } from 'dashboard/composables/useAccount';
@@ -12,6 +13,7 @@ import { emitter } from 'shared/helpers/mitt';
 import ConversationSidebar from 'dashboard/components/widgets/conversation/ConversationSidebar.vue';
 import { Splitpanes, Pane } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
+import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 
 export default {
   components: {
@@ -60,12 +62,14 @@ export default {
     const { uiSettings, updateUISettings } = useUISettings();
     const { accountId } = useAccount();
     const { width: windowWidth } = useWindowSize();
+    const mobileLayoutRef = ref(null);
 
     return {
       uiSettings,
       updateUISettings,
       accountId,
       windowWidth,
+      mobileLayoutRef,
     };
   },
   data() {
@@ -95,7 +99,7 @@ export default {
     },
     showMessageView() {
       if (this.isMobileView) {
-        return this.conversationId && !this.shouldShowSidebar;
+        return !!this.conversationId;
       }
       return this.conversationId ? true : !this.isOnExpandedLayout;
     },
@@ -144,10 +148,14 @@ export default {
     this.$store.dispatch('portals/index');
     this.initialize();
     this.loadSplitpaneSizes();
+    this.attachSwipeBack();
     this.$watch('$store.state.route', () => this.initialize());
     this.$watch('chatList.length', () => {
       this.setActiveChat();
     });
+  },
+  beforeUnmount() {
+    this.detachSwipeBack();
   },
 
   methods: {
@@ -214,11 +222,12 @@ export default {
           })
           .then(() => {
             emitter.emit(BUS_EVENTS.SCROLL_TO_MESSAGE, { messageId });
-            // Auto-open contact sidebar when selecting a conversation
-            this.updateUISettings({
-              is_contact_sidebar_open: true,
-              is_copilot_panel_open: false,
-            });
+            if (!this.isMobileView) {
+              this.updateUISettings({
+                is_contact_sidebar_open: true,
+                is_copilot_panel_open: false,
+              });
+            }
           });
       } else {
         this.$store.dispatch('clearSelectedState');
@@ -257,6 +266,65 @@ export default {
         this.splitpaneSizes.conversationBox = panes[1]?.size;
         this.splitpaneSizes.sidebar = panes[2]?.size;
       }
+    },
+    attachSwipeBack() {
+      const el = this.$refs.mobileLayoutRef;
+      if (!el) return;
+      this.swipeState = { startX: 0, startY: 0, tracking: false };
+      this.onTouchStart = event => {
+        if (!this.isMobileView || !this.conversationId) return;
+        if (event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        if (touch.clientX > 50) return;
+        this.swipeState.startX = touch.clientX;
+        this.swipeState.startY = touch.clientY;
+        this.swipeState.tracking = true;
+      };
+      this.onTouchEnd = event => {
+        if (!this.swipeState?.tracking) return;
+        this.swipeState.tracking = false;
+        const touch = event.changedTouches[0];
+        if (!touch) return;
+        const dx = touch.clientX - this.swipeState.startX;
+        const dy = Math.abs(touch.clientY - this.swipeState.startY);
+        if (dx > 80 && dy < 60) this.handleSwipeBack();
+      };
+      el.addEventListener('touchstart', this.onTouchStart, { passive: true });
+      el.addEventListener('touchend', this.onTouchEnd, { passive: true });
+    },
+    detachSwipeBack() {
+      const el = this.$refs.mobileLayoutRef;
+      if (!el) return;
+      if (this.onTouchStart)
+        el.removeEventListener('touchstart', this.onTouchStart);
+      if (this.onTouchEnd) el.removeEventListener('touchend', this.onTouchEnd);
+    },
+    handleSwipeBack() {
+      if (!this.isMobileView) return;
+      if (this.shouldShowSidebar) {
+        this.updateUISettings({
+          is_contact_sidebar_open: false,
+          is_copilot_panel_open: false,
+        });
+        return;
+      }
+      const {
+        params: { inbox_id: inboxId, label, teamId, id: customViewId },
+        name,
+      } = this.$route;
+      const conversationTypeMap = {
+        conversation_through_mentions: 'mention',
+        conversation_through_unattended: 'unattended',
+      };
+      const url = conversationListPageURL({
+        accountId: this.accountId,
+        inboxId,
+        label,
+        teamId,
+        conversationType: conversationTypeMap[name],
+        customViewId,
+      });
+      this.$router.push(url);
     },
     toggleLayoutLock() {
       if (this.isLayoutLocked) {
@@ -318,7 +386,7 @@ export default {
       </Pane>
     </Splitpanes>
     <!-- Mobile: Simple flex layout (one panel at a time) -->
-    <div v-else class="flex w-full h-full">
+    <div v-else ref="mobileLayoutRef" class="flex w-full h-full">
       <div v-show="showConversationList" class="flex h-full w-full">
         <ChatList
           :show-conversation-list="showConversationList"

@@ -15,6 +15,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  fromNoCategory: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['close', 'success']);
@@ -27,7 +31,9 @@ const selectedTopics = ref([]);
 const isSubmitting = ref(false);
 
 const LEGACY_LABEL_TO_VALUE = {
-  '💰 Пополнение / Вывод': 'deposits_withdrawals',
+  '💰 Пополнение / Вывод': 'deposits',
+  '💰 Пополнение': 'deposits',
+  '💸 Вывод': 'withdrawals',
   '📝 Регистрация и вход': 'registration_login',
   '🎁 Бонусы и рейкбек': 'bonuses_rakeback',
   '🚨 Жалоба / Нарушение': 'complaint',
@@ -36,8 +42,12 @@ const LEGACY_LABEL_TO_VALUE = {
 
 const closeTopics = computed(() => [
   {
-    value: 'deposits_withdrawals',
-    label: t('CLOSE_TOPICS.TOPIC_DEPOSITS_WITHDRAWALS'),
+    value: 'deposits',
+    label: t('CLOSE_TOPICS.TOPIC_DEPOSITS'),
+  },
+  {
+    value: 'withdrawals',
+    label: t('CLOSE_TOPICS.TOPIC_WITHDRAWALS'),
   },
   {
     value: 'registration_login',
@@ -62,6 +72,10 @@ watch(
   newVal => {
     isOpen.value = newVal;
     if (newVal) {
+      if (props.fromNoCategory) {
+        selectedTopics.value = ['other'];
+        return;
+      }
       const conversation = store.getters.getConversationById(
         props.conversationId
       );
@@ -105,6 +119,7 @@ const submitTopics = async () => {
       status: 'resolved',
       closeTopics:
         selectedTopics.value.length > 0 ? selectedTopics.value : null,
+      closedFromNoCategory: props.fromNoCategory,
     });
 
     await store.dispatch('updateCustomAttributes', {

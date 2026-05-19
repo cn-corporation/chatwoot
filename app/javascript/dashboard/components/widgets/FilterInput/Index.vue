@@ -146,11 +146,11 @@ export default {
       class="p-2 border border-solid rounded-lg"
       :class="getInputErrorClass(errorMessage)"
     >
-      <div class="flex gap-1">
+      <div class="flex flex-wrap md:flex-nowrap gap-1">
         <select
           v-if="groupedFilters"
           v-model="attributeKey"
-          class="max-w-[30%] mb-0 mr-1"
+          class="basis-full md:basis-auto md:max-w-[30%] mb-0 md:mr-1"
           @change="resetFilter()"
         >
           <optgroup
@@ -171,7 +171,7 @@ export default {
         <select
           v-else
           v-model="attributeKey"
-          class="max-w-[30%] mb-0 mr-1"
+          class="basis-full md:basis-auto md:max-w-[30%] mb-0 md:mr-1"
           @change="resetFilter()"
         >
           <option
@@ -184,7 +184,10 @@ export default {
           </option>
         </select>
 
-        <select v-model="filterOperator" class="max-w-[20%] mb-0 mr-1">
+        <select
+          v-model="filterOperator"
+          class="basis-[40%] md:basis-auto md:max-w-[20%] mb-0 mr-1"
+        >
           <option
             v-for="(operator, o) in operators"
             :key="o"
