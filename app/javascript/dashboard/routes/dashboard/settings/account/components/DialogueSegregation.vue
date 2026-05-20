@@ -9,6 +9,7 @@ import SingleSelect from 'dashboard/components-next/filter/inputs/SingleSelect.v
 
 const { t } = useI18n();
 const selectedTeam = ref(null);
+const selectedAmlTeam = ref(null);
 
 const { currentAccount, updateAccount } = useAccount();
 const teams = useMapGetter('teams/getTeams');
@@ -28,6 +29,10 @@ watch(
     selectedTeam.value = teamId
       ? teamOptions.value.find(opt => opt.id === teamId) || null
       : null;
+    const amlTeamId = settings.aml_team_id;
+    selectedAmlTeam.value = amlTeamId
+      ? teamOptions.value.find(opt => opt.id === amlTeamId) || null
+      : null;
   },
   { deep: true, immediate: true }
 );
@@ -43,24 +48,57 @@ const updateSupportTeam = async team => {
     useAlert(t('GENERAL_SETTINGS.FORM.SUPPORT_247_TEAM.API.ERROR'));
   }
 };
+
+const updateAmlTeam = async team => {
+  selectedAmlTeam.value = team;
+  try {
+    await updateAccount({
+      aml_team_id: team?.id || null,
+    });
+    useAlert(t('GENERAL_SETTINGS.FORM.AML_TEAM.API.SUCCESS'));
+  } catch (error) {
+    useAlert(t('GENERAL_SETTINGS.FORM.AML_TEAM.API.ERROR'));
+  }
+};
 </script>
 
 <template>
-  <SectionLayout
-    :title="t('GENERAL_SETTINGS.FORM.SUPPORT_247_TEAM.TITLE')"
-    :description="t('GENERAL_SETTINGS.FORM.SUPPORT_247_TEAM.NOTE')"
-    with-border
-  >
-    <template #headerActions>
-      <div class="flex justify-end w-full max-w-[220px]">
-        <SingleSelect
-          :model-value="selectedTeam"
-          :options="teamOptions"
-          :placeholder="t('GENERAL_SETTINGS.FORM.SUPPORT_247_TEAM.PLACEHOLDER')"
-          placeholder-icon="i-lucide-users"
-          @update:model-value="updateSupportTeam"
-        />
-      </div>
-    </template>
-  </SectionLayout>
+  <div>
+    <SectionLayout
+      :title="t('GENERAL_SETTINGS.FORM.SUPPORT_247_TEAM.TITLE')"
+      :description="t('GENERAL_SETTINGS.FORM.SUPPORT_247_TEAM.NOTE')"
+      with-border
+    >
+      <template #headerActions>
+        <div class="flex justify-end w-full max-w-[220px]">
+          <SingleSelect
+            :model-value="selectedTeam"
+            :options="teamOptions"
+            :placeholder="
+              t('GENERAL_SETTINGS.FORM.SUPPORT_247_TEAM.PLACEHOLDER')
+            "
+            placeholder-icon="i-lucide-users"
+            @update:model-value="updateSupportTeam"
+          />
+        </div>
+      </template>
+    </SectionLayout>
+    <SectionLayout
+      :title="t('GENERAL_SETTINGS.FORM.AML_TEAM.TITLE')"
+      :description="t('GENERAL_SETTINGS.FORM.AML_TEAM.NOTE')"
+      with-border
+    >
+      <template #headerActions>
+        <div class="flex justify-end w-full max-w-[220px]">
+          <SingleSelect
+            :model-value="selectedAmlTeam"
+            :options="teamOptions"
+            :placeholder="t('GENERAL_SETTINGS.FORM.AML_TEAM.PLACEHOLDER')"
+            placeholder-icon="i-lucide-shield"
+            @update:model-value="updateAmlTeam"
+          />
+        </div>
+      </template>
+    </SectionLayout>
+  </div>
 </template>

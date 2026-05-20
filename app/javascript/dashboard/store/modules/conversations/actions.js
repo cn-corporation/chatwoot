@@ -78,6 +78,11 @@ const actions = {
     return fetchCountsInFlight;
   },
 
+  revalidateConversationCounts: async ({ commit, dispatch }) => {
+    commit(types.CLEAR_CONVERSATIONS_FOR_COUNTS);
+    await dispatch('fetchAllConversationsForCounts');
+  },
+
   cleanupInboxCounts: ({ commit, state }, inboxId) => {
     const filteredCounts = state.sidebarCountsData.filter(
       conversation => conversation.inbox_id !== inboxId
