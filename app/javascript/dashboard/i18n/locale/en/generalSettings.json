@@ -113,6 +113,15 @@
           "ERROR": "Failed to update Support 24/7 team"
         }
       },
+      "AML_TEAM": {
+        "TITLE": "AML team",
+        "NOTE": "When set, deposit conversations are routed to this team if no front-line operator is available (all online front-line operators are on break or offline).",
+        "PLACEHOLDER": "Select team",
+        "API": {
+          "SUCCESS": "AML team updated successfully",
+          "ERROR": "Failed to update AML team"
+        }
+      },
       "ASSIGNABLE_AGENTS": {
         "TITLE": "Assignable agents",
         "NOTE": "Select which agents can be assigned to conversations. If none selected, all agents will be available.",

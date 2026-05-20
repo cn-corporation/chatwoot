@@ -38,6 +38,7 @@ class ActionCableConnector extends BaseActionCableConnector {
       'notification.updated': this.onNotificationUpdated,
       'conversation.read': this.onConversationRead,
       'conversation.updated': this.onConversationUpdated,
+      'team.changed': this.onTeamChanged,
       'account.cache_invalidated': this.onCacheInvalidate,
       'copilot.message.created': this.onCopilotMessageCreated,
       'support_line.changed': this.onSupportLineChanged,
@@ -130,6 +131,14 @@ class ActionCableConnector extends BaseActionCableConnector {
 
   onConversationUpdated = data => {
     this.app.$store.dispatch('updateConversation', data);
+    this.fetchConversationStats();
+  };
+
+  onTeamChanged = data => {
+    const { id } = data;
+    if (id) {
+      this.app.$store.dispatch('updateConversation', data);
+    }
     this.fetchConversationStats();
   };
 

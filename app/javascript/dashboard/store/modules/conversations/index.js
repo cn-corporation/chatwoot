@@ -187,6 +187,10 @@ export const mutations = {
     _state.sidebarCountsData = result;
     recalculateUnreadCounts(_state);
   },
+  [types.CLEAR_CONVERSATIONS_FOR_COUNTS](_state) {
+    _state.sidebarCountsData = [];
+    recalculateUnreadCounts(_state);
+  },
   [types.SET_ALL_MESSAGES_LOADED](_state) {
     const [chat] = getSelectedChatConversation(_state);
     chat.allMessagesLoaded = true;

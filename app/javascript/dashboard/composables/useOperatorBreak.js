@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue';
-import { useMapGetter } from 'dashboard/composables/store';
+import { useMapGetter, useStore } from 'dashboard/composables/store';
 import ChatwootExtraAPI from '../api/chatwootExtra';
 
 const REHYDRATE_POLL_MS = 30000;
@@ -38,6 +38,7 @@ const startPolling = userId => {
 
 export const useOperatorBreak = () => {
   const currentUser = useMapGetter('getCurrentUser');
+  const store = useStore();
 
   const startBreak = async breakType => {
     const user = currentUser.value;
@@ -62,6 +63,7 @@ export const useOperatorBreak = () => {
     try {
       await ChatwootExtraAPI.endOperatorBreak(user.id);
       activeBreak.value = null;
+      store.dispatch('revalidateConversationCounts');
     } finally {
       isLoading.value = false;
     }
