@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 
 import { frontendURL } from 'dashboard/helper/URLHelper.js';
-import { dynamicTime } from 'shared/helpers/timeHelper';
+import { dateFormat } from 'shared/helpers/timeHelper';
 import InboxName from 'dashboard/components/widgets/InboxName.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 
@@ -52,7 +52,9 @@ const navigateTo = computed(() => {
   );
 });
 
-const createdAtTime = dynamicTime(props.createdAt);
+const createdAtTime = computed(() =>
+  dateFormat(props.createdAt, 'MMM d, yyyy, h:mm a')
+);
 
 const infoItems = computed(() => [
   {

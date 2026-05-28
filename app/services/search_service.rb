@@ -39,7 +39,7 @@ class SearchService
                                     .where("cast(conversations.display_id as text) ILIKE :search OR contacts.name ILIKE :search OR contacts.email
                             ILIKE :search OR contacts.phone_number ILIKE :search OR contacts.identifier ILIKE :search OR contact_inboxes.source_id = :exact_search", search: "%#{search_query}%", exact_search: search_query)
                                     .distinct
-                                    .order('conversations.created_at DESC')
+                                    .order('conversations.last_activity_at DESC')
                                     .page(params[:page])
                                     .per(15)
   end
