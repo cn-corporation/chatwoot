@@ -127,10 +127,8 @@ const standByUnreadCount = useMapGetter('getStandByOperatorUnreadCount');
 const getUnreadCountForLabel = useMapGetter('getOperatorUnreadCountForLabel');
 const getUnreadCountForTeam = useMapGetter('getOperatorUnreadCountForTeam');
 const allSectionUnreadCount = useMapGetter('getAllSectionOperatorUnreadCount');
-const unattendedUnreadCount = useMapGetter('getUnattendedOperatorUnreadCount');
 const mineUnreadCount = useMapGetter('getMineOperatorUnreadCount');
 const sidebarAllCount = useMapGetter('getSidebarAllCount');
-const sidebarUnattendedCount = useMapGetter('getSidebarUnattendedCount');
 const sidebarMineCount = useMapGetter('getSidebarMineCount');
 const sidebarStandByCount = useMapGetter('getSidebarStandByCount');
 const getSidebarTotalCountForTeam = useMapGetter('getSidebarTotalCountForTeam');
@@ -526,6 +524,7 @@ const menuItems = computed(() => {
       name: 'Conversation',
       label: t('SIDEBAR.CONVERSATIONS'),
       icon: 'i-lucide-message-circle',
+      persistent: true,
       children: [
         {
           name: 'All',
@@ -535,14 +534,14 @@ const menuItems = computed(() => {
           count: allSectionUnreadCount.value || 0,
           totalCount: sidebarAllCount.value,
         },
-        {
-          name: 'Unattended',
-          activeOn: ['conversation_through_unattended'],
-          label: t('SIDEBAR.UNATTENDED_CONVERSATIONS'),
-          to: accountScopedRoute('conversation_unattended'),
-          count: unattendedUnreadCount.value || 0,
-          totalCount: sidebarUnattendedCount.value,
-        },
+        // {
+        //   name: 'Unattended',
+        //   activeOn: ['conversation_through_unattended'],
+        //   label: t('SIDEBAR.UNATTENDED_CONVERSATIONS'),
+        //   to: accountScopedRoute('conversation_unattended'),
+        //   count: unattendedUnreadCount.value || 0,
+        //   totalCount: sidebarUnattendedCount.value,
+        // },
         ...(isAdmin.value
           ? [
               {

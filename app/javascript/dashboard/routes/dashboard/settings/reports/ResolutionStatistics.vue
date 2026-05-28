@@ -85,6 +85,9 @@ const formatTopics = topicsArray => {
 };
 
 const getAgentName = operatorId => {
+  if (operatorId === null || operatorId === undefined) {
+    return t('RESOLUTION_STATISTICS.BOT');
+  }
   const agent = agentsMap.value.get(String(operatorId));
   if (agent) {
     return (
