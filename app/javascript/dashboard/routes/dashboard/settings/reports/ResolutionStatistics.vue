@@ -118,6 +118,8 @@ const overviewMetrics = computed(() => {
 
   return {
     totalResolutions: overview.totalResolutions,
+    measurableResolutions: overview.measurableResolutions,
+    avgResolutionTimeMs: overview.avgResolutionTimeMs,
     uniqueConversations: overview.uniqueConversations,
     uniqueOperators: overview.uniqueOperators,
   };
