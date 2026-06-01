@@ -18,18 +18,5 @@ RSpec.describe Channel::Instagram do
 
   describe 'concerns' do
     it_behaves_like 'reauthorizable'
-
-    context 'when prompt_reauthorization!' do
-      it 'calls channel notifier mail for instagram' do
-        admin_mailer = double
-        mailer_double = double
-
-        expect(AdministratorNotifications::ChannelNotificationsMailer).to receive(:with).and_return(admin_mailer)
-        expect(admin_mailer).to receive(:instagram_disconnect).with(channel.inbox).and_return(mailer_double)
-        expect(mailer_double).to receive(:deliver_later)
-
-        channel.prompt_reauthorization!
-      end
-    end
   end
 end

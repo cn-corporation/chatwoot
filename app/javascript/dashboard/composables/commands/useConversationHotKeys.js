@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router';
 import { emitter } from 'shared/helpers/mitt';
 import { useConversationLabels } from 'dashboard/composables/useConversationLabels';
 import { useAI } from 'dashboard/composables/useAI';
+import { useExtraAIAssist } from 'dashboard/composables/useExtraAIAssist';
 import { useAgentsList } from 'dashboard/composables/useAgentsList';
 import { CMD_AI_ASSIST } from 'dashboard/helper/commandbar/events';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
@@ -100,6 +101,11 @@ const createDraftMessageAIAssistActions = t => {
       key: 'simplify',
       icon: ICON_AI_ASSIST,
     },
+    {
+      label: t('INTEGRATION_SETTINGS.OPEN_AI.OPTIONS.CUSTOM'),
+      key: 'custom',
+      icon: ICON_AI_ASSIST,
+    },
   ];
 };
 
@@ -116,6 +122,7 @@ export function useConversationHotKeys() {
   } = useConversationLabels();
 
   const { isAIIntegrationEnabled } = useAI();
+  const { isExtraAIEnabled } = useExtraAIAssist();
   const { agentsList } = useAgentsList();
 
   const currentChat = useMapGetter('getSelectedChat');
@@ -274,9 +281,21 @@ export function useConversationHotKeys() {
   });
 
   const AIAssistActions = computed(() => {
-    const aiOptions = draftMessage.value
-      ? createDraftMessageAIAssistActions(t)
-      : createNonDraftMessageAIAssistActions(t, replyMode.value);
+    let aiOptions = [];
+    if (draftMessage.value) {
+      aiOptions = isExtraAIEnabled.value
+        ? createDraftMessageAIAssistActions(t)
+        : [];
+    } else {
+      aiOptions = isAIIntegrationEnabled.value
+        ? createNonDraftMessageAIAssistActions(t, replyMode.value)
+        : [];
+    }
+
+    if (!aiOptions.length) {
+      return [];
+    }
+
     const options = aiOptions.map(item => ({
       id: `ai-assist-${item.key}`,
       title: item.label,
@@ -316,7 +335,7 @@ export function useConversationHotKeys() {
       ...assignTeamActions.value,
       ...labelActions.value,
     ];
-    if (isAIIntegrationEnabled.value) {
+    if (isExtraAIEnabled.value || isAIIntegrationEnabled.value) {
       return [...defaultConversationHotKeys, ...AIAssistActions.value];
     }
     return defaultConversationHotKeys;
