@@ -181,6 +181,57 @@ class ChatwootExtraAPI {
     return response.data?.data || null;
   }
 
+  async streamMessageAssist({ content, action, instruction, signal, onEvent }) {
+    const response = await fetch(`${this.baseURL}/api/message-assist/stream`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ content, action, instruction }),
+      signal,
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error(`Message assist request failed: ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let currentEvent = '';
+
+    const processLine = line => {
+      if (line.startsWith('event: ')) {
+        currentEvent = line.slice(7).trim();
+      } else if (line.startsWith('data: ') && currentEvent) {
+        try {
+          const data = JSON.parse(line.slice(6));
+          onEvent({ event: currentEvent, data });
+        } catch {
+          // ignore malformed SSE data line
+        }
+        currentEvent = '';
+      } else if (line === '') {
+        currentEvent = '';
+      }
+    };
+
+    try {
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        // eslint-disable-next-line no-await-in-loop
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        lines.forEach(processLine);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
   // Operator Presence API
   async getPresenceState(conversationId) {
     const response = await axios.get(
