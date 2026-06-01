@@ -1,15 +1,88 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useStore } from 'vuex';
+
+const DRAFT_STORAGE_PREFIX = 'telegram-dialogues-draft-';
 
 const store = useStore();
 const messageText = ref('');
 const attachedFile = ref(null);
+const attachedFileData = ref(null);
 const fileInputRef = ref(null);
 const textareaRef = ref(null);
 const sending = computed(
   () => store.getters['telegramDialogues/getSendingMessage']
 );
+const activeChatId = computed(
+  () => store.getters['telegramDialogues/getActiveChatId']
+);
+const draftKey = computed(() =>
+  activeChatId.value ? `${DRAFT_STORAGE_PREFIX}${activeChatId.value}` : null
+);
+
+const fileToData = file =>
+  new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = () =>
+      resolve({ name: file.name, type: file.type, dataUrl: reader.result });
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+
+const dataToFile = data => {
+  const [meta, base64] = data.dataUrl.split(',');
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  const type = data.type || meta.slice(5, meta.indexOf(';'));
+  return new File([bytes], data.name, { type });
+};
+
+const saveDraft = () => {
+  const key = draftKey.value;
+  if (!key) return;
+  const text = messageText.value;
+  const file = attachedFileData.value;
+  if (!text && !file) {
+    localStorage.removeItem(key);
+    return;
+  }
+  try {
+    localStorage.setItem(key, JSON.stringify({ text, file }));
+  } catch (error) {
+    // Draft exceeds storage quota; keep it in memory only.
+  }
+};
+
+const setAttachedFile = async file => {
+  attachedFile.value = file;
+  attachedFileData.value = file ? await fileToData(file) : null;
+  saveDraft();
+};
+
+const loadDraft = () => {
+  const key = draftKey.value;
+  const raw = key ? localStorage.getItem(key) : null;
+  if (!raw) {
+    messageText.value = '';
+    attachedFile.value = null;
+    attachedFileData.value = null;
+    return;
+  }
+  try {
+    const { text, file } = JSON.parse(raw);
+    messageText.value = text || '';
+    attachedFileData.value = file || null;
+    attachedFile.value = file ? dataToFile(file) : null;
+  } catch (error) {
+    messageText.value = '';
+    attachedFile.value = null;
+    attachedFileData.value = null;
+  }
+};
+
+watch(activeChatId, loadDraft, { immediate: true });
+watch(messageText, saveDraft);
 
 const wrapSelection = (before, after) => {
   const el = textareaRef.value;
@@ -76,6 +149,8 @@ const handleSend = async () => {
 
   messageText.value = '';
   attachedFile.value = null;
+  attachedFileData.value = null;
+  saveDraft();
 
   if (file) {
     await store.dispatch('telegramDialogues/sendMedia', {
@@ -100,14 +175,22 @@ const openFilePicker = () => {
 
 const handleFileChange = event => {
   const file = event.target.files?.[0];
-  if (file) {
-    attachedFile.value = file;
-  }
+  if (file) setAttachedFile(file);
   event.target.value = '';
 };
 
+const handlePaste = event => {
+  const items = Array.from(event.clipboardData?.items || []);
+  const imageItem = items.find(item => item.type.startsWith('image/'));
+  if (!imageItem) return;
+  const file = imageItem.getAsFile();
+  if (!file) return;
+  event.preventDefault();
+  setAttachedFile(file);
+};
+
 const removeFile = () => {
-  attachedFile.value = null;
+  setAttachedFile(null);
 };
 
 const formatFileSize = size => {
@@ -193,6 +276,7 @@ const formatFileSize = size => {
         class="flex-1 resize-none rounded-lg border border-n-weak bg-n-solid-3 px-3 py-2 text-sm outline-none placeholder:text-n-slate-10 focus:border-n-brand min-h-[4.5rem]"
         :placeholder="attachedFile ? 'Add a caption...' : 'Type a message...'"
         @keydown="handleKeydown"
+        @paste="handlePaste"
       />
       <button
         class="flex items-center justify-center size-9 rounded-lg bg-n-brand text-white flex-shrink-0 disabled:opacity-50"
