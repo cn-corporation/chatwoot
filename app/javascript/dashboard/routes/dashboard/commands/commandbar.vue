@@ -81,7 +81,7 @@ watchEffect(() => {
 onMounted(setCommandBarData);
 </script>
 
-<!-- eslint-disable vue/attribute-hyphenation -->
+<!-- eslint-disable vue/attribute-hyphenation, vue/no-deprecated-slot-attribute -->
 <template>
   <ninja-keys
     ref="ninjakeys"
@@ -90,7 +90,9 @@ onMounted(setCommandBarData);
     :placeholder="placeholder"
     @selected="onSelected"
     @closed="onClosed"
-  />
+  >
+    <span slot="footer" />
+  </ninja-keys>
 </template>
 
 <style lang="scss">
@@ -98,6 +100,17 @@ ninja-keys {
   --ninja-accent-color: rgba(39, 129, 246, 1);
   --ninja-font-family: 'Inter';
   z-index: 9999;
+}
+
+// Hide the search bar and give the list more room only when the command bar is
+// opened from the AI assist button, so the AI options popup shows just the full
+// list of actions.
+ninja-keys.ai-assist-popup {
+  --ninja-actions-height: 420px;
+}
+
+ninja-keys.ai-assist-popup::part(ninja-input-wrapper) {
+  display: none;
 }
 
 // Wrapped with body.dark to avoid overriding the default theme
