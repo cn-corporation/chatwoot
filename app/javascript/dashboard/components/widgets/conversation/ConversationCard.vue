@@ -139,6 +139,8 @@ const TOPIC_EMOJIS = {
   deposits_withdrawals: '💰',
   registration_login: '📝',
   bonuses_rakeback: '🎁',
+  service_complaint: '🚨',
+  violation: '⚠️',
   complaint: '🚨',
   other: '❓',
 };

@@ -36,6 +36,8 @@ const LEGACY_LABEL_TO_VALUE = {
   '💸 Вывод': 'withdrawals',
   '📝 Регистрация и вход': 'registration_login',
   '🎁 Бонусы и рейкбек': 'bonuses_rakeback',
+  '🚨 Жалоба на сервис': 'service_complaint',
+  '⚠️ Нарушение': 'violation',
   '🚨 Жалоба / Нарушение': 'complaint',
   '❓ Другое': 'other',
 };
@@ -58,8 +60,12 @@ const closeTopics = computed(() => [
     label: t('CLOSE_TOPICS.TOPIC_BONUSES_RAKEBACK'),
   },
   {
-    value: 'complaint',
-    label: t('CLOSE_TOPICS.TOPIC_COMPLAINT'),
+    value: 'service_complaint',
+    label: t('CLOSE_TOPICS.TOPIC_SERVICE_COMPLAINT'),
+  },
+  {
+    value: 'violation',
+    label: t('CLOSE_TOPICS.TOPIC_VIOLATION'),
   },
   {
     value: 'other',
