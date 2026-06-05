@@ -67,10 +67,6 @@ const closeTopics = computed(() => [
     value: 'violation',
     label: t('CLOSE_TOPICS.TOPIC_VIOLATION'),
   },
-  {
-    value: 'other',
-    label: t('CLOSE_TOPICS.TOPIC_OTHER'),
-  },
 ]);
 
 watch(
