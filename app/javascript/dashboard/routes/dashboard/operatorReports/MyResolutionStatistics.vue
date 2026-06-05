@@ -62,6 +62,8 @@ const resolutionTopicLabels = {
   deposits_withdrawals: () => t('CLOSE_TOPICS.TOPIC_DEPOSITS_WITHDRAWALS'),
   registration_login: () => t('CLOSE_TOPICS.TOPIC_REGISTRATION_LOGIN'),
   bonuses_rakeback: () => t('CLOSE_TOPICS.TOPIC_BONUSES_RAKEBACK'),
+  service_complaint: () => t('CLOSE_TOPICS.TOPIC_SERVICE_COMPLAINT'),
+  violation: () => t('CLOSE_TOPICS.TOPIC_VIOLATION'),
   complaint: () => t('CLOSE_TOPICS.TOPIC_COMPLAINT'),
   other: () => t('CLOSE_TOPICS.TOPIC_OTHER'),
   registration_funnel: () => 'Registration Funnel',
@@ -89,6 +91,8 @@ const overviewMetrics = computed(() => {
   return {
     totalResolutions: overview.totalResolutions,
     uniqueConversations: overview.uniqueConversations,
+    uniqueOperators: 1,
+    avgResolutionTimeMs: overview.avgResolutionTimeMs,
   };
 });
 
@@ -127,6 +131,17 @@ const chartOptions = {
 const formatDateTime = value => {
   if (!value) return t('RESOLUTION_STATISTICS.EMPTY_VALUE');
   return format(new Date(value), 'MMM dd, yyyy HH:mm');
+};
+
+const formatTime = ms => {
+  if (!ms) return '--';
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  if (hours > 0) return `${hours}h ${minutes % 60}m`;
+  if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+  return `${seconds}s`;
 };
 
 const tableRows = computed(() => {
@@ -227,7 +242,7 @@ onMounted(() => {
 
     <div
       v-if="!isLoading && overviewMetrics"
-      class="grid grid-cols-1 md:grid-cols-2 gap-4"
+      class="grid grid-cols-1 md:grid-cols-3 gap-4"
     >
       <div class="px-6 py-5 rounded-xl bg-n-solid-2 border border-n-slate-6">
         <div class="text-sm text-n-slate-11 mb-1">
@@ -244,6 +259,15 @@ onMounted(() => {
         </div>
         <div class="text-3xl font-bold text-n-slate-12">
           {{ overviewMetrics.uniqueConversations }}
+        </div>
+      </div>
+
+      <div class="px-6 py-5 rounded-xl bg-n-solid-2 border border-n-slate-6">
+        <div class="text-sm text-n-slate-11 mb-1">
+          Avg Resolution Time
+        </div>
+        <div class="text-3xl font-bold text-n-slate-12">
+          {{ formatTime(overviewMetrics.avgResolutionTimeMs) }}
         </div>
       </div>
     </div>

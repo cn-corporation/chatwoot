@@ -79,7 +79,7 @@ class ChatwootHub
   end
 
   def self.register_instance(company_name, owner_name, owner_email)
-    info = { company_name: company_name, owner_name: owner_name, owner_email: owner_email, subscribed_to_mailers: true }
+    info = { company_name: company_name, owner_name: owner_name, owner_email: owner_email, subscribed_to_mailers: false }
     RestClient.post(REGISTRATION_URL, info.merge(instance_config).to_json, { content_type: :json, accept: :json })
   rescue *ExceptionList::REST_CLIENT_EXCEPTIONS => e
     Rails.logger.error "Exception: #{e.message}"

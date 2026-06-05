@@ -38,7 +38,7 @@ describe ChatwootHub do
     let(:owner_email) { 'test@test.com' }
 
     it 'sends info of registration' do
-      info = { company_name: company_name, owner_name: owner_name, owner_email: owner_email, subscribed_to_mailers: true }
+      info = { company_name: company_name, owner_name: owner_name, owner_email: owner_email, subscribed_to_mailers: false }
       allow(RestClient).to receive(:post)
       described_class.register_instance(company_name, owner_name, owner_email)
       expect(RestClient).to have_received(:post).with(described_class::REGISTRATION_URL,

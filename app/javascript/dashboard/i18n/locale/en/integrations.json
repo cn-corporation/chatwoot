@@ -148,12 +148,15 @@
         "EXPAND": "Expand",
         "MAKE_FRIENDLY": "Change message tone to friendly",
         "MAKE_FORMAL": "Use formal tone",
-        "SIMPLIFY": "Simplify"
+        "SIMPLIFY": "Simplify",
+        "CUSTOM": "Custom instruction"
       },
       "ASSISTANCE_MODAL": {
         "DRAFT_TITLE": "Draft content",
         "GENERATED_TITLE": "Generated content",
         "AI_WRITING": "AI is writing",
+        "CUSTOM_PLACEHOLDER": "Describe what to do with your message…",
+        "CUSTOM_GENERATE": "Generate",
         "BUTTONS": {
           "APPLY": "Use this suggestion",
           "CANCEL": "Cancel"

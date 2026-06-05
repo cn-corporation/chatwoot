@@ -82,20 +82,22 @@ const renderAvgTime = value => (value ? formatTime(value / 1000) : '--');
 const renderCount = value => (value ? value.toLocaleString() : '--');
 
 const tableData = computed(() =>
-  agentOverviewData.value.map(row => {
-    const agent = getAgentById(row.operatorId);
-    return {
-      id: row.operatorId,
-      name: agent?.name || `Operator ${row.operatorId}`,
-      type: 'agent',
-      conversationsCount: renderCount(row.conversationsCount),
-      avgFirstResponseTime: renderAvgTime(row.avgFirstResponseTimeMs),
-      avgResolutionTime: renderAvgTime(row.avgResolutionTimeMs),
-      avgResponseTime: renderAvgTime(row.avgResponseTimeMs),
-      maxResponseTime: renderAvgTime(row.maxResponseTimeMs),
-      resolutionsCount: renderCount(row.resolutionCount),
-    };
-  })
+  agentOverviewData.value
+    .map(row => {
+      const agent = getAgentById(row.operatorId);
+      return {
+        id: row.operatorId,
+        name: agent?.name || `Operator ${row.operatorId}`,
+        type: 'agent',
+        conversationsCount: renderCount(row.conversationsCount),
+        avgFirstResponseTime: renderAvgTime(row.avgFirstResponseTimeMs),
+        avgResolutionTime: renderAvgTime(row.avgResolutionTimeMs),
+        avgResponseTime: renderAvgTime(row.avgResponseTimeMs),
+        maxResponseTime: renderAvgTime(row.maxResponseTimeMs),
+        resolutionsCount: renderCount(row.resolutionCount),
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
 );
 
 const fetchAgentsOverview = async () => {

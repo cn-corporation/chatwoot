@@ -6,7 +6,7 @@
 # when a user changes his/her password, the auth token they provided to chatwoot becomes invalid
 
 # This module helps to capture the errors into a counter and when threshold is passed would mark
-# the object to be reauthorized. We will also send an email to the owners alerting them of the error.
+# the object to be reauthorized.
 
 # In the UI, we will check for the reauthorization_required? status and prompt the reauthorization flow
 
@@ -44,23 +44,6 @@ module Reauthorizable
     invalidate_inbox_cache unless instance_of?(::AutomationRule)
   end
 
-  def process_integration_hook_reauthorization_emails
-    if slack?
-      AdministratorNotifications::IntegrationsNotificationMailer.with(account: account).slack_disconnect.deliver_later
-    elsif dialogflow?
-      AdministratorNotifications::IntegrationsNotificationMailer.with(account: account).dialogflow_disconnect.deliver_later
-    end
-  end
-
-  def send_channel_reauthorization_email(disconnect_type)
-    AdministratorNotifications::ChannelNotificationsMailer.with(account: account).public_send(disconnect_type, inbox).deliver_later
-  end
-
-  def handle_automation_rule_reauthorization
-    update!(active: false)
-    AdministratorNotifications::AccountNotificationMailer.with(account: account).automation_rule_disabled(self).deliver_later
-  end
-
   # call this after you successfully Reauthorized the object in UI
   def reauthorized!
     ::Redis::Alfred.delete(authorization_error_count_key)
@@ -73,12 +56,7 @@ module Reauthorizable
 
   def reauthorization_handlers
     {
-      'Integrations::Hook' => ->(obj) { obj.process_integration_hook_reauthorization_emails },
-      'Channel::FacebookPage' => ->(obj) { obj.send_channel_reauthorization_email(:facebook_disconnect) },
-      'Channel::Instagram' => ->(obj) { obj.send_channel_reauthorization_email(:instagram_disconnect) },
-      'Channel::Whatsapp' => ->(obj) { obj.send_channel_reauthorization_email(:whatsapp_disconnect) },
-      'Channel::Email' => ->(obj) { obj.send_channel_reauthorization_email(:email_disconnect) },
-      'AutomationRule' => ->(obj) { obj.handle_automation_rule_reauthorization }
+      'AutomationRule' => ->(obj) { obj.update!(active: false) }
     }
   end
 

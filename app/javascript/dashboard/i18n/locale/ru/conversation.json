@@ -476,6 +476,8 @@
     "TOPIC_REGISTRATION_LOGIN": "Регистрация и вход",
     "TOPIC_BONUSES_RAKEBACK": "Бонусы и рейкбек",
     "TOPIC_COMPLAINT": "Жалоба / Нарушение",
+    "TOPIC_SERVICE_COMPLAINT": "Жалоба на сервис",
+    "TOPIC_VIOLATION": "Нарушение",
     "TOPIC_OTHER": "Другое",
     "ERROR_MESSAGE": "Ошибка при сохранении темы",
     "CANCEL": "Отмена",

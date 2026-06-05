@@ -684,7 +684,8 @@
     },
     "EMPTY_STATE": "No data available",
     "EMPTY_VALUE": "--",
-    "OPERATOR_ID": "Operator {id}"
+    "OPERATOR_ID": "Operator {id}",
+    "BOT": "BOT"
   },
   "TASKS_REPORT": {
     "HEADER": "Tasks report",

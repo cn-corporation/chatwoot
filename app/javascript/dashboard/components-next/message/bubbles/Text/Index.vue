@@ -151,10 +151,6 @@ const handleTaskComplete = async checked => {
 
     if (response?.success && response?.data) {
       taskData.value = response.data;
-      store.dispatch('assignTeam', {
-        conversationId: conversationId.value,
-        teamId: 0,
-      });
       emitter.emit(BUS_EVENTS.TASK_COMPLETED, {
         taskId: taskId.value,
         messageId: id.value,

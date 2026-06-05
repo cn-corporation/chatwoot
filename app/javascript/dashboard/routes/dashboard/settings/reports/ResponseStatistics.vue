@@ -87,9 +87,12 @@ const overviewMetrics = computed(() => {
     (sum, op) => sum + op.totalResponses,
     0
   );
+  const totalMs = operatorStats.value.reduce(
+    (sum, op) => sum + op.averageResponseTimeMs * op.totalResponses,
+    0
+  );
   const avgResponseTime =
-    operatorStats.value.reduce((sum, op) => sum + op.averageResponseTimeMs, 0) /
-    operatorStats.value.length;
+    totalResponses > 0 ? Math.round(totalMs / totalResponses) : 0;
   const activeOperators = operatorStats.value.length;
   const fastestResponse = Math.min(
     ...operatorStats.value.map(op => op.minResponseTimeMs)
@@ -97,7 +100,7 @@ const overviewMetrics = computed(() => {
 
   return {
     totalResponses,
-    avgResponseTime: Math.round(avgResponseTime),
+    avgResponseTime,
     activeOperators,
     fastestResponse,
   };
@@ -107,7 +110,7 @@ const operatorChartData = computed(() => {
   if (operatorStats.value.length === 0) return null;
 
   const sortedOperators = [...operatorStats.value]
-    .sort((a, b) => a.averageResponseTimeMs - b.averageResponseTimeMs)
+    .sort((a, b) => b.averageResponseTimeMs - a.averageResponseTimeMs)
     .slice(0, 10);
 
   return {

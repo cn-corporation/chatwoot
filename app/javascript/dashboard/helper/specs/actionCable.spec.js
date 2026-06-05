@@ -64,4 +64,30 @@ describe('ActionCableConnector - Copilot Tests', () => {
       );
     });
   });
+
+  describe('team change event handler', () => {
+    it('should register the team.changed event handler', () => {
+      expect(Object.keys(actionCable.events)).toContain('team.changed');
+      expect(actionCable.events['team.changed']).toBe(
+        actionCable.onTeamChanged
+      );
+    });
+
+    it('should update the conversation when a team.changed event is received', () => {
+      const teamChangedData = {
+        id: 28,
+        account_id: 1,
+        status: 'open',
+        meta: { team: { id: 2, name: 'aml' }, assignee: null },
+      };
+      actionCable.onReceived({
+        event: 'team.changed',
+        data: teamChangedData,
+      });
+      expect(mockDispatch).toHaveBeenCalledWith(
+        'updateConversation',
+        teamChangedData
+      );
+    });
+  });
 });

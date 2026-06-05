@@ -63,6 +63,8 @@ const resolutionTopicLabels = {
   deposits_withdrawals: () => t('CLOSE_TOPICS.TOPIC_DEPOSITS_WITHDRAWALS'),
   registration_login: () => t('CLOSE_TOPICS.TOPIC_REGISTRATION_LOGIN'),
   bonuses_rakeback: () => t('CLOSE_TOPICS.TOPIC_BONUSES_RAKEBACK'),
+  service_complaint: () => t('CLOSE_TOPICS.TOPIC_SERVICE_COMPLAINT'),
+  violation: () => t('CLOSE_TOPICS.TOPIC_VIOLATION'),
   complaint: () => t('CLOSE_TOPICS.TOPIC_COMPLAINT'),
   other: () => t('CLOSE_TOPICS.TOPIC_OTHER'),
   registration_funnel: () => 'Registration Funnel',
@@ -85,6 +87,9 @@ const formatTopics = topicsArray => {
 };
 
 const getAgentName = operatorId => {
+  if (operatorId === null || operatorId === undefined) {
+    return t('RESOLUTION_STATISTICS.BOT');
+  }
   const agent = agentsMap.value.get(String(operatorId));
   if (agent) {
     return (
@@ -115,6 +120,8 @@ const overviewMetrics = computed(() => {
 
   return {
     totalResolutions: overview.totalResolutions,
+    measurableResolutions: overview.measurableResolutions,
+    avgResolutionTimeMs: overview.avgResolutionTimeMs,
     uniqueConversations: overview.uniqueConversations,
     uniqueOperators: overview.uniqueOperators,
   };

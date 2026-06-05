@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, nextTick } from 'vue';
+import { computed, watch } from 'vue';
 import { useSidebarContext } from './provider';
 import { useRoute, useRouter } from 'vue-router';
 import Policy from 'dashboard/components/policy.vue';
@@ -17,6 +17,7 @@ const props = defineProps({
   children: { type: Array, default: undefined },
   getterKeys: { type: Object, default: () => ({}) },
   onClick: { type: Function, default: null },
+  persistent: { type: Boolean, default: false },
 });
 
 const {
@@ -45,6 +46,7 @@ const navigableChildren = computed(() => {
 const route = useRoute();
 const router = useRouter();
 const isExpanded = computed(() => expandedItem.value === props.name);
+const isDisplayExpanded = computed(() => isExpanded.value || props.persistent);
 const isExpandable = computed(() => props.children);
 const hasChildren = computed(
   () => Array.isArray(props.children) && props.children.length > 0
@@ -137,12 +139,18 @@ const toggleTrigger = () => {
   setExpandedItem(props.name);
 };
 
-onMounted(async () => {
-  await nextTick();
-  if (hasActiveChild.value) {
-    setExpandedItem(props.name);
-  }
-});
+// Keep the accordion in sync with the active route so the expanded section
+// always follows navigation (including SPA navigation that doesn't click a
+// sidebar header). Without this, a previously expanded section would stay open.
+watch(
+  hasActiveChild,
+  active => {
+    if (active && expandedItem.value !== props.name) {
+      setExpandedItem(props.name);
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <!-- eslint-disable-next-line vue/no-root-v-if -->
@@ -163,12 +171,12 @@ onMounted(async () => {
       :is-active="isActive"
       :has-active-child="hasActiveChild"
       :expandable="hasChildren"
-      :is-expanded="isExpanded"
+      :is-expanded="isDisplayExpanded"
       @toggle="toggleTrigger"
     />
     <ul
       v-if="hasChildren"
-      v-show="isExpanded || hasActiveChild"
+      v-show="isDisplayExpanded || hasActiveChild"
       class="grid m-0 list-none sidebar-group-children"
     >
       <template v-for="child in children" :key="child.name">
@@ -177,12 +185,12 @@ onMounted(async () => {
           :label="child.label"
           :icon="child.icon"
           :children="child.children"
-          :is-expanded="isExpanded"
+          :is-expanded="isDisplayExpanded"
           :active-child="activeChild"
         />
         <SidebarGroupLeaf
           v-else-if="isChildAllowed(child)"
-          v-show="isExpanded || activeChild?.name === child.name"
+          v-show="isDisplayExpanded || activeChild?.name === child.name"
           v-bind="child"
           :active="activeChild?.name === child.name"
         />
