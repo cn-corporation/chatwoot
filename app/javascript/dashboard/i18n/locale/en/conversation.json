@@ -482,7 +482,7 @@
     "TOPIC_REGISTRATION_LOGIN": "Registration & Login",
     "TOPIC_BONUSES_RAKEBACK": "Bonuses & Rakeback",
     "TOPIC_COMPLAINT": "Complaint/Violation",
-    "TOPIC_SERVICE_COMPLAINT": "Service Complaint",
+    "TOPIC_SERVICE_COMPLAINT": "Service",
     "TOPIC_VIOLATION": "Violation",
     "TOPIC_OTHER": "Other",
     "ERROR_MESSAGE": "Failed to save topics",
