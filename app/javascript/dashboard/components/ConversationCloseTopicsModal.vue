@@ -36,8 +36,8 @@ const LEGACY_LABEL_TO_VALUE = {
   '💸 Вывод': 'withdrawals',
   '📝 Регистрация и вход': 'registration_login',
   '🎁 Бонусы и рейкбек': 'bonuses_rakeback',
-  '🚨 Жалоба на сервис': 'service_complaint',
-  '⚠️ Нарушение': 'violation',
+  '🚨 Работа клуба': 'service_complaint',
+  '⚠️ Жалоба на игрока': 'violation',
   '🚨 Жалоба / Нарушение': 'complaint',
   '❓ Другое': 'other',
 };
