@@ -344,6 +344,11 @@ export default {
       const uncompletedApiTaskIds = new Set(
         this.normalizedTasks.filter(t => !t.completed).map(t => String(t.id))
       );
+      // The tasks store is synced over SSE, so tasks created by other users
+      // pin to the bottom immediately, before conversationTasks is refetched.
+      this.$store.getters['tasks/getUncompletedTaskIds'](
+        this.currentChat?.id
+      ).forEach(taskId => uncompletedApiTaskIds.add(taskId));
       const messages = this.currentChat.messages || [];
       messages.forEach(m => {
         const tId =
@@ -496,6 +501,7 @@ export default {
     // when a message is sent we set the flag to true this hides the label suggestions,
     // until the chat is changed and the flag is reset in the watch for currentChat
     emitter.on(BUS_EVENTS.MESSAGE_SENT, this.handleMessageSent);
+    emitter.on(BUS_EVENTS.TASK_CREATED, this.handleTaskCreated);
     emitter.on(BUS_EVENTS.TASK_COMPLETED, this.handleTaskCompleted);
     emitter.on(BUS_EVENTS.TASK_STATUS_LOADED, this.handleTaskStatusLoaded);
   },
@@ -530,8 +536,15 @@ export default {
         this.taskStatusMap.set(messageId, { taskId, completed });
       }
     },
-    handleTaskCompleted({ messageId, taskId }) {
+    handleTaskCompleted({ messageId, taskId, conversationId }) {
+      if (conversationId && conversationId !== this.currentChat?.id) return;
       this.taskStatusMap.delete(messageId);
+      // SSE events carry messageId: null, so also clear entries by task id.
+      this.taskStatusMap.forEach((status, mappedMessageId) => {
+        if (String(status.taskId) === String(taskId)) {
+          this.taskStatusMap.delete(mappedMessageId);
+        }
+      });
       const task = this.conversationTasks.find(
         t =>
           String(t.id) === String(taskId) ||
@@ -540,6 +553,10 @@ export default {
       if (task) {
         task.completed = true;
       }
+      this.fetchConversationTasks();
+    },
+    handleTaskCreated({ conversationId }) {
+      if (conversationId !== this.currentChat?.id) return;
       this.fetchConversationTasks();
     },
     async fetchConversationTasks() {
@@ -642,6 +659,7 @@ export default {
       emitter.off(BUS_EVENTS.SCROLL_TO_MESSAGE, this.onScrollToMessage);
       emitter.off(BUS_EVENTS.FETCH_LABEL_SUGGESTIONS, this.fetchSuggestions);
       emitter.off(BUS_EVENTS.MESSAGE_SENT, this.handleMessageSent);
+      emitter.off(BUS_EVENTS.TASK_CREATED, this.handleTaskCreated);
       emitter.off(BUS_EVENTS.TASK_COMPLETED, this.handleTaskCompleted);
       emitter.off(BUS_EVENTS.TASK_STATUS_LOADED, this.handleTaskStatusLoaded);
     },

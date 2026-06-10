@@ -19,6 +19,10 @@ const getters = {
     const list = $state.uncompletedByConversation[conversationId];
     return list?.length ? list[list.length - 1] : null;
   },
+  getUncompletedTaskIds: $state => conversationId => {
+    const list = $state.uncompletedByConversation[conversationId] || [];
+    return list.map(entry => String(entry.taskId));
+  },
   getTasksUIFlags: $state => $state.uiFlags,
 };
 
