@@ -138,16 +138,12 @@ const handleTaskComplete = async checked => {
   isCompletingTask.value = true;
   try {
     const currentUser = store.getters.getCurrentUser;
-    const updateData = {
+    const response = await store.dispatch('tasks/completeTask', {
+      taskId: taskId.value,
       completed: true,
       completedBy: currentUser.id,
       completedByName: currentUser.name || currentUser.available_name,
-    };
-
-    const response = await ChatwootExtraAPI.updateTask(
-      taskId.value,
-      updateData
-    );
+    });
 
     if (response?.success && response?.data) {
       taskData.value = response.data;

@@ -155,6 +155,9 @@ const topicEmoji = computed(() => {
 
 const isInboxNameVisible = computed(() => !activeInbox.value);
 
+const getPendingTask = useMapGetter('tasks/getPendingTask');
+const pendingTask = computed(() => getPendingTask.value(props.chat.id));
+
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
 
 const typingOperators = computed(() => {
@@ -516,6 +519,21 @@ const onUnblockContact = () => {
         class="text-n-teal-10 italic text-sm my-0 mx-2 leading-6 h-6 flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-medium"
       >
         {{ typingText }}
+      </p>
+      <p
+        v-else-if="pendingTask"
+        :title="$t('TODO.PENDING_TASK')"
+        class="text-sm my-0 mx-2 leading-6 h-6 flex-1 min-w-0 flex items-center gap-1"
+        :class="messagePreviewClass"
+      >
+        <fluent-icon
+          icon="lock-closed"
+          size="14"
+          class="flex-shrink-0"
+        />
+        <span class="overflow-hidden text-ellipsis whitespace-nowrap">
+          {{ pendingTask.text }}
+        </span>
       </p>
       <MessagePreview
         v-else-if="lastMessageInChat"

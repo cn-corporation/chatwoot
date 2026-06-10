@@ -114,6 +114,24 @@ const stopPriorityTimer = () => {
   }
 };
 
+let pendingTasksTimer = null;
+
+const fetchPendingTasks = () => {
+  store.dispatch('tasks/fetchPending');
+};
+
+// Backstop for task events missed while the SSE stream was down.
+const startPendingTasksTimer = () => {
+  pendingTasksTimer = setInterval(fetchPendingTasks, 60000); // 60 seconds
+};
+
+const stopPendingTasksTimer = () => {
+  if (pendingTasksTimer) {
+    clearInterval(pendingTasksTimer);
+    pendingTasksTimer = null;
+  }
+};
+
 provide('conversationTimerTick', conversationTimerTick);
 
 const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.UNASSIGNED);
@@ -963,10 +981,13 @@ onMounted(() => {
     store.dispatch('campaigns/get');
   }
   startPriorityTimer();
+  fetchPendingTasks();
+  startPendingTasksTimer();
 });
 
 onUnmounted(() => {
   stopPriorityTimer();
+  stopPendingTasksTimer();
 });
 
 const deleteConversationDialogRef = ref(null);
@@ -1002,6 +1023,8 @@ const handleCreateTask = conversationId => {
 const closeTodoModal = () => {
   showTodoModal.value = false;
   selectedChatForTask.value = null;
+  // The agent may have just created a task in the iframe; refresh indicators.
+  fetchPendingTasks();
 };
 
 async function onBlockContact(duration, conversationId) {
