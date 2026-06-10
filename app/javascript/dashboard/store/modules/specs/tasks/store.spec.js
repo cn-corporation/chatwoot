@@ -139,6 +139,8 @@ describe('tasks store', () => {
       expect(store.getters['tasks/getPendingTask'](3).text).toBe(
         'task from teammate'
       );
+      expect(store.getters['tasks/getUncompletedTaskIds'](3)).toEqual(['t5']);
+      expect(store.getters['tasks/getUncompletedTaskIds'](99)).toEqual([]);
     });
 
     it('unlocks the card when another user completes the task', async () => {
