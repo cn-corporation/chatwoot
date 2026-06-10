@@ -34,23 +34,17 @@ export default {
       teams: 'teams/getTeams',
       currentAccountId: 'getCurrentAccountId',
     }),
-    currentAccountSettings() {
-      return (
-        this.$store.getters['accounts/getAccount'](this.currentAccountId)
-          ?.settings || {}
-      );
-    },
     support247TeamId() {
-      return this.currentAccountSettings.support_247_team_id || null;
-    },
-    supportLine1Active() {
-      return !!this.currentAccountSettings.support_line_1_active;
+      const account = this.$store.getters['accounts/getAccount'](
+        this.currentAccountId
+      );
+      return Number(account?.settings?.support_247_team_id) || null;
     },
     hasAnAssignedTeam() {
       return !!this.currentChat?.meta?.team;
     },
     teamsList() {
-      if (this.hasAnAssignedTeam) {
+      if (this.hasAnAssignedTeam && !this.support247TeamId) {
         return [
           { id: 0, name: this.$t('TEAMS_SETTINGS.LIST.NONE') },
           ...this.teams,
@@ -83,21 +77,8 @@ export default {
       set(team) {
         if (!this.currentChat) return;
         const conversationId = this.currentChat.id;
-        let resolvedTeam = team;
-        let teamId = team ? team.id : 0;
-        if (
-          teamId === 0 &&
-          !this.supportLine1Active &&
-          this.support247TeamId
-        ) {
-          resolvedTeam =
-            this.teams.find(t => t.id === this.support247TeamId) || team;
-          teamId = this.support247TeamId;
-        }
-        this.$store.dispatch('setCurrentChatTeam', {
-          team: resolvedTeam,
-          conversationId,
-        });
+        const teamId = team ? team.id : 0;
+        this.$store.dispatch('setCurrentChatTeam', { team, conversationId });
         this.$store
           .dispatch('assignTeam', { conversationId, teamId })
           .then(() => {
@@ -117,10 +98,9 @@ export default {
 
     onClickAssignTeam(selectedItemTeam) {
       if (this.assignedTeam && this.assignedTeam.id === selectedItemTeam.id) {
-        this.assignedTeam = null;
-      } else {
-        this.assignedTeam = selectedItemTeam;
+        return;
       }
+      this.assignedTeam = selectedItemTeam;
     },
   },
 };

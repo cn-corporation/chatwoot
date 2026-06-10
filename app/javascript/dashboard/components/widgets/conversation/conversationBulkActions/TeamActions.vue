@@ -15,10 +15,22 @@ export default {
     };
   },
   computed: {
-    ...mapGetters({ teams: 'teams/getTeams' }),
+    ...mapGetters({
+      teams: 'teams/getTeams',
+      currentAccountId: 'getCurrentAccountId',
+    }),
+    support247TeamId() {
+      const account = this.$store.getters['accounts/getAccount'](
+        this.currentAccountId
+      );
+      return Number(account?.settings?.support_247_team_id) || null;
+    },
     filteredTeams() {
+      const noneOption = this.support247TeamId
+        ? []
+        : [{ name: this.$t('TEAMS_SETTINGS.LIST.NONE'), id: 0 }];
       return [
-        { name: this.$t('TEAMS_SETTINGS.LIST.NONE'), id: 0 },
+        ...noneOption,
         ...this.teams.filter(team =>
           team.name.toLowerCase().includes(this.query.toLowerCase())
         ),

@@ -396,8 +396,7 @@
     "DOCS": "Read docs",
     "SECURITY": "Security",
     "KNOWLEDGE_BASE": "Knowledge Base",
-    "TELEGRAM_DIALOGUES": "Telegram",
-    "SUPPORT_LINE_1": "Support Line 1"
+    "TELEGRAM_DIALOGUES": "Telegram"
   },
   "BILLING_SETTINGS": {
     "TITLE": "Billing",

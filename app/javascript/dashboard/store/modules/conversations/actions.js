@@ -272,15 +272,6 @@ const actions = {
     commit(types.ASSIGN_TEAM, { team, conversationId });
   },
 
-  backfillTeamForUnassignedConversations({ state, commit }, { team }) {
-    if (!team) return;
-    state.allConversations.forEach(chat => {
-      if (!chat.meta?.team) {
-        commit(types.ASSIGN_TEAM, { team, conversationId: chat.id });
-      }
-    });
-  },
-
   toggleStatus: async (
     { commit, dispatch },
     {

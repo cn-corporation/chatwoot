@@ -217,10 +217,15 @@ export default {
       ];
     },
     assignableTeams() {
-      return [
-        { name: this.$t('TEAMS_SETTINGS.LIST.NONE'), id: 0 },
-        ...this.teams,
-      ];
+      const account = this.$store.getters['accounts/getAccount'](
+        this.currentAccountId
+      );
+      const support247TeamId =
+        Number(account?.settings?.support_247_team_id) || null;
+      const noneOption = support247TeamId
+        ? []
+        : [{ name: this.$t('TEAMS_SETTINGS.LIST.NONE'), id: 0 }];
+      return [...noneOption, ...this.teams];
     },
     isContactBlocked() {
       if (!this.contactBlockedUntil) return false;
