@@ -41,7 +41,6 @@ class ActionCableConnector extends BaseActionCableConnector {
       'team.changed': this.onTeamChanged,
       'account.cache_invalidated': this.onCacheInvalidate,
       'copilot.message.created': this.onCopilotMessageCreated,
-      'support_line.changed': this.onSupportLineChanged,
     };
   }
 
@@ -223,24 +222,6 @@ class ActionCableConnector extends BaseActionCableConnector {
 
   onCopilotMessageCreated = data => {
     this.app.$store.dispatch('copilotMessages/upsert', data);
-  };
-
-  onSupportLineChanged = data => {
-    this.app.$store.dispatch('accounts/applySupportLineChange', data);
-    if (data.support_line_1_active === false) {
-      const accountId = this.app.$store.getters.getCurrentAccountId;
-      const account = this.app.$store.getters['accounts/getAccount'](accountId);
-      const support247TeamId = account?.settings?.support_247_team_id;
-      if (support247TeamId) {
-        const team = this.app.$store.getters['teams/getTeam'](support247TeamId);
-        if (team?.id) {
-          this.app.$store.dispatch('backfillTeamForUnassignedConversations', {
-            team,
-          });
-        }
-      }
-    }
-    this.fetchConversationStats();
   };
 
   onCacheInvalidate = data => {
