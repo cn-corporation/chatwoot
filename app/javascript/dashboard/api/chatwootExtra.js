@@ -611,6 +611,23 @@ class ChatwootExtraAPI {
     }
   }
 
+  getTasksStreamURL(accountId) {
+    const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
+    return `${this.baseURL}/api/tasks/stream/${accountId}?apiKey=${apiKey}`;
+  }
+
+  async getPendingTasks(accountId) {
+    try {
+      const response = await axios.get(`${this.baseURL}/api/tasks/pending`, {
+        params: { accountId },
+        headers: this.headers,
+      });
+      return response.data?.data || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
   async getTasksReport(filters = {}) {
     try {
       const response = await axios.get(`${this.baseURL}/api/tasks/report`, {

@@ -12,6 +12,7 @@
     "TASK_ADDED": "Task added successfully",
     "TASK_COMPLETED": "Task completed successfully",
     "TASK_DELETED": "Task deleted successfully",
-    "TASK_UPDATED": "Task updated successfully"
+    "TASK_UPDATED": "Task updated successfully",
+    "PENDING_TASK": "Uncompleted task"
   }
 }
