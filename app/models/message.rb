@@ -432,6 +432,10 @@ class Message < ApplicationRecord
   end
 
   def set_conversation_activity
+    # Private notes and tasks are internal annotations and must not bump the
+    # conversation's activity, so the queue ordering reflects only real replies.
+    return if private?
+
     # rubocop:disable Rails/SkipsModelValidations
     conversation.update_columns(last_activity_at: created_at)
     # rubocop:enable Rails/SkipsModelValidations
