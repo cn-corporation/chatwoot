@@ -33,7 +33,7 @@ import ConversationBulkActions from './widgets/conversation/conversationBulkActi
 import IntersectionObserver from './IntersectionObserver.vue';
 import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import TodoModal from './widgets/conversation/TodoModal.vue';
+import NoteTaskModal from './widgets/conversation/NoteTaskModal.vue';
 import ConversationCloseTopicsModal from './ConversationCloseTopicsModal.vue';
 
 import { useUISettings } from 'dashboard/composables/useUISettings';
@@ -992,8 +992,9 @@ onUnmounted(() => {
 
 const deleteConversationDialogRef = ref(null);
 const selectedConversationId = ref(null);
-const showTodoModal = ref(false);
-const selectedChatForTask = ref(null);
+const showNoteTaskModal = ref(false);
+const selectedChatForNoteTask = ref(null);
+const noteTaskType = ref('note');
 
 async function deleteConversation() {
   try {
@@ -1012,19 +1013,18 @@ const handleDelete = conversationId => {
   deleteConversationDialogRef.value.open();
 };
 
-const handleCreateTask = conversationId => {
+const handleOpenNoteTask = (conversationId, type) => {
   const conversation = chatLists.value.find(c => c.id === conversationId);
   if (conversation) {
-    selectedChatForTask.value = conversation;
-    showTodoModal.value = true;
+    selectedChatForNoteTask.value = conversation;
+    noteTaskType.value = type;
+    showNoteTaskModal.value = true;
   }
 };
 
-const closeTodoModal = () => {
-  showTodoModal.value = false;
-  selectedChatForTask.value = null;
-  // The agent may have just created a task in the iframe; refresh indicators.
-  fetchPendingTasks();
+const closeNoteTaskModal = () => {
+  showNoteTaskModal.value = false;
+  selectedChatForNoteTask.value = null;
 };
 
 async function onBlockContact(duration, conversationId) {
@@ -1056,7 +1056,7 @@ provide('markAsUnread', markAsUnread);
 provide('markAsRead', markAsRead);
 provide('assignPriority', assignPriority);
 provide('isConversationSelected', isConversationSelected);
-provide('createTask', handleCreateTask);
+provide('openNoteTask', handleOpenNoteTask);
 provide('deleteConversation', handleDelete);
 provide('blockContact', onBlockContact);
 provide('unblockContact', onUnblockContact);
@@ -1242,11 +1242,12 @@ watch(chatLists, () => {
       @confirm="deleteConversation"
       @close="selectedConversationId = null"
     />
-    <TodoModal
-      v-if="showTodoModal"
-      :show="showTodoModal"
-      :current-chat="selectedChatForTask"
-      @cancel="closeTodoModal"
+    <NoteTaskModal
+      v-if="showNoteTaskModal"
+      :show="showNoteTaskModal"
+      :current-chat="selectedChatForNoteTask"
+      :type="noteTaskType"
+      @close="closeNoteTaskModal"
     />
     <ConversationCloseTopicsModal
       v-if="showCloseTopicsModal && closeConversationId"

@@ -48,7 +48,7 @@ const emit = defineEmits([
   'markAsUnread',
   'markAsRead',
   'updateConversationStatus',
-  'createTask',
+  'openNoteTask',
   'deleteConversation',
   'blockContact',
   'unblockContact',
@@ -397,8 +397,8 @@ const markAsRead = () => {
   closeContextMenu();
 };
 
-const createTask = () => {
-  emit('createTask', props.chat.id);
+const openNoteTask = (chatId, type) => {
+  emit('openNoteTask', props.chat.id, type);
   closeContextMenu();
 };
 
@@ -611,7 +611,7 @@ const onUnblockContact = () => {
         @assign-team="onAssignTeam"
         @mark-as-unread="markAsUnread"
         @mark-as-read="markAsRead"
-        @create-task="createTask"
+        @open-note-task="openNoteTask"
         @delete-conversation="deleteConversation"
         @block-contact="onBlockContact"
         @unblock-contact="onUnblockContact"
