@@ -1,13 +1,13 @@
 <script setup>
 import { ref } from 'vue';
 import ReportHeader from './components/ReportHeader.vue';
-import SummaryReports from './components/SummaryReports.vue';
+import InboxOverviewReport from './components/InboxOverviewReport.vue';
 import V4Button from 'dashboard/components-next/button/Button.vue';
 
-const summarReportsRef = ref(null);
+const inboxOverviewRef = ref(null);
 
 const onDownloadClick = () => {
-  summarReportsRef.value.downloadReports();
+  inboxOverviewRef.value.downloadReports();
 };
 </script>
 
@@ -24,12 +24,5 @@ const onDownloadClick = () => {
     />
   </ReportHeader>
 
-  <SummaryReports
-    ref="summarReportsRef"
-    action-key="summaryReports/fetchInboxSummaryReports"
-    getter-key="inboxes/getInboxes"
-    fetch-items-key="inboxes/get"
-    summary-key="summaryReports/getInboxSummaryReports"
-    type="inbox"
-  />
+  <InboxOverviewReport ref="inboxOverviewRef" />
 </template>

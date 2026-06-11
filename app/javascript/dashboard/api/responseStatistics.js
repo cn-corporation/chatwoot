@@ -101,6 +101,17 @@ class ResponseStatisticsAPI {
     );
     return response.data;
   }
+
+  async getInboxesOverview(params = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/response-statistics/statistics/inboxes-overview`,
+      {
+        params,
+        headers: this.headers,
+      }
+    );
+    return response.data;
+  }
 }
 
 export default new ResponseStatisticsAPI();
