@@ -21,7 +21,8 @@ const MENU = {
   TEAM: 'team',
   LABEL: 'label',
   BLOCK_CONTACT: 'block-contact',
-  CREATE_TASK: 'create-task',
+  ADD_NOTE: 'add-note',
+  ADD_TASK: 'add-task',
   DELETE: 'delete',
   OPEN_NEW_TAB: 'open-new-tab',
   COPY_LINK: 'copy-link',
@@ -75,7 +76,7 @@ export default {
     'assignAgent',
     'assignTeam',
     'assignLabel',
-    'createTask',
+    'openNoteTask',
     'deleteConversation',
     'blockContact',
     'unblockContact',
@@ -151,10 +152,15 @@ export default {
         icon: 'people-team-add',
         label: this.$t('CONVERSATION.CARD_CONTEXT_MENU.ASSIGN_TEAM'),
       },
-      createTaskOption: {
-        key: MENU.CREATE_TASK,
+      addNoteOption: {
+        key: MENU.ADD_NOTE,
+        icon: 'lock-closed',
+        label: this.$t('TODO.ADD_NOTE'),
+      },
+      addTaskOption: {
+        key: MENU.ADD_TASK,
         icon: 'add',
-        label: this.$t('TODO.CREATE_TASK'),
+        label: this.$t('TODO.ADD_TASK'),
       },
       deleteOption: {
         key: MENU.DELETE,
@@ -286,8 +292,8 @@ export default {
     assignPriority(priority) {
       this.$emit('assignPriority', priority);
     },
-    createTask() {
-      this.$emit('createTask', this.chatId);
+    openNoteTask(type) {
+      this.$emit('openNoteTask', this.chatId, type);
     },
     deleteConversation() {
       this.$emit('deleteConversation', this.chatId);
@@ -432,11 +438,18 @@ export default {
       </MenuItemWithSubmenu>
       <hr class="m-1 rounded border-b border-n-weak dark:border-n-weak" />
     </template>
-    <template v-if="isAllowed([MENU.CREATE_TASK])">
+    <template v-if="isAllowed([MENU.ADD_NOTE, MENU.ADD_TASK])">
       <MenuItem
-        :option="createTaskOption"
+        v-if="isAllowed([MENU.ADD_NOTE])"
+        :option="addNoteOption"
         variant="icon"
-        @click.stop="createTask"
+        @click.stop="openNoteTask('note')"
+      />
+      <MenuItem
+        v-if="isAllowed([MENU.ADD_TASK])"
+        :option="addTaskOption"
+        variant="icon"
+        @click.stop="openNoteTask('task')"
       />
       <hr class="m-1 rounded border-b border-n-weak dark:border-n-weak" />
     </template>
