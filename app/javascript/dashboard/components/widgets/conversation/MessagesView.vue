@@ -363,13 +363,16 @@ export default {
       return ids;
     },
     pendingTaskMessages() {
-      const loadedIds = new Set(
-        (this.currentChat.messages || []).map(m => m.id)
-      );
+      const loadedTaskIds = new Set();
+      (this.currentChat.messages || []).forEach(m => {
+        const tId =
+          m.content_attributes?.task_id || m.content_attributes?.taskId;
+        if (tId) loadedTaskIds.add(String(tId));
+      });
       return this.normalizedTasks
-        .filter(t => !t.completed && t.messageId && !loadedIds.has(t.messageId))
+        .filter(t => !t.completed && !loadedTaskIds.has(String(t.id)))
         .map(task => ({
-          id: task.messageId,
+          id: task.messageId ?? `pending-task-${task.id}`,
           content: task.message,
           private: true,
           message_type: 1,
