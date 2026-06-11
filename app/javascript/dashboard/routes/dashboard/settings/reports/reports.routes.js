@@ -10,7 +10,6 @@ import TeamReportsIndex from './TeamReportsIndex.vue';
 import LabelReportsIndex from './LabelReportsIndex.vue';
 
 import AgentReportsShow from './AgentReportsShow.vue';
-import InboxReportsShow from './InboxReportsShow.vue';
 import TeamReportsShow from './TeamReportsShow.vue';
 import LabelReportsShow from './LabelReportsShow.vue';
 
@@ -85,14 +84,6 @@ const revisedReportRoutes = [
       permissions: ['administrator', 'report_manage'],
     },
     component: InboxReportsIndex,
-  },
-  {
-    path: 'inboxes/:id',
-    name: 'inbox_reports_show',
-    meta: {
-      permissions: ['administrator', 'report_manage'],
-    },
-    component: InboxReportsShow,
   },
   {
     path: 'teams_overview',
