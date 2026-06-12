@@ -242,7 +242,7 @@ class Conversation < ApplicationRecord
 
   def execute_after_update_commit_callbacks
     handle_resolved_status_change
-    assign_support_247_team_on_reopen
+    assign_support_247_team_on_status_change
     notify_status_change
     create_activity
     notify_conversation_updation
@@ -266,8 +266,12 @@ class Conversation < ApplicationRecord
     # rubocop:enable Rails/SkipsModelValidations
   end
 
-  def assign_support_247_team_on_reopen
-    return unless saved_change_to_status? && (open? || pending?)
+  def assign_support_247_team_on_status_change
+    # Whenever a conversation leaves the resolved state it must belong to the 24/7 team again.
+    # handle_resolved_status_change clears team_id on resolve, so every non-resolved transition
+    # (open, pending, snoozed, stand_by) needs to restore it, otherwise the conversation falls
+    # back into the team-less L1 queue.
+    return unless saved_change_to_status? && !resolved?
     return unless should_assign_support_247_team?
 
     # rubocop:disable Rails/SkipsModelValidations
