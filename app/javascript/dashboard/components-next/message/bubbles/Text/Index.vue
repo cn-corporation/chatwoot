@@ -168,6 +168,12 @@ const handleTaskComplete = async checked => {
   }
 };
 
+useEmitter(BUS_EVENTS.TRANSLATE_MESSAGE, messageId => {
+  if (String(messageId) === String(id.value) && renderOriginal.value) {
+    handleSeeOriginal();
+  }
+});
+
 // Reflect completions made by other users, delivered over SSE with the full
 // task attached. Our own local completion sets taskData directly and emits
 // without a task payload, so it is ignored here.

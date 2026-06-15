@@ -15,17 +15,13 @@ import TranslationToggle from 'dashboard/components-next/message/TranslationTogg
 import { useMessageContext } from '../../provider.js';
 import { MESSAGE_TYPES } from 'next/message/constants.js';
 import { useTranslations } from 'dashboard/composables/useTranslations';
+import { useEmitter } from 'dashboard/composables/emitter';
+import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { useStore } from 'vuex';
 import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 
-const {
-  id,
-  content,
-  contentAttributes,
-  attachments,
-  messageType,
-  conversationId,
-} = useMessageContext();
+const { id, content, contentAttributes, attachments, messageType } =
+  useMessageContext();
 
 const store = useStore();
 const isExpandable = ref(false);
@@ -146,6 +142,12 @@ const handleSeeOriginal = async () => {
   }
   renderOriginal.value = !renderOriginal.value;
 };
+
+useEmitter(BUS_EVENTS.TRANSLATE_MESSAGE, messageId => {
+  if (String(messageId) === String(id.value) && renderOriginal.value) {
+    handleSeeOriginal();
+  }
+});
 </script>
 
 <template>
