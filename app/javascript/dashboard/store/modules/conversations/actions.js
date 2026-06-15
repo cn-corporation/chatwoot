@@ -10,7 +10,6 @@ import {
   isOnUnattendedView,
 } from './helpers/actionHelpers';
 import messageReadActions from './actions/messageReadActions';
-import messageTranslateActions from './actions/messageTranslateActions';
 import * as Sentry from '@sentry/vue';
 
 export const hasMessageFailedWithExternalError = pendingMessage => {
@@ -652,7 +651,6 @@ const actions = {
   },
 
   ...messageReadActions,
-  ...messageTranslateActions,
 };
 
 export default actions;

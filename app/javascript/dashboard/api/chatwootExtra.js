@@ -737,10 +737,10 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
-  async translateText({ text, targetLang }) {
+  async translateText({ text, targetLang, sourceLang }) {
     const response = await axios.post(
       `${this.baseURL}/api/translate`,
-      { text, targetLang },
+      { text, targetLang, ...(sourceLang ? { sourceLang } : {}) },
       { headers: this.headers }
     );
     return response.data;

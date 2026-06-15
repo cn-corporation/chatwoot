@@ -6,6 +6,8 @@ import ContextMenu from 'dashboard/components/ui/ContextMenu.vue';
 import AddCannedModal from 'dashboard/routes/dashboard/settings/canned/AddCanned.vue';
 import { useSnakeCase } from 'dashboard/composables/useTransformKeys';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
+import { emitter } from 'shared/helpers/mitt';
+import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { conversationUrl, frontendURL } from '../../../helper/URLHelper';
 import {
   ACCOUNT_EVENTS,
@@ -60,7 +62,6 @@ export default {
   },
   computed: {
     ...mapGetters({
-      getAccount: 'accounts/getAccount',
       currentAccountId: 'getCurrentAccountId',
     }),
     plainTextContent() {
@@ -117,12 +118,7 @@ export default {
       this.$emit('close', e);
     },
     handleTranslate() {
-      const { locale } = this.getAccount(this.currentAccountId);
-      this.$store.dispatch('translateMessage', {
-        conversationId: this.conversationId,
-        messageId: this.messageId,
-        targetLanguage: locale || 'en',
-      });
+      emitter.emit(BUS_EVENTS.TRANSLATE_MESSAGE, this.messageId);
       useTrack(CONVERSATION_EVENTS.TRANSLATE_A_MESSAGE);
       this.handleClose();
     },
