@@ -447,6 +447,13 @@ const menuItems = computed(() => {
       to: accountScopedRoute('todo_list'),
       activeOn: ['todo_list'],
     },
+    {
+      name: 'ClickUpForm',
+      label: t('SIDEBAR.CLICKUP_FORM'),
+      icon: 'i-lucide-clipboard-list',
+      to: accountScopedRoute('clickup_form'),
+      activeOn: ['clickup_form'],
+    },
   ];
 
   if (isAdmin.value || isTelegramOperator.value) {

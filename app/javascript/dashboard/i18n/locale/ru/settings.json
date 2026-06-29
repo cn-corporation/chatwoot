@@ -393,7 +393,8 @@
     },
     "DOCS": "Открыть документацию",
     "SECURITY": "Безопасность",
-    "SUPPORT_LINE_1": "Линия поддержки 1"
+    "SUPPORT_LINE_1": "Линия поддержки 1",
+    "CLICKUP_FORM": "Форма ClickUp"
   },
   "BILLING_SETTINGS": {
     "TITLE": "Платёж",
