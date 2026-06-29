@@ -34,23 +34,29 @@ export default {
       teams: 'teams/getTeams',
       currentAccountId: 'getCurrentAccountId',
     }),
-    support247TeamId() {
-      const account = this.$store.getters['accounts/getAccount'](
-        this.currentAccountId
+    currentAccountSettings() {
+      return (
+        this.$store.getters['accounts/getAccount'](this.currentAccountId)
+          ?.settings || {}
       );
-      return Number(account?.settings?.support_247_team_id) || null;
+    },
+    support247TeamId() {
+      return this.currentAccountSettings.support_247_team_id || null;
+    },
+    supportLine1Active() {
+      return !!this.currentAccountSettings.support_line_1_active;
     },
     hasAnAssignedTeam() {
       return !!this.currentChat?.meta?.team;
     },
     teamsList() {
-      if (this.hasAnAssignedTeam && !this.support247TeamId) {
+      if (this.hasAnAssignedTeam) {
         return [
           { id: 0, name: this.$t('TEAMS_SETTINGS.LIST.NONE') },
           ...this.teams,
         ];
       }
-      return this.teams;
+      return [...this.teams];
     },
     assignedAgent: {
       get() {
@@ -77,8 +83,17 @@ export default {
       set(team) {
         if (!this.currentChat) return;
         const conversationId = this.currentChat.id;
-        const teamId = team ? team.id : 0;
-        this.$store.dispatch('setCurrentChatTeam', { team, conversationId });
+        let resolvedTeam = team;
+        let teamId = team ? team.id : 0;
+        if (teamId === 0 && !this.supportLine1Active && this.support247TeamId) {
+          resolvedTeam =
+            this.teams.find(t => t.id === this.support247TeamId) || team;
+          teamId = this.support247TeamId;
+        }
+        this.$store.dispatch('setCurrentChatTeam', {
+          team: resolvedTeam,
+          conversationId,
+        });
         this.$store
           .dispatch('assignTeam', { conversationId, teamId })
           .then(() => {
@@ -100,7 +115,11 @@ export default {
       if (this.assignedTeam && this.assignedTeam.id === selectedItemTeam.id) {
         return;
       }
-      this.assignedTeam = selectedItemTeam;
+      if (selectedItemTeam?.id === 0) {
+        this.assignedTeam = null;
+      } else {
+        this.assignedTeam = selectedItemTeam;
+      }
     },
   },
 };

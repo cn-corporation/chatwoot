@@ -57,6 +57,15 @@ class Api::V1::AccountsController < Api::BaseController
     head :ok
   end
 
+  def toggle_support_line
+    authorize @account, :toggle_support_line?
+    @account.settings['support_line_1_active'] = params[:active]
+    @account.save!
+    backfill_support_247_team unless @account.settings['support_line_1_active']
+    broadcast_support_line_change
+    render json: { support_line_1_active: @account.settings['support_line_1_active'] }
+  end
+
   private
 
   def ensure_account_name
@@ -93,7 +102,7 @@ class Api::V1::AccountsController < Api::BaseController
 
   def settings_params
     params.permit(:auto_resolve_after, :auto_resolve_message, :auto_resolve_ignore_waiting, :audio_transcriptions, :auto_resolve_label,
-                  :support_247_team_id, :aml_team_id, assignable_agent_ids: [])
+                  :support_247_team_id, :support_l1_enabled, :aml_team_id, assignable_agent_ids: [])
   end
 
   def check_signup_enabled
@@ -102,6 +111,21 @@ class Api::V1::AccountsController < Api::BaseController
 
   def validate_captcha
     raise ActionController::InvalidAuthenticityToken, 'Invalid Captcha' unless ChatwootCaptcha.new(params[:h_captcha_client_response]).valid?
+  end
+
+  def backfill_support_247_team
+    support_team_id = @account.settings['support_247_team_id']
+    return if support_team_id.blank?
+
+    # rubocop:disable Rails/SkipsModelValidations
+    @account.conversations.where(team_id: nil, status: %i[open pending]).update_all(team_id: support_team_id)
+    # rubocop:enable Rails/SkipsModelValidations
+  end
+
+  def broadcast_support_line_change
+    tokens = @account.users.pluck(:pubsub_token)
+    payload = { account_id: @account.id, support_line_1_active: @account.settings['support_line_1_active'] }
+    ::ActionCableBroadcastJob.perform_later(tokens.uniq, 'support_line.changed', payload)
   end
 
   def pundit_user
