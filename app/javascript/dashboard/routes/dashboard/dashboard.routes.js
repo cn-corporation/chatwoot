@@ -14,6 +14,7 @@ import operatorReportsRoutes from './operatorReports/operatorReports.routes';
 import AppContainer from './Dashboard.vue';
 import Suspended from './suspended/Index.vue';
 import TodoList from './TodoList.vue';
+import ClickUpForm from './clickupForm/ClickUpForm.vue';
 import NoAccounts from './noAccounts/Index.vue';
 
 export default {
@@ -29,6 +30,14 @@ export default {
             permissions: ['administrator', 'agent', 'custom_role'],
           },
           component: TodoList,
+        },
+        {
+          path: 'clickup-form',
+          name: 'clickup_form',
+          meta: {
+            permissions: ['administrator', 'agent', 'custom_role'],
+          },
+          component: ClickUpForm,
         },
         ...captainRoutes,
         ...inboxRoutes,
