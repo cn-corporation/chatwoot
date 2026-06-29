@@ -281,7 +281,10 @@ class Conversation < ApplicationRecord
   end
 
   def should_assign_support_247_team?
-    account.settings&.dig('support_247_team_id').present?
+    return false if account.settings&.dig('support_247_team_id').blank?
+    return false if account.settings&.dig('support_l1_enabled') && account.settings&.dig('support_line_1_active')
+
+    true
   end
 
   def ensure_snooze_until_reset

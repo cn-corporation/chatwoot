@@ -35,8 +35,19 @@ class Api::V1::Accounts::Conversations::AssignmentsController < Api::V1::Account
 
   def set_team
     @team = Current.account.teams.find_by(id: params[:team_id])
+    @team ||= fallback_support_247_team
     @conversation.update!(team: @team)
     render json: @team
+  end
+
+  def fallback_support_247_team
+    return nil unless Current.account.settings&.dig('support_l1_enabled')
+    return nil if Current.account.settings&.dig('support_line_1_active')
+
+    support_team_id = Current.account.settings&.dig('support_247_team_id')
+    return nil if support_team_id.blank?
+
+    Current.account.teams.find_by(id: support_team_id)
   end
 
   def agent_bot_assignment?

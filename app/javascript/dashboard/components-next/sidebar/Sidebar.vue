@@ -1,5 +1,5 @@
 <script setup>
-import { h, computed, onMounted, onUnmounted } from 'vue';
+import { h, computed, ref, onMounted, onUnmounted } from 'vue';
 import { provideSidebarContext } from './provider';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useKbd } from 'dashboard/composables/utils/useKbd';
@@ -15,6 +15,7 @@ import { emitter } from 'shared/helpers/mitt';
 import { buildPortalURL } from 'dashboard/helper/portalHelper';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 
+import Switch from 'next/switch/Switch.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import SidebarGroup from './SidebarGroup.vue';
 import SidebarProfileMenu from './SidebarProfileMenu.vue';
@@ -650,6 +651,55 @@ const menuItems = computed(() => {
     },
   ];
 });
+
+const SUPPORT_LINE_COOLDOWN = 10000;
+let supportLine1LockedUntil = 0;
+const supportLine1Toggling = ref(false);
+
+const support247TeamId = computed(() => {
+  const accountId = store.getters.getCurrentAccountId;
+  const account = store.getters['accounts/getAccount'](accountId);
+  return account?.settings?.support_247_team_id || null;
+});
+
+const supportL1Enabled = computed(() => {
+  const accountId = store.getters.getCurrentAccountId;
+  const account = store.getters['accounts/getAccount'](accountId);
+  return !!account?.settings?.support_l1_enabled;
+});
+
+const showSupportLine1Toggle = computed(() => {
+  return supportL1Enabled.value && !!support247TeamId.value;
+});
+
+const canToggleSupportLine1 = computed(() => {
+  if (supportLine1Toggling.value) return false;
+  const currentUserVal = store.getters.getCurrentUser;
+  if (currentUserVal?.role === 'administrator') return true;
+  const myTeamIds = (store.getters['teams/getMyTeams'] || []).map(
+    team => team.id
+  );
+  if (myTeamIds.length === 0) return true;
+  return myTeamIds.includes(support247TeamId.value);
+});
+
+const supportLine1Active = computed(() => {
+  const accountId = store.getters.getCurrentAccountId;
+  return !!store.getters['accounts/getAccount'](accountId)?.settings
+    ?.support_line_1_active;
+});
+
+const updateSupportLine1Active = async value => {
+  const now = Date.now();
+  if (now < supportLine1LockedUntil) return;
+  supportLine1Toggling.value = true;
+  supportLine1LockedUntil = now + SUPPORT_LINE_COOLDOWN;
+  try {
+    await store.dispatch('accounts/toggleSupportLine', { active: value });
+  } finally {
+    supportLine1Toggling.value = false;
+  }
+};
 </script>
 
 <template>
@@ -710,6 +760,30 @@ const menuItems = computed(() => {
     <nav
       class="flex flex-col overflow-y-scroll flex-grow gap-2 px-2 pb-5 no-scrollbar"
     >
+      <div
+        v-if="showSupportLine1Toggle"
+        class="flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium"
+        :class="[
+          supportLine1Active
+            ? 'bg-n-teal-3 text-n-teal-11'
+            : 'bg-n-solid-3 text-n-slate-11',
+          !canToggleSupportLine1 && 'opacity-60',
+        ]"
+      >
+        <div class="flex items-center gap-1.5">
+          <span
+            :class="supportLine1Active ? 'i-lucide-zap' : 'i-lucide-moon'"
+            class="size-3.5"
+          />
+          <span>{{ t('SIDEBAR.SUPPORT_LINE_1') }}</span>
+        </div>
+        <Switch
+          :model-value="supportLine1Active"
+          size="small"
+          :disabled="!canToggleSupportLine1"
+          @update:model-value="updateSupportLine1Active"
+        />
+      </div>
       <ul class="flex flex-col gap-1.5 m-0 list-none">
         <SidebarGroup
           v-for="item in menuItems"
