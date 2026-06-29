@@ -43,6 +43,9 @@ export default {
     support247TeamId() {
       return this.currentAccountSettings.support_247_team_id || null;
     },
+    supportL1Enabled() {
+      return !!this.currentAccountSettings.support_l1_enabled;
+    },
     supportLine1Active() {
       return !!this.currentAccountSettings.support_line_1_active;
     },
@@ -50,7 +53,7 @@ export default {
       return !!this.currentChat?.meta?.team;
     },
     teamsList() {
-      if (this.hasAnAssignedTeam) {
+      if (this.hasAnAssignedTeam && this.supportL1Enabled) {
         return [
           { id: 0, name: this.$t('TEAMS_SETTINGS.LIST.NONE') },
           ...this.teams,

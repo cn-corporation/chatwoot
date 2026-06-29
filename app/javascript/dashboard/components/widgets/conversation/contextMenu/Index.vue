@@ -222,11 +222,15 @@ export default {
         ...this.filteredAgentOnAvailability,
       ];
     },
+    supportL1Enabled() {
+      const account = this.$store.getters['accounts/getAccount'](
+        this.currentAccountId
+      );
+      return !!account?.settings?.support_l1_enabled;
+    },
     assignableTeams() {
-      return [
-        { name: this.$t('TEAMS_SETTINGS.LIST.NONE'), id: 0 },
-        ...this.teams,
-      ];
+      const none = { name: this.$t('TEAMS_SETTINGS.LIST.NONE'), id: 0 };
+      return this.supportL1Enabled ? [none, ...this.teams] : [...this.teams];
     },
     isContactBlocked() {
       if (!this.contactBlockedUntil) return false;
