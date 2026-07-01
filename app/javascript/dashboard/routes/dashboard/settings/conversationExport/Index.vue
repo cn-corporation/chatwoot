@@ -7,6 +7,7 @@ import SettingsLayout from '../SettingsLayout.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import { emitter } from 'shared/helpers/mitt';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
+import chatwootExtraAPI from 'dashboard/api/chatwootExtra';
 
 const store = useStore();
 const getters = useStoreGetters();
@@ -105,20 +106,20 @@ const stopExport = async () => {
 };
 
 const downloadExport = async record => {
+  const url = chatwootExtraAPI.getConversationExportDownloadUrl(record.id);
   try {
-    const blob = await store.dispatch('conversationExport/download', record.id);
-    const url = URL.createObjectURL(blob);
+    const response = await fetch(url, { method: 'HEAD' });
+    if (!response.ok) {
+      throw new Error(`${response.status} ${response.statusText}`);
+    }
     const link = document.createElement('a');
     link.href = url;
     link.download = `conversations_export_${record.id}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   } catch (error) {
-    emitter.emit(BUS_EVENTS.SHOW_TOAST, {
-      message: error.message,
-    });
+    emitter.emit(BUS_EVENTS.SHOW_TOAST, { message: error.message });
   }
 };
 
