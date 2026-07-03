@@ -40,6 +40,7 @@ const LANGUAGES = [
 ];
 
 const sourceText = ref('');
+const sourceLang = ref('auto');
 const targetLang = ref('ru');
 const translatedText = ref('');
 const detectedLang = ref('');
@@ -69,6 +70,7 @@ const translate = async () => {
     const result = await chatwootExtraAPI.translateText({
       text: sourceText.value,
       targetLang: targetLang.value,
+      sourceLang: sourceLang.value === 'auto' ? undefined : sourceLang.value,
     });
     translatedText.value = result.translatedText;
     detectedLang.value = result.detectedSourceLang;
@@ -92,6 +94,7 @@ watch(sourceText, value => {
   debouncedTranslate();
 });
 watch(targetLang, translate);
+watch(sourceLang, translate);
 
 const hideCanned = () => {
   showCanned.value = false;
@@ -137,10 +140,22 @@ onMounted(() => {
         <span class="text-xs text-n-slate-11 shrink-0">
           {{ $t('CONVERSATION.REPLYBOX.TRANSLATOR.FROM_LABEL') }}
         </span>
-        <span class="text-xs font-medium text-n-slate-12 shrink-0">
-          {{ $t('CONVERSATION.REPLYBOX.TRANSLATOR.AUTO_DETECT') }}
-          <template v-if="detectedLang">({{ detectedLang }})</template>
-        </span>
+        <select
+          v-model="sourceLang"
+          class="h-6 py-0 pl-2 pr-6 text-xs border border-solid rounded bg-n-slate-3 dark:bg-n-solid-3 border-n-weak text-n-slate-12 !mb-0 ![outline:none] hover:![outline:none] focus:![outline:none]"
+        >
+          <option value="auto">
+            {{ $t('CONVERSATION.REPLYBOX.TRANSLATOR.AUTO_DETECT')
+            }}<template v-if="detectedLang"> ({{ detectedLang }})</template>
+          </option>
+          <option
+            v-for="lang in LANGUAGES"
+            :key="lang.value"
+            :value="lang.value"
+          >
+            {{ $t(lang.labelKey) }}
+          </option>
+        </select>
         <span class="text-n-slate-9 text-xs">→</span>
         <span class="text-xs text-n-slate-11 shrink-0">
           {{ $t('CONVERSATION.REPLYBOX.TRANSLATOR.TO_LABEL') }}

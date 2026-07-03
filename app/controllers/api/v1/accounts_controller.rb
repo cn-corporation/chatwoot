@@ -58,6 +58,7 @@ class Api::V1::AccountsController < Api::BaseController
   end
 
   def toggle_support_line
+    authorize @account, :toggle_support_line?
     @account.settings['support_line_1_active'] = params[:active]
     @account.save!
     backfill_support_247_team unless @account.settings['support_line_1_active']
@@ -101,7 +102,7 @@ class Api::V1::AccountsController < Api::BaseController
 
   def settings_params
     params.permit(:auto_resolve_after, :auto_resolve_message, :auto_resolve_ignore_waiting, :audio_transcriptions, :auto_resolve_label,
-                  :support_247_team_id, :support_line_1_active, :aml_team_id, assignable_agent_ids: [])
+                  :support_247_team_id, :support_l1_enabled, :aml_team_id, assignable_agent_ids: [])
   end
 
   def check_signup_enabled

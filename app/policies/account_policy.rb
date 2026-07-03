@@ -15,21 +15,17 @@ class AccountPolicy < ApplicationPolicy
     @account_user.administrator?
   end
 
-  def update_active_at?
-    true
-  end
-
   def toggle_support_line?
+    account = @account_user.account
+    return false unless account.settings&.dig('support_l1_enabled')
     return true if @account_user.administrator?
     return false unless @account_user.agent?
 
-    user = @account_user.user
-    account = @account_user.account
-    support_team_id = account.settings&.dig('support_247_team_id')
-    return false if support_team_id.blank?
+    agent_has_support_team_access?(account)
+  end
 
-    user_team_ids = user.teams.where(account_id: account.id).pluck(:id)
-    user_team_ids.empty? || user_team_ids.include?(support_team_id)
+  def update_active_at?
+    true
   end
 
   def subscription?
@@ -42,5 +38,16 @@ class AccountPolicy < ApplicationPolicy
 
   def toggle_deletion?
     @account_user.administrator?
+  end
+
+  private
+
+  def agent_has_support_team_access?(account)
+    user = @account_user.user
+    support_team_id = account.settings&.dig('support_247_team_id')
+    return false if support_team_id.blank?
+
+    user_team_ids = user.teams.where(account_id: account.id).pluck(:id)
+    user_team_ids.empty? || user_team_ids.include?(support_team_id)
   end
 end

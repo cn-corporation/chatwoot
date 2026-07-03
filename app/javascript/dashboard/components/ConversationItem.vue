@@ -16,7 +16,7 @@ export default {
     'markAsRead',
     'assignPriority',
     'isConversationSelected',
-    'createTask',
+    'openNoteTask',
     'deleteConversation',
     'blockContact',
     'unblockContact',
@@ -71,7 +71,7 @@ export default {
     @mark-as-unread="markAsUnread"
     @mark-as-read="markAsRead"
     @assign-priority="assignPriority"
-    @create-task="createTask"
+    @open-note-task="openNoteTask"
     @delete-conversation="deleteConversation"
     @block-contact="blockContact"
     @unblock-contact="unblockContact"

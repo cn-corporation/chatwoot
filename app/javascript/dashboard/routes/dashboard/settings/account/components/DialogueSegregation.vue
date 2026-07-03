@@ -6,10 +6,12 @@ import { useAlert } from 'dashboard/composables';
 import { useMapGetter } from 'dashboard/composables/store';
 import SectionLayout from './SectionLayout.vue';
 import SingleSelect from 'dashboard/components-next/filter/inputs/SingleSelect.vue';
+import Switch from 'next/switch/Switch.vue';
 
 const { t } = useI18n();
 const selectedTeam = ref(null);
 const selectedAmlTeam = ref(null);
+const supportL1Enabled = ref(false);
 
 const { currentAccount, updateAccount } = useAccount();
 const teams = useMapGetter('teams/getTeams');
@@ -33,6 +35,7 @@ watch(
     selectedAmlTeam.value = amlTeamId
       ? teamOptions.value.find(opt => opt.id === amlTeamId) || null
       : null;
+    supportL1Enabled.value = !!settings.support_l1_enabled;
   },
   { deep: true, immediate: true }
 );
@@ -58,6 +61,16 @@ const updateAmlTeam = async team => {
     useAlert(t('GENERAL_SETTINGS.FORM.AML_TEAM.API.SUCCESS'));
   } catch (error) {
     useAlert(t('GENERAL_SETTINGS.FORM.AML_TEAM.API.ERROR'));
+  }
+};
+
+const updateSupportL1Enabled = async value => {
+  supportL1Enabled.value = value;
+  try {
+    await updateAccount({ support_l1_enabled: value });
+    useAlert(t('GENERAL_SETTINGS.FORM.SUPPORT_L1_ENABLED.API.SUCCESS'));
+  } catch (error) {
+    useAlert(t('GENERAL_SETTINGS.FORM.SUPPORT_L1_ENABLED.API.ERROR'));
   }
 };
 </script>
@@ -98,6 +111,18 @@ const updateAmlTeam = async team => {
             @update:model-value="updateAmlTeam"
           />
         </div>
+      </template>
+    </SectionLayout>
+    <SectionLayout
+      :title="t('GENERAL_SETTINGS.FORM.SUPPORT_L1_ENABLED.TITLE')"
+      :description="t('GENERAL_SETTINGS.FORM.SUPPORT_L1_ENABLED.NOTE')"
+      with-border
+    >
+      <template #headerActions>
+        <Switch
+          :model-value="supportL1Enabled"
+          @update:model-value="updateSupportL1Enabled"
+        />
       </template>
     </SectionLayout>
   </div>

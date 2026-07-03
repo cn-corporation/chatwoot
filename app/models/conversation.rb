@@ -242,19 +242,20 @@ class Conversation < ApplicationRecord
 
   def execute_after_update_commit_callbacks
     handle_resolved_status_change
-    assign_support_247_team_on_reopen
+    assign_support_247_team_on_status_change
     notify_status_change
     create_activity
     notify_conversation_updation
   end
 
   def handle_resolved_status_change
-    # When conversation is resolved, clear waiting_since and team_id using update_column to avoid callbacks
+    # When conversation is resolved, clear waiting_since, team_id and assignee_id using update_column to avoid callbacks
     return unless saved_change_to_status? && status == 'resolved'
 
     # rubocop:disable Rails/SkipsModelValidations
     update_column(:waiting_since, nil)
     update_column(:team_id, nil) if team_id.present?
+    update_column(:assignee_id, nil) if assignee_id.present?
     # rubocop:enable Rails/SkipsModelValidations
   end
 
@@ -266,8 +267,12 @@ class Conversation < ApplicationRecord
     # rubocop:enable Rails/SkipsModelValidations
   end
 
-  def assign_support_247_team_on_reopen
-    return unless saved_change_to_status? && (open? || pending?)
+  def assign_support_247_team_on_status_change
+    # Whenever a conversation leaves the resolved state it must belong to the 24/7 team again.
+    # handle_resolved_status_change clears team_id on resolve, so every non-resolved transition
+    # (open, pending, snoozed, stand_by) needs to restore it, otherwise the conversation falls
+    # back into the team-less L1 queue.
+    return unless saved_change_to_status? && !resolved?
     return unless should_assign_support_247_team?
 
     # rubocop:disable Rails/SkipsModelValidations
@@ -276,9 +281,8 @@ class Conversation < ApplicationRecord
   end
 
   def should_assign_support_247_team?
-    support_team_id = account.settings&.dig('support_247_team_id')
-    return false if support_team_id.blank?
-    return false if account.settings&.dig('support_line_1_active')
+    return false if account.settings&.dig('support_247_team_id').blank?
+    return false if account.settings&.dig('support_l1_enabled') && account.settings&.dig('support_line_1_active')
 
     true
   end

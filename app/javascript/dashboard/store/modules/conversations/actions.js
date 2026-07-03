@@ -10,7 +10,6 @@ import {
   isOnUnattendedView,
 } from './helpers/actionHelpers';
 import messageReadActions from './actions/messageReadActions';
-import messageTranslateActions from './actions/messageTranslateActions';
 import * as Sentry from '@sentry/vue';
 
 export const hasMessageFailedWithExternalError = pendingMessage => {
@@ -270,15 +269,6 @@ const actions = {
 
   setCurrentChatTeam({ commit }, { team, conversationId }) {
     commit(types.ASSIGN_TEAM, { team, conversationId });
-  },
-
-  backfillTeamForUnassignedConversations({ state, commit }, { team }) {
-    if (!team) return;
-    state.allConversations.forEach(chat => {
-      if (!chat.meta?.team) {
-        commit(types.ASSIGN_TEAM, { team, conversationId: chat.id });
-      }
-    });
   },
 
   toggleStatus: async (
@@ -661,7 +651,6 @@ const actions = {
   },
 
   ...messageReadActions,
-  ...messageTranslateActions,
 };
 
 export default actions;

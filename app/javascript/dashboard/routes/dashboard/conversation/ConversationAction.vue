@@ -43,6 +43,9 @@ export default {
     support247TeamId() {
       return this.currentAccountSettings.support_247_team_id || null;
     },
+    supportL1Enabled() {
+      return !!this.currentAccountSettings.support_l1_enabled;
+    },
     supportLine1Active() {
       return !!this.currentAccountSettings.support_line_1_active;
     },
@@ -50,13 +53,13 @@ export default {
       return !!this.currentChat?.meta?.team;
     },
     teamsList() {
-      if (this.hasAnAssignedTeam) {
+      if (this.hasAnAssignedTeam && this.supportL1Enabled) {
         return [
           { id: 0, name: this.$t('TEAMS_SETTINGS.LIST.NONE') },
           ...this.teams,
         ];
       }
-      return this.teams;
+      return [...this.teams];
     },
     assignedAgent: {
       get() {
@@ -85,11 +88,7 @@ export default {
         const conversationId = this.currentChat.id;
         let resolvedTeam = team;
         let teamId = team ? team.id : 0;
-        if (
-          teamId === 0 &&
-          !this.supportLine1Active &&
-          this.support247TeamId
-        ) {
+        if (teamId === 0 && !this.supportLine1Active && this.support247TeamId) {
           resolvedTeam =
             this.teams.find(t => t.id === this.support247TeamId) || team;
           teamId = this.support247TeamId;
@@ -117,6 +116,9 @@ export default {
 
     onClickAssignTeam(selectedItemTeam) {
       if (this.assignedTeam && this.assignedTeam.id === selectedItemTeam.id) {
+        return;
+      }
+      if (selectedItemTeam?.id === 0) {
         this.assignedTeam = null;
       } else {
         this.assignedTeam = selectedItemTeam;

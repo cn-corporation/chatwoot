@@ -41,6 +41,7 @@ class Api::V1::Accounts::Conversations::AssignmentsController < Api::V1::Account
   end
 
   def fallback_support_247_team
+    return nil unless Current.account.settings&.dig('support_l1_enabled')
     return nil if Current.account.settings&.dig('support_line_1_active')
 
     support_team_id = Current.account.settings&.dig('support_247_team_id')

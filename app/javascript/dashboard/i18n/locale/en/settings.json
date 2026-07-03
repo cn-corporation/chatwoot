@@ -397,7 +397,8 @@
     "SECURITY": "Security",
     "KNOWLEDGE_BASE": "Knowledge Base",
     "TELEGRAM_DIALOGUES": "Telegram",
-    "SUPPORT_LINE_1": "Support Line 1"
+    "SUPPORT_LINE_1": "Support Line 1",
+    "CLICKUP_FORM": "ClickUp Form"
   },
   "BILLING_SETTINGS": {
     "TITLE": "Billing",

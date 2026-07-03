@@ -51,7 +51,6 @@ import {
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { LocalStorage } from 'shared/helpers/localStorage';
 import { emitter } from 'shared/helpers/mitt';
-import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 const EmojiInput = defineAsyncComponent(
   () => import('shared/components/emoji/EmojiInput.vue')
 );
@@ -1192,7 +1191,10 @@ export default {
             this.currentUser.name || this.currentUser.available_name,
         };
 
-        const taskResponse = await ChatwootExtraAPI.createTask(taskData);
+        const taskResponse = await this.$store.dispatch(
+          'tasks/createTask',
+          taskData
+        );
 
         if (taskResponse?.success && taskResponse?.data) {
           const taskId = taskResponse.data.id;

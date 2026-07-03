@@ -15,14 +15,25 @@ export default {
     };
   },
   computed: {
-    ...mapGetters({ teams: 'teams/getTeams' }),
+    ...mapGetters({
+      teams: 'teams/getTeams',
+      currentAccountId: 'getCurrentAccountId',
+    }),
+    supportL1Enabled() {
+      return !!this.$store.getters['accounts/getAccount'](this.currentAccountId)
+        ?.settings?.support_l1_enabled;
+    },
     filteredTeams() {
-      return [
-        { name: this.$t('TEAMS_SETTINGS.LIST.NONE'), id: 0 },
-        ...this.teams.filter(team =>
-          team.name.toLowerCase().includes(this.query.toLowerCase())
-        ),
-      ];
+      const filtered = this.teams.filter(team =>
+        team.name.toLowerCase().includes(this.query.toLowerCase())
+      );
+      if (this.supportL1Enabled) {
+        return [
+          { name: this.$t('TEAMS_SETTINGS.LIST.NONE'), id: 0 },
+          ...filtered,
+        ];
+      }
+      return filtered;
     },
   },
   methods: {

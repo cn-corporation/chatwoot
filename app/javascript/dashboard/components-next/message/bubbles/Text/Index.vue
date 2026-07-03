@@ -9,6 +9,7 @@ import VoiceIndicator from 'dashboard/components-next/message/VoiceIndicator.vue
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import { MESSAGE_TYPES } from '../../constants';
 import { useMessageContext } from '../../provider.js';
+import { useEmitter } from 'dashboard/composables/emitter';
 import { useTranslations } from 'dashboard/composables/useTranslations';
 import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 import { useAlert } from 'dashboard/composables';
@@ -122,6 +123,7 @@ const loadTask = async () => {
       emitter.emit(BUS_EVENTS.TASK_STATUS_LOADED, {
         taskId: taskId.value,
         messageId: id.value,
+        conversationId: conversationId.value,
         completed: response.data.completed ?? false,
       });
     }
@@ -138,22 +140,19 @@ const handleTaskComplete = async checked => {
   isCompletingTask.value = true;
   try {
     const currentUser = store.getters.getCurrentUser;
-    const updateData = {
+    const response = await store.dispatch('tasks/completeTask', {
+      taskId: taskId.value,
       completed: true,
       completedBy: currentUser.id,
       completedByName: currentUser.name || currentUser.available_name,
-    };
-
-    const response = await ChatwootExtraAPI.updateTask(
-      taskId.value,
-      updateData
-    );
+    });
 
     if (response?.success && response?.data) {
       taskData.value = response.data;
       emitter.emit(BUS_EVENTS.TASK_COMPLETED, {
         taskId: taskId.value,
         messageId: id.value,
+        conversationId: conversationId.value,
       });
       useAlert(t('CONVERSATION.REPLYBOX.TASK_COMPLETED'));
     } else {
@@ -168,6 +167,22 @@ const handleTaskComplete = async checked => {
     isCompletingTask.value = false;
   }
 };
+
+useEmitter(BUS_EVENTS.TRANSLATE_MESSAGE, messageId => {
+  if (String(messageId) === String(id.value) && renderOriginal.value) {
+    handleSeeOriginal();
+  }
+});
+
+// Reflect completions made by other users, delivered over SSE with the full
+// task attached. Our own local completion sets taskData directly and emits
+// without a task payload, so it is ignored here.
+useEmitter(BUS_EVENTS.TASK_COMPLETED, payload => {
+  if (!payload?.task || String(payload.taskId) !== String(taskId.value)) {
+    return;
+  }
+  taskData.value = payload.task;
+});
 
 onMounted(() => {
   if (hasTask.value) {

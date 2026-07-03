@@ -15,6 +15,7 @@ import { emitter } from 'shared/helpers/mitt';
 import { buildPortalURL } from 'dashboard/helper/portalHelper';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 
+import Switch from 'next/switch/Switch.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import SidebarGroup from './SidebarGroup.vue';
 import SidebarProfileMenu from './SidebarProfileMenu.vue';
@@ -23,7 +24,6 @@ import ChannelLeaf from './ChannelLeaf.vue';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
 import Logo from 'next/icon/Logo.vue';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
-import Switch from 'next/switch/Switch.vue';
 
 const props = defineProps({
   isMobileSidebarOpen: {
@@ -136,62 +136,6 @@ const isTelegramOperator = useMapGetter(
   'telegramDialoguesAccess/isCurrentUserAllowed'
 );
 // Removed unused custom views - simplified for poker operator UI
-
-const SUPPORT_LINE_COOLDOWN = 10000;
-let supportLine1LockedUntil = 0;
-const supportLine1Toggling = ref(false);
-
-const support247TeamId = computed(() => {
-  const accountId = store.getters.getCurrentAccountId;
-  const account = store.getters['accounts/getAccount'](accountId);
-  return account?.settings?.support_247_team_id || null;
-});
-
-const showSupportLine1Toggle = computed(() => {
-  return !!support247TeamId.value;
-});
-
-const canToggleSupportLine1 = computed(() => {
-  if (supportLine1Toggling.value) return false;
-  const currentUserVal = store.getters.getCurrentUser;
-  if (currentUserVal?.role === 'administrator') return true;
-  const myTeamIds = (store.getters['teams/getMyTeams'] || []).map(
-    team => team.id
-  );
-  if (myTeamIds.length === 0) return true;
-  return myTeamIds.includes(support247TeamId.value);
-});
-
-const supportLine1Active = computed({
-  get() {
-    const accountId = store.getters.getCurrentAccountId;
-    return !!store.getters['accounts/getAccount'](accountId)?.settings
-      ?.support_line_1_active;
-  },
-  set() {},
-});
-
-const toggleSupportLine1 = async () => {
-  if (Date.now() < supportLine1LockedUntil) return;
-  supportLine1LockedUntil = Date.now() + SUPPORT_LINE_COOLDOWN;
-  supportLine1Toggling.value = true;
-  const desired = !supportLine1Active.value;
-  try {
-    await store.dispatch('accounts/toggleSupportLine', { active: desired });
-  } catch {
-    supportLine1LockedUntil = 0;
-    supportLine1Toggling.value = false;
-    return;
-  }
-  const remaining = supportLine1LockedUntil - Date.now();
-  if (remaining > 0) {
-    setTimeout(() => {
-      supportLine1Toggling.value = false;
-    }, remaining);
-  } else {
-    supportLine1Toggling.value = false;
-  }
-};
 
 const refreshCounts = async () => {
   await store.dispatch('fetchAllConversationsForCounts');
@@ -503,6 +447,13 @@ const menuItems = computed(() => {
       to: accountScopedRoute('todo_list'),
       activeOn: ['todo_list'],
     },
+    {
+      name: 'ClickUpForm',
+      label: t('SIDEBAR.CLICKUP_FORM'),
+      icon: 'i-lucide-clipboard-list',
+      to: accountScopedRoute('clickup_form'),
+      activeOn: ['clickup_form'],
+    },
   ];
 
   if (isAdmin.value || isTelegramOperator.value) {
@@ -707,6 +658,55 @@ const menuItems = computed(() => {
     },
   ];
 });
+
+const SUPPORT_LINE_COOLDOWN = 10000;
+let supportLine1LockedUntil = 0;
+const supportLine1Toggling = ref(false);
+
+const support247TeamId = computed(() => {
+  const accountId = store.getters.getCurrentAccountId;
+  const account = store.getters['accounts/getAccount'](accountId);
+  return account?.settings?.support_247_team_id || null;
+});
+
+const supportL1Enabled = computed(() => {
+  const accountId = store.getters.getCurrentAccountId;
+  const account = store.getters['accounts/getAccount'](accountId);
+  return !!account?.settings?.support_l1_enabled;
+});
+
+const showSupportLine1Toggle = computed(() => {
+  return supportL1Enabled.value && !!support247TeamId.value;
+});
+
+const canToggleSupportLine1 = computed(() => {
+  if (supportLine1Toggling.value) return false;
+  const currentUserVal = store.getters.getCurrentUser;
+  if (currentUserVal?.role === 'administrator') return true;
+  const myTeamIds = (store.getters['teams/getMyTeams'] || []).map(
+    team => team.id
+  );
+  if (myTeamIds.length === 0) return true;
+  return myTeamIds.includes(support247TeamId.value);
+});
+
+const supportLine1Active = computed(() => {
+  const accountId = store.getters.getCurrentAccountId;
+  return !!store.getters['accounts/getAccount'](accountId)?.settings
+    ?.support_line_1_active;
+});
+
+const updateSupportLine1Active = async value => {
+  const now = Date.now();
+  if (now < supportLine1LockedUntil) return;
+  supportLine1Toggling.value = true;
+  supportLine1LockedUntil = now + SUPPORT_LINE_COOLDOWN;
+  try {
+    await store.dispatch('accounts/toggleSupportLine', { active: value });
+  } finally {
+    supportLine1Toggling.value = false;
+  }
+};
 </script>
 
 <template>
@@ -785,10 +785,10 @@ const menuItems = computed(() => {
           <span>{{ t('SIDEBAR.SUPPORT_LINE_1') }}</span>
         </div>
         <Switch
-          v-model="supportLine1Active"
+          :model-value="supportLine1Active"
           size="small"
           :disabled="!canToggleSupportLine1"
-          @change="toggleSupportLine1"
+          @update:model-value="updateSupportLine1Active"
         />
       </div>
       <ul class="flex flex-col gap-1.5 m-0 list-none">

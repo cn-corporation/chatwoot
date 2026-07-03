@@ -122,6 +122,14 @@
           "ERROR": "Failed to update AML team"
         }
       },
+      "SUPPORT_L1_ENABLED": {
+        "TITLE": "Enable Support Line 1",
+        "NOTE": "When enabled, operators can toggle the Support Line 1 mode from the sidebar to route new conversations to the L1 queue instead of the 24/7 team.",
+        "API": {
+          "SUCCESS": "Support Line 1 setting updated successfully",
+          "ERROR": "Failed to update Support Line 1 setting"
+        }
+      },
       "ASSIGNABLE_AGENTS": {
         "TITLE": "Assignable agents",
         "NOTE": "Select which agents can be assigned to conversations. If none selected, all agents will be available.",
