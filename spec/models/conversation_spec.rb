@@ -979,4 +979,72 @@ RSpec.describe Conversation do
       expect(reply_events.count).to eq(0)
     end
   end
+
+  describe 'AML auto-open behavior' do
+    let!(:account) { create(:account) }
+    let!(:support_team) { create(:team, account: account) }
+    let!(:aml_team) { create(:team, account: account) }
+    let(:inbox) { create(:inbox, account: account) }
+    let(:contact) { create(:contact, account: account) }
+    let(:contact_inbox) { create(:contact_inbox, contact: contact, inbox: inbox) }
+
+    before do
+      account.settings['support_247_team_id'] = support_team.id
+      account.settings['aml_team_id'] = aml_team.id
+      account.save!
+    end
+
+    describe '#should_assign_support_247_team?' do
+      it 'is false when the conversation is on the AML team' do
+        conversation = create(:conversation, account: account, inbox: inbox,
+                                             contact: contact, contact_inbox: contact_inbox,
+                                             team: aml_team)
+        expect(conversation.send(:should_assign_support_247_team?)).to be(false)
+      end
+
+      it 'is true when the conversation is on a non-AML team' do
+        conversation = create(:conversation, account: account, inbox: inbox,
+                                             contact: contact, contact_inbox: contact_inbox,
+                                             team: support_team)
+        expect(conversation.send(:should_assign_support_247_team?)).to be(true)
+      end
+    end
+
+    describe 'auto-open on AML team assignment' do
+      let!(:conversation) do
+        create(:conversation, account: account, inbox: inbox, contact: contact,
+                              contact_inbox: contact_inbox, status: 'stand_by', team: support_team)
+      end
+
+      it 'opens a stand_by (waiting) conversation when the team changes to the AML team' do
+        conversation.update!(team: aml_team)
+        expect(conversation.reload.status).to eq('open')
+      end
+
+      it 'keeps the AML team assigned after opening (does not restore support 24/7 team)' do
+        conversation.update!(team: aml_team)
+        expect(conversation.reload.team_id).to eq(aml_team.id)
+      end
+
+      it 'leaves the conversation in stand_by when the team changes to a non-AML team' do
+        other_team = create(:team, account: account)
+        conversation.update!(team: other_team)
+        expect(conversation.reload.status).to eq('stand_by')
+      end
+
+      it 'does not change status when an already-open conversation is assigned to AML' do
+        open_conversation = create(:conversation, account: account, inbox: inbox, contact: contact,
+                                                  contact_inbox: contact_inbox, status: 'open', team: support_team)
+        open_conversation.update!(team: aml_team)
+        expect(open_conversation.reload.status).to eq('open')
+      end
+
+      it 'does not open a pending conversation assigned to AML (only stand_by qualifies)' do
+        pending_conversation = create(:conversation, account: account, inbox: inbox, contact: contact,
+                                                     contact_inbox: contact_inbox, status: 'pending', team: support_team)
+        pending_conversation.update!(team: aml_team)
+        expect(pending_conversation.reload.status).to eq('pending')
+      end
+    end
+  end
 end
