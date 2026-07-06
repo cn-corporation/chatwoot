@@ -100,9 +100,6 @@ export const actions = {
       commit(types.SET_CONVERSATION_EXPORT_UI_FLAG, { isStopping: false });
     }
   },
-  download: async (_, id) => {
-    return ChatwootExtraAPI.downloadConversationExport(id);
-  },
 };
 
 export const mutations = {

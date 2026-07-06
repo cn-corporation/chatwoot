@@ -41,7 +41,7 @@ const LANGUAGES = [
 
 const sourceText = ref('');
 const sourceLang = ref('auto');
-const targetLang = ref('ru');
+const targetLang = ref('kk');
 const translatedText = ref('');
 const detectedLang = ref('');
 const isLoading = ref(false);
