@@ -243,6 +243,7 @@ class Conversation < ApplicationRecord
   def execute_after_update_commit_callbacks
     handle_resolved_status_change
     assign_support_247_team_on_status_change
+    open_stand_by_conversation_on_aml_assignment
     notify_status_change
     create_activity
     notify_conversation_updation
@@ -280,12 +281,28 @@ class Conversation < ApplicationRecord
     # rubocop:enable Rails/SkipsModelValidations
   end
 
+  def open_stand_by_conversation_on_aml_assignment
+    return unless saved_change_to_team_id?
+
+    aml_team_id = account.settings&.dig('aml_team_id')
+    return if aml_team_id.blank?
+    return unless team_id == aml_team_id
+    return unless stand_by?
+
+    update!(status: :open)
+  end
+
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def should_assign_support_247_team?
     return false if account.settings&.dig('support_247_team_id').blank?
     return false if account.settings&.dig('support_l1_enabled') && account.settings&.dig('support_line_1_active')
 
+    aml_team_id = account.settings&.dig('aml_team_id')
+    return false if aml_team_id.present? && team_id == aml_team_id
+
     true
   end
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
   def ensure_snooze_until_reset
     self.snoozed_until = nil unless snoozed?
