@@ -2,6 +2,8 @@ class ConversationFinder
   attr_reader :current_user, :current_account, :params
 
   DEFAULT_STATUS = 'open'.freeze
+  # The sidebar "Mine" view keeps a conversation visible after it is moved to stand_by
+  MINE_STATUSES = %w[open stand_by].freeze
   SORT_OPTIONS = {
     'last_activity_at_asc' => %w[sort_on_last_activity_at asc],
     'last_activity_at_desc' => %w[sort_on_last_activity_at desc],
@@ -167,7 +169,9 @@ class ConversationFinder
   def filter_by_status
     return if params[:status] == 'all'
 
-    @conversations = @conversations.where(status: params[:status] || DEFAULT_STATUS)
+    status = params[:status] || DEFAULT_STATUS
+    status = MINE_STATUSES if params[:conversation_type] == 'mine' && status == DEFAULT_STATUS
+    @conversations = @conversations.where(status: status)
   end
 
   def filter_by_dialogue_segregation

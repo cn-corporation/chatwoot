@@ -22,6 +22,7 @@ import CopilotContainer from 'dashboard/components/copilot/CopilotContainer.vue'
 import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSidebarLauncher.vue';
 import InstallHint from 'dashboard/components-next/install-hint/InstallHint.vue';
 import TelegramDialoguesPopup from 'dashboard/routes/dashboard/telegramDialogues/TelegramDialoguesPopup.vue';
+import ClickUpFormPopup from 'dashboard/routes/dashboard/clickupForm/ClickUpFormPopup.vue';
 import { emitter } from 'shared/helpers/mitt';
 
 export default {
@@ -36,6 +37,7 @@ export default {
     MobileSidebarLauncher,
     InstallHint,
     TelegramDialoguesPopup,
+    ClickUpFormPopup,
   },
   setup() {
     const upgradePageRef = ref(null);
@@ -58,6 +60,7 @@ export default {
       showShortcutModal: false,
       isMobileSidebarOpen: false,
       showTelegramPopup: false,
+      showClickUpPopup: false,
     };
   },
   computed: {
@@ -101,9 +104,11 @@ export default {
   },
   mounted() {
     emitter.on('open-telegram-dialogues-popup', this.openTelegramPopup);
+    emitter.on('open-clickup-form-popup', this.openClickUpPopup);
   },
   beforeUnmount() {
     emitter.off('open-telegram-dialogues-popup', this.openTelegramPopup);
+    emitter.off('open-clickup-form-popup', this.openClickUpPopup);
   },
   methods: {
     toggleMobileSidebar() {
@@ -133,6 +138,12 @@ export default {
     },
     closeTelegramPopup() {
       this.showTelegramPopup = false;
+    },
+    openClickUpPopup() {
+      this.showClickUpPopup = true;
+    },
+    closeClickUpPopup() {
+      this.showClickUpPopup = false;
     },
   },
 };
@@ -187,5 +198,6 @@ export default {
       :show="showTelegramPopup"
       @close="closeTelegramPopup"
     />
+    <ClickUpFormPopup :show="showClickUpPopup" @close="closeClickUpPopup" />
   </div>
 </template>

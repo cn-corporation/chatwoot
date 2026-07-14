@@ -8,6 +8,9 @@ import {
 } from '../../../helper/permissionsHelper';
 import camelcaseKeys from 'camelcase-keys';
 
+// The "Mine" view keeps a conversation visible after it is moved to stand_by
+const MINE_STATUSES = ['open', 'stand_by'];
+
 export const getSelectedChatConversation = ({
   allConversations,
   selectedChatId,
@@ -115,12 +118,16 @@ const getters = {
   },
   getMineChats: (_state, _, __, rootGetters) => activeFilters => {
     const currentUserID = rootGetters.getCurrentUser?.id;
+    const filters =
+      activeFilters.status === 'open'
+        ? { ...activeFilters, status: MINE_STATUSES }
+        : activeFilters;
 
     return _state.allConversations
       .filter(conversation => {
         const { assignee } = conversation.meta;
         const isAssignedToMe = assignee && assignee.id === currentUserID;
-        const shouldFilter = applyPageFilters(conversation, activeFilters);
+        const shouldFilter = applyPageFilters(conversation, filters);
         return isAssignedToMe && shouldFilter;
       })
       .sort((a, b) => sortComparator(a, b, _state.chatSortFilter));
@@ -421,7 +428,9 @@ const getters = {
     return source.filter(conv => {
       if (!passesDialogueSegregation(conv, rootGetters)) return false;
       const assigneeId = conv.assignee_id ?? conv.meta?.assignee?.id;
-      return assigneeId === currentUserId && conv.status === 'open';
+      return (
+        assigneeId === currentUserId && MINE_STATUSES.includes(conv.status)
+      );
     }).length;
   },
 
