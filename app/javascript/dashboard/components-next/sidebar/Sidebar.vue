@@ -451,8 +451,7 @@ const menuItems = computed(() => {
       name: 'ClickUpForm',
       label: t('SIDEBAR.CLICKUP_FORM'),
       icon: 'i-lucide-clipboard-list',
-      to: accountScopedRoute('clickup_form'),
-      activeOn: ['clickup_form'],
+      onClick: () => emitter.emit('open-clickup-form-popup'),
     },
   ];
 
