@@ -409,7 +409,9 @@ class Message < ApplicationRecord
   end
 
   def reopen_resolved_conversation
-    if conversation.inbox.active_bot? || conversation.inbox.channel_type == 'Channel::Telegram'
+    if conversation.inbox.channel_type == 'Channel::Telegram'
+      conversation.open!
+    elsif conversation.inbox.active_bot?
       conversation.pending!
     elsif conversation.inbox.api?
       Current.executed_by = sender if reopened_by_contact?
