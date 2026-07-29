@@ -54,10 +54,6 @@ export const ASSIGNEE_TYPE_TAB_PERMISSIONS = {
     count: 'allCount',
     permissions: ['administrator'], // Only admins can see this tab
   },
-  no_category: {
-    count: 'pendingCount',
-    permissions: [...ROLES, ...CONVERSATION_PERMISSIONS],
-  },
   pending: {
     count: 'pendingCount',
     permissions: [...ROLES, ...CONVERSATION_PERMISSIONS],
