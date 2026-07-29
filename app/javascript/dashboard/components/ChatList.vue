@@ -306,7 +306,6 @@ const assigneeTabItems = computed(() => {
       case 'all-operators':
         count = stats.allCount || 0;
         break;
-      case 'no_category':
       case 'pending':
         count = stats.pendingCount || 0;
         break;
@@ -326,7 +325,7 @@ const assigneeTabItems = computed(() => {
 });
 
 const simplifiedAssigneeTabItems = computed(() => {
-  const operatorEssentialTabs = ['unassigned', 'no_category', 'resolved'];
+  const operatorEssentialTabs = ['unassigned', 'resolved'];
 
   const filteredTabs = assigneeTabItems.value.filter(item =>
     operatorEssentialTabs.includes(item.key)
@@ -338,17 +337,13 @@ const simplifiedAssigneeTabItems = computed(() => {
 const showAssigneeInConversationCard = computed(() => {
   return (
     hasAppliedFiltersOrActiveFolders.value ||
-    activeAssigneeTab.value === wootConstants.ASSIGNEE_TYPE.ALL ||
-    activeAssigneeTab.value === 'no_category'
+    activeAssigneeTab.value === wootConstants.ASSIGNEE_TYPE.ALL
   );
 });
 
 const currentPageFilterKey = computed(() => {
   if (hasAppliedFiltersOrActiveFolders.value) {
     return 'appliedFilters';
-  }
-  if (activeAssigneeTab.value === 'no_category') {
-    return 'pending';
   }
   if (props.conversationType === 'pending') {
     return 'stand_by';
@@ -383,14 +378,9 @@ const conversationFilters = computed(() => {
   let status = activeStatus.value;
   if (activeAssigneeTab.value === 'resolved') {
     status = 'resolved';
-  } else if (activeAssigneeTab.value === 'no_category') {
-    status = 'pending';
   }
 
   let assigneeType = activeAssigneeTab.value;
-  if (assigneeType === 'no_category') {
-    assigneeType = 'all';
-  }
 
   if (props.conversationType === 'mine') {
     assigneeType = 'me';
@@ -467,8 +457,6 @@ const conversationList = computed(() => {
       localConversationList = [...unAssignedChatsList.value(filters)];
     } else if (activeAssigneeTab.value === 'resolved') {
       localConversationList = [...resolvedChatsList.value(filters)];
-    } else if (activeAssigneeTab.value === 'no_category') {
-      localConversationList = [...allChatList.value(filters)];
     } else {
       localConversationList = [...allChatList.value(filters)];
     }

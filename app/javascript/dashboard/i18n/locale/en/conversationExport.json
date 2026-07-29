@@ -10,6 +10,8 @@
     "STOPPED": "Export stopped",
     "DOWNLOAD": "Download CSV",
     "VALIDATION": "Pick both a from and to date, with from on or before to.",
+    "RANGE_VALIDATION": "Dates must be between {min} and {max}. Check the year.",
+    "INVALID_RANGE": "Invalid date range",
     "EMPTY": "No exports yet.",
     "STAGE": {
       "preprocessing": "Preparing…",

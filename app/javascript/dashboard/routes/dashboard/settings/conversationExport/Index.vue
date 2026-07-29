@@ -13,6 +13,10 @@ const store = useStore();
 const getters = useStoreGetters();
 const { t } = useI18n();
 
+const MIN_EXPORT_DATE = '2000-01-01';
+const MAX_EXPORT_DATE = '2100-12-31';
+const DATE_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 const dateFrom = ref('');
 const dateTo = ref('');
 const pollTimer = ref(null);
@@ -65,10 +69,24 @@ onBeforeUnmount(stopPolling);
 const toIsoStart = value => `${value}T00:00:00.000Z`;
 const toIsoEnd = value => `${value}T23:59:59.999Z`;
 
+const isSupportedDate = value =>
+  DATE_INPUT_PATTERN.test(value) &&
+  value >= MIN_EXPORT_DATE &&
+  value <= MAX_EXPORT_DATE;
+
 const startExport = async () => {
   if (!dateFrom.value || !dateTo.value || dateFrom.value > dateTo.value) {
     emitter.emit(BUS_EVENTS.SHOW_TOAST, {
       message: t('CONVERSATION_EXPORT.VALIDATION'),
+    });
+    return;
+  }
+  if (!isSupportedDate(dateFrom.value) || !isSupportedDate(dateTo.value)) {
+    emitter.emit(BUS_EVENTS.SHOW_TOAST, {
+      message: t('CONVERSATION_EXPORT.RANGE_VALIDATION', {
+        min: MIN_EXPORT_DATE,
+        max: MAX_EXPORT_DATE,
+      }),
     });
     return;
   }
@@ -124,10 +142,14 @@ const downloadExport = async record => {
 };
 
 const formatDateTime = value => (value ? new Date(value).toLocaleString() : '');
-const formatRange = record =>
-  `${new Date(record.dateFrom).toLocaleDateString()} – ${new Date(
+const formatRange = record => {
+  if (record.hasInvalidDateRange || !record.dateFrom || !record.dateTo) {
+    return t('CONVERSATION_EXPORT.INVALID_RANGE');
+  }
+  return `${new Date(record.dateFrom).toLocaleDateString()} – ${new Date(
     record.dateTo
   ).toLocaleDateString()}`;
+};
 
 const stageLabel = stage => {
   switch (stage) {
@@ -176,6 +198,8 @@ const statusLabel = status => {
             <input
               v-model="dateFrom"
               type="date"
+              :min="MIN_EXPORT_DATE"
+              :max="MAX_EXPORT_DATE"
               class="px-3 py-2 border border-n-slate-6 rounded-lg"
             />
           </div>
@@ -186,6 +210,8 @@ const statusLabel = status => {
             <input
               v-model="dateTo"
               type="date"
+              :min="MIN_EXPORT_DATE"
+              :max="MAX_EXPORT_DATE"
               class="px-3 py-2 border border-n-slate-6 rounded-lg"
             />
           </div>
@@ -284,7 +310,12 @@ const statusLabel = status => {
               :key="record.id"
               class="hover:bg-n-slate-2"
             >
-              <td class="py-3 text-sm">{{ formatRange(record) }}</td>
+              <td
+                class="py-3 text-sm"
+                :class="{ 'text-n-ruby-11': record.hasInvalidDateRange }"
+              >
+                {{ formatRange(record) }}
+              </td>
               <td class="py-3 text-sm">
                 {{ formatDateTime(record.createdAt) }}
               </td>
