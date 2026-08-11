@@ -304,6 +304,7 @@
       "EDIT": "Edit",
       "DELETE": "Delete",
       "CREATE_A_CANNED_RESPONSE": "Add to canned responses",
+      "CREATE_A_PERSONAL_CANNED_RESPONSE": "Add to personal canned responses",
       "TRANSLATE": "Translate",
       "COPY_PERMALINK": "Copy link to the message",
       "LINK_COPIED": "Message URL copied to the clipboard",

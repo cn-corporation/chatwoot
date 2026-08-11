@@ -3,23 +3,20 @@ import { useAlert } from 'dashboard/composables';
 import { mapGetters } from 'vuex';
 import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
 import ContextMenu from 'dashboard/components/ui/ContextMenu.vue';
-import AddCannedModal from 'dashboard/routes/dashboard/settings/canned/AddCanned.vue';
+import AddPersonalCannedModal from 'dashboard/routes/dashboard/settings/personalCanned/AddPersonalCanned.vue';
 import { useSnakeCase } from 'dashboard/composables/useTransformKeys';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { emitter } from 'shared/helpers/mitt';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { conversationUrl, frontendURL } from '../../../helper/URLHelper';
-import {
-  ACCOUNT_EVENTS,
-  CONVERSATION_EVENTS,
-} from '../../../helper/AnalyticsHelper/events';
+import { CONVERSATION_EVENTS } from '../../../helper/AnalyticsHelper/events';
 import MenuItem from '../../../components/widgets/conversation/contextMenu/menuItem.vue';
 import { useTrack } from 'dashboard/composables';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 
 export default {
   components: {
-    AddCannedModal,
+    AddPersonalCannedModal,
     MenuItem,
     ContextMenu,
     NextButton,
@@ -56,7 +53,7 @@ export default {
   },
   data() {
     return {
-      isCannedResponseModalOpen: false,
+      isPersonalCannedResponseModalOpen: false,
       showDeleteModal: false,
     };
   },
@@ -103,12 +100,11 @@ export default {
       useAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
       this.handleClose();
     },
-    showCannedResponseModal() {
-      useTrack(ACCOUNT_EVENTS.ADDED_TO_CANNED_RESPONSE);
-      this.isCannedResponseModalOpen = true;
+    showPersonalCannedResponseModal() {
+      this.isPersonalCannedResponseModalOpen = true;
     },
-    hideCannedResponseModal() {
-      this.isCannedResponseModalOpen = false;
+    hidePersonalCannedResponseModal() {
+      this.isPersonalCannedResponseModalOpen = false;
       this.handleClose();
     },
     handleOpen(e) {
@@ -155,15 +151,17 @@ export default {
 
 <template>
   <div class="context-menu">
-    <!-- Add To Canned Responses -->
+    <!-- Add To Personal Canned Responses -->
     <woot-modal
-      v-if="isCannedResponseModalOpen && enabledOptions['cannedResponse']"
-      v-model:show="isCannedResponseModalOpen"
-      :on-close="hideCannedResponseModal"
+      v-if="
+        isPersonalCannedResponseModalOpen && enabledOptions['cannedResponse']
+      "
+      v-model:show="isPersonalCannedResponseModalOpen"
+      :on-close="hidePersonalCannedResponseModal"
     >
-      <AddCannedModal
+      <AddPersonalCannedModal
         :response-content="plainTextContent"
-        :on-close="hideCannedResponseModal"
+        :on-close="hidePersonalCannedResponseModal"
       />
     </woot-modal>
     <!-- Confirm Deletion -->
@@ -188,7 +186,7 @@ export default {
       @click="handleOpen"
     />
     <ContextMenu
-      v-if="isOpen && !isCannedResponseModalOpen"
+      v-if="isOpen && !isPersonalCannedResponseModalOpen"
       :x="contextMenuPosition.x"
       :y="contextMenuPosition.y"
       @close="handleClose"
@@ -244,10 +242,12 @@ export default {
           v-if="enabledOptions['cannedResponse']"
           :option="{
             icon: 'comment-add',
-            label: $t('CONVERSATION.CONTEXT_MENU.CREATE_A_CANNED_RESPONSE'),
+            label: $t(
+              'CONVERSATION.CONTEXT_MENU.CREATE_A_PERSONAL_CANNED_RESPONSE'
+            ),
           }"
           variant="icon"
-          @click.stop="showCannedResponseModal"
+          @click.stop="showPersonalCannedResponseModal"
         />
         <hr v-if="enabledOptions['delete']" />
         <MenuItem
