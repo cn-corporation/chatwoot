@@ -4,14 +4,20 @@ import { useI18n } from 'vue-i18n';
 import ReportHeader from './components/ReportHeader.vue';
 import OperatorStatusOnline from './components/OperatorStatusOnline.vue';
 import OperatorStatusSessions from './components/OperatorStatusSessions.vue';
+import OperatorPayrollSettings from './components/OperatorPayrollSettings.vue';
 
 const { t } = useI18n();
 const activeTab = ref('online');
 const sessionsKey = ref(0);
 
+const openPayrollSettings = () => {
+  activeTab.value = 'payroll';
+};
+
 const tabs = computed(() => [
   { key: 'online', label: t('REPORT.OPERATOR_STATUS_PAGE.TAB_ONLINE') },
   { key: 'sessions', label: t('REPORT.OPERATOR_STATUS_PAGE.TAB_SESSIONS') },
+  { key: 'payroll', label: t('REPORT.OPERATOR_STATUS_PAGE.TAB_PAYROLL') },
 ]);
 </script>
 
@@ -32,13 +38,23 @@ const tabs = computed(() => [
             ? 'border-woot-500 text-woot-500'
             : 'border-transparent text-n-slate-11 hover:text-n-slate-12'
         "
-        @click="() => { activeTab = tab.key; if (tab.key === 'sessions') sessionsKey++; }"
+        @click="
+          () => {
+            activeTab = tab.key;
+            if (tab.key === 'sessions') sessionsKey++;
+          }
+        "
       >
         {{ tab.label }}
       </button>
     </div>
 
     <OperatorStatusOnline v-if="activeTab === 'online'" />
-    <OperatorStatusSessions v-if="activeTab === 'sessions'" :key="sessionsKey" />
+    <OperatorStatusSessions
+      v-if="activeTab === 'sessions'"
+      :key="sessionsKey"
+      @open-payroll="openPayrollSettings"
+    />
+    <OperatorPayrollSettings v-if="activeTab === 'payroll'" />
   </div>
 </template>

@@ -130,6 +130,7 @@
       "DESCRIPTION": "Track operator online status and work session history.",
       "TAB_ONLINE": "Online Now",
       "TAB_SESSIONS": "Work Sessions",
+      "TAB_PAYROLL": "Shift rates",
       "LOADING": "Loading...",
       "STATE": {
         "ONLINE": "Online",
@@ -145,6 +146,12 @@
         "NOW": "Now"
       },
       "FILTERS": {
+        "DATE_FILTER": "Filter by",
+        "DATE_RANGE": "Report period",
+        "DATE_RANGE_HINT": "Choose a calendar month or enter exact dates.",
+        "PERIOD": "Date range",
+        "CUSTOM_PERIOD": "Custom period",
+        "MONTH": "Month",
         "START_DATE": "Start Date",
         "END_DATE": "End Date",
         "OPERATORS": "Operators",
@@ -154,6 +161,48 @@
         "SEARCH_PLACEHOLDER": "Search...",
         "NO_RESULTS": "No results",
         "APPLY": "Apply"
+      },
+      "EXPORT": {
+        "ACTION": "Generate detailed Excel",
+        "EXPORTING": "Preparing Excel...",
+        "SUCCESS": "Detailed payroll report downloaded.",
+        "ERROR": "We couldn't create the detailed payroll report. Please try again."
+      },
+      "PAYROLL": {
+        "TITLE": "Shift rates and periods",
+        "DESCRIPTION": "Set the daily time periods and USD hourly rate for each shift type. A report always pays actual worked time, including when the session is shorter than its shift type.",
+        "NEW_GROUP": "New operator group",
+        "GROUP_NAME": "Group name",
+        "GROUP_NAME_PLACEHOLDER": "e.g. Night support team",
+        "OPERATORS": "Operators in this group",
+        "OPERATORS_HINT": "Only unassigned operators are available. A named group may be saved empty and reused later.",
+        "OPERATORS_PLACEHOLDER": "Choose operators",
+        "OPERATORS_SEARCH": "Search operators",
+        "OPERATORS_EMPTY": "No operators are available. Check that the Chatwoot Extra service is connected.",
+        "ALL_OPERATORS_ASSIGNED": "All operators already belong to rate groups.",
+        "RATES_UNAVAILABLE": "The rate groups are unavailable. Apply the payroll migrations, then reload this page.",
+        "EIGHT_HOUR_RULE": "8-hour shift",
+        "EIGHT_HOUR_RULE_DESCRIPTION": "Sessions lasting up to 8 hours and 30 minutes use the 8-hour rates.",
+        "TWELVE_HOUR_RULE": "12-hour shift",
+        "TWELVE_HOUR_RULE_DESCRIPTION": "Any longer session uses the 12-hour rates for all of its actual worked hours.",
+        "PERIOD": "Period",
+        "START": "Starts",
+        "END": "Ends",
+        "EIGHT_HOUR_RATE": "8-hour rate, USD/hr",
+        "TWELVE_HOUR_RATE": "12-hour rate, USD/hr",
+        "PERIODS": {
+          "morning": "Morning",
+          "noon": "Noon",
+          "evening": "Evening",
+          "night": "Night"
+        },
+        "COVERAGE_HINT": "Periods must cover the full 24 hours without overlaps. A period can continue after midnight.",
+        "SAVE": "Save group rates",
+        "OPEN_SETTINGS": "Configure shift rates",
+        "SAVING": "Saving...",
+        "SAVED": "Shift rates saved.",
+        "LOAD_ERROR": "We couldn't load the shift rates. Please refresh and try again.",
+        "SAVE_ERROR": "Enter a group name and check that periods cover a full day without overlaps."
       },
       "METRICS": {
         "TOTAL_HOURS": "Total Hours",
