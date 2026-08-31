@@ -2,10 +2,12 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStore } from 'dashboard/composables/store';
-import { format, subDays } from 'date-fns';
+import { useAlert } from 'dashboard/composables';
+import { endOfMonth, format, subDays } from 'date-fns';
 import ChatwootExtraAPI from 'dashboard/api/chatwootExtra';
 
 const { t } = useI18n();
+const emit = defineEmits(['open-payroll']);
 const store = useStore();
 const caretDown = '▾';
 const checkMark = '✓';
@@ -14,10 +16,13 @@ const caretCollapsed = '▶';
 const minHoursPlaceholder = '0';
 const rightArrow = '→';
 const isLoading = ref(false);
+const isExporting = ref(false);
 const reportData = ref([]);
 const operatorOptions = ref([]);
 const selectedOperators = ref([]);
 const minHours = ref('');
+const dateFilterType = ref('period');
+const selectedMonth = ref(format(new Date(), 'yyyy-MM'));
 const dateRange = ref({
   start: format(subDays(new Date(), 18), 'yyyy-MM-dd'),
   end: format(new Date(), 'yyyy-MM-dd'),
@@ -123,30 +128,72 @@ const fetchOperatorOptions = async () => {
   }
 };
 
+const buildReportParams = () => {
+  const selectedRange = getSelectedRange();
+  const params = {
+    startDate: selectedRange.start,
+    endDate: selectedRange.end,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  };
+
+  if (selectedOperators.value.length > 0) {
+    params.operatorIds = selectedOperators.value
+      .map(op => op.value || op)
+      .join(',');
+  }
+
+  if (minHours.value) {
+    params.minHours = minHours.value;
+  }
+
+  return params;
+};
+
+const getSelectedRange = () => {
+  if (dateFilterType.value === 'month' && selectedMonth.value) {
+    const monthDate = new Date(`${selectedMonth.value}-01T00:00:00`);
+    return {
+      start: format(monthDate, 'yyyy-MM-dd'),
+      end: format(endOfMonth(monthDate), 'yyyy-MM-dd'),
+    };
+  }
+  return dateRange.value;
+};
+
 const fetchReport = async () => {
   isLoading.value = true;
   try {
-    const params = {
-      startDate: dateRange.value.start,
-      endDate: dateRange.value.end,
-    };
-
-    if (selectedOperators.value.length > 0) {
-      params.operatorIds = selectedOperators.value
-        .map(op => op.value || op)
-        .join(',');
-    }
-
-    if (minHours.value) {
-      params.minHours = minHours.value;
-    }
-
-    const res = await ChatwootExtraAPI.getOperatorStatusReport(params);
+    const res =
+      await ChatwootExtraAPI.getOperatorStatusReport(buildReportParams());
     reportData.value = res?.data?.operators || [];
   } catch {
     reportData.value = [];
   } finally {
     isLoading.value = false;
+  }
+};
+
+const downloadShiftReport = async () => {
+  isExporting.value = true;
+  try {
+    const selectedRange = getSelectedRange();
+    const data =
+      await ChatwootExtraAPI.downloadOperatorShiftReport(buildReportParams());
+    const blob = new Blob([data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `operator-payroll-${selectedRange.start}-${selectedRange.end}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(link.href);
+    useAlert(t('REPORT.OPERATOR_STATUS_PAGE.EXPORT.SUCCESS'));
+  } catch {
+    useAlert(t('REPORT.OPERATOR_STATUS_PAGE.EXPORT.ERROR'));
+  } finally {
+    isExporting.value = false;
   }
 };
 
@@ -159,102 +206,180 @@ onMounted(async () => {
 
 <template>
   <div class="flex flex-col gap-6">
-    <div class="flex flex-col gap-3 p-4 rounded-lg bg-n-slate-2">
-      <div class="flex flex-wrap items-end gap-4">
-        <div>
-          <label class="block mb-1 text-xs font-medium text-n-slate-11">
-            {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.START_DATE') }}
-          </label>
-          <input
-            v-model="dateRange.start"
-            type="date"
-            class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
-          />
-        </div>
-        <div>
-          <label class="block mb-1 text-xs font-medium text-n-slate-11">
-            {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.END_DATE') }}
-          </label>
-          <input
-            v-model="dateRange.end"
-            type="date"
-            class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
-          />
-        </div>
-        <div ref="dropdownRef" class="relative">
-          <label class="block mb-1 text-xs font-medium text-n-slate-11">
-            {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.OPERATORS') }}
-          </label>
-          <button
-            type="button"
-            class="flex items-center justify-between h-9 w-[220px] px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
-            @click="dropdownOpen = !dropdownOpen"
-          >
-            <span class="truncate">{{ operatorButtonLabel }}</span>
-            <span class="ml-2 text-n-slate-9" aria-hidden="true">{{
-              caretDown
-            }}</span>
-          </button>
+    <div class="rounded-lg border border-n-slate-3 bg-n-slate-2 p-4">
+      <div class="flex flex-col gap-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p class="text-sm font-medium text-n-slate-12">
+              {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.DATE_RANGE') }}
+            </p>
+            <p class="mt-0.5 text-xs text-n-slate-10">
+              {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.DATE_RANGE_HINT') }}
+            </p>
+          </div>
           <div
-            v-if="dropdownOpen"
-            class="absolute z-50 mt-1 w-[220px] rounded-md border border-n-slate-4 bg-n-background shadow-lg"
+            class="inline-flex rounded-md border border-n-slate-4 bg-n-background p-0.5"
+            role="group"
+            :aria-label="t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.DATE_RANGE')"
           >
-            <div class="p-1.5 border-b border-n-slate-3">
-              <input
-                v-model="dropdownSearch"
-                type="text"
-                :placeholder="
-                  t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.SEARCH_PLACEHOLDER')
-                "
-                class="w-full px-2 py-1 text-sm border rounded border-n-slate-4 bg-n-background text-n-slate-12"
-              />
-            </div>
-            <ul class="max-h-[200px] overflow-y-auto py-1">
-              <li
-                v-for="op in filteredOperatorOptions"
-                :key="op.value"
-                class="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-n-slate-2 text-n-slate-12"
-                @click="toggleOperator(op)"
-              >
-                <span
-                  class="flex items-center justify-center w-4 h-4 border rounded border-n-slate-6"
-                  :class="{ 'bg-woot-500 border-woot-500': isSelected(op) }"
-                >
-                  <span v-if="isSelected(op)" class="text-white text-xs">{{
-                    checkMark
-                  }}</span>
-                </span>
-                <span class="truncate">{{ op.label }}</span>
-              </li>
-              <li
-                v-if="!filteredOperatorOptions.length"
-                class="px-3 py-1.5 text-sm text-n-slate-9"
-              >
-                {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.NO_RESULTS') }}
-              </li>
-            </ul>
+            <button
+              type="button"
+              class="h-8 rounded px-3 text-sm font-medium transition-colors"
+              :class="
+                dateFilterType === 'month'
+                  ? 'bg-woot-500 text-white'
+                  : 'text-n-slate-11 hover:bg-n-slate-2 hover:text-n-slate-12'
+              "
+              :aria-pressed="dateFilterType === 'month'"
+              @click="dateFilterType = 'month'"
+            >
+              {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.MONTH') }}
+            </button>
+            <button
+              type="button"
+              class="h-8 rounded px-3 text-sm font-medium transition-colors"
+              :class="
+                dateFilterType === 'period'
+                  ? 'bg-woot-500 text-white'
+                  : 'text-n-slate-11 hover:bg-n-slate-2 hover:text-n-slate-12'
+              "
+              :aria-pressed="dateFilterType === 'period'"
+              @click="dateFilterType = 'period'"
+            >
+              {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.CUSTOM_PERIOD') }}
+            </button>
           </div>
         </div>
-        <div>
-          <label class="block mb-1 text-xs font-medium text-n-slate-11">
-            {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.MIN_HOURS') }}
-          </label>
-          <input
-            v-model="minHours"
-            type="number"
-            min="0"
-            step="0.5"
-            :placeholder="minHoursPlaceholder"
-            class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12 w-20"
-          />
+
+        <div class="flex flex-wrap items-end gap-4">
+          <div v-if="dateFilterType === 'month'" class="w-full sm:w-[13rem]">
+            <label
+              class="mb-1 block text-xs font-medium text-n-slate-11"
+              for="operator-report-month"
+            >
+              {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.MONTH') }}
+            </label>
+            <input
+              id="operator-report-month"
+              v-model="selectedMonth"
+              type="month"
+              class="no-margin block h-9 w-full rounded-md border border-n-slate-4 bg-n-background px-3 text-sm text-n-slate-12"
+            />
+          </div>
+          <template v-else>
+            <div class="w-full sm:w-[13rem]">
+              <label class="mb-1 block text-xs font-medium text-n-slate-11">
+                {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.START_DATE') }}
+              </label>
+              <input
+                v-model="dateRange.start"
+                type="date"
+                class="no-margin block h-9 w-full rounded-md border border-n-slate-4 bg-n-background px-3 text-sm text-n-slate-12"
+              />
+            </div>
+            <div class="w-full sm:w-[13rem]">
+              <label class="mb-1 block text-xs font-medium text-n-slate-11">
+                {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.END_DATE') }}
+              </label>
+              <input
+                v-model="dateRange.end"
+                type="date"
+                class="no-margin block h-9 w-full rounded-md border border-n-slate-4 bg-n-background px-3 text-sm text-n-slate-12"
+              />
+            </div>
+          </template>
+          <div ref="dropdownRef" class="relative">
+            <label class="block mb-1 text-xs font-medium text-n-slate-11">
+              {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.OPERATORS') }}
+            </label>
+            <button
+              type="button"
+              class="flex items-center justify-between h-9 w-[220px] px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12"
+              @click="dropdownOpen = !dropdownOpen"
+            >
+              <span class="truncate">{{ operatorButtonLabel }}</span>
+              <span class="ml-2 text-n-slate-9" aria-hidden="true">{{
+                caretDown
+              }}</span>
+            </button>
+            <div
+              v-if="dropdownOpen"
+              class="absolute z-50 mt-1 w-[220px] rounded-md border border-n-slate-4 bg-n-background shadow-lg"
+            >
+              <div class="p-1.5 border-b border-n-slate-3">
+                <input
+                  v-model="dropdownSearch"
+                  type="text"
+                  :placeholder="
+                    t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.SEARCH_PLACEHOLDER')
+                  "
+                  class="w-full px-2 py-1 text-sm border rounded border-n-slate-4 bg-n-background text-n-slate-12"
+                />
+              </div>
+              <ul class="max-h-[200px] overflow-y-auto py-1">
+                <li
+                  v-for="op in filteredOperatorOptions"
+                  :key="op.value"
+                  class="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-n-slate-2 text-n-slate-12"
+                  @click="toggleOperator(op)"
+                >
+                  <span
+                    class="flex items-center justify-center w-4 h-4 border rounded border-n-slate-6"
+                    :class="{ 'bg-woot-500 border-woot-500': isSelected(op) }"
+                  >
+                    <span v-if="isSelected(op)" class="text-white text-xs">{{
+                      checkMark
+                    }}</span>
+                  </span>
+                  <span class="truncate">{{ op.label }}</span>
+                </li>
+                <li
+                  v-if="!filteredOperatorOptions.length"
+                  class="px-3 py-1.5 text-sm text-n-slate-9"
+                >
+                  {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.NO_RESULTS') }}
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div>
+            <label class="block mb-1 text-xs font-medium text-n-slate-11">
+              {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.MIN_HOURS') }}
+            </label>
+            <input
+              v-model="minHours"
+              type="number"
+              min="0"
+              step="0.5"
+              :placeholder="minHoursPlaceholder"
+              class="no-margin block h-9 px-3 text-sm border rounded-md border-n-slate-4 bg-n-background text-n-slate-12 w-20"
+            />
+          </div>
+          <div class="flex flex-wrap items-center gap-2 sm:ml-auto">
+            <button
+              class="h-9 px-4 text-sm font-medium text-white rounded-md bg-woot-500 hover:bg-woot-600"
+              @click="fetchReport"
+            >
+              {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.APPLY') }}
+            </button>
+            <button
+              class="h-9 px-4 text-sm font-medium rounded-md border border-n-slate-5 bg-n-background text-n-slate-12 hover:bg-n-slate-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="isExporting"
+              @click="downloadShiftReport"
+            >
+              {{
+                isExporting
+                  ? t('REPORT.OPERATOR_STATUS_PAGE.EXPORT.EXPORTING')
+                  : t('REPORT.OPERATOR_STATUS_PAGE.EXPORT.ACTION')
+              }}
+            </button>
+          </div>
         </div>
-      </div>
-      <div>
         <button
-          class="h-9 px-4 text-sm font-medium text-white rounded-md bg-woot-500 hover:bg-woot-600"
-          @click="fetchReport"
+          class="self-start text-sm font-medium text-woot-600 hover:text-woot-700"
+          @click="emit('open-payroll')"
         >
-          {{ t('REPORT.OPERATOR_STATUS_PAGE.FILTERS.APPLY') }}
+          {{ t('REPORT.OPERATOR_STATUS_PAGE.PAYROLL.OPEN_SETTINGS') }}
         </button>
       </div>
     </div>

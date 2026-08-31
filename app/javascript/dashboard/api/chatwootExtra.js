@@ -1021,6 +1021,31 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async downloadOperatorShiftReport(params = {}) {
+    const response = await axios.get(
+      `${this.baseURL}/api/operator-status/shift-report`,
+      { params, headers: this.headers, responseType: 'blob' }
+    );
+    return response.data;
+  }
+
+  async getOperatorPayrollSettings() {
+    const response = await axios.get(
+      `${this.baseURL}/api/operator-status/payroll-settings`,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
+  async updateOperatorPayrollSettings(payload) {
+    const response = await axios.put(
+      `${this.baseURL}/api/operator-status/payroll-settings`,
+      payload,
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   async getOperatorsList() {
     const response = await axios.get(
       `${this.baseURL}/api/operator-status/operators`,
