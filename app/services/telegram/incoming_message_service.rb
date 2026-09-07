@@ -97,17 +97,7 @@ class Telegram::IncomingMessageService
   end
 
   def dispatch_callback_webhook
-    payload = {
-      event: 'message_created_with_context',
-      id: 0,
-      content: telegram_params_message_content,
-      message_type: 'incoming',
-      content_attributes: telegram_params_content_attributes,
-      created_at: Time.zone.now.to_s,
-      conversation: @conversation.webhook_data,
-      account: @conversation.account.webhook_data,
-      inbox: inbox.webhook_data
-    }
+    payload = @message.webhook_data.merge(event: 'message_created_with_context')
 
     @conversation.account.webhooks.account_type.each do |webhook|
       next unless webhook.subscriptions.include?('message_created_with_context')

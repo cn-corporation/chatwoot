@@ -73,5 +73,23 @@ describe MessageFinder do
         expect(result.last.id).to be conversation.messages[-2].id
       end
     end
+
+    context 'with sort_by_id for cursor-safe exports' do
+      let(:params) { { sort_by_id: true } }
+
+      before do
+        20.times do
+          create(:message, account: account, inbox: inbox, conversation: conversation)
+        end
+        create(:message, account: account, inbox: inbox, conversation: conversation, created_at: 1.year.ago)
+      end
+
+      it 'returns every message across id-cursor pages when timestamps are out of id order' do
+        latest = message_finder.perform
+        older = described_class.new(conversation, before: latest.map(&:id).min, sort_by_id: true).perform
+
+        expect((older + latest).map(&:id)).to eq conversation.messages.reorder(:id).pluck(:id)
+      end
+    end
   end
 end
