@@ -52,10 +52,22 @@ class AgentNotifications::ConversationNotificationsMailer < ApplicationMailer
     @conversation = conversation
     subject = "#{@agent.available_name}, New message in your participating conversation [ID - #{@conversation.display_id}]."
     @action_url = app_account_conversation_url(account_id: @conversation.account_id, id: @conversation.display_id)
+    return if params[:retention_session_id] && !set_retention_link(conversation, agent)
+
     send_mail_with_liquid(to: @agent.email, subject: subject) and return
   end
 
   private
+
+  def set_retention_link(conversation, agent)
+    return false unless Retention::Access.new(conversation.account, agent).conversations.exists?(conversation.id)
+
+    session = conversation.retention_sessions.find(params[:retention_session_id])
+    query = session.snapshot_id ? { snapshot: session.snapshot_id } : { conversation: conversation.display_id }
+    path = "/app/accounts/#{conversation.account_id}/retention?#{query.to_query}"
+    @action_url = URI.join(ENV.fetch('FRONTEND_URL', 'http://localhost:3000'), path).to_s
+    true
+  end
 
   def liquid_droppables
     super.merge({

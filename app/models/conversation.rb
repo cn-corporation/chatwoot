@@ -2,55 +2,64 @@
 #
 # Table name: conversations
 #
-#  id                     :integer          not null, primary key
-#  additional_attributes  :jsonb
-#  agent_last_seen_at     :datetime
-#  assignee_last_seen_at  :datetime
-#  cached_label_list      :text
-#  contact_last_seen_at   :datetime
-#  custom_attributes      :jsonb
-#  first_reply_created_at :datetime
-#  identifier             :string
-#  last_activity_at       :datetime         not null
-#  priority               :integer
-#  resolution_reason      :integer
-#  snoozed_until          :datetime
-#  status                 :integer          default("open"), not null
-#  uuid                   :uuid             not null
-#  waiting_since          :datetime
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  account_id             :integer          not null
-#  assignee_agent_bot_id  :bigint
-#  assignee_id            :integer
-#  campaign_id            :bigint
-#  contact_id             :bigint
-#  contact_inbox_id       :bigint
-#  display_id             :integer          not null
-#  inbox_id               :integer          not null
-#  sla_policy_id          :bigint
-#  team_id                :bigint
+#  id                          :integer          not null, primary key
+#  additional_attributes       :jsonb
+#  agent_last_seen_at          :datetime
+#  assignee_last_seen_at       :datetime
+#  cached_label_list           :text
+#  contact_last_seen_at        :datetime
+#  custom_attributes           :jsonb
+#  first_reply_created_at      :datetime
+#  identifier                  :string
+#  last_activity_at            :datetime         not null
+#  priority                    :integer
+#  resolution_reason           :integer
+#  retention_archived_at       :datetime
+#  snoozed_until               :datetime
+#  status                      :integer          default("open"), not null
+#  support_started_at          :datetime
+#  uuid                        :uuid             not null
+#  waiting_since               :datetime
+#  workflow_epoch              :integer          default(0), not null
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  account_id                  :integer          not null
+#  active_retention_session_id :bigint
+#  assignee_agent_bot_id       :bigint
+#  assignee_id                 :integer
+#  campaign_id                 :bigint
+#  contact_id                  :bigint
+#  contact_inbox_id            :bigint
+#  display_id                  :integer          not null
+#  inbox_id                    :integer          not null
+#  sla_policy_id               :bigint
+#  team_id                     :bigint
 #
 # Indexes
 #
-#  conv_acid_inbid_stat_asgnid_idx                    (account_id,inbox_id,status,assignee_id)
-#  index_conversations_on_account_id                  (account_id)
-#  index_conversations_on_account_id_and_display_id   (account_id,display_id) UNIQUE
-#  index_conversations_on_assignee_id_and_account_id  (assignee_id,account_id)
-#  index_conversations_on_campaign_id                 (campaign_id)
-#  index_conversations_on_contact_id                  (contact_id)
-#  index_conversations_on_contact_inbox_id            (contact_inbox_id)
-#  index_conversations_on_first_reply_created_at      (first_reply_created_at)
-#  index_conversations_on_id_and_account_id           (account_id,id)
-#  index_conversations_on_identifier_and_account_id   (identifier,account_id)
-#  index_conversations_on_inbox_id                    (inbox_id)
-#  index_conversations_on_priority                    (priority)
-#  index_conversations_on_resolution_reason           (resolution_reason)
-#  index_conversations_on_status_and_account_id       (status,account_id)
-#  index_conversations_on_status_and_priority         (status,priority)
-#  index_conversations_on_team_id                     (team_id)
-#  index_conversations_on_uuid                        (uuid) UNIQUE
-#  index_conversations_on_waiting_since               (waiting_since)
+#  conv_acid_inbid_stat_asgnid_idx                     (account_id,inbox_id,status,assignee_id)
+#  index_conversations_on_account_id                   (account_id)
+#  index_conversations_on_account_id_and_display_id    (account_id,display_id) UNIQUE
+#  index_conversations_on_active_retention_session_id  (active_retention_session_id)
+#  index_conversations_on_assignee_id_and_account_id   (assignee_id,account_id)
+#  index_conversations_on_campaign_id                  (campaign_id)
+#  index_conversations_on_contact_id                   (contact_id)
+#  index_conversations_on_contact_inbox_id             (contact_inbox_id)
+#  index_conversations_on_first_reply_created_at       (first_reply_created_at)
+#  index_conversations_on_id_and_account_id            (account_id,id)
+#  index_conversations_on_identifier_and_account_id    (identifier,account_id)
+#  index_conversations_on_inbox_id                     (inbox_id)
+#  index_conversations_on_priority                     (priority)
+#  index_conversations_on_resolution_reason            (resolution_reason)
+#  index_conversations_on_status_and_account_id        (status,account_id)
+#  index_conversations_on_status_and_priority          (status,priority)
+#  index_conversations_on_team_id                      (team_id)
+#  index_conversations_on_uuid                         (uuid) UNIQUE
+#  index_conversations_on_waiting_since                (waiting_since)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (active_retention_session_id => retention_sessions.id)
 #
 
 class Conversation < ApplicationRecord
@@ -65,11 +74,23 @@ class Conversation < ApplicationRecord
   include ConversationMuteHelpers
   include AgentAssignmentLogger
 
+  belongs_to :active_retention_session, class_name: 'RetentionSession', optional: true
+  has_many :retention_sessions, dependent: :restrict_with_error
+  scope :support, -> { where(active_retention_session_id: nil) }
+  before_validation :validate_additional_attributes
+  before_validation :reset_agent_bot_when_assignee_present
+  before_save :ensure_snooze_until_reset
+  before_create :determine_conversation_status
+  before_create :ensure_waiting_since
+  around_update :guard_retention_update
+
+  def retention_active?
+    active_retention_session_id.present?
+  end
+
   validates :account_id, presence: true
   validates :inbox_id, presence: true
   validates :contact_id, presence: true
-  before_validation :validate_additional_attributes
-  before_validation :reset_agent_bot_when_assignee_present
   validates :additional_attributes, jsonb_attributes_length: true
   validates :custom_attributes, jsonb_attributes_length: true
   validates :uuid, uniqueness: true
@@ -93,12 +114,12 @@ class Conversation < ApplicationRecord
   scope :resolvable_not_waiting, lambda { |auto_resolve_after|
     return none if auto_resolve_after.to_i.zero?
 
-    open.where('last_activity_at < ? AND waiting_since IS NULL', Time.now.utc - auto_resolve_after.minutes)
+    support.open.where('last_activity_at < ? AND waiting_since IS NULL', Time.now.utc - auto_resolve_after.minutes)
   }
   scope :resolvable_all, lambda { |auto_resolve_after|
     return none if auto_resolve_after.to_i.zero?
 
-    open.where('last_activity_at < ?', Time.now.utc - auto_resolve_after.minutes)
+    support.open.where('last_activity_at < ?', Time.now.utc - auto_resolve_after.minutes)
   }
 
   scope :last_user_message_at, lambda {
@@ -124,10 +145,6 @@ class Conversation < ApplicationRecord
   has_many :notifications, as: :primary_actor, dependent: :destroy_async
   has_many :attachments, through: :messages
   has_many :reporting_events, dependent: :destroy_async
-
-  before_save :ensure_snooze_until_reset
-  before_create :determine_conversation_status
-  before_create :ensure_waiting_since
 
   after_update_commit :execute_after_update_commit_callbacks
   after_create_commit :notify_conversation_creation
@@ -240,7 +257,18 @@ class Conversation < ApplicationRecord
 
   private
 
+  def guard_retention_update
+    current_state = self.class.lock.find(id)
+    if current_state.retention_active? || current_state.workflow_epoch != workflow_epoch
+      raise Retention::Workflow::Conflict, I18n.t('retention.errors.active')
+    end
+
+    yield
+  end
+
   def execute_after_update_commit_callbacks
+    return if retention_active?
+
     handle_resolved_status_change
     assign_support_247_team_on_status_change
     open_stand_by_conversation_on_aml_assignment
@@ -261,6 +289,8 @@ class Conversation < ApplicationRecord
   end
 
   def assign_support_247_team
+    return if retention_active?
+
     return unless should_assign_support_247_team?
 
     # rubocop:disable Rails/SkipsModelValidations

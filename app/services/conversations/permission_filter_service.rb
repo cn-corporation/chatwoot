@@ -2,7 +2,7 @@ class Conversations::PermissionFilterService
   attr_reader :conversations, :user, :account
 
   def initialize(conversations, user, account)
-    @conversations = conversations
+    @conversations = conversations.support
     @user = user
     @account = account
   end

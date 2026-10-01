@@ -4,6 +4,8 @@ class Notification::PushNotificationService
   pattr_initialize [:notification!]
 
   def perform
+    return unless notification.delivery_allowed?
+
     return unless user_subscribed_to_notification?
 
     notification_subscriptions.each do |subscription|
@@ -39,6 +41,8 @@ class Notification::PushNotificationService
   end
 
   def push_url
+    return URI.join(ENV.fetch('FRONTEND_URL', 'http://localhost:3000'), notification.retention_url).to_s if notification.retention_notification?
+
     app_account_conversation_url(account_id: conversation.account_id, id: conversation.display_id)
   end
 

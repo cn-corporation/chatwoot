@@ -9,6 +9,7 @@ import { useI18n } from 'vue-i18n';
 import { useStorage } from '@vueuse/core';
 import { useSidebarKeyboardShortcuts } from './useSidebarKeyboardShortcuts';
 import { useAdmin } from 'dashboard/composables/useAdmin';
+import { useRetentionAccess } from 'dashboard/composables/useRetentionAccess';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { emitter } from 'shared/helpers/mitt';
 
@@ -45,6 +46,8 @@ const store = useStore();
 const searchShortcut = useKbd([`$mod`, 'k']);
 const { t } = useI18n();
 const { isAdmin } = useAdmin();
+const { member: isRetentionMember, unreadCount: retentionUnreadCount } =
+  useRetentionAccess();
 
 const isACustomBrandedInstance = useMapGetter(
   'globalConfig/isACustomBrandedInstance'
@@ -470,6 +473,20 @@ const menuItems = computed(() => {
 
   return [
     ...topItems,
+    ...(isRetentionMember.value
+      ? [
+          {
+            name: 'Retention',
+            label: t('RETENTION.TITLE'),
+            icon: 'i-lucide-heart-handshake',
+            to: accountScopedRoute('retention_space'),
+            activeOn: ['retention_space'],
+            count: retentionUnreadCount.value,
+            badge: retentionUnreadCount.value > 0,
+            permissions: ['administrator', 'agent', 'custom_role'],
+          },
+        ]
+      : []),
     {
       name: 'Conversation',
       label: t('SIDEBAR.CONVERSATIONS'),

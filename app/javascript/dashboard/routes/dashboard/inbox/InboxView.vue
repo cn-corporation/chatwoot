@@ -102,6 +102,10 @@ const openNotification = async notificationItem => {
       unreadCount,
     });
 
+    if (notificationItem.retention_url) {
+      router.push(notificationItem.retention_url);
+      return;
+    }
     router.push({
       name: 'inbox_view_conversation',
       params: { type: 'conversation', id: conversationIdFromNotification },

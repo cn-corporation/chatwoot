@@ -7,7 +7,7 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
 
   def recent
     limit = [(params[:limit] || 100).to_i, 100].min
-    @messages = @conversation.messages
+    @messages = @conversation.messages.support.where(workflow_epoch: @conversation.workflow_epoch)
                              .where.not(message_type: [2, 3])
                              .where.not(private: true)
                              .reorder(created_at: :desc)

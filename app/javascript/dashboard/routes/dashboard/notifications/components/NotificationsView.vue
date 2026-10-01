@@ -45,6 +45,10 @@ export default {
         unreadCount: this.meta.unreadCount,
       });
 
+      if (notification.retention_url) {
+        this.$router.push(notification.retention_url);
+        return;
+      }
       this.$router.push(
         `/app/accounts/${this.accountId}/conversations/${conversationId}`
       );

@@ -454,10 +454,10 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
-  async testAdSend(adId, telegramId) {
+  async testAdSend(adId, telegramId, credentials) {
     const response = await axios.post(
       `${this.baseURL}/api/ads-send-operations/test`,
-      { adId, telegramId },
+      { adId, telegramId, ...credentials },
       { headers: this.headers }
     );
     return response.data;
@@ -540,11 +540,11 @@ class ChatwootExtraAPI {
   }
 
   // Ads Log API
-  async deleteSentAds(adId) {
+  async deleteSentAds(adId, credentials) {
     const response = await axios.delete(
       `${this.baseURL}/api/ads-log/sent-ads`,
       {
-        data: { adId },
+        data: { adId, ...credentials },
         headers: this.headers,
       }
     );

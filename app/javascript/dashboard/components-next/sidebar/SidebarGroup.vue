@@ -16,6 +16,8 @@ const props = defineProps({
   activeOn: { type: Array, default: () => [] },
   children: { type: Array, default: undefined },
   getterKeys: { type: Object, default: () => ({}) },
+  count: { type: Number, default: null },
+  badge: { type: Boolean, default: null },
   onClick: { type: Function, default: null },
   persistent: { type: Boolean, default: false },
 });
@@ -168,6 +170,8 @@ watch(
       :label
       :to
       :getter-keys="getterKeys"
+      :count
+      :badge
       :is-active="isActive"
       :has-active-child="hasActiveChild"
       :expandable="hasChildren"
