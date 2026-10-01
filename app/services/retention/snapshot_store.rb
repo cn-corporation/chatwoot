@@ -7,10 +7,16 @@ class Retention::SnapshotStore
   end
 
   def self.signature(method, path, timestamp, body)
-    secret = ENV.fetch('CHATWOOT_RETENTION_SECRET', '')
-    raise Unavailable, 'Retention service secret is not configured' if secret.blank?
-
     OpenSSL::HMAC.hexdigest('SHA256', secret, [method, path, timestamp, Digest::SHA256.hexdigest(body)].join("\n"))
+  end
+
+  def self.secret
+    return ENV['CHATWOOT_RETENTION_SECRET'] if ENV['CHATWOOT_RETENTION_SECRET'].present?
+
+    shared_secret = ENV.fetch('CHATWOOT_EXTRA_WEBHOOK_SECRET', nil)
+    raise Unavailable, 'Retention service secret is not configured' if shared_secret.blank?
+
+    OpenSSL::HMAC.hexdigest('SHA256', shared_secret, 'chatwoot-retention-snapshots-v1')
   end
 
   def self.valid_request?(request)
