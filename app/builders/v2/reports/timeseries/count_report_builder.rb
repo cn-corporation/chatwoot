@@ -30,11 +30,11 @@ class V2::Reports::Timeseries::CountReportBuilder < V2::Reports::Timeseries::Bas
   end
 
   def scope_for_incoming_messages_count
-    scope.messages.where(account_id: account.id, created_at: range).incoming.unscope(:order)
+    scope.messages.support.where(account_id: account.id, created_at: range).incoming.unscope(:order)
   end
 
   def scope_for_outgoing_messages_count
-    scope.messages.where(account_id: account.id, created_at: range).outgoing
+    scope.messages.support.where(account_id: account.id, created_at: range).outgoing
          .where.not(sender_type: 'AgentBot')
          .unscope(:order)
   end

@@ -186,6 +186,10 @@ const openConversation = async notificationItem => {
       unreadCount: meta.value.unreadCount,
     });
 
+    if (notificationItem.retentionUrl) {
+      router.push(notificationItem.retentionUrl);
+      return;
+    }
     router.push({
       name: 'inbox_view_conversation',
       params: { inboxId, type: 'conversation', id: conversationId },

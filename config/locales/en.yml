@@ -30,6 +30,24 @@
 # available at https://guides.rubyonrails.org/i18n.html.
 
 en:
+  retention:
+    errors:
+      automation_busy: 'An earlier support action is finishing. Wait a few seconds, refresh, and try again. Your message has not been sent.'
+      immutable: "Completed retention snapshots cannot be changed."
+      empty_message: "Write a message or attach a file before sending."
+      invalid_upload: 'Select up to 15 files to send.'
+      upload_too_large: 'Each file must be smaller than %{limit} MB.'
+      invalid_request: "Invalid send request. Reload and try again."
+      changed: "This session changed. Refresh the conversation before sending again."
+      delivery_pending: "Wait for outgoing messages to finish sending before completing the session."
+      message_too_long: "This message is too long to edit."
+      telegram_edit: "Telegram rejected this edit. The original message is unchanged."
+      telegram_delete: "Telegram rejected this deletion. The original message is unchanged."
+      storage_unavailable: 'Snapshot storage is unavailable. If completion did not finish, the chat stays in retention. Refresh and retry.'
+      canonical: "Select the current conversation for this Telegram contact."
+      active: "This conversation is in the retention space."
+      invalid_members: 'Select verified members of this account.'
+      stale_membership: 'Account membership changed. Reload the saved selection and try again.'
   hello: 'Hello world'
   inbox:
     reauthorization:

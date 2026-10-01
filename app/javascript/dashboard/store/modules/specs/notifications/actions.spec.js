@@ -314,3 +314,19 @@ describe('#actions', () => {
     });
   });
 });
+
+describe('retention notification reads', () => {
+  it('reads the displayed session through its message watermark even when the alert is outside the loaded page', async () => {
+    const dispatch = vi.fn();
+    axios.post.mockResolvedValue({});
+    await actions.readRetention(
+      { dispatch, state: { records: {} } },
+      { conversationId: 29, sessionId: 12, lastMessageId: 108 }
+    );
+    expect(axios.post).toHaveBeenCalledWith(
+      expect.stringContaining('/retention/conversations/29/read'),
+      { session_id: 12, last_message_id: 108 }
+    );
+    expect(dispatch).toHaveBeenCalledWith('get');
+  });
+});

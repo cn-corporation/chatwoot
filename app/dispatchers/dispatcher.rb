@@ -13,6 +13,10 @@ class Dispatcher
   end
 
   def dispatch(event_name, timestamp, data, _async = false)
+    return unless Retention::EventGuard.allowed?(data, timestamp)
+
+    conversation = data[:conversation] || data[:message]&.conversation
+    data = data.merge(workflow_epoch: conversation.workflow_epoch) if conversation.is_a?(Conversation)
     @sync_dispatcher.dispatch(event_name, timestamp, data)
     @async_dispatcher.dispatch(event_name, timestamp, data)
   end

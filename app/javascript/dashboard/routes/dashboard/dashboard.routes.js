@@ -14,6 +14,7 @@ import operatorReportsRoutes from './operatorReports/operatorReports.routes';
 import AppContainer from './Dashboard.vue';
 import Suspended from './suspended/Index.vue';
 import TodoList from './TodoList.vue';
+import RetentionSpace from './retention/RetentionSpace.vue';
 import NoAccounts from './noAccounts/Index.vue';
 
 export default {
@@ -22,6 +23,12 @@ export default {
       path: frontendURL('accounts/:accountId'),
       component: AppContainer,
       children: [
+        {
+          path: 'retention',
+          name: 'retention_space',
+          meta: { permissions: ['administrator', 'agent', 'custom_role'] },
+          component: RetentionSpace,
+        },
         {
           path: 'todo',
           name: 'todo_list',

@@ -1,5 +1,10 @@
 import types from '../../mutation-types';
 import NotificationsAPI from '../../../api/notifications';
+import RetentionAPI from 'dashboard/api/retention';
+import { emitter } from 'shared/helpers/mitt';
+
+const refreshRetentionCounters = data =>
+  emitter.emit('retention.notifications_changed', data);
 
 export const actions = {
   get: async ({ commit }, { page = 1 } = {}) => {
@@ -13,6 +18,7 @@ export const actions = {
       commit(types.CLEAR_NOTIFICATIONS);
       commit(types.SET_NOTIFICATIONS, payload);
       commit(types.SET_NOTIFICATIONS_META, meta);
+      refreshRetentionCounters();
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isFetching: false });
     } catch (error) {
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isFetching: false });
@@ -60,16 +66,25 @@ export const actions = {
       await NotificationsAPI.read(primaryActorType, primaryActorId);
       commit(types.SET_NOTIFICATIONS_UNREAD_COUNT, unreadCount - 1);
       commit(types.READ_NOTIFICATION, { id, read_at: new Date() });
+      refreshRetentionCounters();
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isUpdating: false });
     } catch (error) {
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isUpdating: false });
     }
+  },
+  readRetention: async (
+    { dispatch },
+    { conversationId, sessionId, lastMessageId }
+  ) => {
+    await RetentionAPI.read(conversationId, { sessionId, lastMessageId });
+    await dispatch('get');
   },
   unread: async ({ commit }, { id }) => {
     commit(types.SET_NOTIFICATIONS_UI_FLAG, { isUpdating: true });
     try {
       await NotificationsAPI.unRead(id);
       commit(types.READ_NOTIFICATION, { id, read_at: null });
+      refreshRetentionCounters();
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isUpdating: false });
     } catch (error) {
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isUpdating: false });
@@ -81,6 +96,7 @@ export const actions = {
       await NotificationsAPI.readAll();
       commit(types.SET_NOTIFICATIONS_UNREAD_COUNT, 0);
       commit(types.UPDATE_ALL_NOTIFICATIONS);
+      refreshRetentionCounters();
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isUpdating: false });
     } catch (error) {
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isUpdating: false });
@@ -94,6 +110,7 @@ export const actions = {
       await NotificationsAPI.delete(notification.id);
       commit(types.SET_NOTIFICATIONS_UNREAD_COUNT, unreadCount - 1);
       commit(types.DELETE_NOTIFICATION, { notification, count, unreadCount });
+      refreshRetentionCounters();
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isDeleting: false });
     } catch (error) {
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isDeleting: false });
@@ -119,6 +136,7 @@ export const actions = {
         type: 'all',
       });
       commit(types.DELETE_ALL_NOTIFICATIONS);
+      refreshRetentionCounters();
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isDeleting: false });
     } catch (error) {
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isDeleting: false });
@@ -140,6 +158,7 @@ export const actions = {
         id,
         snoozed_until,
       });
+      refreshRetentionCounters();
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isUpdating: false });
     } catch (error) {
       commit(types.SET_NOTIFICATIONS_UI_FLAG, { isUpdating: false });
@@ -148,13 +167,16 @@ export const actions = {
 
   updateNotification: async ({ commit }, data) => {
     commit(types.UPDATE_NOTIFICATION, data);
+    refreshRetentionCounters(data);
   },
 
   addNotification({ commit }, data) {
     commit(types.ADD_NOTIFICATION, data);
+    refreshRetentionCounters(data);
   },
   deleteNotification({ commit }, data) {
     commit(types.DELETE_NOTIFICATION, data);
+    refreshRetentionCounters(data);
   },
   clear({ commit }) {
     commit(types.CLEAR_NOTIFICATIONS);

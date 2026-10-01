@@ -1,7 +1,10 @@
+import RetentionAPI from '../api/retention';
+import DashboardAudioNotificationHelper from './AudioAlerts/DashboardAudioNotificationHelper';
 import AuthAPI from '../api/auth';
 import BaseActionCableConnector from '../../shared/helpers/BaseActionCableConnector';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { emitter } from 'shared/helpers/mitt';
+import mutationTypes from 'dashboard/store/mutation-types';
 import { useImpersonation } from 'dashboard/composables/useImpersonation';
 import {
   clearCookiesOnLogout,
@@ -19,6 +22,7 @@ class ActionCableConnector extends BaseActionCableConnector {
     super(app, pubsubToken, websocketURL);
     this.CancelTyping = new Map();
     this.events = {
+      'retention.changed': this.onRetentionChanged,
       'message.created': this.onMessageCreated,
       'message.updated': this.onMessageUpdated,
       'conversation.created': this.onConversationCreated,
@@ -96,6 +100,19 @@ class ActionCableConnector extends BaseActionCableConnector {
 
   onConversationRead = data => {
     this.app.$store.dispatch('updateConversation', data);
+  };
+
+  onRetentionChanged = data => {
+    if (!this.isAValidEvent(data)) return;
+    if (data.conversation_id) {
+      this.app.$store.commit(
+        mutationTypes.DELETE_CONVERSATION,
+        data.conversation_id
+      );
+      this.fetchConversationStats();
+    }
+    this.app.$store.dispatch('notifications/get');
+    emitter.emit('retention.changed', data);
   };
 
   // eslint-disable-next-line class-methods-use-this
@@ -209,7 +226,21 @@ class ActionCableConnector extends BaseActionCableConnector {
     this.app.$store.dispatch('updateContactInConversations', data);
   };
 
-  onNotificationCreated = data => {
+  onNotificationCreated = async data => {
+    if (data.notification?.retention_url) {
+      if (!this.isAValidEvent(data)) return;
+      try {
+        const { data: access } = await RetentionAPI.capabilities();
+        if (!access.member) return;
+      } catch {
+        return;
+      }
+      DashboardAudioNotificationHelper.onRetentionNotification();
+      emitter.emit('retention.changed', {
+        account_id: data.account_id,
+        conversation_id: data.notification.primary_actor?.id,
+      });
+    }
     this.app.$store.dispatch('notifications/addNotification', data);
   };
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_06_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_30_140000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -52,6 +52,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_120000) do
     t.boolean "auto_offline", default: true, null: false
     t.bigint "custom_role_id"
     t.bigint "agent_capacity_policy_id"
+    t.boolean "retention_member", default: false, null: false
     t.index ["account_id", "user_id"], name: "uniq_user_id_per_account_id", unique: true
     t.index ["account_id"], name: "index_account_users_on_account_id"
     t.index ["agent_capacity_policy_id"], name: "index_account_users_on_agent_capacity_policy_id"
@@ -671,10 +672,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_120000) do
     t.text "cached_label_list"
     t.integer "resolution_reason"
     t.bigint "assignee_agent_bot_id"
+    t.bigint "active_retention_session_id"
+    t.integer "workflow_epoch", default: 0, null: false
+    t.datetime "retention_archived_at"
+    t.datetime "support_started_at"
     t.index ["account_id", "display_id"], name: "index_conversations_on_account_id_and_display_id", unique: true
     t.index ["account_id", "id"], name: "index_conversations_on_id_and_account_id"
     t.index ["account_id", "inbox_id", "status", "assignee_id"], name: "conv_acid_inbid_stat_asgnid_idx"
     t.index ["account_id"], name: "index_conversations_on_account_id"
+    t.index ["active_retention_session_id"], name: "index_conversations_on_active_retention_session_id"
     t.index ["assignee_id", "account_id"], name: "index_conversations_on_assignee_id_and_account_id"
     t.index ["campaign_id"], name: "index_conversations_on_campaign_id"
     t.index ["contact_id"], name: "index_conversations_on_contact_id"
@@ -966,16 +972,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_120000) do
     t.jsonb "additional_attributes", default: {}
     t.text "processed_message_content"
     t.jsonb "sentiment", default: {}
+    t.bigint "retention_session_id"
+    t.integer "workflow_epoch", default: 0, null: false
+    t.uuid "retention_request_id"
     t.index "((additional_attributes -> 'campaign_id'::text))", name: "index_messages_on_additional_attributes_campaign_id", using: :gin
     t.index ["account_id", "content_type", "created_at"], name: "idx_messages_account_content_created"
     t.index ["account_id", "created_at", "message_type"], name: "index_messages_on_account_created_type"
     t.index ["account_id", "inbox_id"], name: "index_messages_on_account_id_and_inbox_id"
+    t.index ["account_id", "retention_request_id"], name: "index_messages_retention_request", unique: true, where: "(retention_request_id IS NOT NULL)"
     t.index ["account_id"], name: "index_messages_on_account_id"
     t.index ["content"], name: "index_messages_on_content", opclass: :gin_trgm_ops, using: :gin
     t.index ["conversation_id", "account_id", "message_type", "created_at"], name: "index_messages_on_conversation_account_type_created"
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
     t.index ["created_at"], name: "index_messages_on_created_at"
     t.index ["inbox_id"], name: "index_messages_on_inbox_id"
+    t.index ["retention_session_id"], name: "index_messages_on_retention_session_id"
     t.index ["sender_type", "sender_id"], name: "index_messages_on_sender_type_and_sender_id"
     t.index ["source_id"], name: "index_messages_on_source_id"
   end
@@ -1110,6 +1121,26 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_120000) do
     t.index ["user_id"], name: "index_reporting_events_on_user_id"
   end
 
+  create_table "retention_sessions", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "conversation_id", null: false
+    t.bigint "started_by_id"
+    t.bigint "completed_by_id"
+    t.datetime "completed_at"
+    t.string "snapshot_digest"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "snapshot_id"
+    t.datetime "snapshot_synced_at"
+    t.string "entry_source", default: "manual", null: false
+    t.string "entry_parameter"
+    t.index ["account_id", "completed_at"], name: "index_retention_sessions_on_account_id_and_completed_at"
+    t.index ["account_id"], name: "index_retention_sessions_on_account_id"
+    t.index ["conversation_id"], name: "index_retention_sessions_on_conversation_id"
+    t.index ["conversation_id"], name: "index_retention_sessions_one_active", unique: true, where: "(completed_at IS NULL)"
+    t.index ["snapshot_id"], name: "index_retention_sessions_on_snapshot_id", unique: true
+  end
+
   create_table "sla_events", force: :cascade do |t|
     t.bigint "applied_sla_id", null: false
     t.bigint "conversation_id", null: false
@@ -1138,6 +1169,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_120000) do
     t.string "description"
     t.float "resolution_time_threshold"
     t.index ["account_id"], name: "index_sla_policies_on_account_id"
+  end
+
+  create_table "support_delivery_leases", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.datetime "expires_at", null: false
+    t.index ["conversation_id"], name: "index_support_delivery_leases_on_conversation_id"
+    t.index ["expires_at"], name: "index_support_delivery_leases_on_expires_at"
   end
 
   create_table "taggings", id: :serial, force: :cascade do |t|
@@ -1257,7 +1295,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_120000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "conversations", "retention_sessions", column: "active_retention_session_id"
   add_foreign_key "inboxes", "portals"
+  add_foreign_key "messages", "retention_sessions"
+  add_foreign_key "retention_sessions", "accounts"
+  add_foreign_key "retention_sessions", "conversations"
+  add_foreign_key "support_delivery_leases", "conversations", on_delete: :cascade
   create_trigger("accounts_after_insert_row_tr", :generated => true, :compatibility => 1).
       on("accounts").
       after(:insert).

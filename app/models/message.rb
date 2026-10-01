@@ -14,11 +14,14 @@
 #  sender_type               :string
 #  sentiment                 :jsonb
 #  status                    :integer          default("sent")
+#  workflow_epoch            :integer          default(0), not null
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #  account_id                :integer          not null
 #  conversation_id           :integer          not null
 #  inbox_id                  :integer          not null
+#  retention_request_id      :uuid
+#  retention_session_id      :bigint
 #  sender_id                 :bigint
 #  source_id                 :string
 #
@@ -34,14 +37,21 @@
 #  index_messages_on_conversation_id                    (conversation_id)
 #  index_messages_on_created_at                         (created_at)
 #  index_messages_on_inbox_id                           (inbox_id)
+#  index_messages_on_retention_session_id               (retention_session_id)
 #  index_messages_on_sender_type_and_sender_id          (sender_type,sender_id)
 #  index_messages_on_source_id                          (source_id)
+#  index_messages_retention_request                     (account_id,retention_request_id) UNIQUE WHERE (retention_request_id IS NOT NULL)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (retention_session_id => retention_sessions.id)
 #
 
 class Message < ApplicationRecord
   searchkick callbacks: false if ChatwootApp.advanced_search_allowed?
 
   include MessageFilterHelpers
+  include RetentionMessage
   include Liquidable
   include Events::Types
   NUMBER_OF_PERMITTED_ATTACHMENTS = 15
@@ -160,7 +170,8 @@ class Message < ApplicationRecord
       unread_count: conversation.unread_incoming_messages.count,
       unread_count_full: conversation.unread_incoming_messages_count,
       last_activity_at: conversation.last_activity_at.to_i,
-      contact_inbox: { source_id: conversation.contact_inbox.source_id }
+      contact_inbox: { source_id: conversation.contact_inbox.source_id },
+      workflow_epoch: workflow_epoch
     }
   end
 
@@ -184,7 +195,8 @@ class Message < ApplicationRecord
       message_type: message_type,
       private: private,
       sender: sender.try(:webhook_data),
-      source_id: source_id
+      source_id: source_id,
+      retention_session_id: retention_session_id, workflow_epoch: workflow_epoch
     }
     data[:attachments] = attachments.map(&:push_event_data) if attachments.present?
     data
@@ -210,9 +222,10 @@ class Message < ApplicationRecord
   end
 
   def valid_first_reply?
+    return false if retention_session_id.present?
     return false unless human_response? && !private?
     return false if conversation.first_reply_created_at.present?
-    return false if conversation.messages.outgoing
+    return false if conversation.messages.support.where(workflow_epoch: workflow_epoch).outgoing
                                 .where.not(sender_type: ['AgentBot', 'Captain::Assistant'])
                                 .where.not(private: true)
                                 .where("(additional_attributes->'campaign_id') is null").count > 1
@@ -237,6 +250,7 @@ class Message < ApplicationRecord
   end
 
   def should_index?
+    return false if retention_session_id.present? || conversation.retention_active?
     return false unless ChatwootApp.advanced_search_allowed?
     return false unless incoming? || outgoing?
     # For Chatwoot Cloud:
@@ -299,6 +313,12 @@ class Message < ApplicationRecord
   end
 
   def execute_after_create_commit_callbacks
+    if retention_session_id.present?
+      retention_session.update_column(:updated_at, Time.current)
+      Retention::NotificationService.new(self).perform
+      send_reply
+      return
+    end
     # rails issue with order of active record callbacks being executed https://github.com/rails/rails/issues/20911
     reopen_conversation
     set_conversation_activity
@@ -366,6 +386,7 @@ class Message < ApplicationRecord
   end
 
   def should_send_edit_to_telegram?
+    return false if retention_session_id.present?
     return false unless saved_change_to_content?
     return false unless outgoing?
     return false unless source_id.present?
@@ -380,6 +401,7 @@ class Message < ApplicationRecord
   end
 
   def should_delete_from_telegram?
+    return false if retention_session_id.present?
     return false unless saved_change_to_content_attributes?
     return false unless outgoing?
     return false unless source_id.present?
@@ -409,6 +431,7 @@ class Message < ApplicationRecord
   end
 
   def reopen_resolved_conversation
+    conversation.update_column(:support_started_at, created_at) if conversation.retention_archived_at? && conversation.support_started_at.nil?
     if conversation.inbox.channel_type == 'Channel::Telegram'
       conversation.open!
     elsif conversation.inbox.active_bot?

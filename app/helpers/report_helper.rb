@@ -45,11 +45,11 @@ module ReportHelper
   end
 
   def incoming_messages
-    scope.messages.where(account_id: account.id, created_at: range).incoming.unscope(:order)
+    scope.messages.support.where(account_id: account.id, created_at: range).incoming.unscope(:order)
   end
 
   def outgoing_messages
-    scope.messages.where(account_id: account.id, created_at: range).outgoing
+    scope.messages.support.where(account_id: account.id, created_at: range).outgoing
          .where.not(sender_type: 'AgentBot')
          .unscope(:order)
   end

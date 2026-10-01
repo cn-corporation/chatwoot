@@ -36,7 +36,7 @@ module SortHandler
                                  .group(:conversation_id)
                                  .to_sql
       joins("LEFT JOIN (#{latest_resolved_subquery}) latest_resolved ON latest_resolved.conversation_id = conversations.id")
-        .order(generate_sql_query("latest_resolved.resolved_at #{direction} NULLS LAST, conversations.updated_at #{direction}"))
+        .order(generate_sql_query("GREATEST(latest_resolved.resolved_at, conversations.retention_archived_at) #{direction} NULLS LAST, conversations.updated_at #{direction}"))
     end
 
     private

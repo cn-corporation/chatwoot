@@ -99,6 +99,8 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
     return render json: { error: 'Not a Telegram channel' }, status: :unprocessable_entity unless @inbox.telegram?
 
     contact_inboxes = @inbox.contact_inboxes.where.not(source_id: [nil, ''])
+    retained_contacts = @inbox.conversations.where.not(active_retention_session_id: nil).select(:contact_inbox_id)
+    contact_inboxes = contact_inboxes.where.not(id: retained_contacts)
 
     filter = telegram_users_filter_params
     if filter.present?

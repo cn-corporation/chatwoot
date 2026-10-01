@@ -3,18 +3,18 @@ class ReportingEventListener < BaseListener
 
   def conversation_resolved(event)
     conversation = extract_conversation_and_account(event)[0]
-    time_to_resolve = conversation.updated_at.to_i - conversation.created_at.to_i
+    started_at = conversation.support_started_at || conversation.created_at
+    time_to_resolve = conversation.updated_at.to_i - started_at.to_i
 
     reporting_event = ReportingEvent.new(
       name: 'conversation_resolved',
       value: time_to_resolve,
-      value_in_business_hours: business_hours(conversation.inbox, conversation.created_at,
-                                              conversation.updated_at),
+      value_in_business_hours: business_hours(conversation.inbox, started_at, conversation.updated_at),
       account_id: conversation.account_id,
       inbox_id: conversation.inbox_id,
       user_id: conversation.assignee_id,
       conversation_id: conversation.id,
-      event_start_time: conversation.created_at,
+      event_start_time: started_at,
       event_end_time: conversation.updated_at
     )
 
@@ -101,7 +101,11 @@ class ReportingEventListener < BaseListener
 
     # For first-time openings, value is 0
     # For reopenings, calculate time since resolution
-    if last_resolved_event
+    if conversation.support_started_at && (!last_resolved_event || last_resolved_event.event_end_time < conversation.support_started_at)
+      time_since_resolved = 0
+      business_hours_value = 0
+      start_time = conversation.support_started_at
+    elsif last_resolved_event
       time_since_resolved = conversation.updated_at.to_i - last_resolved_event.event_end_time.to_i
       business_hours_value = business_hours(conversation.inbox, last_resolved_event.event_end_time, conversation.updated_at)
       start_time = last_resolved_event.event_end_time
@@ -134,7 +138,7 @@ class ReportingEventListener < BaseListener
   def create_bot_resolved_event(conversation, reporting_event)
     return unless conversation.inbox.active_bot?
     # We don't want to create a bot_resolved event if there is user interaction on the conversation
-    return if conversation.messages.exists?(message_type: :outgoing, sender_type: 'User')
+    return if conversation.messages.support.where(workflow_epoch: conversation.workflow_epoch).exists?(message_type: :outgoing, sender_type: 'User')
 
     bot_resolved_event = reporting_event.dup
     bot_resolved_event.name = 'conversation_bot_resolved'

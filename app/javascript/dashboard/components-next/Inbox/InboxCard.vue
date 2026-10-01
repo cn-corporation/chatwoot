@@ -98,6 +98,13 @@ const formattedMessage = computed(() => {
 });
 
 const notificationDetails = computed(() => {
+  if (props.inboxItem?.retentionUrl) {
+    return {
+      text: t('RETENTION.TITLE'),
+      icon: 'i-lucide-messages-square',
+      color: 'text-n-blue-text',
+    };
+  }
   const type = props.inboxItem?.notificationType?.toUpperCase() || '';
   const [icon = '', color = 'text-n-blue-text'] =
     NOTIFICATION_TYPES_MAPPING[type] || [];

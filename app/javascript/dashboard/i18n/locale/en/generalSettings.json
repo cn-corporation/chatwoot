@@ -36,6 +36,26 @@
     },
     "FORM": {
       "ERROR": "Please fix form errors",
+      "RETENTION_SPECIALISTS": {
+        "TITLE": "Retention specialists",
+        "NOTE": "Choose account members for retention. Access changes when you save. If you remove everyone, active sessions stay in retention until a specialist is added.",
+        "LABEL": "Specialists",
+        "PLACEHOLDER": "Search and select specialists",
+        "LOADING": "Loading retention specialists…",
+        "SAVE": "Save specialists",
+        "RELOAD": "Reload saved selection",
+        "SELECT": "Press enter to select",
+        "SELECTED": "Selected",
+        "REMOVE": "Press enter to remove",
+        "NO_RESULTS": "No specialists match your search.",
+        "NO_AGENTS": "Invite and verify account members to select specialists.",
+        "API": {
+          "SUCCESS": "Retention specialists saved",
+          "LOAD_ERROR": "Could not load retention specialists. Reload to try again.",
+          "SAVE_ERROR": "Could not save retention specialists. Your selection is preserved; check that everyone is a verified account member and try again.",
+          "CONFLICT": "Account membership changed while you were editing. Reload the saved selection before making changes."
+        }
+      },
       "GENERAL_SECTION": {
         "TITLE": "General settings",
         "NOTE": ""

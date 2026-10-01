@@ -2,6 +2,8 @@ class Notification::EmailNotificationService
   pattr_initialize [:notification!]
 
   def perform
+    return unless notification.delivery_allowed?
+
     # don't send emails if user read the push notification already
     return if notification.read_at.present?
     # don't send emails if user is not confirmed
@@ -10,11 +12,17 @@ class Notification::EmailNotificationService
 
     # TODO : Clean up whatever happening over here
     # Segregate the mailers properly
-    AgentNotifications::ConversationNotificationsMailer.with(account: notification.account).public_send(notification
-      .notification_type.to_s, notification.primary_actor, notification.user, notification.secondary_actor).deliver_later
+    mailer.public_send(notification.notification_type.to_s, notification.primary_actor,
+                       notification.user, notification.secondary_actor).deliver_later
   end
 
   private
+
+  def mailer
+    AgentNotifications::ConversationNotificationsMailer.with(
+      account: notification.account, retention_session_id: notification.meta&.fetch('retention_session_id', nil)
+    )
+  end
 
   def user_subscribed_to_notification?
     notification_setting = notification.user.notification_settings.find_by(account_id: notification.account.id)

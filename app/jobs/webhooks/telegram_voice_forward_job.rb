@@ -11,6 +11,10 @@ class Webhooks::TelegramVoiceForwardJob < ApplicationJob
   retry_on Net::ReadTimeout, wait: :exponentially_longer, attempts: 10
 
   def perform(payload)
+    data = payload.with_indifferent_access
+    conversation = Conversation.find_by(account_id: data[:account_id], display_id: data[:conversation_id])
+    return unless conversation && !conversation.retention_active? && conversation.workflow_epoch == data.fetch(:workflow_epoch, 0).to_i
+
     ChatwootExtra::Client.forward_voice(payload)
   end
 end

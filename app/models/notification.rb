@@ -29,6 +29,7 @@
 
 class Notification < ApplicationRecord
   include MessageFormatHelper
+  include RetentionNotification
   belongs_to :account
   belongs_to :user
 
@@ -71,6 +72,7 @@ class Notification < ApplicationRecord
       meta: meta,
       account_id: account_id
     }
+    payload[:retention_url] = retention_url if retention_notification?
     payload.merge!(primary_actor_data) if primary_actor.present?
     payload
   end
@@ -153,6 +155,8 @@ class Notification < ApplicationRecord
   end
 
   def process_notification_delivery
+    return unless delivery_allowed?
+
     Notification::PushNotificationJob.perform_later(self) if user_subscribed_to_notification?('push')
 
     Notification::RemoveDuplicateNotificationJob.perform_later(self)
@@ -184,7 +188,7 @@ class Notification < ApplicationRecord
 
   def primary_actor_data
     {
-      primary_actor: primary_actor&.push_event_data,
+      primary_actor: retention_notification? ? retention_actor_data : primary_actor&.push_event_data,
       # TODO: Rename push_message_title to push_message_body
       push_message_title: push_message_body,
       push_message_body: push_message_body

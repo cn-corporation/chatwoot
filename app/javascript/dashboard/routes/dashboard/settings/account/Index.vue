@@ -18,6 +18,7 @@ import AutoResolve from './components/AutoResolve.vue';
 import AudioTranscription from './components/AudioTranscription.vue';
 import DialogueSegregation from './components/DialogueSegregation.vue';
 import AssignableAgents from './components/AssignableAgents.vue';
+import RetentionSpecialists from './components/RetentionSpecialists.vue';
 import HiddenContactFields from './components/HiddenContactFields.vue';
 import SectionLayout from './components/SectionLayout.vue';
 
@@ -32,6 +33,7 @@ export default {
     AudioTranscription,
     DialogueSegregation,
     AssignableAgents,
+    RetentionSpecialists,
     HiddenContactFields,
     SectionLayout,
     WithLabel,
@@ -249,6 +251,7 @@ export default {
     <AudioTranscription v-if="showAudioTranscriptionConfig" />
     <DialogueSegregation />
     <AssignableAgents />
+    <RetentionSpecialists />
     <HiddenContactFields />
     <AccountId />
     <div v-if="!uiFlags.isFetchingItem && isOnChatwootCloud">

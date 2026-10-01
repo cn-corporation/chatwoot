@@ -16,6 +16,16 @@ class SendReplyJob < ApplicationJob
 
   def perform(message_id)
     message = Message.find(message_id)
+    message.conversation.with_lock { deliver(message.reload) }
+  end
+
+  private
+
+  def deliver(message)
+    # A queued support send cannot escape into a later workflow. Retention sends
+    # remain deliverable until acknowledged; completion waits for that acknowledgement.
+    return unless deliverable_in_workflow?(message)
+
     channel_name = message.conversation.inbox.channel.class.to_s
 
     return send_on_facebook_page(message) if channel_name == 'Channel::FacebookPage'
@@ -26,7 +36,13 @@ class SendReplyJob < ApplicationJob
     service_class.new(message: message).perform
   end
 
-  private
+  def deliverable_in_workflow?(message)
+    if message.retention_session_id.present?
+      message.retention_session_id == message.conversation.active_retention_session_id
+    else
+      !message.conversation.retention_active? && message.workflow_epoch == message.conversation.workflow_epoch
+    end
+  end
 
   def send_on_facebook_page(message)
     if message.conversation.additional_attributes['type'] == 'instagram_direct_message'

@@ -37,7 +37,10 @@ class Channel::Telegram < ApplicationRecord
   end
 
   def send_message_on_telegram(message)
-    return Telegram::SendAttachmentsService.new(message: message).perform if message.attachments.present?
+    if message.attachments.present?
+      service = message.retention_session_id.present? ? Retention::TelegramAttachmentsService : Telegram::SendAttachmentsService
+      return service.new(message: message).perform
+    end
 
     send_message(message) if message.outgoing_content.present?
   end
