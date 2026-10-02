@@ -16,6 +16,7 @@ class Messages::ContextFetcherService
     # This provides proper context flow for AI processing
     @conversation
       .messages
+      .support.where(workflow_epoch: @message.workflow_epoch)
       .where.not(message_type: :activity) # Exclude activity messages
       .where('created_at <= ?', @message.created_at) # Include the current message
       .order(created_at: :desc)
@@ -42,8 +43,8 @@ class Messages::ContextFetcherService
   def webhook_payload_with_context
     base_payload = @message.webhook_data
     base_payload.merge({
-      context_messages: formatted_context_for_webhook,
-      context_size: self.class.context_size
-    })
+                         context_messages: formatted_context_for_webhook,
+                         context_size: self.class.context_size
+                       })
   end
 end

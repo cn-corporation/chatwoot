@@ -1,5 +1,7 @@
 module AccessTokenAuthHelper
   BOT_ACCESSIBLE_ENDPOINTS = {
+    'api/v1/accounts/retention/workflow' => ['show'],
+    'api/v1/accounts/retention/leases' => %w[create update destroy],
     'api/v1/accounts/conversations' => %w[toggle_status toggle_priority create update custom_attributes],
     'api/v1/accounts/conversations/messages' => %w[create update],
     'api/v1/accounts/inboxes' => ['bot_token'],

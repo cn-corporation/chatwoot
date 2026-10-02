@@ -118,7 +118,7 @@ class Api::V1::AccountsController < Api::BaseController
     return if support_team_id.blank?
 
     # rubocop:disable Rails/SkipsModelValidations
-    @account.conversations.where(team_id: nil, status: %i[open pending]).update_all(team_id: support_team_id)
+    @account.conversations.support.where(team_id: nil, status: %i[open pending]).update_all(team_id: support_team_id)
     # rubocop:enable Rails/SkipsModelValidations
   end
 

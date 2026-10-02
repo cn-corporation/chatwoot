@@ -11,7 +11,9 @@ class MessageFinder
   private
 
   def conversation_messages
-    @conversation.messages.includes(:attachments, :sender, sender: { avatar_attachment: [:blob] })
+    scope = @conversation.messages
+    scope = scope.support if @params[:support_only].present?
+    scope.includes(:attachments, :sender, sender: { avatar_attachment: [:blob] })
   end
 
   def messages

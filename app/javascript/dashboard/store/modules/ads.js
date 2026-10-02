@@ -4,6 +4,16 @@ import ChatwootExtraAPI from '../../api/chatwootExtra';
 import { throwErrorMessage } from '../utils/api';
 import { encrypt } from '../../helper/encryption';
 
+const deliveryCredentials = async rootGetters => ({
+  bearerTokenHash: await encrypt(
+    JSON.stringify({
+      bearerToken: rootGetters.getCurrentUser.access_token,
+      accountId: rootGetters.getCurrentAccountId,
+    })
+  ),
+  chatwootApiUrl: window.location.origin,
+});
+
 export const state = {
   records: [],
   sendOperations: {},
@@ -328,10 +338,14 @@ export const actions = {
       commit(types.SET_ADS_UI_FLAG, { isCancellingSchedule: false });
     }
   },
-  testSend: async ({ commit }, { adId, telegramId }) => {
+  testSend: async ({ commit, rootGetters }, { adId, telegramId }) => {
     commit(types.SET_ADS_UI_FLAG, { isTestingSend: true });
     try {
-      const response = await ChatwootExtraAPI.testAdSend(adId, telegramId);
+      const response = await ChatwootExtraAPI.testAdSend(
+        adId,
+        telegramId,
+        await deliveryCredentials(rootGetters)
+      );
       if (response.success && response.data) {
         return response.data;
       }
@@ -412,10 +426,13 @@ export const actions = {
       commit(types.SET_ADS_UI_FLAG, { isFetchingOperations: false });
     }
   },
-  deleteSentMessages: async ({ commit }, adId) => {
+  deleteSentMessages: async ({ commit, rootGetters }, adId) => {
     commit(types.SET_ADS_UI_FLAG, { isDeletingSentMessages: true });
     try {
-      const response = await ChatwootExtraAPI.deleteSentAds(adId);
+      const response = await ChatwootExtraAPI.deleteSentAds(
+        adId,
+        await deliveryCredentials(rootGetters)
+      );
       if (response.success) {
         return response;
       }

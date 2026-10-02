@@ -6,6 +6,7 @@
 #  active_at                :datetime
 #  auto_offline             :boolean          default(TRUE), not null
 #  availability             :integer          default("online"), not null
+#  retention_member         :boolean          default(FALSE), not null
 #  role                     :integer          default("agent")
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
@@ -39,6 +40,7 @@ class AccountUser < ApplicationRecord
   after_create_commit :notify_creation, :create_notification_setting
   after_destroy :notify_deletion, :remove_user_from_account
   after_save :update_presence_in_redis, if: :saved_change_to_availability?
+  after_commit :notify_retention_change, on: [:update, :destroy], if: :retention_access_changed?
 
   validates :user_id, uniqueness: { scope: :account_id }
 
@@ -67,6 +69,18 @@ class AccountUser < ApplicationRecord
   end
 
   private
+
+  def retention_access_changed?
+    destroyed? ? retention_member? : saved_change_to_retention_member?
+  end
+
+  def notify_retention_change
+    user.notifications.where(account_id: account_id).where("meta ? 'retention_session_id'").destroy_all if destroyed? || !retention_member?
+    tokens = (account.users.pluck(:pubsub_token) + [user.pubsub_token]).uniq
+    ActionCableBroadcastJob.perform_later(
+      tokens, 'retention.changed', account_id: account_id, user_id: user_id, member: !destroyed? && retention_member?
+    )
+  end
 
   def notify_creation
     Rails.configuration.dispatcher.dispatch(AGENT_ADDED, Time.zone.now, account: account)

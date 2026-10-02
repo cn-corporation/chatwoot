@@ -166,6 +166,16 @@ export class DashboardAudioNotificationHelper {
     return shouldPlayAudio.some(Boolean);
   };
 
+  onRetentionNotification = () => {
+    if (
+      this.notificationConfig.audioAlertType.includes('none') ||
+      !this.shouldPlayAlert()
+    )
+      return;
+    this.playAudioAlert();
+    showBadgeOnFavicon();
+  };
+
   onNewMessage = message => {
     // If the user does not have the permission to view the conversation, then dismiss the alert
     // FIX ME: There shouldn't be a new message if the user has no access to the conversation.

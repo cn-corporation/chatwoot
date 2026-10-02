@@ -8,6 +8,8 @@ class ConversationPolicy < ApplicationPolicy
   end
 
   def show?
+    return false if record.retention_active?
+
     administrator? || agent_bot? || agent_can_view_conversation?
   end
 

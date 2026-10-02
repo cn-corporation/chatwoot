@@ -33,7 +33,7 @@ class SearchService
   def filter_conversations
     return current_account.conversations.none if search_query.blank?
 
-    @conversations = current_account.conversations.where(inbox_id: accessable_inbox_ids)
+    @conversations = current_account.conversations.support.where(inbox_id: accessable_inbox_ids)
                                     .joins('INNER JOIN contacts ON conversations.contact_id = contacts.id')
                                     .joins('LEFT JOIN contact_inboxes ON conversations.contact_inbox_id = contact_inboxes.id')
                                     .where("cast(conversations.display_id as text) ILIKE :search OR contacts.name ILIKE :search OR contacts.email
@@ -92,7 +92,8 @@ class SearchService
   end
 
   def message_base_query
-    query = current_account.messages.where('created_at >= ?', 3.months.ago)
+    query = current_account.messages.support.where(conversation_id: current_account.conversations.support.select(:id))
+                           .where('created_at >= ?', 3.months.ago)
     query = query.where(inbox_id: accessable_inbox_ids) unless should_skip_inbox_filtering?
     query
   end

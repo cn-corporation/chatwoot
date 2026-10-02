@@ -101,7 +101,9 @@ export default {
             <span class="notification--type">
               {{
                 $t(
-                  `NOTIFICATIONS_PAGE.TYPE_LABEL.${notificationItem.notification_type}`
+                  notificationItem.retention_url
+                    ? 'RETENTION.TITLE'
+                    : `NOTIFICATIONS_PAGE.TYPE_LABEL.${notificationItem.notification_type}`
                 )
               }}
             </span>

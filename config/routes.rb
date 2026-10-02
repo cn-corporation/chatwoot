@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  post '/internal/retention/snapshot-receipts', to: 'internal/retention/snapshot_receipts#create'
+  get '/retention/snapshot-files/:token', to: 'retention/snapshot_files#show', as: :retention_snapshot_file
+  get '/retention/media/:token', to: 'retention/media#show', as: :retention_media
   # AUTH STARTS
   mount_devise_token_auth_for 'User', at: 'auth', controllers: {
     confirmations: 'devise_overrides/confirmations',
@@ -45,6 +48,22 @@ Rails.application.routes.draw do
         end
 
         scope module: :accounts do
+          namespace :retention do
+            resource :members, only: [:show, :update]
+            get :capabilities, to: 'workspace#capabilities'
+            get :workflow, to: 'workflow#show'
+            resources :leases, only: [:create, :update, :destroy]
+            get :history, to: 'workspace#history'
+            get 'snapshots/:id', to: 'workspace#snapshot'
+            get :conversations, to: 'workspace#index'
+            get 'conversations/:id', to: 'workspace#show'
+            post 'conversations/:id/read', to: 'workspace#read'
+            post 'conversations/:id/messages', to: 'workspace#send_message'
+            post 'conversations/:id/messages/:message_id/retry', to: 'workspace#retry_message'
+            patch 'conversations/:id/messages/:message_id', to: 'workspace#edit_message'
+            delete 'conversations/:id/messages/:message_id', to: 'workspace#delete_message'
+            post 'conversations/:id/complete', to: 'workspace#complete'
+          end
           namespace :actions do
             resource :contact_merge, only: [:create]
           end

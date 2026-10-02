@@ -1,3 +1,4 @@
+import retention from './retention.json';
 import ads from './ads.json';
 import advancedFilters from './advancedFilters.json';
 import agentBots from './agentBots.json';
@@ -43,6 +44,7 @@ import whatsappTemplates from './whatsappTemplates.json';
 import mobile from './mobile.json';
 
 export default {
+  ...retention,
   ...ads,
   ...advancedFilters,
   ...agentBots,

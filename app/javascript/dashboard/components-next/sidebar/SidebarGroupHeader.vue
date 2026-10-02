@@ -12,13 +12,17 @@ const props = defineProps({
   isActive: { type: Boolean, default: false },
   hasActiveChild: { type: Boolean, default: false },
   getterKeys: { type: Object, default: () => ({}) },
+  count: { type: Number, default: null },
+  badge: { type: Boolean, default: null },
 });
 
 const emit = defineEmits(['toggle']);
 
-const showBadge = useMapGetter(props.getterKeys.badge);
-const dynamicCount = useMapGetter(props.getterKeys.count);
-const count = computed(() =>
+const badgeGetter = useMapGetter(props.getterKeys.badge);
+const countGetter = useMapGetter(props.getterKeys.count);
+const showBadge = computed(() => props.badge ?? badgeGetter.value);
+const dynamicCount = computed(() => props.count ?? countGetter.value);
+const formattedCount = computed(() =>
   dynamicCount.value > 99 ? '99+' : dynamicCount.value
 );
 </script>
@@ -57,7 +61,7 @@ const count = computed(() =>
           'text-n-slate-11 outline-n-strong': !isActive,
         }"
       >
-        {{ count }}
+        {{ formattedCount }}
       </span>
     </div>
     <span

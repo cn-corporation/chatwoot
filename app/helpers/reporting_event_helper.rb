@@ -22,7 +22,9 @@ module ReportingEventHelper
     # These will always take precedence over any other activity
     # Also, any of these events can happen at any time in the course of a conversation lifecycle.
     # So we pick the latest event
-    event = ReportingEvent.where(
+    events = ReportingEvent.where(conversation_id: conversation.id)
+    events = events.where(event_end_time: conversation.support_started_at..) if conversation.support_started_at.present?
+    event = events.where(
       conversation_id: conversation.id,
       name: %w[conversation_bot_handoff conversation_opened]
     ).order(event_end_time: :desc).first
@@ -31,12 +33,12 @@ module ReportingEventHelper
 
     # Fallback to bot resolved event
     # Because this will be closest to the most accurate activity instead of conversation.created_at
-    bot_event = ReportingEvent.where(conversation_id: conversation.id, name: 'conversation_bot_resolved').last
+    bot_event = events.where(name: 'conversation_bot_resolved').last
 
     return bot_event.event_end_time if bot_event&.event_end_time
 
     # If no events found, return conversation creation time
-    conversation.created_at
+    conversation.support_started_at || conversation.created_at
   end
 
   private

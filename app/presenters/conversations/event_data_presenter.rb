@@ -6,6 +6,8 @@ class Conversations::EventDataPresenter < SimpleDelegator
       channel: inbox.try(:channel_type),
       contact_inbox: contact_inbox,
       id: display_id,
+      workflow_epoch: workflow_epoch,
+      retention_active: retention_active?,
       inbox_id: inbox_id,
       messages: push_messages,
       labels: label_list,
@@ -26,7 +28,7 @@ class Conversations::EventDataPresenter < SimpleDelegator
   private
 
   def push_messages
-    [messages.chat.last&.push_event_data].compact
+    [messages.support.chat.last&.push_event_data].compact
   end
 
   def push_meta

@@ -10,19 +10,24 @@ class Telegram::IncomingMessageService
     # chatwoot doesn't support group conversations at the moment
     transform_business_message!
     return unless private_message?
+    return perform_retention_launch if retention_launch?
 
     if message_params? && voice_message?
       handle_voice_message
       return
     end
 
-    return if message_params? && audio_message?
+    return if message_params? && audio_message? && !retention_ingress?
 
     set_contact
     return if @contact.time_blocked?
 
     update_contact_avatar
     set_conversation
+    if callback_query_params? && retention_callback?
+      answer_callback_query
+      return
+    end
     if callback_query_params? && csat_callback?
       answer_callback_query
       dispatch_csat_webhook unless csat_noop_callback?
@@ -55,6 +60,7 @@ class Telegram::IncomingMessageService
     # See: https://core.telegram.org/bots/api#readbusinessmessage
     @message = @conversation.messages.build(
       content: telegram_params_message_content,
+      retention_ingress: true,
       account_id: @inbox.account_id,
       inbox_id: @inbox.id,
       message_type: message_type,
@@ -69,6 +75,43 @@ class Telegram::IncomingMessageService
   end
 
   private
+
+  def retention_launch?
+    !business_message_outgoing? && message_params? && params.dig(:message, :text).to_s == '/start rtn'
+  end
+
+  def perform_retention_launch
+    set_contact
+    return if @contact.time_blocked?
+
+    update_contact_avatar
+    @contact_inbox.with_lock do
+      # A retried provider update must not create a second session after completion.
+      next if @contact_inbox.conversations.joins(:messages).where(messages: { source_id: telegram_params_message_id.to_s })
+                            .where.not(messages: { retention_session_id: nil }).exists?
+
+      set_conversation
+      Retention::EntryService.new(@conversation).perform(source: 'telegram_start', parameter: 'rtn')
+      @message = @conversation.messages.create!(
+        content: telegram_params_message_content, retention_ingress: true,
+        account_id: @inbox.account_id, inbox_id: @inbox.id, message_type: :incoming,
+        sender: @contact, content_attributes: telegram_params_content_attributes, source_id: telegram_params_message_id.to_s
+      )
+    end
+  end
+
+  def retention_ingress?
+    inbox.conversations.joins(:contact_inbox).where(contact_inboxes: { source_id: telegram_params_from_id.to_s })
+         .where.not(active_retention_session_id: nil).exists?
+  end
+
+  def retention_callback?
+    return true if @conversation.retention_active?
+
+    source_id = params.dig(:callback_query, :message, :message_id)&.to_s
+    message = @conversation.messages.find_by(source_id: source_id)
+    message && message.workflow_epoch != @conversation.workflow_epoch
+  end
 
   def answer_callback_query
     inbox.channel.answer_callback_query(params[:callback_query][:id])
@@ -156,7 +199,9 @@ class Telegram::IncomingMessageService
     update_contact_avatar
     set_conversation
 
-    if voice_too_long?
+    if @conversation.retention_active?
+      create_retention_voice_message
+    elsif voice_too_long?
       create_voice_skipped_message
     else
       enqueue_voice_forward
@@ -166,6 +211,15 @@ class Telegram::IncomingMessageService
   def voice_too_long?
     duration = params[:message][:voice][:duration].to_i
     duration > ENV.fetch('TELEGRAM_MAX_VOICE_SECONDS', 60).to_i
+  end
+
+  def create_retention_voice_message
+    @message = @conversation.messages.build(
+      account_id: @inbox.account_id, inbox_id: @inbox.id, message_type: :incoming,
+      sender: @contact, source_id: params[:message][:message_id].to_s
+    )
+    attach_voice_file
+    @message.save!
   end
 
   def create_voice_skipped_message
@@ -226,6 +280,7 @@ class Telegram::IncomingMessageService
     {
       account_id: @inbox.account_id,
       conversation_id: @conversation.display_id,
+      workflow_epoch: @conversation.workflow_epoch,
       contact_id: @contact.id,
       inbox_id: @inbox.id,
       telegram_file_url: file_url,
@@ -255,7 +310,7 @@ class Telegram::IncomingMessageService
   def set_conversation
     @contact_inbox.with_lock do
       @conversation = @contact_inbox.conversations.first
-      return @conversation if @conversation
+      next @conversation if @conversation
 
       @conversation = ::Conversation.create!(conversation_params)
     end
