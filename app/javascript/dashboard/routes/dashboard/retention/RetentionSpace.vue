@@ -47,6 +47,8 @@ const query = ref('');
 const rows = ref([]);
 const selected = ref(null);
 const savedSession = ref(null);
+const openedRows = ref({});
+const tabQueries = ref({});
 const messages = ref([]);
 const drafts = ref({});
 const fileDrafts = ref({});
@@ -69,6 +71,7 @@ let chatSequence = 0;
 const pendingSends = new Map();
 let timer;
 let listTimer;
+let searchTimer;
 
 const draft = computed({
   get: () => drafts.value[selected.value?.id] || '',
@@ -86,7 +89,8 @@ const subtitle = computed(
 );
 const formatDate = value => new Date(value).toLocaleString();
 
-function clearChat() {
+function clearChat(forget = true) {
+  if (forget) delete openedRows.value[tab.value];
   chatSequence += 1;
   selected.value = null;
   savedSession.value = null;
@@ -133,7 +137,8 @@ async function scrollToBottom() {
 
 async function openRow(row) {
   if (!member.value) return;
-  clearChat();
+  clearChat(false);
+  openedRows.value[tab.value] = row;
   error.value = '';
   chatSequence += 1;
   const sequence = chatSequence;
@@ -161,6 +166,7 @@ async function openRow(row) {
 }
 
 async function loadList(more = false) {
+  clearTimeout(searchTimer);
   if (!member.value) return;
   listSequence += 1;
   const sequence = listSequence;
@@ -383,6 +389,7 @@ async function complete() {
       selected.value.session_id
     );
     if (sequence !== chatSequence) return;
+    delete openedRows.value[tab.value];
     query.value = '';
     tab.value = 'history';
     await nextTick();
@@ -528,9 +535,21 @@ function refreshOnFocus() {
 
 watch(
   [tab, member, accountId],
-  () => {
+  (
+    [currentTab, currentMember, currentAccount],
+    [previousTab, , previousAccount]
+  ) => {
+    clearTimeout(searchTimer);
     listSequence += 1;
-    clearChat();
+    clearChat(false);
+    if (!currentMember || currentAccount !== previousAccount) {
+      openedRows.value = {};
+      tabQueries.value = {};
+      query.value = '';
+    } else if (currentTab !== previousTab) {
+      tabQueries.value[previousTab] = query.value;
+      query.value = tabQueries.value[currentTab] || '';
+    }
     rows.value = [];
     loading.value = false;
     if (!member.value) {
@@ -540,6 +559,17 @@ watch(
     }
     hasMore.value = false;
     loadList();
+    if (openedRows.value[currentTab]) openRow(openedRows.value[currentTab]);
+  },
+  { flush: 'sync' }
+);
+watch(
+  query,
+  () => {
+    clearTimeout(searchTimer);
+    if (tab.value === 'active' || !member.value) return;
+    listSequence += 1;
+    searchTimer = setTimeout(() => loadList(), 300);
   },
   { flush: 'sync' }
 );
@@ -581,6 +611,7 @@ onUnmounted(() => {
   chatSequence += 1;
   clearInterval(timer);
   clearInterval(listTimer);
+  clearTimeout(searchTimer);
 });
 </script>
 
