@@ -3,12 +3,6 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
 
   def index
     @messages = message_finder.perform
-    return unless params[:include_resolution_history] == 'true'
-    return if params[:before].present? || params[:after].present?
-
-    @resolution_timestamps = ReportingEvent.where(account_id: Current.account.id, conversation_id: @conversation.id,
-                                                  name: 'conversation_resolved')
-                                           .where.not(event_end_time: nil).order(:event_end_time).pluck(:event_end_time).map(&:to_f)
   end
 
   def recent
