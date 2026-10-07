@@ -51,10 +51,18 @@ const startPolling = () => {
       stopPolling();
       return;
     }
-    await store.dispatch('conversationExport/getStatus', active.id);
+    const result = await store.dispatch(
+      'conversationExport/getStatus',
+      active.id
+    );
     if (!activeExport.value) {
       stopPolling();
       await store.dispatch('conversationExport/get');
+      if (active.stage === 'reviews' && result?.status === 'completed') {
+        emitter.emit(BUS_EVENTS.SHOW_TOAST, {
+          message: t('CONVERSATION_EXPORT.REVIEWS_UPDATED'),
+        });
+      }
     }
   }, 2000);
 };
@@ -141,6 +149,23 @@ const downloadExport = async record => {
   }
 };
 
+const refreshReviews = async record => {
+  try {
+    const result = await store.dispatch(
+      'conversationExport/refreshReviews',
+      record.id
+    );
+    if (result) {
+      emitter.emit(BUS_EVENTS.SHOW_TOAST, {
+        message: t('CONVERSATION_EXPORT.REVIEWS_STARTED'),
+      });
+      startPolling();
+    }
+  } catch (error) {
+    emitter.emit(BUS_EVENTS.SHOW_TOAST, { message: error.message });
+  }
+};
+
 const formatDateTime = value => (value ? new Date(value).toLocaleString() : '');
 const formatRange = record => {
   if (record.hasInvalidDateRange || !record.dateFrom || !record.dateTo) {
@@ -159,6 +184,8 @@ const stageLabel = stage => {
       return t('CONVERSATION_EXPORT.STAGE.loading');
     case 'finalizing':
       return t('CONVERSATION_EXPORT.STAGE.finalizing');
+    case 'reviews':
+      return t('CONVERSATION_EXPORT.STAGE.reviews');
     default:
       return stage;
   }
@@ -218,10 +245,18 @@ const statusLabel = status => {
           <Button
             :label="$t('CONVERSATION_EXPORT.START')"
             icon="i-lucide-download"
-            :is-disabled="!!activeExport || uiFlags.isCreating"
+            :disabled="
+              !!activeExport ||
+              uiFlags.isCreating ||
+              !!uiFlags.updatingReviewsId
+            "
             @click="startExport"
           />
         </div>
+
+        <p class="text-sm text-n-slate-11">
+          {{ $t('CONVERSATION_EXPORT.REVIEWS_HELP') }}
+        </p>
 
         <div
           v-if="activeExport"
@@ -266,7 +301,10 @@ const statusLabel = status => {
               {{ stageLabel(activeExport.stage) }}
             </p>
             <p
-              v-if="activeExport.conversationsTotal !== null"
+              v-if="
+                activeExport.stage !== 'reviews' &&
+                activeExport.conversationsTotal !== null
+              "
               class="text-sm text-n-slate-11"
             >
               {{
@@ -275,10 +313,10 @@ const statusLabel = status => {
             </p>
             <Button
               :label="$t('CONVERSATION_EXPORT.STOP')"
-              color-scheme="warning"
+              color="amber"
               variant="ghost"
               icon="i-lucide-square"
-              :is-disabled="uiFlags.isStopping"
+              :disabled="uiFlags.isStopping"
               @click="stopExport"
             />
           </div>
@@ -321,17 +359,38 @@ const statusLabel = status => {
               </td>
               <td class="py-3 text-sm">
                 {{ statusLabel(record.status) }}
+                <p v-if="record.errorText" class="mt-1 text-xs text-n-ruby-11">
+                  {{ record.errorText }}
+                </p>
               </td>
               <td class="py-3 text-sm">{{ record.messageCount }}</td>
               <td class="py-3 text-sm">
-                <Button
-                  v-if="record.status === 'completed'"
-                  variant="ghost"
-                  size="small"
-                  icon="i-lucide-download"
-                  :label="$t('CONVERSATION_EXPORT.DOWNLOAD')"
-                  @click="downloadExport(record)"
-                />
+                <div v-if="record.mediaId" class="flex flex-wrap gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon="i-lucide-download"
+                    :label="$t('CONVERSATION_EXPORT.DOWNLOAD')"
+                    @click="downloadExport(record)"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon="i-lucide-refresh-cw"
+                    :label="$t('CONVERSATION_EXPORT.UPDATE_REVIEWS')"
+                    :disabled="
+                      !!activeExport ||
+                      uiFlags.isCreating ||
+                      !!uiFlags.updatingReviewsId
+                    "
+                    :is-loading="
+                      (record.status === 'processing' &&
+                        record.stage === 'reviews') ||
+                      uiFlags.updatingReviewsId === record.id
+                    "
+                    @click="refreshReviews(record)"
+                  />
+                </div>
               </td>
             </tr>
             <tr v-if="!records.length">

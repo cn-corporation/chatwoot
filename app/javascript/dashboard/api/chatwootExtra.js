@@ -1171,6 +1171,15 @@ class ChatwootExtraAPI {
     return response.data;
   }
 
+  async refreshConversationExportReviews(id) {
+    const response = await axios.post(
+      `${this.baseURL}/api/conversation-exports/${id}/reviews`,
+      {},
+      { headers: this.headers }
+    );
+    return response.data;
+  }
+
   getConversationExportDownloadUrl(id) {
     const apiKey = encodeURIComponent(CHATWOOT_EXTRA_API_KEY);
     return `${this.baseURL}/api/conversation-exports/${id}/download?apiKey=${apiKey}`;
