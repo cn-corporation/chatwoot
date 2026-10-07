@@ -9,6 +9,7 @@ export const state = {
     isFetching: false,
     isCreating: false,
     isStopping: false,
+    updatingReviewsId: null,
   },
 };
 
@@ -82,6 +83,25 @@ export const actions = {
     } catch (error) {
       throwErrorMessage(error);
       return null;
+    }
+  },
+  refreshReviews: async ({ commit }, id) => {
+    commit(types.SET_CONVERSATION_EXPORT_UI_FLAG, { updatingReviewsId: id });
+    try {
+      const response =
+        await ChatwootExtraAPI.refreshConversationExportReviews(id);
+      if (!response.success || !response.data) {
+        throw new Error(response.error);
+      }
+      commit(types.SET_CONVERSATION_EXPORT, response.data);
+      return response.data;
+    } catch (error) {
+      throwErrorMessage(error);
+      return null;
+    } finally {
+      commit(types.SET_CONVERSATION_EXPORT_UI_FLAG, {
+        updatingReviewsId: null,
+      });
     }
   },
   stop: async ({ commit }, id) => {

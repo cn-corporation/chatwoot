@@ -9,6 +9,10 @@
     "STARTED": "Export started",
     "STOPPED": "Export stopped",
     "DOWNLOAD": "Download CSV",
+    "UPDATE_REVIEWS": "Update reviews",
+    "REVIEWS_HELP": "CSV files include AI and customer reviews for each ticket. Update reviews in a saved export without exporting its messages again.",
+    "REVIEWS_STARTED": "Updating reviews in the saved CSV. The current file remains available until the update finishes.",
+    "REVIEWS_UPDATED": "Reviews updated. Download the CSV to get the latest reviews.",
     "VALIDATION": "Pick both a from and to date, with from on or before to.",
     "RANGE_VALIDATION": "Dates must be between {min} and {max}. Check the year.",
     "INVALID_RANGE": "Invalid date range",
@@ -16,7 +20,8 @@
     "STAGE": {
       "preprocessing": "Preparing…",
       "loading": "Loading messages…",
-      "finalizing": "Finalizing…"
+      "finalizing": "Finalizing…",
+      "reviews": "Updating ticket reviews…"
     },
     "STATUS": {
       "processing": "In progress",
