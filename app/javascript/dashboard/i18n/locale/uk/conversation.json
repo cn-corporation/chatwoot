@@ -429,6 +429,20 @@
   "GALLERY_VIEW": {
     "ERROR_DOWNLOADING": "Unable to download attachment. Please try again"
   },
+  "AI_SUGGESTION": {
+    "LOADING": "Завантаження підказки ШІ...",
+    "TITLE": "Підказка ШІ",
+    "BADGE": "Згенеровано автоматично",
+    "USE_BUTTON": "Використати цю відповідь",
+    "DISMISS_BUTTON": "Відхилити",
+    "RELOAD_TOOLTIP": "Оновити підказку",
+    "GET_BUTTON": "Отримати підказку ШІ",
+    "EMPTY": "Немає підказки для останнього повідомлення",
+    "ERROR": "Не вдалося завантажити підказку ШІ",
+    "HIDE_BUTTON": "Сховати підказки ШІ",
+    "DISABLE_TOOLTIP": "Вимкнути підказки ШІ",
+    "ENABLE_TOOLTIP": "Увімкнути підказки ШІ"
+  },
   "OPERATOR_PRESENCE": {
     "TITLE": "Оператори переглядають",
     "NO_OPERATORS": "Жоден оператор зараз не переглядає цю розмову",

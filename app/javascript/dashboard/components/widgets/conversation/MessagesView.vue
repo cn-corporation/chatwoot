@@ -5,7 +5,11 @@ import { ref, provide } from 'vue';
 import { useConfig } from 'dashboard/composables/useConfig';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import { useAI } from 'dashboard/composables/useAI';
-import { useAISuggestions } from 'dashboard/composables/useAISuggestions';
+import {
+  useAISuggestions,
+  findMessageAwaitingReply,
+  isSuggestionFor,
+} from 'dashboard/composables/useAISuggestions';
 import { useSnakeCase } from 'dashboard/composables/useTransformKeys';
 import { useSourceChannelColors } from 'dashboard/composables/useSourceChannelColors';
 
@@ -78,9 +82,15 @@ export default {
       aiSuggestion,
       isLoadingSuggestion,
       suggestionError,
-      hasSuggestion,
-      fetchAISuggestion,
+      hasCheckedSuggestion,
+      isAISuggestionsEnabled,
+      setAISuggestionsEnabled,
+      waitForSuggestion,
+      refreshSuggestionForMessage,
       clearSuggestion,
+      rememberUsedSuggestion,
+      rejectSuggestion,
+      reportSentMessage,
     } = useAISuggestions();
 
     const { getSourceBgColor, getInboxBackgroundStyle } =
@@ -98,9 +108,15 @@ export default {
       aiSuggestion,
       isLoadingSuggestion,
       suggestionError,
-      hasSuggestion,
-      fetchAISuggestion,
+      hasCheckedSuggestion,
+      isAISuggestionsEnabled,
+      setAISuggestionsEnabled,
+      waitForSuggestion,
+      refreshSuggestionForMessage,
       clearSuggestion,
+      rememberUsedSuggestion,
+      rejectSuggestion,
+      reportSentMessage,
       conversationPanelRef,
       getSourceBgColor,
       getInboxBackgroundStyle,
@@ -390,6 +406,25 @@ export default {
     shouldShowNewMessagesIndicator() {
       return this.hasUserScrolled && this.newMessagesWhileScrolledUp > 0;
     },
+    messageAwaitingReply() {
+      return findMessageAwaitingReply(this.currentChat?.messages || []);
+    },
+    visibleAISuggestion() {
+      const message = this.messageAwaitingReply;
+      const suggestion = this.aiSuggestion;
+      if (!message || !suggestion) return null;
+      if (String(suggestion.conversationId) !== String(this.currentChat.id)) {
+        return null;
+      }
+      return isSuggestionFor(suggestion, message.id) ? suggestion : null;
+    },
+    shouldShowAISuggestionBanner() {
+      return (
+        !this.isReadOnlyMode &&
+        this.isAISuggestionsEnabled &&
+        !!this.messageAwaitingReply
+      );
+    },
   },
 
   watch: {
@@ -397,12 +432,10 @@ export default {
       if (newChat.id === oldChat.id) {
         return;
       }
-      this.clearSuggestion();
       this.taskStatusMap.clear();
       this.fetchAllAttachmentsFromCurrentChat();
       this.fetchSuggestions();
       this.fetchConversationTasks();
-      this.fetchAISuggestionForConversation();
       this.messageSentSinceOpened = false;
       this.newMessagesWhileScrolledUp = 0;
       this.lastTrackedConversationId = newChat.id;
@@ -491,11 +524,25 @@ export default {
         this.$nextTick(() => this.checkAndTriggerLinkedLoading());
       }
     },
+    messageAwaitingReply: {
+      immediate: true,
+      handler(message, previousMessage) {
+        if (previousMessage && message?.id === previousMessage.id) return;
+        this.syncAISuggestion();
+      },
+    },
+    isAISuggestionsEnabled() {
+      this.syncAISuggestion();
+    },
+    isReadOnlyMode() {
+      this.syncAISuggestion();
+    },
   },
 
   created() {
-    this.handleMessageSent = () => {
+    this.handleMessageSent = payload => {
       this.messageSentSinceOpened = true;
+      this.reportSentMessage(payload);
     };
 
     emitter.on(BUS_EVENTS.SCROLL_TO_MESSAGE, this.onScrollToMessage);
@@ -514,7 +561,6 @@ export default {
     this.fetchAllAttachmentsFromCurrentChat();
     this.fetchSuggestions();
     this.fetchConversationTasks();
-    this.fetchAISuggestionForConversation();
     this.lastTrackedConversationId = this.currentChat?.id;
     const messages = this.getMessages;
     this.lastMessageId =
@@ -610,43 +656,40 @@ export default {
         }
       });
     },
-    async fetchAISuggestionForConversation() {
-      if (!this.currentChat?.id) {
+    syncAISuggestion() {
+      if (!this.isAISuggestionsEnabled || this.isReadOnlyMode) {
+        this.clearSuggestion();
         return;
       }
-
-      const messages = this.getMessages;
-      if (messages.length === 0) {
-        return;
-      }
-
-      const lastMessage = messages[messages.length - 1];
-      const MESSAGE_TYPE_INCOMING = 0;
-      const isLastMessageIncoming =
-        lastMessage.message_type === MESSAGE_TYPE_INCOMING;
-
-      if (!isLastMessageIncoming) {
-        return;
-      }
-
-      try {
-        await this.fetchAISuggestion(this.currentChat.id);
-      } catch (error) {
-        // Silently handle - suggestion is optional
-      }
+      this.refreshSuggestionForMessage(
+        this.currentChat?.id,
+        this.messageAwaitingReply
+      );
     },
     handleUseSuggestion(suggestionContent) {
       emitter.emit(BUS_EVENTS.INSERT_INTO_NORMAL_EDITOR, suggestionContent);
+      this.rememberUsedSuggestion(
+        this.currentChat.id,
+        this.visibleAISuggestion
+      );
       this.clearSuggestion();
     },
     handleDismissSuggestion() {
+      this.rejectSuggestion(this.currentChat.id, this.visibleAISuggestion);
       this.clearSuggestion();
     },
     handleReloadSuggestion() {
-      if (!this.currentChat?.id) {
+      const message = this.messageAwaitingReply;
+      if (!this.currentChat?.id || !message) {
         return;
       }
-      this.fetchAISuggestion(this.currentChat.id).catch();
+      this.waitForSuggestion(this.currentChat.id, {
+        messageId: message.id,
+        waitMs: 0,
+      });
+    },
+    handleDisableAISuggestions() {
+      this.setAISuggestionsEnabled(false);
     },
     isLabelSuggestionDismissed() {
       return LocalStorage.getFlag(
@@ -1077,6 +1120,18 @@ export default {
             alt="Someone is typing"
           />
         </div>
+      </div>
+      <div v-if="shouldShowAISuggestionBanner" class="px-4">
+        <AISuggestionBanner
+          :suggestion="visibleAISuggestion"
+          :is-loading="isLoadingSuggestion"
+          :error="suggestionError"
+          :is-empty="hasCheckedSuggestion && !visibleAISuggestion"
+          @use-suggestion="handleUseSuggestion"
+          @dismiss="handleDismissSuggestion"
+          @reload="handleReloadSuggestion"
+          @disable="handleDisableAISuggestions"
+        />
       </div>
       <ReplyBox
         v-if="!isReadOnlyMode"

@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
+import { useAISuggestionsToggle } from 'dashboard/composables/useAISuggestions';
 import FileUpload from 'vue-upload-component';
 import * as ActiveStorage from 'activestorage';
 import inboxMixin from 'shared/mixins/inboxMixin';
@@ -144,6 +145,8 @@ export default {
       useUISettings();
 
     const uploadRef = ref(false);
+    const { isAISuggestionsEnabled, toggleAISuggestions } =
+      useAISuggestionsToggle();
 
     const keyboardEvents = {
       '$mod+Alt+KeyA': {
@@ -167,6 +170,8 @@ export default {
       setSignatureFlagForInbox,
       fetchSignatureFlagFromUISettings,
       uploadRef,
+      isAISuggestionsEnabled,
+      toggleAISuggestions,
     };
   },
   data() {
@@ -266,6 +271,11 @@ export default {
       return this.quotedReplyEnabled
         ? this.$t('CONVERSATION.REPLYBOX.QUOTED_REPLY.DISABLE_TOOLTIP')
         : this.$t('CONVERSATION.REPLYBOX.QUOTED_REPLY.ENABLE_TOOLTIP');
+    },
+    aiSuggestionsToggleTooltip() {
+      return this.isAISuggestionsEnabled
+        ? this.$t('AI_SUGGESTION.DISABLE_TOOLTIP')
+        : this.$t('AI_SUGGESTION.ENABLE_TOOLTIP');
     },
   },
   mounted() {
@@ -409,6 +419,16 @@ export default {
         :message="message"
         :disabled="isInputDisabled"
         @replace-text="replaceText"
+      />
+      <NextButton
+        v-tooltip.top-end="aiSuggestionsToggleTooltip"
+        :icon="isAISuggestionsEnabled ? 'i-ph-sparkle-fill' : 'i-ph-sparkle'"
+        slate
+        faded
+        sm
+        :aria-label="aiSuggestionsToggleTooltip"
+        :aria-pressed="isAISuggestionsEnabled"
+        @click="toggleAISuggestions"
       />
       <transition name="modal-fade">
         <div
