@@ -936,7 +936,14 @@ export default {
           messagePayload
         );
         emitter.emit(BUS_EVENTS.SCROLL_TO_MESSAGE);
-        emitter.emit(BUS_EVENTS.MESSAGE_SENT);
+        emitter.emit(BUS_EVENTS.MESSAGE_SENT, {
+          conversationId: messagePayload.conversationId,
+          private: !!messagePayload.private,
+          message:
+            this.isSignatureAvailable && messagePayload.message
+              ? removeSignature(messagePayload.message, this.signatureToApply)
+              : messagePayload.message || '',
+        });
         this.removeFromDraft();
         this.sendMessageAnalyticsData(messagePayload.private);
       } catch (error) {
