@@ -510,12 +510,17 @@
   },
   "AI_SUGGESTION": {
     "LOADING": "Loading AI suggestion...",
-    "TITLE": "AI Suggested Response",
+    "TITLE": "AI suggestion",
     "BADGE": "Auto-generated",
     "USE_BUTTON": "Use this response",
     "DISMISS_BUTTON": "Dismiss",
     "RELOAD_TOOLTIP": "Reload suggestion",
-    "GET_BUTTON": "Get AI Suggestion"
+    "GET_BUTTON": "Get AI suggestion",
+    "EMPTY": "No suggestion for the latest message",
+    "ERROR": "Couldn't load the AI suggestion",
+    "HIDE_BUTTON": "Hide AI suggestions",
+    "DISABLE_TOOLTIP": "Turn off AI suggestions",
+    "ENABLE_TOOLTIP": "Turn on AI suggestions"
   },
   "OPERATOR_PRESENCE": {
     "TITLE": "Operators Viewing",

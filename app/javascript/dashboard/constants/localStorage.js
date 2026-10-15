@@ -6,4 +6,5 @@ export const LOCAL_STORAGE_KEYS = {
   DISMISSED_LABEL_SUGGESTIONS: 'labelSuggestionsDismissed',
   MESSAGE_REPLY_TO: 'messageReplyTo',
   REPLY_BOX_HEIGHT: 'replyBoxHeight',
+  AI_SUGGESTIONS_ENABLED: 'cw.aiSuggestions.enabled',
 };
