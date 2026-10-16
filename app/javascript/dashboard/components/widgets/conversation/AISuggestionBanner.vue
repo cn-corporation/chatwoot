@@ -218,7 +218,7 @@ const rate = value => {
 
       <div
         v-if="hasError"
-        class="flex items-center gap-2 px-3 py-1.5 text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded border border-red-200 dark:border-red-800/50"
+        class="flex items-center gap-2 px-3 py-1.5 text-xs text-n-ruby-11 bg-n-ruby-9/10 rounded border border-n-ruby-9/20"
         :title="error.message"
       >
         <span class="i-ph-warning-circle size-4 flex-shrink-0" />
