@@ -20,11 +20,38 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  rating: {
+    type: String,
+    default: null,
+  },
 });
 
-const emit = defineEmits(['useSuggestion', 'dismiss', 'reload', 'disable']);
+const emit = defineEmits([
+  'useSuggestion',
+  'dismiss',
+  'reload',
+  'disable',
+  'rate',
+]);
 
 const { t } = useI18n();
+
+const ratingOptions = computed(() => [
+  {
+    value: 'up',
+    icon: 'i-ph-thumbs-up',
+    selectedIcon: 'i-ph-thumbs-up-fill',
+    selectedClass: 'text-n-teal-11 bg-n-teal-9/10',
+    tooltip: t('AI_SUGGESTION.RATE_UP_TOOLTIP'),
+  },
+  {
+    value: 'down',
+    icon: 'i-ph-thumbs-down',
+    selectedIcon: 'i-ph-thumbs-down-fill',
+    selectedClass: 'text-n-ruby-11 bg-n-ruby-9/10',
+    tooltip: t('AI_SUGGESTION.RATE_DOWN_TOOLTIP'),
+  },
+]);
 
 const hasSuggestion = computed(() => {
   return props.suggestion && props.suggestion.content;
@@ -53,6 +80,13 @@ const reload = () => {
 const disable = () => {
   emit('disable');
 };
+
+const isRated = value => props.rating === value;
+
+const rate = value => {
+  if (isRated(value)) return;
+  emit('rate', value);
+};
 </script>
 
 <template>
@@ -80,12 +114,12 @@ const disable = () => {
 
     <div v-else-if="hasSuggestion" class="ai-suggestion-banner">
       <div
-        class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/40 dark:to-blue-950/40 rounded-lg border border-purple-200 dark:border-purple-800/50 p-4"
+        class="bg-gradient-to-r from-n-iris-3 to-n-blue-3 dark:from-n-iris-2 dark:to-n-blue-2 rounded-lg border border-n-iris-6 dark:border-n-iris-5 p-4"
       >
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0">
             <div
-              class="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 dark:from-purple-600 dark:to-blue-600 rounded-lg flex items-center justify-center shadow-sm"
+              class="w-8 h-8 bg-gradient-to-br from-n-iris-9 to-n-blue-9 rounded-lg flex items-center justify-center shadow-sm"
             >
               <span class="i-ph-sparkle-fill size-4 text-white" />
             </div>
@@ -113,7 +147,7 @@ const disable = () => {
 
             <div class="flex items-center gap-2 flex-wrap">
               <button
-                class="px-4 py-2 text-sm font-medium text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900 hover:bg-purple-200 dark:hover:bg-purple-800 rounded-lg border border-purple-300 dark:border-purple-600 transition-all duration-200 shadow-sm"
+                class="px-4 py-2 text-sm font-medium text-white bg-n-iris-9 hover:bg-n-iris-10 rounded-lg border border-n-iris-9 hover:border-n-iris-10 transition-all duration-200 shadow-sm"
                 @click="useSuggestion"
               >
                 {{ t('AI_SUGGESTION.USE_BUTTON') }}
@@ -126,8 +160,32 @@ const disable = () => {
                 {{ t('AI_SUGGESTION.DISMISS_BUTTON') }}
               </button>
 
+              <div class="flex items-center gap-1 ltr:ml-auto rtl:mr-auto">
+                <button
+                  v-for="option in ratingOptions"
+                  :key="option.value"
+                  class="flex p-2 rounded-lg transition-all duration-200"
+                  :class="
+                    isRated(option.value)
+                      ? option.selectedClass
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-n-iris-9/10'
+                  "
+                  :title="option.tooltip"
+                  :aria-label="option.tooltip"
+                  :aria-pressed="isRated(option.value)"
+                  @click="rate(option.value)"
+                >
+                  <span
+                    class="size-4"
+                    :class="
+                      isRated(option.value) ? option.selectedIcon : option.icon
+                    "
+                  />
+                </button>
+              </div>
+
               <button
-                class="flex ml-auto p-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 rounded-lg transition-all duration-200"
+                class="flex p-2 text-n-iris-11 hover:text-n-iris-12 hover:bg-n-iris-9/10 rounded-lg transition-all duration-200"
                 :title="t('AI_SUGGESTION.RELOAD_TOOLTIP')"
                 :aria-label="t('AI_SUGGESTION.RELOAD_TOOLTIP')"
                 @click="reload"
@@ -136,7 +194,7 @@ const disable = () => {
               </button>
 
               <button
-                class="flex p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-purple-100 dark:hover:bg-purple-900/40 rounded-lg transition-all duration-200"
+                class="flex p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-n-iris-9/10 rounded-lg transition-all duration-200"
                 :title="t('AI_SUGGESTION.DISABLE_TOOLTIP')"
                 :aria-label="t('AI_SUGGESTION.DISABLE_TOOLTIP')"
                 @click="disable"
@@ -151,7 +209,7 @@ const disable = () => {
 
     <div v-else class="flex items-center gap-2 flex-wrap">
       <button
-        class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-950/50 rounded-lg border border-purple-200 dark:border-purple-800/50 transition-all duration-200 shadow-sm hover:shadow"
+        class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-n-iris-11 bg-n-iris-3 hover:bg-n-iris-4 rounded-lg border border-n-iris-6 transition-all duration-200 shadow-sm hover:shadow"
         @click="reload"
       >
         <span class="i-ph-arrow-clockwise size-4" />
@@ -160,7 +218,7 @@ const disable = () => {
 
       <div
         v-if="hasError"
-        class="flex items-center gap-2 px-3 py-1.5 text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded border border-red-200 dark:border-red-800/50"
+        class="flex items-center gap-2 px-3 py-1.5 text-xs text-n-ruby-11 bg-n-ruby-9/10 rounded border border-n-ruby-9/20"
         :title="error.message"
       >
         <span class="i-ph-warning-circle size-4 flex-shrink-0" />
