@@ -33,6 +33,50 @@ describe('AISuggestionBanner', () => {
     expect(wrapper.emitted('disable')).toHaveLength(1);
   });
 
+  it('emits a rating without using, dismissing or hiding the suggestion', async () => {
+    const wrapper = mountBanner({ suggestion: { content: 'Hi' } });
+    const up = buttonWithTitle(wrapper, 'Good suggestion');
+    const down = buttonWithTitle(wrapper, 'Bad suggestion');
+
+    expect(up.attributes('aria-label')).toBe('Good suggestion');
+    expect(down.attributes('aria-label')).toBe('Bad suggestion');
+    expect(up.attributes('aria-pressed')).toBe('false');
+    expect(down.attributes('aria-pressed')).toBe('false');
+
+    await up.trigger('click');
+    await down.trigger('click');
+
+    expect(wrapper.emitted('rate')).toEqual([['up'], ['down']]);
+    expect(wrapper.emitted('useSuggestion')).toBeUndefined();
+    expect(wrapper.emitted('dismiss')).toBeUndefined();
+    expect(wrapper.emitted('disable')).toBeUndefined();
+  });
+
+  it('shows the current rating as pressed and ignores clicking it again', async () => {
+    const wrapper = mountBanner({
+      suggestion: { content: 'Hi' },
+      rating: 'up',
+    });
+    const up = () => buttonWithTitle(wrapper, 'Good suggestion');
+    const down = () => buttonWithTitle(wrapper, 'Bad suggestion');
+
+    expect(up().attributes('aria-pressed')).toBe('true');
+    expect(up().find('span').classes()).toContain('i-ph-thumbs-up-fill');
+    expect(down().find('span').classes()).toContain('i-ph-thumbs-down');
+
+    await up().trigger('click');
+    expect(wrapper.emitted('rate')).toBeUndefined();
+
+    await down().trigger('click');
+    expect(wrapper.emitted('rate')).toEqual([['down']]);
+
+    await wrapper.setProps({ rating: 'down' });
+    expect(up().attributes('aria-pressed')).toBe('false');
+    expect(up().find('span').classes()).toContain('i-ph-thumbs-up');
+    expect(down().attributes('aria-pressed')).toBe('true');
+    expect(down().find('span').classes()).toContain('i-ph-thumbs-down-fill');
+  });
+
   it('shows the loading state with a way to turn suggestions off', async () => {
     const wrapper = mountBanner({ isLoading: true });
 

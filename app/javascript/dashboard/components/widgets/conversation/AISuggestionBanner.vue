@@ -20,11 +20,38 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  rating: {
+    type: String,
+    default: null,
+  },
 });
 
-const emit = defineEmits(['useSuggestion', 'dismiss', 'reload', 'disable']);
+const emit = defineEmits([
+  'useSuggestion',
+  'dismiss',
+  'reload',
+  'disable',
+  'rate',
+]);
 
 const { t } = useI18n();
+
+const ratingOptions = computed(() => [
+  {
+    value: 'up',
+    icon: 'i-ph-thumbs-up',
+    selectedIcon: 'i-ph-thumbs-up-fill',
+    selectedClass: 'text-n-teal-11 bg-n-teal-9/10',
+    tooltip: t('AI_SUGGESTION.RATE_UP_TOOLTIP'),
+  },
+  {
+    value: 'down',
+    icon: 'i-ph-thumbs-down',
+    selectedIcon: 'i-ph-thumbs-down-fill',
+    selectedClass: 'text-n-ruby-11 bg-n-ruby-9/10',
+    tooltip: t('AI_SUGGESTION.RATE_DOWN_TOOLTIP'),
+  },
+]);
 
 const hasSuggestion = computed(() => {
   return props.suggestion && props.suggestion.content;
@@ -52,6 +79,13 @@ const reload = () => {
 
 const disable = () => {
   emit('disable');
+};
+
+const isRated = value => props.rating === value;
+
+const rate = value => {
+  if (isRated(value)) return;
+  emit('rate', value);
 };
 </script>
 
@@ -126,8 +160,32 @@ const disable = () => {
                 {{ t('AI_SUGGESTION.DISMISS_BUTTON') }}
               </button>
 
+              <div class="flex items-center gap-1 ltr:ml-auto rtl:mr-auto">
+                <button
+                  v-for="option in ratingOptions"
+                  :key="option.value"
+                  class="flex p-2 rounded-lg transition-all duration-200"
+                  :class="
+                    isRated(option.value)
+                      ? option.selectedClass
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-n-alpha-2'
+                  "
+                  :title="option.tooltip"
+                  :aria-label="option.tooltip"
+                  :aria-pressed="isRated(option.value)"
+                  @click="rate(option.value)"
+                >
+                  <span
+                    class="size-4"
+                    :class="
+                      isRated(option.value) ? option.selectedIcon : option.icon
+                    "
+                  />
+                </button>
+              </div>
+
               <button
-                class="flex ml-auto p-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 rounded-lg transition-all duration-200"
+                class="flex p-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 rounded-lg transition-all duration-200"
                 :title="t('AI_SUGGESTION.RELOAD_TOOLTIP')"
                 :aria-label="t('AI_SUGGESTION.RELOAD_TOOLTIP')"
                 @click="reload"

@@ -515,6 +515,8 @@
     "USE_BUTTON": "Use this response",
     "DISMISS_BUTTON": "Dismiss",
     "RELOAD_TOOLTIP": "Reload suggestion",
+    "RATE_UP_TOOLTIP": "Good suggestion",
+    "RATE_DOWN_TOOLTIP": "Bad suggestion",
     "GET_BUTTON": "Get AI suggestion",
     "EMPTY": "No suggestion for the latest message",
     "ERROR": "Couldn't load the AI suggestion",

@@ -254,3 +254,82 @@ describe('useAISuggestions feedback', () => {
     await expect(ai.rejectSuggestion(55, suggestion(10))).resolves.toBeNull();
   });
 });
+
+describe('useAISuggestions rating', () => {
+  it('sends the rating with the suggestion id and shows it right away', async () => {
+    const ai = useAISuggestions();
+    const rated = suggestion(20);
+
+    const request = ai.rateSuggestion(55, rated, 'up');
+    expect(ai.getSuggestionRating(rated)).toBe('up');
+    await request;
+
+    expect(chatwootExtraAPI.sendAISuggestionFeedback).toHaveBeenCalledWith(55, {
+      suggestionId: 'sug-20',
+      rating: 'up',
+    });
+  });
+
+  it('switches the rating and ignores repeating the current one', async () => {
+    const ai = useAISuggestions();
+    const rated = suggestion(21);
+
+    await ai.rateSuggestion(55, rated, 'up');
+    await ai.rateSuggestion(55, rated, 'up');
+    await ai.rateSuggestion(55, rated, 'down');
+
+    expect(ai.getSuggestionRating(rated)).toBe('down');
+    expect(chatwootExtraAPI.sendAISuggestionFeedback.mock.calls).toEqual([
+      [55, { suggestionId: 'sug-21', rating: 'up' }],
+      [55, { suggestionId: 'sug-21', rating: 'down' }],
+    ]);
+  });
+
+  it('keeps the rating per suggestion for the session', async () => {
+    await useAISuggestions().rateSuggestion(55, suggestion(22), 'down');
+    const ai = useAISuggestions();
+
+    expect(ai.getSuggestionRating(suggestion(22))).toBe('down');
+    expect(ai.getSuggestionRating(suggestion(23))).toBeNull();
+  });
+
+  it('reverts the rating when the request fails', async () => {
+    const ai = useAISuggestions();
+    await ai.rateSuggestion(55, suggestion(24), 'up');
+    chatwootExtraAPI.sendAISuggestionFeedback.mockRejectedValue(
+      new Error('down')
+    );
+
+    await expect(
+      ai.rateSuggestion(55, suggestion(24), 'down')
+    ).resolves.toBeNull();
+    await ai.rateSuggestion(55, suggestion(25), 'up');
+
+    expect(ai.getSuggestionRating(suggestion(24))).toBe('up');
+    expect(ai.getSuggestionRating(suggestion(25))).toBeNull();
+  });
+
+  it('ignores suggestions without an id', async () => {
+    const ai = useAISuggestions();
+
+    expect(await ai.rateSuggestion(55, { content: 'Hi' }, 'up')).toBeNull();
+    expect(ai.getSuggestionRating({ content: 'Hi' })).toBeNull();
+    expect(chatwootExtraAPI.sendAISuggestionFeedback).not.toHaveBeenCalled();
+  });
+
+  it('leaves the shown suggestion and the used-suggestion feedback alone', async () => {
+    const ai = useAISuggestions();
+    const rated = suggestion(26, 'Hello there');
+    ai.aiSuggestion.value = rated;
+
+    await ai.rateSuggestion(55, rated, 'up');
+    ai.rememberUsedSuggestion(55, rated);
+    await ai.reportSentMessage({ conversationId: 55, message: 'Hello there' });
+
+    expect(ai.aiSuggestion.value).toEqual(rated);
+    expect(chatwootExtraAPI.sendAISuggestionFeedback.mock.calls).toEqual([
+      [55, { suggestionId: 'sug-26', rating: 'up' }],
+      [55, { suggestionId: 'sug-26', action: 'accepted' }],
+    ]);
+  });
+});
