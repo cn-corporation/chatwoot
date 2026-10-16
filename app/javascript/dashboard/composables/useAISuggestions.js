@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref, computed, reactive } from 'vue';
 import chatwootExtraAPI from 'dashboard/api/chatwootExtra';
 import { LocalStorage } from 'shared/helpers/localStorage';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
@@ -12,6 +12,16 @@ const RECENT_MESSAGE_AGE_MS = 60000;
 const isAISuggestionsEnabled = ref(
   LocalStorage.get(LOCAL_STORAGE_KEYS.AI_SUGGESTIONS_ENABLED) !== false
 );
+
+const suggestionRatings = reactive({});
+
+const restoreRating = (suggestionId, rating) => {
+  if (rating) {
+    suggestionRatings[suggestionId] = rating;
+  } else {
+    delete suggestionRatings[suggestionId];
+  }
+};
 
 const persistEnabledSetting = value => {
   try {
@@ -208,6 +218,37 @@ export function useAISuggestions() {
   };
 
   /**
+   * The agent's rating ('up' or 'down') of a suggestion in this session, or null when unrated.
+   */
+  const getSuggestionRating = suggestion => {
+    const suggestionId = suggestion?.metadata?.suggestionId;
+    return (suggestionId && suggestionRatings[suggestionId]) || null;
+  };
+
+  /**
+   * Rates a suggestion 'up' or 'down' without using or dismissing it. The rating is shown
+   * immediately, kept per suggestion for the session and rolled back if the request fails.
+   */
+  const rateSuggestion = async (conversationId, suggestion, rating) => {
+    const suggestionId = suggestion?.metadata?.suggestionId;
+    const previousRating = getSuggestionRating(suggestion);
+    if (!suggestionId || previousRating === rating) return null;
+
+    suggestionRatings[suggestionId] = rating;
+    try {
+      return await chatwootExtraAPI.sendAISuggestionFeedback(conversationId, {
+        suggestionId,
+        rating,
+      });
+    } catch {
+      if (suggestionRatings[suggestionId] === rating) {
+        restoreRating(suggestionId, previousRating);
+      }
+      return null;
+    }
+  };
+
+  /**
    * Reports the outcome of a used suggestion once the agent sends a public reply.
    */
   const reportSentMessage = ({
@@ -247,6 +288,8 @@ export function useAISuggestions() {
     clearSuggestion,
     rememberUsedSuggestion,
     rejectSuggestion,
+    getSuggestionRating,
+    rateSuggestion,
     reportSentMessage,
   };
 }

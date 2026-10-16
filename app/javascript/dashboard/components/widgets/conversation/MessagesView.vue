@@ -90,6 +90,8 @@ export default {
       clearSuggestion,
       rememberUsedSuggestion,
       rejectSuggestion,
+      getSuggestionRating,
+      rateSuggestion,
       reportSentMessage,
     } = useAISuggestions();
 
@@ -116,6 +118,8 @@ export default {
       clearSuggestion,
       rememberUsedSuggestion,
       rejectSuggestion,
+      getSuggestionRating,
+      rateSuggestion,
       reportSentMessage,
       conversationPanelRef,
       getSourceBgColor,
@@ -418,6 +422,9 @@ export default {
       }
       return isSuggestionFor(suggestion, message.id) ? suggestion : null;
     },
+    visibleAISuggestionRating() {
+      return this.getSuggestionRating(this.visibleAISuggestion);
+    },
     shouldShowAISuggestionBanner() {
       return (
         !this.isReadOnlyMode &&
@@ -677,6 +684,13 @@ export default {
     handleDismissSuggestion() {
       this.rejectSuggestion(this.currentChat.id, this.visibleAISuggestion);
       this.clearSuggestion();
+    },
+    handleRateSuggestion(rating) {
+      this.rateSuggestion(
+        this.currentChat.id,
+        this.visibleAISuggestion,
+        rating
+      );
     },
     handleReloadSuggestion() {
       const message = this.messageAwaitingReply;
@@ -1127,10 +1141,12 @@ export default {
           :is-loading="isLoadingSuggestion"
           :error="suggestionError"
           :is-empty="hasCheckedSuggestion && !visibleAISuggestion"
+          :rating="visibleAISuggestionRating"
           @use-suggestion="handleUseSuggestion"
           @dismiss="handleDismissSuggestion"
           @reload="handleReloadSuggestion"
           @disable="handleDisableAISuggestions"
+          @rate="handleRateSuggestion"
         />
       </div>
       <ReplyBox
