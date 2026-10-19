@@ -15,6 +15,10 @@ const isAISuggestionsEnabled = ref(
 
 const suggestionRatings = reactive({});
 
+const suggestionComments = reactive({});
+
+const reportedUsedSuggestionIds = new Set();
+
 const restoreRating = (suggestionId, rating) => {
   if (rating) {
     suggestionRatings[suggestionId] = rating;
@@ -211,6 +215,25 @@ export function useAISuggestions() {
       : null;
   };
 
+  /**
+   * Tells the engine the agent inserted a suggestion into the reply box, once per suggestion
+   * per session. Fire-and-forget: it never throws, and a failed request is retried on the next
+   * use of the same suggestion.
+   */
+  const reportUsedSuggestion = (conversationId, suggestion) => {
+    const suggestionId = suggestion?.metadata?.suggestionId;
+    if (!suggestionId || reportedUsedSuggestionIds.has(suggestionId)) {
+      return Promise.resolve(null);
+    }
+    reportedUsedSuggestionIds.add(suggestionId);
+    return chatwootExtraAPI
+      .sendAISuggestionFeedback(conversationId, { suggestionId, used: true })
+      .catch(() => {
+        reportedUsedSuggestionIds.delete(suggestionId);
+        return null;
+      });
+  };
+
   const rejectSuggestion = (conversationId, suggestion) => {
     const suggestionId = suggestion?.metadata?.suggestionId;
     if (!suggestionId) return Promise.resolve(null);
@@ -245,6 +268,50 @@ export function useAISuggestions() {
         restoreRating(suggestionId, previousRating);
       }
       return null;
+    }
+  };
+
+  /**
+   * The agent's comment on a suggestion in this session as `{ text, status }`, or null when they
+   * have not commented. `text` is the last comment that was sent (null until one is) and `status`
+   * is 'sending', 'sent' or 'error' for the latest request.
+   */
+  const getSuggestionComment = suggestion => {
+    const suggestionId = suggestion?.metadata?.suggestionId;
+    return (suggestionId && suggestionComments[suggestionId]) || null;
+  };
+
+  /**
+   * Sends a free-text comment on a suggestion, independent of its rating; a later comment
+   * replaces the earlier one. Resolves to true once it is sent, and to false when the comment is
+   * blank, the suggestion has no id or the request fails, keeping the earlier comment.
+   */
+  const commentOnSuggestion = async (conversationId, suggestion, comment) => {
+    const suggestionId = suggestion?.metadata?.suggestionId;
+    const text = (comment || '').trim();
+    if (!suggestionId || !text) return false;
+
+    const previousText = suggestionComments[suggestionId]?.text || null;
+    suggestionComments[suggestionId] = {
+      text: previousText,
+      status: 'sending',
+    };
+    const request = suggestionComments[suggestionId];
+    const settle = state => {
+      if (suggestionComments[suggestionId] === request) {
+        suggestionComments[suggestionId] = state;
+      }
+    };
+    try {
+      await chatwootExtraAPI.sendAISuggestionFeedback(conversationId, {
+        suggestionId,
+        comment: text,
+      });
+      settle({ text, status: 'sent' });
+      return true;
+    } catch {
+      settle({ text: previousText, status: 'error' });
+      return false;
     }
   };
 
@@ -287,9 +354,12 @@ export function useAISuggestions() {
     refreshSuggestionForMessage,
     clearSuggestion,
     rememberUsedSuggestion,
+    reportUsedSuggestion,
     rejectSuggestion,
     getSuggestionRating,
     rateSuggestion,
+    getSuggestionComment,
+    commentOnSuggestion,
     reportSentMessage,
   };
 }

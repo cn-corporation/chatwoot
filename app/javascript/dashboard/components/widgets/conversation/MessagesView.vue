@@ -89,9 +89,12 @@ export default {
       refreshSuggestionForMessage,
       clearSuggestion,
       rememberUsedSuggestion,
+      reportUsedSuggestion,
       rejectSuggestion,
       getSuggestionRating,
       rateSuggestion,
+      getSuggestionComment,
+      commentOnSuggestion,
       reportSentMessage,
     } = useAISuggestions();
 
@@ -117,9 +120,12 @@ export default {
       refreshSuggestionForMessage,
       clearSuggestion,
       rememberUsedSuggestion,
+      reportUsedSuggestion,
       rejectSuggestion,
       getSuggestionRating,
       rateSuggestion,
+      getSuggestionComment,
+      commentOnSuggestion,
       reportSentMessage,
       conversationPanelRef,
       getSourceBgColor,
@@ -425,6 +431,9 @@ export default {
     visibleAISuggestionRating() {
       return this.getSuggestionRating(this.visibleAISuggestion);
     },
+    visibleAISuggestionComment() {
+      return this.getSuggestionComment(this.visibleAISuggestion);
+    },
     shouldShowAISuggestionBanner() {
       return (
         !this.isReadOnlyMode &&
@@ -679,6 +688,7 @@ export default {
         this.currentChat.id,
         this.visibleAISuggestion
       );
+      this.reportUsedSuggestion(this.currentChat.id, this.visibleAISuggestion);
       this.clearSuggestion();
     },
     handleDismissSuggestion() {
@@ -690,6 +700,13 @@ export default {
         this.currentChat.id,
         this.visibleAISuggestion,
         rating
+      );
+    },
+    handleCommentSuggestion(comment) {
+      this.commentOnSuggestion(
+        this.currentChat.id,
+        this.visibleAISuggestion,
+        comment
       );
     },
     handleReloadSuggestion() {
@@ -1142,11 +1159,13 @@ export default {
           :error="suggestionError"
           :is-empty="hasCheckedSuggestion && !visibleAISuggestion"
           :rating="visibleAISuggestionRating"
+          :comment="visibleAISuggestionComment"
           @use-suggestion="handleUseSuggestion"
           @dismiss="handleDismissSuggestion"
           @reload="handleReloadSuggestion"
           @disable="handleDisableAISuggestions"
           @rate="handleRateSuggestion"
+          @comment="handleCommentSuggestion"
         />
       </div>
       <ReplyBox
