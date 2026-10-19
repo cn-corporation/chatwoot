@@ -15,6 +15,8 @@ const isAISuggestionsEnabled = ref(
 
 const suggestionRatings = reactive({});
 
+const suggestionComments = reactive({});
+
 const restoreRating = (suggestionId, rating) => {
   if (rating) {
     suggestionRatings[suggestionId] = rating;
@@ -249,6 +251,50 @@ export function useAISuggestions() {
   };
 
   /**
+   * The agent's comment on a suggestion in this session as `{ text, status }`, or null when they
+   * have not commented. `text` is the last comment that was sent (null until one is) and `status`
+   * is 'sending', 'sent' or 'error' for the latest request.
+   */
+  const getSuggestionComment = suggestion => {
+    const suggestionId = suggestion?.metadata?.suggestionId;
+    return (suggestionId && suggestionComments[suggestionId]) || null;
+  };
+
+  /**
+   * Sends a free-text comment on a suggestion, independent of its rating; a later comment
+   * replaces the earlier one. Resolves to true once it is sent, and to false when the comment is
+   * blank, the suggestion has no id or the request fails, keeping the earlier comment.
+   */
+  const commentOnSuggestion = async (conversationId, suggestion, comment) => {
+    const suggestionId = suggestion?.metadata?.suggestionId;
+    const text = (comment || '').trim();
+    if (!suggestionId || !text) return false;
+
+    const previousText = suggestionComments[suggestionId]?.text || null;
+    suggestionComments[suggestionId] = {
+      text: previousText,
+      status: 'sending',
+    };
+    const request = suggestionComments[suggestionId];
+    const settle = state => {
+      if (suggestionComments[suggestionId] === request) {
+        suggestionComments[suggestionId] = state;
+      }
+    };
+    try {
+      await chatwootExtraAPI.sendAISuggestionFeedback(conversationId, {
+        suggestionId,
+        comment: text,
+      });
+      settle({ text, status: 'sent' });
+      return true;
+    } catch {
+      settle({ text: previousText, status: 'error' });
+      return false;
+    }
+  };
+
+  /**
    * Reports the outcome of a used suggestion once the agent sends a public reply.
    */
   const reportSentMessage = ({
@@ -290,6 +336,8 @@ export function useAISuggestions() {
     rejectSuggestion,
     getSuggestionRating,
     rateSuggestion,
+    getSuggestionComment,
+    commentOnSuggestion,
     reportSentMessage,
   };
 }

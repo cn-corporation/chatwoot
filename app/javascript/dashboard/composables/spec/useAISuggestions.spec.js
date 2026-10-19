@@ -333,3 +333,88 @@ describe('useAISuggestions rating', () => {
     ]);
   });
 });
+
+describe('useAISuggestions comment', () => {
+  it('sends the trimmed comment with the suggestion id and marks it sent', async () => {
+    const ai = useAISuggestions();
+    const commented = suggestion(40);
+
+    const request = ai.commentOnSuggestion(55, commented, '  Wrong amount  ');
+    expect(ai.getSuggestionComment(commented)).toEqual({
+      text: null,
+      status: 'sending',
+    });
+
+    await expect(request).resolves.toBe(true);
+    expect(chatwootExtraAPI.sendAISuggestionFeedback).toHaveBeenCalledWith(55, {
+      suggestionId: 'sug-40',
+      comment: 'Wrong amount',
+    });
+    expect(ai.getSuggestionComment(commented)).toEqual({
+      text: 'Wrong amount',
+      status: 'sent',
+    });
+  });
+
+  it('does not send blank comments or comments for suggestions without an id', async () => {
+    const ai = useAISuggestions();
+
+    expect(await ai.commentOnSuggestion(55, suggestion(41), '   ')).toBe(false);
+    expect(await ai.commentOnSuggestion(55, suggestion(41), '')).toBe(false);
+    expect(await ai.commentOnSuggestion(55, { content: 'Hi' }, 'Nope')).toBe(
+      false
+    );
+    expect(chatwootExtraAPI.sendAISuggestionFeedback).not.toHaveBeenCalled();
+    expect(ai.getSuggestionComment(suggestion(41))).toBeNull();
+    expect(ai.getSuggestionComment({ content: 'Hi' })).toBeNull();
+  });
+
+  it('replaces the earlier comment with a later one', async () => {
+    const ai = useAISuggestions();
+    const commented = suggestion(42);
+
+    await ai.commentOnSuggestion(55, commented, 'First');
+    await ai.commentOnSuggestion(55, commented, 'Second');
+
+    expect(ai.getSuggestionComment(commented).text).toBe('Second');
+    expect(chatwootExtraAPI.sendAISuggestionFeedback.mock.calls).toEqual([
+      [55, { suggestionId: 'sug-42', comment: 'First' }],
+      [55, { suggestionId: 'sug-42', comment: 'Second' }],
+    ]);
+  });
+
+  it('reports a failure and keeps the earlier comment', async () => {
+    const ai = useAISuggestions();
+    const commented = suggestion(43);
+    await ai.commentOnSuggestion(55, commented, 'First');
+    chatwootExtraAPI.sendAISuggestionFeedback.mockRejectedValue(
+      new Error('down')
+    );
+
+    await expect(ai.commentOnSuggestion(55, commented, 'Second')).resolves.toBe(
+      false
+    );
+
+    expect(ai.getSuggestionComment(commented)).toEqual({
+      text: 'First',
+      status: 'error',
+    });
+  });
+
+  it('keeps the comment per suggestion and independent of the rating', async () => {
+    const ai = useAISuggestions();
+    const commented = suggestion(44);
+
+    await ai.rateSuggestion(55, commented, 'down');
+    await ai.commentOnSuggestion(55, commented, 'Too formal');
+    const another = useAISuggestions();
+
+    expect(another.getSuggestionComment(commented).text).toBe('Too formal');
+    expect(another.getSuggestionComment(suggestion(45))).toBeNull();
+    expect(another.getSuggestionRating(commented)).toBe('down');
+    expect(chatwootExtraAPI.sendAISuggestionFeedback.mock.calls).toEqual([
+      [55, { suggestionId: 'sug-44', rating: 'down' }],
+      [55, { suggestionId: 'sug-44', comment: 'Too formal' }],
+    ]);
+  });
+});

@@ -183,7 +183,7 @@ class ChatwootExtraAPI {
 
   async sendAISuggestionFeedback(
     conversationId,
-    { suggestionId, action, finalText, rating }
+    { suggestionId, action, finalText, rating, comment }
   ) {
     const response = await axios.post(
       `${this.baseURL}/api/ai-suggestions/${conversationId}/feedback`,
@@ -192,6 +192,7 @@ class ChatwootExtraAPI {
         ...(action ? { action } : {}),
         ...(finalText ? { finalText } : {}),
         ...(rating ? { rating } : {}),
+        ...(comment ? { comment } : {}),
       },
       { headers: this.headers }
     );
