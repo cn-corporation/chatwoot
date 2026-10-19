@@ -49,6 +49,17 @@ describe('AISuggestionBanner', () => {
     expect(wrapper.emitted('disable')).toHaveLength(1);
   });
 
+  it('emits a single useSuggestion with the content and nothing else when using it', async () => {
+    const wrapper = mountBanner({ suggestion: { content: 'Hi' } });
+
+    await buttonWithText(wrapper, 'Use this response').trigger('click');
+
+    expect(wrapper.emitted('useSuggestion')).toEqual([['Hi']]);
+    expect(wrapper.emitted('rate')).toBeUndefined();
+    expect(wrapper.emitted('comment')).toBeUndefined();
+    expect(wrapper.emitted('dismiss')).toBeUndefined();
+  });
+
   it('emits a rating without using, dismissing or hiding the suggestion', async () => {
     const wrapper = mountBanner({ suggestion: { content: 'Hi' } });
     const up = buttonWithTitle(wrapper, 'Good suggestion');

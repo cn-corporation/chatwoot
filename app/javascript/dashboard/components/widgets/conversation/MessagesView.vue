@@ -89,6 +89,7 @@ export default {
       refreshSuggestionForMessage,
       clearSuggestion,
       rememberUsedSuggestion,
+      reportUsedSuggestion,
       rejectSuggestion,
       getSuggestionRating,
       rateSuggestion,
@@ -119,6 +120,7 @@ export default {
       refreshSuggestionForMessage,
       clearSuggestion,
       rememberUsedSuggestion,
+      reportUsedSuggestion,
       rejectSuggestion,
       getSuggestionRating,
       rateSuggestion,
@@ -686,6 +688,7 @@ export default {
         this.currentChat.id,
         this.visibleAISuggestion
       );
+      this.reportUsedSuggestion(this.currentChat.id, this.visibleAISuggestion);
       this.clearSuggestion();
     },
     handleDismissSuggestion() {

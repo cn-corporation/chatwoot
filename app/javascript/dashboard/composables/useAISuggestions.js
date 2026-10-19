@@ -17,6 +17,8 @@ const suggestionRatings = reactive({});
 
 const suggestionComments = reactive({});
 
+const reportedUsedSuggestionIds = new Set();
+
 const restoreRating = (suggestionId, rating) => {
   if (rating) {
     suggestionRatings[suggestionId] = rating;
@@ -213,6 +215,25 @@ export function useAISuggestions() {
       : null;
   };
 
+  /**
+   * Tells the engine the agent inserted a suggestion into the reply box, once per suggestion
+   * per session. Fire-and-forget: it never throws, and a failed request is retried on the next
+   * use of the same suggestion.
+   */
+  const reportUsedSuggestion = (conversationId, suggestion) => {
+    const suggestionId = suggestion?.metadata?.suggestionId;
+    if (!suggestionId || reportedUsedSuggestionIds.has(suggestionId)) {
+      return Promise.resolve(null);
+    }
+    reportedUsedSuggestionIds.add(suggestionId);
+    return chatwootExtraAPI
+      .sendAISuggestionFeedback(conversationId, { suggestionId, used: true })
+      .catch(() => {
+        reportedUsedSuggestionIds.delete(suggestionId);
+        return null;
+      });
+  };
+
   const rejectSuggestion = (conversationId, suggestion) => {
     const suggestionId = suggestion?.metadata?.suggestionId;
     if (!suggestionId) return Promise.resolve(null);
@@ -333,6 +354,7 @@ export function useAISuggestions() {
     refreshSuggestionForMessage,
     clearSuggestion,
     rememberUsedSuggestion,
+    reportUsedSuggestion,
     rejectSuggestion,
     getSuggestionRating,
     rateSuggestion,
