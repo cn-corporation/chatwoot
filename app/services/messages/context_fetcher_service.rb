@@ -16,6 +16,7 @@ class Messages::ContextFetcherService
     # This provides proper context flow for AI processing
     @conversation
       .messages
+      .includes(attachments: { file_attachment: :blob })
       .support.where(workflow_epoch: @message.workflow_epoch)
       .where.not(message_type: :activity) # Exclude activity messages
       .where('created_at <= ?', @message.created_at) # Include the current message
@@ -27,7 +28,7 @@ class Messages::ContextFetcherService
 
   def formatted_context_for_webhook
     fetch_context_messages.map do |msg|
-      {
+      data = {
         id: msg.id,
         content: msg.content,
         message_type: msg.message_type,
@@ -37,6 +38,8 @@ class Messages::ContextFetcherService
         content_type: msg.content_type,
         private: msg.private
       }
+      data[:attachments] = msg.attachments.map(&:push_event_data) if msg.attachments.present?
+      data
     end
   end
 
