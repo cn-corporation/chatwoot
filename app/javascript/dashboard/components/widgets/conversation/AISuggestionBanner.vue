@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import { isCommentDetailedEnough } from 'dashboard/composables/useAISuggestions';
 
 const props = defineProps({
   suggestion: {
@@ -61,6 +62,7 @@ const isCommentOpen = ref(false);
 const commentDraft = ref('');
 const isAwaitingComment = ref(false);
 const hasCommentError = ref(false);
+const isCommentTooShort = ref(false);
 const showCommentThanks = ref(false);
 let commentThanksTimer = null;
 const now = ref(Date.now());
@@ -139,6 +141,7 @@ const commentTooltip = computed(() =>
 const openComment = () => {
   isCommentOpen.value = true;
   hasCommentError.value = false;
+  isCommentTooShort.value = false;
   commentDraft.value = sentComment.value;
   nextTick(() => commentInput.value?.focus({ preventScroll: true }));
 };
@@ -146,6 +149,7 @@ const openComment = () => {
 const closeComment = () => {
   isCommentOpen.value = false;
   hasCommentError.value = false;
+  isCommentTooShort.value = false;
   commentDraft.value = '';
 };
 
@@ -175,14 +179,19 @@ const flashCommentThanks = () => {
 };
 
 /**
- * Emits the trimmed draft; an unchanged comment just closes the box. The box stays open until
- * the `comment` prop reports the request as sent or failed.
+ * Emits the trimmed draft; an unchanged comment just closes the box and one with too few letters
+ * asks for more detail instead. The box stays open until the `comment` prop reports the request
+ * as sent or failed.
  */
 const sendComment = () => {
   const comment = commentDraft.value.trim();
   if (!comment || isSendingComment.value) return;
   if (comment === sentComment.value) {
     cancelComment();
+    return;
+  }
+  if (!isCommentDetailedEnough(comment)) {
+    isCommentTooShort.value = true;
     return;
   }
   hasCommentError.value = false;
@@ -211,6 +220,10 @@ const rate = value => {
     openComment();
   }
 };
+
+watch(commentDraft, () => {
+  isCommentTooShort.value = false;
+});
 
 watch(
   () => props.comment,
@@ -438,12 +451,16 @@ onBeforeUnmount(() => {
 
                 <div class="flex items-center gap-2 flex-wrap">
                   <div
-                    v-if="hasCommentError"
+                    v-if="isCommentTooShort || hasCommentError"
                     role="alert"
                     class="flex items-center gap-2 px-3 py-1.5 text-xs text-n-ruby-11 bg-n-ruby-9/10 rounded border border-n-ruby-9/20"
                   >
                     <span class="i-ph-warning-circle size-4 flex-shrink-0" />
-                    <span>{{ t('AI_SUGGESTION.COMMENT_ERROR') }}</span>
+                    <span>{{
+                      isCommentTooShort
+                        ? t('AI_SUGGESTION.COMMENT_TOO_SHORT')
+                        : t('AI_SUGGESTION.COMMENT_ERROR')
+                    }}</span>
                   </div>
                   <span
                     v-else

@@ -526,6 +526,7 @@
     "COMMENT_CANCEL": "Cancel",
     "COMMENT_THANKS": "Thanks for the feedback",
     "COMMENT_ERROR": "Couldn't send the comment",
+    "COMMENT_TOO_SHORT": "The explanation is too short — please add more detail",
     "GET_BUTTON": "Get AI suggestion",
     "EMPTY": "No suggestion for the latest message",
     "ERROR": "Couldn't load the AI suggestion",

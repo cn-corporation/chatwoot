@@ -3,6 +3,7 @@ import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import {
   AI_SUGGESTION_POLL_INTERVAL_MS,
   findMessageAwaitingReply,
+  isCommentDetailedEnough,
   isSuggestionFor,
   needsSuggestionComment,
   useAISuggestions,
@@ -355,6 +356,22 @@ describe('useAISuggestions forced mode', () => {
   });
 });
 
+describe('isCommentDetailedEnough', () => {
+  it('needs at least four letters of any alphabet', () => {
+    expect(isCommentDetailedEnough('Ціна')).toBe(true);
+    expect(isCommentDetailedEnough('Wrong')).toBe(true);
+    expect(isCommentDetailedEnough(' сума, не та! ')).toBe(true);
+  });
+
+  it('does not count digits, spaces, punctuation or other symbols', () => {
+    ['', 'ок', 'Ні!!!', '...,,,', '12345', 'а, б, в.', '🙏🙏🙏🙏'].forEach(
+      text => {
+        expect(isCommentDetailedEnough(text)).toBe(false);
+      }
+    );
+  });
+});
+
 describe('needsSuggestionComment', () => {
   const confident = suggestion(10, 'Hello there', 0.95);
 
@@ -632,6 +649,15 @@ describe('useAISuggestions comment', () => {
       text: 'Wrong amount',
       status: 'sent',
     });
+  });
+
+  it('does not send comments with fewer than four letters', async () => {
+    const ai = useAISuggestions();
+
+    expect(await ai.commentOnSuggestion(55, suggestion(45), 'ок...')).toBe(
+      false
+    );
+    expect(chatwootExtraAPI.sendAISuggestionFeedback).not.toHaveBeenCalled();
   });
 
   it('does not send blank comments or comments for suggestions without an id', async () => {

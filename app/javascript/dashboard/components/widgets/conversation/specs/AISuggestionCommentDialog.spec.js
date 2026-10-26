@@ -56,6 +56,24 @@ describe('AISuggestionCommentDialog', () => {
     expect(wrapper.emitted('submit')).toEqual([['Wrong amount']]);
   });
 
+  it('asks for more detail when the comment has fewer than four letters', async () => {
+    const wrapper = mountDialog({ suggestion });
+    const textarea = document.body.querySelector('textarea');
+
+    textarea.value = 'Ні!!! 123';
+    textarea.dispatchEvent(new Event('input'));
+    await wrapper.vm.$nextTick();
+    textarea.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true })
+    );
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.emitted('submit')).toBeUndefined();
+    expect(document.body.textContent).toContain(
+      'The explanation is too short — please add more detail'
+    );
+  });
+
   it('shows the error when the comment could not be saved', () => {
     mountDialog({ suggestion, hasError: true });
 

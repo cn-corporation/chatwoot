@@ -210,6 +210,23 @@ describe('AISuggestionBanner', () => {
       expect(wrapper.emitted('comment')).toBeUndefined();
     });
 
+    it('asks for more detail when the comment has fewer than four letters', async () => {
+      const wrapper = mountBanner({ suggestion: { content: 'Hi' } });
+      await commentButton(wrapper).trigger('click');
+
+      await commentBox(wrapper).setValue('ок...');
+      await buttonWithText(wrapper, 'Send').trigger('click');
+      expect(wrapper.emitted('comment')).toBeUndefined();
+      expect(wrapper.find('[role="alert"]').text()).toBe(
+        'The explanation is too short — please add more detail'
+      );
+
+      await commentBox(wrapper).setValue('Сума не та');
+      expect(wrapper.find('[role="alert"]').exists()).toBe(false);
+      await buttonWithText(wrapper, 'Send').trigger('click');
+      expect(wrapper.emitted('comment')).toEqual([['Сума не та']]);
+    });
+
     it('keeps Send disabled until there is text and emits the trimmed comment', async () => {
       const wrapper = mountBanner({ suggestion });
       await commentButton(wrapper).trigger('click');

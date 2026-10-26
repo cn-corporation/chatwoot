@@ -7,6 +7,7 @@ import { MESSAGE_TYPE, MESSAGE_STATUS } from 'shared/constants/messages';
 export const AI_SUGGESTION_POLL_INTERVAL_MS = 1000;
 export const AI_SUGGESTION_MAX_WAIT_MS = 45000;
 export const AI_SUGGESTION_UNSEEN_LOCK_MS = 5000;
+export const AI_SUGGESTION_COMMENT_MIN_LETTERS = 4;
 const AI_SUGGESTION_FIRST_CHECK_DELAY_MS = 1000;
 
 const isAISuggestionsEnabled = ref(
@@ -103,6 +104,14 @@ export const isSuggestionFor = (suggestion, messageId) => {
   if (suggestion.triggerMessageId === undefined) return true;
   return suggestion.triggerMessageId >= messageId;
 };
+
+/**
+ * Whether a comment explains enough: at least AI_SUGGESTION_COMMENT_MIN_LETTERS letters of any
+ * alphabet. Digits, spaces, punctuation and other symbols do not count.
+ */
+export const isCommentDetailedEnough = text =>
+  ((text || '').match(/\p{L}/gu) || []).length >=
+  AI_SUGGESTION_COMMENT_MIN_LETTERS;
 
 /**
  * Whether forced mode asks for a comment before the agent sends `text` instead of `suggestion`, or
@@ -399,13 +408,14 @@ export function useAISuggestions() {
 
   /**
    * Sends a free-text comment on a suggestion, independent of its rating; a later comment
-   * replaces the earlier one. Resolves to true once it is sent, and to false when the comment is
-   * blank, the suggestion has no id or the request fails, keeping the earlier comment.
+   * replaces the earlier one. Resolves to true once it is sent, and to false when the comment has
+   * too few letters (see isCommentDetailedEnough), the suggestion has no id or the request fails,
+   * keeping the earlier comment.
    */
   const commentOnSuggestion = async (conversationId, suggestion, comment) => {
     const suggestionId = suggestion?.metadata?.suggestionId;
     const text = (comment || '').trim();
-    if (!suggestionId || !text) return false;
+    if (!suggestionId || !isCommentDetailedEnough(text)) return false;
 
     const previousText = suggestionComments[suggestionId]?.text || null;
     suggestionComments[suggestionId] = {

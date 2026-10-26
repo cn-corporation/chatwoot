@@ -1,7 +1,8 @@
 <script setup>
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
+import { isCommentDetailedEnough } from 'dashboard/composables/useAISuggestions';
 
 const props = defineProps({
   suggestion: {
@@ -30,6 +31,7 @@ const { t } = useI18n();
 const dialogRef = ref(null);
 const commentInput = ref(null);
 const comment = ref('');
+const isTooShort = ref(false);
 
 const isDismiss = computed(() => props.mode === 'dismiss');
 
@@ -45,6 +47,7 @@ const confidencePercent = computed(() => {
  */
 const open = () => {
   comment.value = '';
+  isTooShort.value = false;
   dialogRef.value?.open();
   nextTick(() => commentInput.value?.focus());
 };
@@ -53,11 +56,22 @@ const close = () => {
   dialogRef.value?.close();
 };
 
+/**
+ * Emits the trimmed comment, or asks for more detail when it has too few letters.
+ */
 const submit = () => {
   const text = comment.value.trim();
   if (!text || props.isSending) return;
+  if (!isCommentDetailedEnough(text)) {
+    isTooShort.value = true;
+    return;
+  }
   emit('submit', text);
 };
+
+watch(comment, () => {
+  isTooShort.value = false;
+});
 
 const onKeydown = event => {
   if (event.isComposing) return;
@@ -130,12 +144,16 @@ defineExpose({ open, close });
       </div>
 
       <div
-        v-if="hasError"
+        v-if="isTooShort || hasError"
         role="alert"
         class="flex items-center gap-2 px-3 py-1.5 text-xs text-n-ruby-11 bg-n-ruby-9/10 rounded border border-n-ruby-9/20"
       >
         <span class="i-ph-warning-circle size-4 flex-shrink-0" />
-        <span>{{ t('AI_SUGGESTION.REQUIRED_COMMENT.ERROR') }}</span>
+        <span>{{
+          isTooShort
+            ? t('AI_SUGGESTION.COMMENT_TOO_SHORT')
+            : t('AI_SUGGESTION.REQUIRED_COMMENT.ERROR')
+        }}</span>
       </div>
       <span v-else class="text-xs text-n-slate-10">
         {{ t('AI_SUGGESTION.COMMENT_HINT') }}
