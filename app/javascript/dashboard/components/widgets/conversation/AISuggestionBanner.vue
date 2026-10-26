@@ -28,6 +28,18 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  isForced: {
+    type: Boolean,
+    default: false,
+  },
+  lockedUntil: {
+    type: Number,
+    default: 0,
+  },
+  isCommentRequired: {
+    type: Boolean,
+    default: false,
+  },
 });
 const emit = defineEmits([
   'useSuggestion',
@@ -51,6 +63,8 @@ const isAwaitingComment = ref(false);
 const hasCommentError = ref(false);
 const showCommentThanks = ref(false);
 let commentThanksTimer = null;
+const now = ref(Date.now());
+let lockTimer = null;
 
 const ratingOptions = computed(() => [
   {
@@ -80,6 +94,10 @@ const suggestionContent = computed(() => {
 const hasError = computed(() => {
   return props.error !== null;
 });
+
+const lockSecondsLeft = computed(() =>
+  Math.max(0, Math.ceil((props.lockedUntil - now.value) / 1000))
+);
 
 const useSuggestion = () => {
   emit('useSuggestion', suggestionContent.value);
@@ -220,8 +238,23 @@ watch(
   }
 );
 
+watch(
+  () => props.lockedUntil,
+  lockedUntil => {
+    clearInterval(lockTimer);
+    now.value = Date.now();
+    if (lockedUntil > now.value) {
+      lockTimer = setInterval(() => {
+        now.value = Date.now();
+      }, 1000);
+    }
+  },
+  { immediate: true }
+);
+
 onBeforeUnmount(() => {
   clearTimeout(commentThanksTimer);
+  clearInterval(lockTimer);
 });
 </script>
 
@@ -233,11 +266,21 @@ onBeforeUnmount(() => {
       >
         <div class="flex items-center gap-2">
           <Spinner :size="16" />
-          <span class="text-sm text-slate-700 dark:text-slate-300">{{
-            t('AI_SUGGESTION.LOADING')
-          }}</span>
+          <div class="flex flex-col">
+            <span class="text-sm text-slate-700 dark:text-slate-300">{{
+              t('AI_SUGGESTION.LOADING')
+            }}</span>
+            <span
+              v-if="lockSecondsLeft > 0"
+              class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400"
+            >
+              <span class="i-ph-lock-simple size-3.5 flex-shrink-0" />
+              {{ t('AI_SUGGESTION.LOCKED', { seconds: lockSecondsLeft }) }}
+            </span>
+          </div>
         </div>
         <button
+          v-if="!isForced"
           class="flex p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 rounded-lg transition-colors"
           :title="t('AI_SUGGESTION.DISABLE_TOOLTIP')"
           :aria-label="t('AI_SUGGESTION.DISABLE_TOOLTIP')"
@@ -352,6 +395,7 @@ onBeforeUnmount(() => {
               </button>
 
               <button
+                v-if="!isForced"
                 class="flex p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-n-iris-9/10 rounded-lg transition-all duration-200"
                 :title="t('AI_SUGGESTION.DISABLE_TOOLTIP')"
                 :aria-label="t('AI_SUGGESTION.DISABLE_TOOLTIP')"
@@ -360,6 +404,14 @@ onBeforeUnmount(() => {
                 <span class="i-ph-eye-slash size-4" />
               </button>
             </div>
+
+            <p
+              v-if="isCommentRequired && !isCommentOpen"
+              class="mt-3 mb-0 flex items-center gap-1.5 text-xs text-n-amber-11"
+            >
+              <span class="i-ph-chat-circle-text size-4 flex-shrink-0" />
+              <span>{{ t('AI_SUGGESTION.COMMENT_REQUIRED_HINT') }}</span>
+            </p>
 
             <Transition name="ai-comment" mode="out-in">
               <div
@@ -459,6 +511,7 @@ onBeforeUnmount(() => {
       </span>
 
       <button
+        v-if="!isForced"
         class="flex items-center gap-1 ltr:ml-auto rtl:mr-auto px-2 py-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors"
         @click="disable"
       >

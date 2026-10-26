@@ -5,12 +5,22 @@ import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { MESSAGE_TYPE, MESSAGE_STATUS } from 'shared/constants/messages';
 
 export const AI_SUGGESTION_POLL_INTERVAL_MS = 1000;
-export const AI_SUGGESTION_MAX_WAIT_MS = 40000;
+export const AI_SUGGESTION_MAX_WAIT_MS = 45000;
+export const AI_SUGGESTION_UNSEEN_LOCK_MS = 5000;
 const AI_SUGGESTION_FIRST_CHECK_DELAY_MS = 1000;
-const RECENT_MESSAGE_AGE_MS = 60000;
 
 const isAISuggestionsEnabled = ref(
   LocalStorage.get(LOCAL_STORAGE_KEYS.AI_SUGGESTIONS_ENABLED) !== false
+);
+
+const suggestionPolicy = ref(null);
+
+let policyConversationId = null;
+
+const isAISuggestionsForced = computed(() => !!suggestionPolicy.value?.forced);
+
+const isAISuggestionsActive = computed(
+  () => isAISuggestionsEnabled.value || isAISuggestionsForced.value
 );
 
 const suggestionRatings = reactive({});
@@ -43,6 +53,27 @@ const wait = ms =>
 
 const normalizeText = text => (text || '').replace(/\s+/g, ' ').trim();
 
+/**
+ * Makes the policy follow the conversation; switching to another one forgets the previous policy.
+ */
+const focusPolicyOn = conversationId => {
+  if (policyConversationId === String(conversationId)) return;
+  policyConversationId = String(conversationId);
+  suggestionPolicy.value = null;
+};
+
+/**
+ * Keeps the forced-mode policy from a suggestion state (none when `state` is null) for the open conversation; answers
+ * for a conversation the agent has left are ignored.
+ */
+const applyPolicy = (conversationId, state) => {
+  if (String(conversationId) !== policyConversationId) return;
+  suggestionPolicy.value = {
+    forced: !!state?.forced,
+    commentFromConfidence: state?.forced ? state.commentFromConfidence : null,
+  };
+};
+
 const isAgentReply = message =>
   message.message_type === MESSAGE_TYPE.OUTGOING &&
   !message.private &&
@@ -74,8 +105,39 @@ export const isSuggestionFor = (suggestion, messageId) => {
 };
 
 /**
+ * Whether forced mode asks for a comment before the agent sends `text` instead of `suggestion`, or
+ * dismisses it when `text` is undefined: its confidence (0 when unknown) is at least
+ * `commentFromConfidence`, the agent has not commented on it yet and the text differs from it.
+ */
+export const needsSuggestionComment = ({
+  suggestion,
+  commentFromConfidence,
+  comment,
+  text,
+}) => {
+  if (
+    !suggestion?.metadata?.suggestionId ||
+    typeof commentFromConfidence !== 'number'
+  ) {
+    return false;
+  }
+  const { confidence } = suggestion.metadata;
+  if (
+    (typeof confidence === 'number' ? confidence : 0) < commentFromConfidence
+  ) {
+    return false;
+  }
+  if (comment?.text) return false;
+  return (
+    text === undefined ||
+    normalizeText(text) !== normalizeText(suggestion.content)
+  );
+};
+
+/**
  * Per-agent on/off switch for AI reply suggestions, stored in localStorage and shared by
- * every component that uses it.
+ * every component that uses it. Forced mode (the brand policy of the open conversation) keeps
+ * suggestions on whatever the switch says, and the switch cannot be flipped meanwhile.
  */
 export function useAISuggestionsToggle() {
   const setAISuggestionsEnabled = value => {
@@ -83,11 +145,15 @@ export function useAISuggestionsToggle() {
     persistEnabledSetting(value);
   };
 
-  const toggleAISuggestions = () =>
+  const toggleAISuggestions = () => {
+    if (isAISuggestionsForced.value) return;
     setAISuggestionsEnabled(!isAISuggestionsEnabled.value);
+  };
 
   return {
     isAISuggestionsEnabled,
+    isAISuggestionsForced,
+    isAISuggestionsActive,
     setAISuggestionsEnabled,
     toggleAISuggestions,
   };
@@ -95,7 +161,10 @@ export function useAISuggestionsToggle() {
 
 export function useAISuggestions() {
   const aiSuggestion = ref(null);
+  const shownSuggestion = ref(null);
   const isLoadingSuggestion = ref(false);
+  const isGeneratingSuggestion = ref(false);
+  const suggestionDeadline = ref(0);
   const suggestionError = ref(null);
   const hasCheckedSuggestion = ref(false);
   const usedSuggestion = ref(null);
@@ -103,6 +172,13 @@ export function useAISuggestions() {
 
   const { isAISuggestionsEnabled: isEnabled, setAISuggestionsEnabled } =
     useAISuggestionsToggle();
+
+  const isReplyLocked = computed(
+    () =>
+      isAISuggestionsForced.value &&
+      isLoadingSuggestion.value &&
+      isGeneratingSuggestion.value
+  );
 
   const hasSuggestion = computed(() => {
     return aiSuggestion.value && aiSuggestion.value.content;
@@ -118,42 +194,54 @@ export function useAISuggestions() {
     suggestionError.value = null;
     hasCheckedSuggestion.value = false;
     isLoadingSuggestion.value = false;
-  };
-
-  const fetchStoredSuggestion = async conversationId => {
-    try {
-      return await chatwootExtraAPI.getAISuggestion(conversationId);
-    } catch (error) {
-      if (error.response?.status === 404) return null;
-      throw error;
-    }
+    isGeneratingSuggestion.value = false;
   };
 
   /**
-   * Shows the loading state and polls the stored suggestion until one answering
-   * `messageId` arrives or `waitMs` elapses. A newer call or clearSuggestion cancels it.
+   * Polls the suggestion state until a suggestion answering `messageId` arrives, the service has
+   * seen the message and is no longer generating, or `waitMs` elapses; every answer updates the
+   * forced-mode policy. The loading state is shown while suggestions are on (by the agent or by
+   * forced mode), and the message counts as generating while the service says so or, for up to
+   * `unseenLockMs`, until the service has seen it. A failed request drops forced mode. A newer
+   * call or clearSuggestion cancels it.
    */
   const waitForSuggestion = async (
     conversationId,
     {
+      inboxId,
       messageId = 0,
       waitMs = AI_SUGGESTION_MAX_WAIT_MS,
+      unseenLockMs = 0,
       initialDelayMs = 0,
       intervalMs = AI_SUGGESTION_POLL_INTERVAL_MS,
     } = {}
   ) => {
     clearSuggestion();
-    if (!conversationId || !isEnabled.value) return null;
+    if (!conversationId) return null;
+    focusPolicyOn(conversationId);
 
     const token = pollToken;
-    const deadline = Date.now() + waitMs;
-    const isCurrent = () => token === pollToken && isEnabled.value;
-    isLoadingSuggestion.value = true;
+    const startedAt = Date.now();
+    const deadline = startedAt + waitMs;
+    const isCurrent = () => token === pollToken;
+    suggestionDeadline.value = deadline;
+    isLoadingSuggestion.value = isAISuggestionsActive.value;
+    isGeneratingSuggestion.value = true;
 
     const poll = async () => {
-      const suggestion = await fetchStoredSuggestion(conversationId);
+      const state = await chatwootExtraAPI.getAISuggestionState(
+        conversationId,
+        inboxId
+      );
       if (!isCurrent()) return null;
-      if (isSuggestionFor(suggestion, messageId)) return suggestion;
+      applyPolicy(conversationId, state);
+      if (!isAISuggestionsActive.value) return null;
+      isLoadingSuggestion.value = true;
+      if (isSuggestionFor(state.suggestion, messageId)) return state.suggestion;
+      const isSeen = (state.latestMessageId ?? 0) >= messageId;
+      if (isSeen && !state.generating) return null;
+      isGeneratingSuggestion.value =
+        state.generating || Date.now() < startedAt + unseenLockMs;
       if (Date.now() + intervalMs > deadline) return null;
       await wait(intervalMs);
       return isCurrent() ? poll() : null;
@@ -165,33 +253,61 @@ export function useAISuggestions() {
       if (isCurrent()) {
         aiSuggestion.value = suggestion;
         hasCheckedSuggestion.value = true;
+        if (suggestion) shownSuggestion.value = suggestion;
       }
       return suggestion;
     } catch (error) {
       if (isCurrent()) {
+        applyPolicy(conversationId, null);
         suggestionError.value = {
           message: error.response?.data?.error || error.message,
         };
       }
       return null;
     } finally {
-      if (token === pollToken) isLoadingSuggestion.value = false;
+      if (isCurrent()) {
+        isLoadingSuggestion.value = false;
+        isGeneratingSuggestion.value = false;
+      }
     }
   };
 
   /**
-   * Loads the suggestion for the customer message the conversation is waiting on. Recent
-   * messages are polled while the suggestion is generated; older ones are checked once.
+   * Re-reads whether forced mode applies to the conversation; a failed request drops it. Resolves
+   * to whether it applies.
    */
-  const refreshSuggestionForMessage = (conversationId, message) => {
+  const refreshSuggestionPolicy = async (conversationId, inboxId) => {
+    focusPolicyOn(conversationId);
+    try {
+      applyPolicy(
+        conversationId,
+        await chatwootExtraAPI.getAISuggestionState(conversationId, inboxId)
+      );
+    } catch {
+      applyPolicy(conversationId, null);
+    }
+    return isAISuggestionsForced.value;
+  };
+
+  /**
+   * Loads the suggestion for the customer message the conversation is waiting on, polling until
+   * 45 s after the message was sent, so every agent and tab waits (and in forced mode stays locked)
+   * until the same moment. Older messages are checked once. Without a message waiting, only the
+   * forced-mode policy is read.
+   */
+  const refreshSuggestionForMessage = (conversationId, message, inboxId) => {
     if (!message) {
       clearSuggestion();
-      return Promise.resolve(null);
+      if (!conversationId) return Promise.resolve(null);
+      return refreshSuggestionPolicy(conversationId, inboxId).then(() => null);
     }
-    const ageMs = Date.now() - (message.created_at || 0) * 1000;
+    const createdAtMs = (message.created_at || 0) * 1000;
+    const ageMs = Date.now() - createdAtMs;
     return waitForSuggestion(conversationId, {
+      inboxId,
       messageId: message.id,
-      waitMs: ageMs < RECENT_MESSAGE_AGE_MS ? AI_SUGGESTION_MAX_WAIT_MS : 0,
+      waitMs: Math.max(0, AI_SUGGESTION_MAX_WAIT_MS - ageMs),
+      unseenLockMs: Math.max(0, AI_SUGGESTION_UNSEEN_LOCK_MS - ageMs),
       initialDelayMs:
         ageMs < AI_SUGGESTION_FIRST_CHECK_DELAY_MS
           ? AI_SUGGESTION_FIRST_CHECK_DELAY_MS - Math.max(ageMs, 0)
@@ -316,6 +432,31 @@ export function useAISuggestions() {
   };
 
   /**
+   * The suggestion forced mode asks the agent to comment on before sending `text` in the
+   * conversation, or before dismissing it when `text` is undefined: the latest one shown, while it
+   * still answers the message awaiting reply (`messageId`). Null when forced mode is off or no
+   * comment is needed.
+   */
+  const getSuggestionNeedingComment = (conversationId, messageId, text) => {
+    const suggestion = shownSuggestion.value;
+    if (
+      !isAISuggestionsForced.value ||
+      String(suggestion?.conversationId) !== String(conversationId) ||
+      !isSuggestionFor(suggestion, messageId)
+    ) {
+      return null;
+    }
+    return needsSuggestionComment({
+      suggestion,
+      commentFromConfidence: suggestionPolicy.value.commentFromConfidence,
+      comment: getSuggestionComment(suggestion),
+      text,
+    })
+      ? suggestion
+      : null;
+  };
+
+  /**
    * Reports the outcome of a used suggestion once the agent sends a public reply.
    */
   const reportSentMessage = ({
@@ -349,8 +490,13 @@ export function useAISuggestions() {
     hasSuggestion,
     suggestionContent,
     isAISuggestionsEnabled: isEnabled,
+    isAISuggestionsForced,
+    isAISuggestionsActive,
+    isReplyLocked,
+    suggestionDeadline,
     setAISuggestionsEnabled,
     waitForSuggestion,
+    refreshSuggestionPolicy,
     refreshSuggestionForMessage,
     clearSuggestion,
     rememberUsedSuggestion,
@@ -360,6 +506,7 @@ export function useAISuggestions() {
     rateSuggestion,
     getSuggestionComment,
     commentOnSuggestion,
+    getSuggestionNeedingComment,
     reportSentMessage,
   };
 }

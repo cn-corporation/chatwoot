@@ -4,26 +4,40 @@ import {
   AI_SUGGESTION_POLL_INTERVAL_MS,
   findMessageAwaitingReply,
   isSuggestionFor,
+  needsSuggestionComment,
   useAISuggestions,
   useAISuggestionsToggle,
 } from '../useAISuggestions';
 
 vi.mock('dashboard/api/chatwootExtra', () => ({
   default: {
-    getAISuggestion: vi.fn(),
+    getAISuggestionState: vi.fn(),
     sendAISuggestionFeedback: vi.fn(),
   },
 }));
 
-const notFound = () =>
-  Object.assign(new Error('Not found'), { response: { status: 404 } });
-
-const suggestion = (triggerMessageId, content = `for ${triggerMessageId}`) => ({
+const suggestion = (
+  triggerMessageId,
+  content = `for ${triggerMessageId}`,
+  confidence = undefined
+) => ({
   conversationId: '55',
   content,
   triggerMessageId,
-  metadata: { suggestionId: `sug-${triggerMessageId}` },
+  metadata: { suggestionId: `sug-${triggerMessageId}`, confidence },
 });
+
+const state = (overrides = {}) => ({
+  forced: false,
+  commentFromConfidence: null,
+  generating: false,
+  latestMessageId: null,
+  suggestion: null,
+  ...overrides,
+});
+
+const forcedState = (overrides = {}) =>
+  state({ forced: true, commentFromConfidence: 0.9, ...overrides });
 
 const incoming = id => ({ id, message_type: 0, private: false });
 const agentReply = (id, extra = {}) => ({
@@ -34,12 +48,19 @@ const agentReply = (id, extra = {}) => ({
   ...extra,
 });
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.clearAllMocks();
   chatwootExtraAPI.sendAISuggestionFeedback.mockResolvedValue({
     success: true,
   });
   useAISuggestionsToggle().setAISuggestionsEnabled(true);
+  chatwootExtraAPI.getAISuggestionState.mockResolvedValue(state());
+  await useAISuggestions().refreshSuggestionPolicy(0, 7);
+  vi.clearAllMocks();
+  chatwootExtraAPI.sendAISuggestionFeedback.mockResolvedValue({
+    success: true,
+  });
+  chatwootExtraAPI.getAISuggestionState.mockResolvedValue(state());
 });
 
 afterEach(() => {
@@ -100,55 +121,76 @@ describe('useAISuggestionsToggle', () => {
 describe('useAISuggestions.waitForSuggestion', () => {
   it('polls until a suggestion for the awaited message arrives', async () => {
     vi.useFakeTimers();
-    chatwootExtraAPI.getAISuggestion
-      .mockRejectedValueOnce(notFound())
-      .mockResolvedValueOnce(suggestion(9))
-      .mockResolvedValueOnce(suggestion(10));
+    chatwootExtraAPI.getAISuggestionState
+      .mockResolvedValueOnce(state({ generating: true, latestMessageId: 10 }))
+      .mockResolvedValueOnce(
+        state({
+          generating: true,
+          latestMessageId: 10,
+          suggestion: suggestion(9),
+        })
+      )
+      .mockResolvedValueOnce(
+        state({ latestMessageId: 10, suggestion: suggestion(10) })
+      );
     const ai = useAISuggestions();
 
-    const result = ai.waitForSuggestion(55, { messageId: 10 });
+    const result = ai.waitForSuggestion(55, { inboxId: 7, messageId: 10 });
     expect(ai.isLoadingSuggestion.value).toBe(true);
     await vi.advanceTimersByTimeAsync(AI_SUGGESTION_POLL_INTERVAL_MS * 2);
 
     expect(await result).toEqual(suggestion(10));
-    expect(chatwootExtraAPI.getAISuggestion).toHaveBeenCalledTimes(3);
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(3);
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledWith(55, 7);
     expect(ai.aiSuggestion.value).toEqual(suggestion(10));
     expect(ai.isLoadingSuggestion.value).toBe(false);
   });
 
+  it('stops once the service saw the message and is no longer generating', async () => {
+    vi.useFakeTimers();
+    chatwootExtraAPI.getAISuggestionState
+      .mockResolvedValueOnce(state({ generating: true, latestMessageId: 10 }))
+      .mockResolvedValueOnce(state({ latestMessageId: 10 }));
+    const ai = useAISuggestions();
+
+    const result = ai.waitForSuggestion(55, { messageId: 10 });
+    await vi.advanceTimersByTimeAsync(10000);
+
+    expect(await result).toBeNull();
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(2);
+    expect(ai.hasCheckedSuggestion.value).toBe(true);
+  });
+
   it('gives up after the wait window and reports that nothing was found', async () => {
     vi.useFakeTimers();
-    chatwootExtraAPI.getAISuggestion.mockRejectedValue(notFound());
     const ai = useAISuggestions();
 
     const result = ai.waitForSuggestion(55, { messageId: 10, waitMs: 5000 });
     await vi.advanceTimersByTimeAsync(10000);
 
     expect(await result).toBeNull();
-    expect(chatwootExtraAPI.getAISuggestion).toHaveBeenCalledTimes(6);
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(6);
     expect(ai.hasCheckedSuggestion.value).toBe(true);
     expect(ai.isLoadingSuggestion.value).toBe(false);
   });
 
-  it('keeps polling every second for up to 40 s by default', async () => {
+  it('keeps polling every second for up to 45 s by default', async () => {
     vi.useFakeTimers();
-    chatwootExtraAPI.getAISuggestion.mockRejectedValue(notFound());
     const ai = useAISuggestions();
 
     const result = ai.waitForSuggestion(55, { messageId: 10 });
     await vi.advanceTimersByTimeAsync(30000);
     expect(ai.isLoadingSuggestion.value).toBe(true);
-    expect(chatwootExtraAPI.getAISuggestion).toHaveBeenCalledTimes(31);
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(31);
 
-    await vi.advanceTimersByTimeAsync(15000);
+    await vi.advanceTimersByTimeAsync(20000);
     expect(await result).toBeNull();
-    expect(chatwootExtraAPI.getAISuggestion).toHaveBeenCalledTimes(41);
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(46);
     expect(ai.isLoadingSuggestion.value).toBe(false);
   });
 
   it('stops polling when cleared', async () => {
     vi.useFakeTimers();
-    chatwootExtraAPI.getAISuggestion.mockRejectedValue(notFound());
     const ai = useAISuggestions();
 
     const result = ai.waitForSuggestion(55, { messageId: 10 });
@@ -157,25 +199,261 @@ describe('useAISuggestions.waitForSuggestion', () => {
     await vi.advanceTimersByTimeAsync(30000);
 
     expect(await result).toBeNull();
-    expect(chatwootExtraAPI.getAISuggestion).toHaveBeenCalledTimes(1);
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(1);
   });
 
-  it('makes no requests while suggestions are turned off', async () => {
+  it('only checks forced mode while suggestions are turned off', async () => {
     useAISuggestionsToggle().setAISuggestionsEnabled(false);
+    chatwootExtraAPI.getAISuggestionState.mockResolvedValue(
+      state({ generating: true, latestMessageId: 10 })
+    );
     const ai = useAISuggestions();
 
     expect(await ai.waitForSuggestion(55, { messageId: 10 })).toBeNull();
-    expect(chatwootExtraAPI.getAISuggestion).not.toHaveBeenCalled();
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(1);
     expect(ai.isLoadingSuggestion.value).toBe(false);
   });
 
-  it('surfaces non-404 errors', async () => {
-    chatwootExtraAPI.getAISuggestion.mockRejectedValue(new Error('Network'));
+  it('surfaces errors and drops forced mode', async () => {
+    chatwootExtraAPI.getAISuggestionState.mockResolvedValueOnce(forcedState());
     const ai = useAISuggestions();
+    await ai.refreshSuggestionPolicy(55, 7);
+    expect(ai.isAISuggestionsForced.value).toBe(true);
 
+    chatwootExtraAPI.getAISuggestionState.mockRejectedValue(
+      new Error('Network')
+    );
     await ai.waitForSuggestion(55, { messageId: 10 });
 
     expect(ai.suggestionError.value).toEqual({ message: 'Network' });
+    expect(ai.isAISuggestionsForced.value).toBe(false);
+  });
+});
+
+describe('useAISuggestions forced mode', () => {
+  it('keeps suggestions on and the switch locked while forced', async () => {
+    const toggle = useAISuggestionsToggle();
+    toggle.setAISuggestionsEnabled(false);
+    chatwootExtraAPI.getAISuggestionState.mockResolvedValue(
+      forcedState({ latestMessageId: 10, suggestion: suggestion(10) })
+    );
+    const ai = useAISuggestions();
+
+    expect(await ai.waitForSuggestion(55, { messageId: 10 })).toEqual(
+      suggestion(10)
+    );
+    expect(ai.isAISuggestionsActive.value).toBe(true);
+
+    toggle.toggleAISuggestions();
+    expect(toggle.isAISuggestionsEnabled.value).toBe(false);
+    expect(toggle.isAISuggestionsForced.value).toBe(true);
+  });
+
+  it('locks the reply while the suggestion is generated', async () => {
+    vi.useFakeTimers();
+    chatwootExtraAPI.getAISuggestionState
+      .mockResolvedValueOnce(
+        forcedState({ generating: true, latestMessageId: 10 })
+      )
+      .mockResolvedValueOnce(
+        forcedState({ latestMessageId: 10, suggestion: suggestion(10) })
+      );
+    const ai = useAISuggestions();
+
+    const result = ai.waitForSuggestion(55, { messageId: 10 });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(ai.isReplyLocked.value).toBe(true);
+    expect(ai.suggestionDeadline.value).toBe(Date.now() + 45000);
+
+    await vi.advanceTimersByTimeAsync(AI_SUGGESTION_POLL_INTERVAL_MS);
+    await result;
+    expect(ai.isReplyLocked.value).toBe(false);
+  });
+
+  it('does not lock without forced mode', async () => {
+    vi.useFakeTimers();
+    chatwootExtraAPI.getAISuggestionState.mockResolvedValue(
+      state({ generating: true, latestMessageId: 10 })
+    );
+    const ai = useAISuggestions();
+
+    ai.waitForSuggestion(55, { messageId: 10 });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(ai.isLoadingSuggestion.value).toBe(true);
+    expect(ai.isReplyLocked.value).toBe(false);
+    ai.clearSuggestion();
+  });
+
+  it('unlocks a message the service has not seen once the grace period ends', async () => {
+    vi.useFakeTimers();
+    chatwootExtraAPI.getAISuggestionState.mockResolvedValue(
+      forcedState({ latestMessageId: 9 })
+    );
+    const ai = useAISuggestions();
+
+    ai.waitForSuggestion(55, { messageId: 10, unseenLockMs: 2000 });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(ai.isReplyLocked.value).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(ai.isLoadingSuggestion.value).toBe(true);
+    expect(ai.isReplyLocked.value).toBe(false);
+    ai.clearSuggestion();
+  });
+
+  it('waits until 45 s after the customer message, whoever opens it', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-26T10:00:30Z'));
+    chatwootExtraAPI.getAISuggestionState.mockResolvedValue(
+      forcedState({ generating: true, latestMessageId: 10 })
+    );
+    const ai = useAISuggestions();
+    const message = {
+      id: 10,
+      created_at: Date.parse('2026-10-26T10:00:00Z') / 1000,
+    };
+
+    const result = ai.refreshSuggestionForMessage(55, message, 7);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(ai.suggestionDeadline.value).toBe(
+      Date.parse('2026-10-26T10:00:45Z')
+    );
+    await vi.advanceTimersByTimeAsync(16000);
+
+    expect(await result).toBeNull();
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(16);
+    expect(ai.isReplyLocked.value).toBe(false);
+  });
+
+  it('reads only the policy when no message awaits a reply', async () => {
+    chatwootExtraAPI.getAISuggestionState.mockResolvedValue(forcedState());
+    const ai = useAISuggestions();
+
+    await ai.refreshSuggestionForMessage(55, null, 7);
+
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledWith(55, 7);
+    expect(ai.isAISuggestionsForced.value).toBe(true);
+    expect(ai.isLoadingSuggestion.value).toBe(false);
+  });
+
+  it('ignores the policy of a conversation the agent has left', async () => {
+    let resolveLate;
+    chatwootExtraAPI.getAISuggestionState.mockReturnValueOnce(
+      new Promise(resolve => {
+        resolveLate = resolve;
+      })
+    );
+    const ai = useAISuggestions();
+
+    const late = ai.refreshSuggestionPolicy(55, 7);
+    await ai.refreshSuggestionPolicy(56, 7);
+    resolveLate(forcedState());
+    await late;
+
+    expect(ai.isAISuggestionsForced.value).toBe(false);
+  });
+});
+
+describe('needsSuggestionComment', () => {
+  const confident = suggestion(10, 'Hello there', 0.95);
+
+  it('asks for a comment when a confident suggestion is not sent as is', () => {
+    expect(
+      needsSuggestionComment({
+        suggestion: confident,
+        commentFromConfidence: 0.9,
+        text: 'Something else',
+      })
+    ).toBe(true);
+    expect(
+      needsSuggestionComment({
+        suggestion: confident,
+        commentFromConfidence: 0.9,
+      })
+    ).toBe(true);
+  });
+
+  it('does not ask when the suggestion is sent as is or was commented on', () => {
+    expect(
+      needsSuggestionComment({
+        suggestion: confident,
+        commentFromConfidence: 0.9,
+        text: ' Hello  there\n',
+      })
+    ).toBe(false);
+    expect(
+      needsSuggestionComment({
+        suggestion: confident,
+        commentFromConfidence: 0.9,
+        comment: { text: 'Wrong amount', status: 'sent' },
+        text: 'Something else',
+      })
+    ).toBe(false);
+  });
+
+  it('asks only from the confidence threshold, treating unknown confidence as 0', () => {
+    const unsure = suggestion(10, 'Hello there', 0.89);
+    const unknown = suggestion(10, 'Hello there');
+    const ask = (s, commentFromConfidence) =>
+      needsSuggestionComment({
+        suggestion: s,
+        commentFromConfidence,
+        text: 'Other',
+      });
+
+    expect(ask(unsure, 0.9)).toBe(false);
+    expect(ask(unknown, 0.9)).toBe(false);
+    expect(ask(unknown, 0)).toBe(true);
+    expect(ask(confident, null)).toBe(false);
+  });
+});
+
+describe('useAISuggestions.getSuggestionNeedingComment', () => {
+  const show = async (policy, shown = suggestion(10, 'Hello there', 0.95)) => {
+    chatwootExtraAPI.getAISuggestionState.mockResolvedValue({
+      ...policy,
+      latestMessageId: 10,
+      suggestion: shown,
+    });
+    const ai = useAISuggestions();
+    await ai.waitForSuggestion(55, { messageId: 10 });
+    return ai;
+  };
+
+  it('returns the shown suggestion when forced mode needs a comment', async () => {
+    const ai = await show(forcedState());
+
+    expect(ai.getSuggestionNeedingComment(55, 10, 'Other')).toEqual(
+      suggestion(10, 'Hello there', 0.95)
+    );
+    expect(ai.getSuggestionNeedingComment(55, 10)).not.toBeNull();
+    expect(ai.getSuggestionNeedingComment(55, 10, 'Hello there')).toBeNull();
+  });
+
+  it('keeps asking after the suggestion was used or dismissed', async () => {
+    const ai = await show(forcedState());
+    ai.clearSuggestion();
+
+    expect(ai.getSuggestionNeedingComment(55, 10, 'Other')).not.toBeNull();
+  });
+
+  it('stops asking once the agent commented', async () => {
+    const shown = suggestion(11, 'Hello there', 0.95);
+    const ai = await show(forcedState(), shown);
+    await ai.commentOnSuggestion(55, shown, 'Wrong amount');
+
+    expect(ai.getSuggestionNeedingComment(55, 11, 'Other')).toBeNull();
+  });
+
+  it('does not ask without forced mode, for other conversations or newer messages', async () => {
+    expect(
+      (await show(state())).getSuggestionNeedingComment(55, 10, 'Other')
+    ).toBeNull();
+
+    const ai = await show(forcedState());
+    expect(ai.getSuggestionNeedingComment(56, 10, 'Other')).toBeNull();
+    expect(ai.getSuggestionNeedingComment(55, 12, 'Other')).toBeNull();
   });
 });
 

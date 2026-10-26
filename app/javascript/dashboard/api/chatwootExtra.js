@@ -181,6 +181,14 @@ class ChatwootExtraAPI {
     return response.data?.data || null;
   }
 
+  async getAISuggestionState(conversationId, inboxId) {
+    const response = await axios.get(
+      `${this.baseURL}/api/ai-suggestions/${conversationId}/state`,
+      { headers: this.headers, params: { inboxId } }
+    );
+    return response.data.data;
+  }
+
   async sendAISuggestionFeedback(
     conversationId,
     { suggestionId, action, finalText, rating, comment, used }

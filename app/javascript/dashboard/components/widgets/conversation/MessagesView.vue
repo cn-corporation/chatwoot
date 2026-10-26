@@ -18,6 +18,7 @@ import ReplyBox from './ReplyBox.vue';
 import MessageList from 'next/message/MessageList.vue';
 import ConversationLabelSuggestion from './conversation/LabelSuggestion.vue';
 import AISuggestionBanner from './AISuggestionBanner.vue';
+import AISuggestionCommentDialog from './AISuggestionCommentDialog.vue';
 import Banner from 'dashboard/components/ui/Banner.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
@@ -53,6 +54,7 @@ export default {
     Banner,
     ConversationLabelSuggestion,
     AISuggestionBanner,
+    AISuggestionCommentDialog,
     Spinner,
   },
   mixins: [inboxMixin],
@@ -84,8 +86,13 @@ export default {
       suggestionError,
       hasCheckedSuggestion,
       isAISuggestionsEnabled,
+      isAISuggestionsForced,
+      isAISuggestionsActive,
+      isReplyLocked,
+      suggestionDeadline,
       setAISuggestionsEnabled,
       waitForSuggestion,
+      refreshSuggestionPolicy,
       refreshSuggestionForMessage,
       clearSuggestion,
       rememberUsedSuggestion,
@@ -95,6 +102,7 @@ export default {
       rateSuggestion,
       getSuggestionComment,
       commentOnSuggestion,
+      getSuggestionNeedingComment,
       reportSentMessage,
     } = useAISuggestions();
 
@@ -115,8 +123,13 @@ export default {
       suggestionError,
       hasCheckedSuggestion,
       isAISuggestionsEnabled,
+      isAISuggestionsForced,
+      isAISuggestionsActive,
+      isReplyLocked,
+      suggestionDeadline,
       setAISuggestionsEnabled,
       waitForSuggestion,
+      refreshSuggestionPolicy,
       refreshSuggestionForMessage,
       clearSuggestion,
       rememberUsedSuggestion,
@@ -126,6 +139,7 @@ export default {
       rateSuggestion,
       getSuggestionComment,
       commentOnSuggestion,
+      getSuggestionNeedingComment,
       reportSentMessage,
       conversationPanelRef,
       getSourceBgColor,
@@ -155,6 +169,7 @@ export default {
       pendingLinkedCheck: false,
       conversationTasks: [],
       taskStatusMap: new Map(),
+      suggestionCommentRequest: null,
     };
   },
 
@@ -437,8 +452,17 @@ export default {
     shouldShowAISuggestionBanner() {
       return (
         !this.isReadOnlyMode &&
-        this.isAISuggestionsEnabled &&
+        this.isAISuggestionsActive &&
         !!this.messageAwaitingReply
+      );
+    },
+    isVisibleAISuggestionCommentRequired() {
+      return (
+        !!this.visibleAISuggestion &&
+        !!this.getSuggestionNeedingComment(
+          this.currentChat.id,
+          this.messageAwaitingReply.id
+        )
       );
     },
   },
@@ -556,6 +580,7 @@ export default {
   },
 
   created() {
+    this.resolveSuggestionComment = null;
     this.handleMessageSent = payload => {
       this.messageSentSinceOpened = true;
       this.reportSentMessage(payload);
@@ -673,13 +698,14 @@ export default {
       });
     },
     syncAISuggestion() {
-      if (!this.isAISuggestionsEnabled || this.isReadOnlyMode) {
+      if (this.isReadOnlyMode) {
         this.clearSuggestion();
         return;
       }
       this.refreshSuggestionForMessage(
         this.currentChat?.id,
-        this.messageAwaitingReply
+        this.messageAwaitingReply,
+        this.currentChat?.inbox_id
       );
     },
     handleUseSuggestion(suggestionContent) {
@@ -691,9 +717,104 @@ export default {
       this.reportUsedSuggestion(this.currentChat.id, this.visibleAISuggestion);
       this.clearSuggestion();
     },
-    handleDismissSuggestion() {
-      this.rejectSuggestion(this.currentChat.id, this.visibleAISuggestion);
-      this.clearSuggestion();
+    async handleDismissSuggestion() {
+      const suggestion = this.visibleAISuggestion;
+      const suggestionNeedingComment =
+        await this.findSuggestionNeedingComment();
+      if (
+        suggestionNeedingComment &&
+        !(await this.askForSuggestionComment(
+          suggestionNeedingComment,
+          'dismiss'
+        ))
+      ) {
+        return;
+      }
+      this.rejectSuggestion(this.currentChat.id, suggestion);
+      if (this.aiSuggestion === suggestion) this.clearSuggestion();
+    },
+    /**
+     * The suggestion forced mode wants a comment on before `text` is sent, or before the shown
+     * suggestion is dismissed when `text` is undefined. Forced mode is re-read first, so no comment
+     * is demanded once the support engine is unreachable.
+     */
+    async findSuggestionNeedingComment(text) {
+      const conversationId = this.currentChat.id;
+      const messageId = this.messageAwaitingReply?.id;
+      if (
+        !messageId ||
+        !this.getSuggestionNeedingComment(conversationId, messageId, text)
+      ) {
+        return null;
+      }
+      await this.refreshSuggestionPolicy(
+        conversationId,
+        this.currentChat.inbox_id
+      );
+      return this.getSuggestionNeedingComment(conversationId, messageId, text);
+    },
+    /**
+     * Called by the reply box before a public reply is sent: resolves to true when the reply may
+     * go out, asking for the comment forced mode requires first.
+     */
+    async confirmReplyAgainstSuggestion(text) {
+      const suggestion = await this.findSuggestionNeedingComment(text);
+      return !suggestion || this.askForSuggestionComment(suggestion, 'send');
+    },
+    /**
+     * Opens the required-comment dialog; resolves to true once the comment is saved, or to false
+     * when the agent cancels.
+     */
+    askForSuggestionComment(suggestion, mode) {
+      this.finishSuggestionComment(false);
+      this.suggestionCommentRequest = {
+        conversationId: this.currentChat.id,
+        inboxId: this.currentChat.inbox_id,
+        suggestion,
+        mode,
+        isSending: false,
+        hasError: false,
+      };
+      this.$nextTick(() => this.$refs.suggestionCommentDialog?.open());
+      return new Promise(resolve => {
+        this.resolveSuggestionComment = resolve;
+      });
+    },
+    finishSuggestionComment(isDone) {
+      const resolve = this.resolveSuggestionComment;
+      if (!resolve) return;
+      this.resolveSuggestionComment = null;
+      this.suggestionCommentRequest = null;
+      if (isDone) this.$refs.suggestionCommentDialog?.close();
+      resolve(isDone);
+    },
+    /**
+     * Saves the required comment. When it cannot be saved the dialog stays open with an error,
+     * unless forced mode no longer applies (the support engine went away), which lets the agent
+     * go on without it.
+     */
+    async submitSuggestionComment(comment) {
+      const request = this.suggestionCommentRequest;
+      if (!request || request.isSending) return;
+      request.isSending = true;
+      request.hasError = false;
+      const isSaved =
+        (await this.commentOnSuggestion(
+          request.conversationId,
+          request.suggestion,
+          comment
+        )) ||
+        !(await this.refreshSuggestionPolicy(
+          request.conversationId,
+          request.inboxId
+        ));
+      if (request !== this.suggestionCommentRequest) return;
+      if (isSaved) {
+        this.finishSuggestionComment(true);
+        return;
+      }
+      request.isSending = false;
+      request.hasError = true;
     },
     handleRateSuggestion(rating) {
       this.rateSuggestion(
@@ -715,11 +836,13 @@ export default {
         return;
       }
       this.waitForSuggestion(this.currentChat.id, {
+        inboxId: this.currentChat.inbox_id,
         messageId: message.id,
         waitMs: 0,
       });
     },
     handleDisableAISuggestions() {
+      if (this.isAISuggestionsForced) return;
       this.setAISuggestionsEnabled(false);
     },
     isLabelSuggestionDismissed() {
@@ -1160,6 +1283,9 @@ export default {
           :is-empty="hasCheckedSuggestion && !visibleAISuggestion"
           :rating="visibleAISuggestionRating"
           :comment="visibleAISuggestionComment"
+          :is-forced="isAISuggestionsForced"
+          :locked-until="isReplyLocked ? suggestionDeadline : 0"
+          :is-comment-required="isVisibleAISuggestionCommentRequired"
           @use-suggestion="handleUseSuggestion"
           @dismiss="handleDismissSuggestion"
           @reload="handleReloadSuggestion"
@@ -1171,7 +1297,18 @@ export default {
       <ReplyBox
         v-if="!isReadOnlyMode"
         :pop-out-reply-box="isPopOutReplyBox"
+        :is-locked-by-ai-suggestion="isReplyLocked"
+        :before-send-reply="confirmReplyAgainstSuggestion"
         @update:pop-out-reply-box="isPopOutReplyBox = $event"
+      />
+      <AISuggestionCommentDialog
+        ref="suggestionCommentDialog"
+        :suggestion="suggestionCommentRequest?.suggestion"
+        :mode="suggestionCommentRequest?.mode"
+        :is-sending="!!suggestionCommentRequest?.isSending"
+        :has-error="!!suggestionCommentRequest?.hasError"
+        @submit="submitSuggestionComment"
+        @cancel="finishSuggestionComment(false)"
       />
     </div>
   </div>

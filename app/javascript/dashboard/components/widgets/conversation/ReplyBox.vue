@@ -79,6 +79,14 @@ export default {
       type: Boolean,
       default: false,
     },
+    isLockedByAiSuggestion: {
+      type: Boolean,
+      default: false,
+    },
+    beforeSendReply: {
+      type: Function,
+      default: null,
+    },
   },
   emits: ['update:popOutReplyBox'],
   setup() {
@@ -214,6 +222,9 @@ export default {
       return this.isPrivate
         ? this.$t('CONVERSATION.FOOTER.PRIVATE_MSG_INPUT')
         : this.$t('CONVERSATION.FOOTER.MSG_INPUT');
+    },
+    isReplyLockedByAiSuggestion() {
+      return this.isLockedByAiSuggestion && !this.isPrivate;
     },
     isMessageLengthReachingThreshold() {
       return this.message.length > this.maxLength - 50;
@@ -416,7 +427,11 @@ export default {
       return this.currentChat.status === wootConstants.STATUS_TYPE.RESOLVED;
     },
     isInputDisabled() {
-      return this.isConversationResolved || !this.currentChat.can_reply;
+      return (
+        this.isConversationResolved ||
+        !this.currentChat.can_reply ||
+        this.isReplyLockedByAiSuggestion
+      );
     },
     isQuotedEmailReplyEnabled() {
       return this.isFeatureEnabledonAccount(
@@ -852,10 +867,11 @@ export default {
       this.assignedAgent = selfAssign;
     },
     async confirmOnSendReply() {
-      if (this.isReplyButtonDisabled) {
+      if (this.isReplyButtonDisabled || this.isReplyLockedByAiSuggestion) {
         return;
       }
       if (!this.showMentions) {
+        if (!(await this.confirmReplyAgainstSuggestion())) return;
         // If it's a task, create the task first
         if (this.isOnTask) {
           await this.createTaskAndSendMessage();
@@ -888,6 +904,18 @@ export default {
         this.hideEmojiPicker();
         this.$emit('update:popOutReplyBox', false);
       }
+    },
+    /**
+     * Lets the parent hold back a public reply (forced AI suggestions ask for a comment first);
+     * resolves to whether the reply may be sent.
+     */
+    confirmReplyAgainstSuggestion() {
+      if (this.isPrivate || !this.beforeSendReply) return true;
+      return this.beforeSendReply(
+        this.isSignatureAvailable
+          ? removeSignature(this.message, this.signatureToApply)
+          : this.message
+      );
     },
     sendMessageAsMultipleMessages(message) {
       const messages = this.getMultipleMessagesPayload(message);

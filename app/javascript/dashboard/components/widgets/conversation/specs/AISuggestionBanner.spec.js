@@ -122,6 +122,56 @@ describe('AISuggestionBanner', () => {
     expect(wrapper.emitted('disable')).toHaveLength(1);
   });
 
+  describe('forced mode', () => {
+    it('offers no way to turn suggestions off', () => {
+      const states = [
+        { isLoading: true },
+        { suggestion: { content: 'Hi' } },
+        { isEmpty: true },
+      ];
+      states.forEach(props => {
+        const wrapper = mountBanner({ ...props, isForced: true });
+        expect(
+          buttonWithTitle(wrapper, 'Turn off AI suggestions')
+        ).toBeUndefined();
+        expect(buttonWithText(wrapper, 'Hide AI suggestions')).toBeUndefined();
+      });
+    });
+
+    it('counts down while the reply box is locked', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-10-26T10:00:00Z'));
+      const wrapper = mountBanner({
+        isLoading: true,
+        isForced: true,
+        lockedUntil: Date.parse('2026-10-26T10:00:30Z'),
+      });
+
+      expect(wrapper.text()).toContain(
+        'The reply box unlocks when the suggestion is ready (at most 30 s)'
+      );
+      await vi.advanceTimersByTimeAsync(10000);
+      await nextTick();
+      expect(wrapper.text()).toContain('(at most 20 s)');
+    });
+
+    it('shows no countdown without a lock', () => {
+      const wrapper = mountBanner({ isLoading: true, isForced: true });
+      expect(wrapper.text()).not.toContain('The reply box unlocks');
+    });
+
+    it('says when a different reply needs a comment', () => {
+      const wrapper = mountBanner({
+        suggestion: { content: 'Hi' },
+        isForced: true,
+        isCommentRequired: true,
+      });
+      expect(wrapper.text()).toContain(
+        'Sending a different reply or dismissing this suggestion needs a comment'
+      );
+    });
+  });
+
   it('shows an error message instead of the empty hint', () => {
     const wrapper = mountBanner({
       isEmpty: true,

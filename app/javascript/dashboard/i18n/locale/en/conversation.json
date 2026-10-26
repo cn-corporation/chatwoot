@@ -531,7 +531,21 @@
     "ERROR": "Couldn't load the AI suggestion",
     "HIDE_BUTTON": "Hide AI suggestions",
     "DISABLE_TOOLTIP": "Turn off AI suggestions",
-    "ENABLE_TOOLTIP": "Turn on AI suggestions"
+    "ENABLE_TOOLTIP": "Turn on AI suggestions",
+    "FORCED_TOOLTIP": "AI suggestions are mandatory in this inbox",
+    "LOCKED": "The reply box unlocks when the suggestion is ready (at most {seconds} s)",
+    "COMMENT_REQUIRED_HINT": "Sending a different reply or dismissing this suggestion needs a comment",
+    "REQUIRED_COMMENT": {
+      "TITLE": "Why not the AI suggestion?",
+      "SEND_DESCRIPTION": "Leave a comment on why you are sending a different reply than the AI suggestion.",
+      "DISMISS_DESCRIPTION": "Leave a comment on why you are dismissing the AI suggestion.",
+      "CONFIDENCE": "AI confidence: {confidence}%",
+      "LABEL": "Comment on the AI suggestion",
+      "PLACEHOLDER": "What's wrong with the suggestion or what is missing?",
+      "SEND_BUTTON": "Comment and send",
+      "DISMISS_BUTTON": "Comment and dismiss",
+      "ERROR": "Couldn't save the comment. Try again."
+    }
   },
   "OPERATOR_PRESENCE": {
     "TITLE": "Operators Viewing",

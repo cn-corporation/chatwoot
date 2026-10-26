@@ -145,8 +145,11 @@ export default {
       useUISettings();
 
     const uploadRef = ref(false);
-    const { isAISuggestionsEnabled, toggleAISuggestions } =
-      useAISuggestionsToggle();
+    const {
+      isAISuggestionsActive,
+      isAISuggestionsForced,
+      toggleAISuggestions,
+    } = useAISuggestionsToggle();
 
     const keyboardEvents = {
       '$mod+Alt+KeyA': {
@@ -170,7 +173,8 @@ export default {
       setSignatureFlagForInbox,
       fetchSignatureFlagFromUISettings,
       uploadRef,
-      isAISuggestionsEnabled,
+      isAISuggestionsActive,
+      isAISuggestionsForced,
       toggleAISuggestions,
     };
   },
@@ -273,7 +277,10 @@ export default {
         : this.$t('CONVERSATION.REPLYBOX.QUOTED_REPLY.ENABLE_TOOLTIP');
     },
     aiSuggestionsToggleTooltip() {
-      return this.isAISuggestionsEnabled
+      if (this.isAISuggestionsForced) {
+        return this.$t('AI_SUGGESTION.FORCED_TOOLTIP');
+      }
+      return this.isAISuggestionsActive
         ? this.$t('AI_SUGGESTION.DISABLE_TOOLTIP')
         : this.$t('AI_SUGGESTION.ENABLE_TOOLTIP');
     },
@@ -422,12 +429,13 @@ export default {
       />
       <NextButton
         v-tooltip.top-end="aiSuggestionsToggleTooltip"
-        :icon="isAISuggestionsEnabled ? 'i-ph-sparkle-fill' : 'i-ph-sparkle'"
+        :icon="isAISuggestionsActive ? 'i-ph-sparkle-fill' : 'i-ph-sparkle'"
         slate
         faded
         sm
+        :disabled="isAISuggestionsForced"
         :aria-label="aiSuggestionsToggleTooltip"
-        :aria-pressed="isAISuggestionsEnabled"
+        :aria-pressed="isAISuggestionsActive"
         @click="toggleAISuggestions"
       />
       <transition name="modal-fade">
