@@ -774,6 +774,7 @@ export default {
         mode,
         isSending: false,
         hasError: false,
+        errorMessage: '',
       };
       this.$nextTick(() => this.$refs.suggestionCommentDialog?.open());
       return new Promise(resolve => {
@@ -798,6 +799,7 @@ export default {
       if (!request || request.isSending) return;
       request.isSending = true;
       request.hasError = false;
+      request.errorMessage = '';
       const isSaved =
         (await this.commentOnSuggestion(
           request.conversationId,
@@ -815,6 +817,8 @@ export default {
       }
       request.isSending = false;
       request.hasError = true;
+      request.errorMessage =
+        this.getSuggestionComment(request.suggestion)?.error || '';
     },
     handleRateSuggestion(rating) {
       this.rateSuggestion(
@@ -1307,6 +1311,7 @@ export default {
         :mode="suggestionCommentRequest?.mode"
         :is-sending="!!suggestionCommentRequest?.isSending"
         :has-error="!!suggestionCommentRequest?.hasError"
+        :error-message="suggestionCommentRequest?.errorMessage || ''"
         @submit="submitSuggestionComment"
         @cancel="finishSuggestionComment(false)"
       />

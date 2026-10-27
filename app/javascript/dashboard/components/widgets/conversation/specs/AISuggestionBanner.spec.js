@@ -312,6 +312,26 @@ describe('AISuggestionBanner', () => {
       wrapper.unmount();
     });
 
+    it('shows why the server refused the comment', async () => {
+      const wrapper = mountBanner({ suggestion });
+      await commentButton(wrapper).trigger('click');
+      await commentBox(wrapper).setValue('олшрлр');
+      await buttonWithText(wrapper, 'Send').trigger('click');
+
+      await wrapper.setProps({ comment: { text: null, status: 'sending' } });
+      await wrapper.setProps({
+        comment: {
+          text: null,
+          status: 'error',
+          error: 'Ваш коментар незрозумілий',
+        },
+      });
+
+      expect(wrapper.find('[role="alert"]').text()).toBe(
+        'Ваш коментар незрозумілий'
+      );
+    });
+
     it('shows the error pill and keeps the draft when sending fails', async () => {
       const wrapper = mountBanner({ suggestion });
       await commentButton(wrapper).trigger('click');

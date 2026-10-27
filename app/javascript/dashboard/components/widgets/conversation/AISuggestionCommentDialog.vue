@@ -22,6 +22,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  errorMessage: {
+    type: String,
+    default: '',
+  },
 });
 const emit = defineEmits(['submit', 'cancel']);
 const COMMENT_MAX_LENGTH = 2000;
@@ -152,7 +156,7 @@ defineExpose({ open, close });
         <span>{{
           isTooShort
             ? t('AI_SUGGESTION.COMMENT_TOO_SHORT')
-            : t('AI_SUGGESTION.REQUIRED_COMMENT.ERROR')
+            : errorMessage || t('AI_SUGGESTION.REQUIRED_COMMENT.ERROR')
         }}</span>
       </div>
       <span v-else class="text-xs text-n-slate-10">

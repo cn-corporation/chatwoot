@@ -702,6 +702,27 @@ describe('useAISuggestions comment', () => {
     expect(ai.getSuggestionComment(commented)).toEqual({
       text: 'First',
       status: 'error',
+      error: null,
+    });
+  });
+
+  it('keeps the reason when the server refuses the comment', async () => {
+    const ai = useAISuggestions();
+    const commented = suggestion(47);
+    chatwootExtraAPI.sendAISuggestionFeedback.mockRejectedValueOnce(
+      Object.assign(new Error('Bad request'), {
+        response: {
+          status: 400,
+          data: { success: false, error: 'Ваш коментар незрозумілий' },
+        },
+      })
+    );
+
+    expect(await ai.commentOnSuggestion(55, commented, 'олшрлр')).toBe(false);
+    expect(ai.getSuggestionComment(commented)).toEqual({
+      text: null,
+      status: 'error',
+      error: 'Ваш коментар незрозумілий',
     });
   });
 

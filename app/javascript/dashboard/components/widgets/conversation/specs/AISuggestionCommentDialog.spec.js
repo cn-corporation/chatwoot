@@ -74,6 +74,18 @@ describe('AISuggestionCommentDialog', () => {
     );
   });
 
+  it('shows the server reason when the comment was refused', () => {
+    mountDialog({
+      suggestion,
+      hasError: true,
+      errorMessage: 'Ваш коментар незрозумілий',
+    });
+
+    expect(document.body.querySelector('[role="alert"]').textContent).toContain(
+      'Ваш коментар незрозумілий'
+    );
+  });
+
   it('shows the error when the comment could not be saved', () => {
     mountDialog({ suggestion, hasError: true });
 

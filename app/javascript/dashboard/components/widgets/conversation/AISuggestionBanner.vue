@@ -459,7 +459,7 @@ onBeforeUnmount(() => {
                     <span>{{
                       isCommentTooShort
                         ? t('AI_SUGGESTION.COMMENT_TOO_SHORT')
-                        : t('AI_SUGGESTION.COMMENT_ERROR')
+                        : comment?.error || t('AI_SUGGESTION.COMMENT_ERROR')
                     }}</span>
                   </div>
                   <span

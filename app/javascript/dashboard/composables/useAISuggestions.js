@@ -397,9 +397,10 @@ export function useAISuggestions() {
   };
 
   /**
-   * The agent's comment on a suggestion in this session as `{ text, status }`, or null when they
-   * have not commented. `text` is the last comment that was sent (null until one is) and `status`
-   * is 'sending', 'sent' or 'error' for the latest request.
+   * The agent's comment on a suggestion in this session as `{ text, status, error }`, or null when
+   * they have not commented. `text` is the last comment that was sent (null until one is), `status`
+   * is 'sending', 'sent' or 'error' for the latest request, and `error` is the server's reason when
+   * it refused the comment (e.g. "Ваш коментар незрозумілий").
    */
   const getSuggestionComment = suggestion => {
     const suggestionId = suggestion?.metadata?.suggestionId;
@@ -435,8 +436,15 @@ export function useAISuggestions() {
       });
       settle({ text, status: 'sent' });
       return true;
-    } catch {
-      settle({ text: previousText, status: 'error' });
+    } catch (error) {
+      settle({
+        text: previousText,
+        status: 'error',
+        error:
+          error.response?.status === 400
+            ? error.response.data?.error || null
+            : null,
+      });
       return false;
     }
   };
