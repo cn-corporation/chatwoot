@@ -6,6 +6,8 @@ import {
   isCommentDetailedEnough,
   isSuggestionFor,
   needsSuggestionComment,
+  suggestionFiles,
+  suggestionImages,
   useAISuggestions,
   useAISuggestionsToggle,
 } from '../useAISuggestions';
@@ -67,6 +69,10 @@ beforeEach(async () => {
 afterEach(() => {
   vi.useRealTimers();
 });
+
+/** State reads in `windowMs`: one right away, then one per poll interval up to the end. */
+const polls = windowMs =>
+  Math.floor(windowMs / AI_SUGGESTION_POLL_INTERVAL_MS) + 1;
 
 describe('findMessageAwaitingReply', () => {
   it('returns the latest customer message when no agent replied after it', () => {
@@ -170,23 +176,29 @@ describe('useAISuggestions.waitForSuggestion', () => {
     await vi.advanceTimersByTimeAsync(10000);
 
     expect(await result).toBeNull();
-    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(6);
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(
+      polls(5000)
+    );
     expect(ai.hasCheckedSuggestion.value).toBe(true);
     expect(ai.isLoadingSuggestion.value).toBe(false);
   });
 
-  it('keeps polling every second for up to 45 s by default', async () => {
+  it('keeps polling for up to 45 s by default', async () => {
     vi.useFakeTimers();
     const ai = useAISuggestions();
 
     const result = ai.waitForSuggestion(55, { messageId: 10 });
     await vi.advanceTimersByTimeAsync(30000);
     expect(ai.isLoadingSuggestion.value).toBe(true);
-    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(31);
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(
+      polls(30000)
+    );
 
     await vi.advanceTimersByTimeAsync(20000);
     expect(await result).toBeNull();
-    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(46);
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(
+      polls(45000)
+    );
     expect(ai.isLoadingSuggestion.value).toBe(false);
   });
 
@@ -323,7 +335,9 @@ describe('useAISuggestions forced mode', () => {
     await vi.advanceTimersByTimeAsync(16000);
 
     expect(await result).toBeNull();
-    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(16);
+    expect(chatwootExtraAPI.getAISuggestionState).toHaveBeenCalledTimes(
+      polls(15000)
+    );
     expect(ai.isReplyLocked.value).toBe(false);
   });
 
@@ -794,5 +808,46 @@ describe('useAISuggestions used', () => {
       [55, { suggestionId: 'sug-53', used: true }],
       [55, { suggestionId: 'sug-53', action: 'accepted' }],
     ]);
+  });
+});
+
+describe('suggestion images', () => {
+  const cardSuggestion = {
+    content: 'Ваш рейк за 26.10: 108,07 грн.',
+    metadata: {
+      attachments: [
+        {
+          mimeType: 'image/png',
+          filename: 'rake-7139-4416-2026-10-26.png',
+          dataBase64: 'iVBORw==',
+        },
+        { mimeType: 'text/plain', filename: 'x.txt', dataBase64: 'eA==' },
+      ],
+    },
+  };
+
+  it('previews only the images, as data URLs', () => {
+    expect(suggestionImages(cardSuggestion)).toEqual([
+      {
+        name: 'rake-7139-4416-2026-10-26.png',
+        type: 'image/png',
+        url: 'data:image/png;base64,iVBORw==',
+      },
+    ]);
+    expect(suggestionImages({ content: 'x' })).toEqual([]);
+    expect(suggestionImages(null)).toEqual([]);
+  });
+
+  it('turns the images into files with their bytes', async () => {
+    const [file, ...rest] = suggestionFiles(cardSuggestion);
+    expect(rest).toEqual([]);
+    expect(file.name).toBe('rake-7139-4416-2026-10-26.png');
+    expect(file.type).toBe('image/png');
+    const bytes = await new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = () => resolve([...new Uint8Array(reader.result)]);
+      reader.readAsArrayBuffer(file);
+    });
+    expect(bytes).toEqual([137, 80, 78, 71]);
   });
 });

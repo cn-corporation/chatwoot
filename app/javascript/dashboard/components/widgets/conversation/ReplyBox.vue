@@ -581,12 +581,14 @@ export default {
       this.onNewConversationModalActive
     );
     emitter.on(BUS_EVENTS.INSERT_INTO_NORMAL_EDITOR, this.addIntoEditor);
+    emitter.on(BUS_EVENTS.ATTACH_FILES_TO_EDITOR, this.attachFilesToEditor);
   },
   unmounted() {
     document.removeEventListener('paste', this.onPaste);
     document.removeEventListener('keydown', this.handleKeyEvents);
     emitter.off(BUS_EVENTS.TOGGLE_REPLY_TO_MESSAGE, this.fetchAndSetReplyTo);
     emitter.off(BUS_EVENTS.INSERT_INTO_NORMAL_EDITOR, this.addIntoEditor);
+    emitter.off(BUS_EVENTS.ATTACH_FILES_TO_EDITOR, this.attachFilesToEditor);
     emitter.off(
       BUS_EVENTS.NEW_CONVERSATION_MODAL,
       this.onNewConversationModalActive
@@ -1029,6 +1031,16 @@ export default {
         text +
         message.slice(selectionEnd, message.length);
       this.message = newMessage;
+    },
+    attachFilesToEditor(files) {
+      files.forEach(file =>
+        this.onFileUpload({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          file,
+        })
+      );
     },
     addIntoEditor(content) {
       if (this.showRichContentEditor) {

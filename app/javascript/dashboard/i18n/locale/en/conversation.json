@@ -512,7 +512,7 @@
     "LOADING": "Loading AI suggestion...",
     "TITLE": "AI suggestion",
     "BADGE": "Auto-generated",
-    "USE_BUTTON": "Use this response",
+    "USE_BUTTON": "Use",
     "DISMISS_BUTTON": "Dismiss",
     "RELOAD_TOOLTIP": "Reload suggestion",
     "RATE_UP_TOOLTIP": "Good suggestion",
@@ -546,7 +546,9 @@
       "SEND_BUTTON": "Comment and send",
       "DISMISS_BUTTON": "Comment and dismiss",
       "ERROR": "Couldn't save the comment. Try again."
-    }
+    },
+    "SHOW_MORE": "More",
+    "SHOW_LESS": "Less"
   },
   "OPERATOR_PRESENCE": {
     "TITLE": "Operators Viewing",

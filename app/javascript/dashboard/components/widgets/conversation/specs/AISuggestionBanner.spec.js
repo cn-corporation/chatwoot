@@ -36,7 +36,7 @@ describe('AISuggestionBanner', () => {
     expect(wrapper.text()).toContain('AI suggestion');
     expect(wrapper.text()).toContain('Перевіряю ваш вивід.');
 
-    await buttonWithText(wrapper, 'Use this response').trigger('click');
+    await buttonWithText(wrapper, 'Use').trigger('click');
     await buttonWithText(wrapper, 'Dismiss').trigger('click');
     await buttonWithTitle(wrapper, 'Reload suggestion').trigger('click');
     await buttonWithTitle(wrapper, 'Turn off AI suggestions').trigger('click');
@@ -52,7 +52,7 @@ describe('AISuggestionBanner', () => {
   it('emits a single useSuggestion with the content and nothing else when using it', async () => {
     const wrapper = mountBanner({ suggestion: { content: 'Hi' } });
 
-    await buttonWithText(wrapper, 'Use this response').trigger('click');
+    await buttonWithText(wrapper, 'Use').trigger('click');
 
     expect(wrapper.emitted('useSuggestion')).toEqual([['Hi']]);
     expect(wrapper.emitted('rate')).toBeUndefined();
@@ -382,7 +382,7 @@ describe('AISuggestionBanner', () => {
       expect(commentBox(wrapper).exists()).toBe(false);
       expect(wrapper.emitted('comment')).toBeUndefined();
 
-      await buttonWithText(wrapper, 'Use this response').trigger('click');
+      await buttonWithText(wrapper, 'Use').trigger('click');
       expect(wrapper.emitted('useSuggestion')).toEqual([['Hi']]);
     });
 
@@ -408,5 +408,42 @@ describe('AISuggestionBanner', () => {
       });
       expect(commentBox(wrapper).exists()).toBe(false);
     });
+  });
+
+  it('shows the images the suggestion carries', () => {
+    const wrapper = mountBanner({
+      suggestion: {
+        content: 'Ваш рейк за 26.10: 108,07 грн.',
+        metadata: {
+          attachments: [
+            {
+              mimeType: 'image/png',
+              filename: 'rake.png',
+              dataBase64: 'iVBORw==',
+            },
+          ],
+        },
+      },
+    });
+    const img = wrapper.find('img');
+    expect(img.exists()).toBe(true);
+    expect(img.attributes('src')).toBe('data:image/png;base64,iVBORw==');
+  });
+
+  it('clamps a long suggestion to three lines until the agent expands it', async () => {
+    const wrapper = mountBanner({
+      suggestion: { content: 'Рядок.\n'.repeat(6) },
+    });
+    const text = () => wrapper.find('p');
+    expect(text().classes()).toContain('line-clamp-3');
+    await buttonWithText(wrapper, 'More').trigger('click');
+    expect(text().classes()).not.toContain('line-clamp-3');
+    await buttonWithText(wrapper, 'Less').trigger('click');
+    expect(text().classes()).toContain('line-clamp-3');
+  });
+
+  it('has no expand toggle for a short suggestion', () => {
+    const wrapper = mountBanner({ suggestion: { content: 'Добрий день!' } });
+    expect(buttonWithText(wrapper, 'More')).toBeUndefined();
   });
 });

@@ -4,7 +4,7 @@ import { LocalStorage } from 'shared/helpers/localStorage';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { MESSAGE_TYPE, MESSAGE_STATUS } from 'shared/constants/messages';
 
-export const AI_SUGGESTION_POLL_INTERVAL_MS = 1000;
+export const AI_SUGGESTION_POLL_INTERVAL_MS = 500;
 export const AI_SUGGESTION_MAX_WAIT_MS = 45000;
 export const AI_SUGGESTION_UNSEEN_LOCK_MS = 5000;
 export const AI_SUGGESTION_COMMENT_MIN_LETTERS = 4;
@@ -118,6 +118,34 @@ export const isCommentDetailedEnough = text =>
  * dismisses it when `text` is undefined: its confidence (0 when unknown) is at least
  * `commentFromConfidence`, the agent has not commented on it yet and the text differs from it.
  */
+const suggestionImageAttachments = suggestion =>
+  (suggestion?.metadata?.attachments ?? []).filter(
+    attachment =>
+      attachment?.mimeType?.startsWith('image/') && attachment.dataBase64
+  );
+
+/**
+ * The images a suggestion carries for the reply (the player's rake card), as `{ name, type, url }`
+ * with a data URL for the preview.
+ */
+export const suggestionImages = suggestion =>
+  suggestionImageAttachments(suggestion).map(attachment => ({
+    name: attachment.filename,
+    type: attachment.mimeType,
+    url: `data:${attachment.mimeType};base64,${attachment.dataBase64}`,
+  }));
+
+/** The suggestion's images as files, ready to attach to the reply box. */
+export const suggestionFiles = suggestion =>
+  suggestionImageAttachments(suggestion).map(attachment => {
+    const bytes = Uint8Array.from(atob(attachment.dataBase64), char =>
+      char.charCodeAt(0)
+    );
+    return new File([bytes], attachment.filename, {
+      type: attachment.mimeType,
+    });
+  });
+
 export const needsSuggestionComment = ({
   suggestion,
   commentFromConfidence,

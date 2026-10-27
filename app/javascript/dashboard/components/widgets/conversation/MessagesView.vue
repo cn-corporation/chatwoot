@@ -9,6 +9,7 @@ import {
   useAISuggestions,
   findMessageAwaitingReply,
   isSuggestionFor,
+  suggestionFiles,
 } from 'dashboard/composables/useAISuggestions';
 import { useSnakeCase } from 'dashboard/composables/useTransformKeys';
 import { useSourceChannelColors } from 'dashboard/composables/useSourceChannelColors';
@@ -710,6 +711,8 @@ export default {
     },
     handleUseSuggestion(suggestionContent) {
       emitter.emit(BUS_EVENTS.INSERT_INTO_NORMAL_EDITOR, suggestionContent);
+      const files = suggestionFiles(this.visibleAISuggestion);
+      if (files.length) emitter.emit(BUS_EVENTS.ATTACH_FILES_TO_EDITOR, files);
       this.rememberUsedSuggestion(
         this.currentChat.id,
         this.visibleAISuggestion
