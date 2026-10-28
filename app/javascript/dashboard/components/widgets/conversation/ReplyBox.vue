@@ -83,7 +83,15 @@ export default {
       type: Boolean,
       default: false,
     },
+    isFloodUnlocked: {
+      type: Boolean,
+      default: false,
+    },
     beforeSendReply: {
+      type: Function,
+      default: null,
+    },
+    aiSuggestionAttributes: {
       type: Function,
       default: null,
     },
@@ -226,6 +234,9 @@ export default {
     isReplyLockedByAiSuggestion() {
       return this.isLockedByAiSuggestion && !this.isPrivate;
     },
+    isReplyOpenForFlood() {
+      return this.isFloodUnlocked && !this.isPrivate;
+    },
     isMessageLengthReachingThreshold() {
       return this.message.length > this.maxLength - 50;
     },
@@ -314,6 +325,7 @@ export default {
         'is-focused': this.isFocused || this.hasAttachments,
         'is-resized': this.editorHeight !== null && !this.popOutReplyBox,
         'is-resizing': this.isResizingEditor,
+        'ring-2 ring-n-teal-9': this.isReplyOpenForFlood,
       };
     },
     editorHeightStyle() {
@@ -959,7 +971,30 @@ export default {
         this.confirmOnSendReply();
       }
     },
-    async sendMessage(messagePayload) {
+    /**
+     * Marks a public reply sent unchanged from an AI suggestion, so the conversation shows it.
+     */
+    withAiSuggestionAttributes(messagePayload) {
+      if (messagePayload.private || !this.aiSuggestionAttributes) {
+        return messagePayload;
+      }
+      const text =
+        this.isSignatureAvailable && messagePayload.message
+          ? removeSignature(messagePayload.message, this.signatureToApply)
+          : messagePayload.message || '';
+      const attributes = this.aiSuggestionAttributes(text);
+      if (!Object.keys(attributes).length) return messagePayload;
+      return {
+        ...messagePayload,
+        contentAttributes: {
+          ...messagePayload.content_attributes,
+          ...messagePayload.contentAttributes,
+          ...attributes,
+        },
+      };
+    },
+    async sendMessage(payload) {
+      const messagePayload = this.withAiSuggestionAttributes(payload);
       try {
         await this.$store.dispatch(
           'createPendingMessageAndSend',

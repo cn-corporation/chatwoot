@@ -548,7 +548,9 @@
       "ERROR": "Couldn't save the comment. Try again."
     },
     "SHOW_MORE": "More",
-    "SHOW_LESS": "Less"
+    "SHOW_LESS": "Less",
+    "FLOOD_HINT": "The customer keeps writing — reply now, no need to wait for the suggestion",
+    "SENT_UNCHANGED": "AI suggestion sent unchanged"
   },
   "OPERATOR_PRESENCE": {
     "TITLE": "Operators Viewing",

@@ -2,8 +2,12 @@ import chatwootExtraAPI from 'dashboard/api/chatwootExtra';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import {
   AI_SUGGESTION_POLL_INTERVAL_MS,
+  AI_SUGGESTION_SPAM_MESSAGES,
+  AI_SUGGESTION_SPAM_WINDOW_MS,
   findMessageAwaitingReply,
+  isAcceptedAISuggestionMessage,
   isCommentDetailedEnough,
+  isCustomerSpamming,
   isSuggestionFor,
   needsSuggestionComment,
   suggestionFiles,
@@ -99,6 +103,87 @@ describe('findMessageAwaitingReply', () => {
       { id: 5, message_type: 2 },
     ];
     expect(findMessageAwaitingReply(messages).id).toBe(1);
+  });
+});
+
+describe('isCustomerSpamming', () => {
+  const at = (id, seconds) => ({ ...incoming(id), created_at: seconds });
+  const burst = (count, everySeconds, startId = 1) =>
+    Array.from({ length: count }, (_, i) =>
+      at(startId + i, 1000 + i * everySeconds)
+    );
+
+  it('is a burst of customer messages since the last agent reply', () => {
+    expect(isCustomerSpamming(burst(AI_SUGGESTION_SPAM_MESSAGES, 5))).toBe(
+      true
+    );
+    expect(isCustomerSpamming(burst(AI_SUGGESTION_SPAM_MESSAGES - 1, 5))).toBe(
+      false
+    );
+  });
+
+  it('needs the latest messages to come within the window', () => {
+    const slow = (AI_SUGGESTION_SPAM_WINDOW_MS / 1000 + 4) / 4;
+    expect(isCustomerSpamming(burst(AI_SUGGESTION_SPAM_MESSAGES, slow))).toBe(
+      false
+    );
+    expect(
+      isCustomerSpamming([
+        at(1, 0),
+        ...burst(AI_SUGGESTION_SPAM_MESSAGES, 3, 2),
+      ])
+    ).toBe(true);
+  });
+
+  it('starts counting again after an agent reply', () => {
+    const messages = [
+      ...burst(AI_SUGGESTION_SPAM_MESSAGES, 3),
+      agentReply(50, { created_at: 1100 }),
+      at(51, 1103),
+    ];
+    expect(isCustomerSpamming(messages)).toBe(false);
+    expect(
+      isCustomerSpamming([
+        ...messages,
+        ...burst(AI_SUGGESTION_SPAM_MESSAGES - 1, 3, 52),
+      ])
+    ).toBe(true);
+  });
+
+  it('ignores private notes between customer messages', () => {
+    const note = {
+      id: 99,
+      message_type: 1,
+      private: true,
+      sender_type: 'User',
+    };
+    const messages = burst(AI_SUGGESTION_SPAM_MESSAGES, 3);
+    messages.splice(2, 0, note);
+    expect(isCustomerSpamming(messages)).toBe(true);
+  });
+});
+
+describe('isAcceptedAISuggestionMessage', () => {
+  it('reads the marker in either key style and never on private notes', () => {
+    expect(
+      isAcceptedAISuggestionMessage({
+        content_attributes: { ai_suggestion_accepted: true },
+      })
+    ).toBe(true);
+    expect(
+      isAcceptedAISuggestionMessage({
+        contentAttributes: { aiSuggestionAccepted: true },
+      })
+    ).toBe(true);
+    expect(
+      isAcceptedAISuggestionMessage({
+        private: true,
+        contentAttributes: { aiSuggestionAccepted: true },
+      })
+    ).toBe(false);
+    expect(isAcceptedAISuggestionMessage({ contentAttributes: {} })).toBe(
+      false
+    );
   });
 });
 
@@ -485,6 +570,33 @@ describe('useAISuggestions.getSuggestionNeedingComment', () => {
     const ai = await show(forcedState());
     expect(ai.getSuggestionNeedingComment(56, 10, 'Other')).toBeNull();
     expect(ai.getSuggestionNeedingComment(55, 12, 'Other')).toBeNull();
+  });
+});
+
+describe('useAISuggestions.acceptedSuggestionAttributes', () => {
+  it('marks a reply that is still the inserted suggestion', () => {
+    const ai = useAISuggestions();
+    ai.rememberUsedSuggestion(55, suggestion(10, 'Hello  there'));
+
+    expect(ai.acceptedSuggestionAttributes(55, 'Hello there\n')).toEqual({
+      ai_suggestion_id: 'sug-10',
+      ai_suggestion_accepted: true,
+    });
+    expect(ai.acceptedSuggestionAttributes('55', 'Hello there')).toEqual({
+      ai_suggestion_id: 'sug-10',
+      ai_suggestion_accepted: true,
+    });
+  });
+
+  it('does not mark edited replies, other conversations or replies without an inserted suggestion', () => {
+    const ai = useAISuggestions();
+    expect(ai.acceptedSuggestionAttributes(55, 'Hello there')).toEqual({});
+    ai.rememberUsedSuggestion(55, suggestion(10, 'Hello there'));
+    expect(ai.acceptedSuggestionAttributes(55, 'Hello there, Olena')).toEqual(
+      {}
+    );
+    expect(ai.acceptedSuggestionAttributes(56, 'Hello there')).toEqual({});
+    expect(ai.acceptedSuggestionAttributes(55, '')).toEqual({});
   });
 });
 

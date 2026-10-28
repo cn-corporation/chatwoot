@@ -160,6 +160,18 @@ describe('AISuggestionBanner', () => {
       expect(wrapper.text()).not.toContain('The reply box unlocks');
     });
 
+    it('tells the agent to reply now while the customer floods the chat', () => {
+      const wrapper = mountBanner({
+        isLoading: true,
+        isForced: true,
+        isFlooding: true,
+      });
+      expect(
+        wrapper.find('[data-testid="ai-suggestion-flood-hint"]').text()
+      ).toContain('The customer keeps writing — reply now');
+      expect(wrapper.text()).not.toContain('The reply box unlocks');
+    });
+
     it('says when a different reply needs a comment', () => {
       const wrapper = mountBanner({
         suggestion: { content: 'Hi' },

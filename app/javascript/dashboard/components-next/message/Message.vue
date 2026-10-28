@@ -11,6 +11,7 @@ import { LocalStorage } from 'shared/helpers/localStorage';
 import { ACCOUNT_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
+import { isAcceptedAISuggestionMessage } from 'dashboard/composables/useAISuggestions';
 import {
   MESSAGE_TYPES,
   ATTACHMENT_TYPES,
@@ -348,6 +349,13 @@ const isMessageDeleted = computed(() => {
   return props.contentAttributes?.deleted;
 });
 
+const isAcceptedAISuggestion = computed(
+  () =>
+    variant.value === MESSAGE_VARIANTS.AGENT &&
+    !isMessageDeleted.value &&
+    isAcceptedAISuggestionMessage(props)
+);
+
 const payloadForContextMenu = computed(() => {
   return {
     id: props.id,
@@ -637,6 +645,22 @@ provideMessageContext({
               {{ $t('CONVERSATION.EDIT_MESSAGE.SAVE') }}
             </button>
           </div>
+        </div>
+        <div
+          v-else-if="isAcceptedAISuggestion"
+          v-tooltip.left="t('AI_SUGGESTION.SENT_UNCHANGED')"
+          class="relative isolate flex min-w-0"
+          data-testid="ai-accepted-message"
+        >
+          <div
+            aria-hidden="true"
+            class="absolute -inset-[3px] -z-10 rounded-[0.95rem] bg-[linear-gradient(90deg,#0894FF,#C959DD,#FF2E54,#FF9004,#C959DD,#0894FF)] bg-[length:300%_100%] blur-[6px] opacity-70 animate-ai-glow motion-reduce:animate-none"
+          />
+          <div
+            aria-hidden="true"
+            class="absolute -inset-[1.5px] -z-10 rounded-[0.85rem] bg-[linear-gradient(90deg,#0894FF,#C959DD,#FF2E54,#FF9004,#C959DD,#0894FF)] bg-[length:300%_100%] animate-ai-glow motion-reduce:animate-none"
+          />
+          <Component :is="componentToRender" />
         </div>
         <Component :is="componentToRender" v-else />
       </div>

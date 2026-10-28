@@ -8,6 +8,7 @@ import { useAI } from 'dashboard/composables/useAI';
 import {
   useAISuggestions,
   findMessageAwaitingReply,
+  isCustomerSpamming,
   isSuggestionFor,
   suggestionFiles,
 } from 'dashboard/composables/useAISuggestions';
@@ -104,6 +105,7 @@ export default {
       getSuggestionComment,
       commentOnSuggestion,
       getSuggestionNeedingComment,
+      acceptedSuggestionAttributes,
       reportSentMessage,
     } = useAISuggestions();
 
@@ -141,6 +143,7 @@ export default {
       getSuggestionComment,
       commentOnSuggestion,
       getSuggestionNeedingComment,
+      acceptedSuggestionAttributes,
       reportSentMessage,
       conversationPanelRef,
       getSourceBgColor,
@@ -434,6 +437,17 @@ export default {
     },
     messageAwaitingReply() {
       return findMessageAwaitingReply(this.currentChat?.messages || []);
+    },
+    /**
+     * Forced mode would keep the reply box locked while the customer keeps writing, so a flooding
+     * customer can be answered at once; the agent's reply resets it.
+     */
+    isFloodUnlocked() {
+      return (
+        this.isAISuggestionsForced &&
+        !!this.messageAwaitingReply &&
+        isCustomerSpamming(this.currentChat?.messages || [])
+      );
     },
     visibleAISuggestion() {
       const message = this.messageAwaitingReply;
@@ -761,6 +775,7 @@ export default {
      * go out, asking for the comment forced mode requires first.
      */
     async confirmReplyAgainstSuggestion(text) {
+      if (this.isFloodUnlocked) return true;
       const suggestion = await this.findSuggestionNeedingComment(text);
       return !suggestion || this.askForSuggestionComment(suggestion, 'send');
     },
@@ -851,6 +866,9 @@ export default {
     handleDisableAISuggestions() {
       if (this.isAISuggestionsForced) return;
       this.setAISuggestionsEnabled(false);
+    },
+    aiSuggestionAttributesFor(text) {
+      return this.acceptedSuggestionAttributes(this.currentChat?.id, text);
     },
     isLabelSuggestionDismissed() {
       return LocalStorage.getFlag(
@@ -1291,8 +1309,13 @@ export default {
           :rating="visibleAISuggestionRating"
           :comment="visibleAISuggestionComment"
           :is-forced="isAISuggestionsForced"
-          :locked-until="isReplyLocked ? suggestionDeadline : 0"
-          :is-comment-required="isVisibleAISuggestionCommentRequired"
+          :locked-until="
+            isReplyLocked && !isFloodUnlocked ? suggestionDeadline : 0
+          "
+          :is-flooding="isFloodUnlocked"
+          :is-comment-required="
+            isVisibleAISuggestionCommentRequired && !isFloodUnlocked
+          "
           @use-suggestion="handleUseSuggestion"
           @dismiss="handleDismissSuggestion"
           @reload="handleReloadSuggestion"
@@ -1304,8 +1327,10 @@ export default {
       <ReplyBox
         v-if="!isReadOnlyMode"
         :pop-out-reply-box="isPopOutReplyBox"
-        :is-locked-by-ai-suggestion="isReplyLocked"
+        :is-locked-by-ai-suggestion="isReplyLocked && !isFloodUnlocked"
+        :is-flood-unlocked="isFloodUnlocked"
         :before-send-reply="confirmReplyAgainstSuggestion"
+        :ai-suggestion-attributes="aiSuggestionAttributesFor"
         @update:pop-out-reply-box="isPopOutReplyBox = $event"
       />
       <AISuggestionCommentDialog

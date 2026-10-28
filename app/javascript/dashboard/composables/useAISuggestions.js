@@ -8,6 +8,8 @@ export const AI_SUGGESTION_POLL_INTERVAL_MS = 500;
 export const AI_SUGGESTION_MAX_WAIT_MS = 45000;
 export const AI_SUGGESTION_UNSEEN_LOCK_MS = 5000;
 export const AI_SUGGESTION_COMMENT_MIN_LETTERS = 4;
+export const AI_SUGGESTION_SPAM_MESSAGES = 5;
+export const AI_SUGGESTION_SPAM_WINDOW_MS = 60000;
 const AI_SUGGESTION_FIRST_CHECK_DELAY_MS = 1000;
 
 const isAISuggestionsEnabled = ref(
@@ -94,6 +96,39 @@ export const findMessageAwaitingReply = (messages = []) => {
     if (isAgentReply(message)) return null;
   }
   return null;
+};
+
+/**
+ * Whether the customer is flooding the conversation: the last AI_SUGGESTION_SPAM_MESSAGES of their
+ * messages since the latest agent reply came within AI_SUGGESTION_SPAM_WINDOW_MS. Every new message
+ * restarts the suggestion, so forced mode would keep the reply box locked for as long as they keep
+ * writing; an agent reply starts the count again.
+ */
+export const isCustomerSpamming = (messages = []) => {
+  const sentAt = [];
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const message = messages[i];
+    if (isAgentReply(message)) break;
+    if (message.message_type === MESSAGE_TYPE.INCOMING) {
+      sentAt.push(message.created_at || 0);
+    }
+  }
+  if (sentAt.length < AI_SUGGESTION_SPAM_MESSAGES) return false;
+  const burstMs = (sentAt[0] - sentAt[AI_SUGGESTION_SPAM_MESSAGES - 1]) * 1000;
+  return burstMs <= AI_SUGGESTION_SPAM_WINDOW_MS;
+};
+
+/**
+ * Whether a message is an agent's public reply sent unchanged from an AI suggestion (marked by
+ * the reply box when it was sent).
+ */
+export const isAcceptedAISuggestionMessage = message => {
+  const attributes =
+    message?.contentAttributes || message?.content_attributes || {};
+  return (
+    !message?.private &&
+    !!(attributes.aiSuggestionAccepted || attributes.ai_suggestion_accepted)
+  );
 };
 
 /**
@@ -503,6 +538,27 @@ export function useAISuggestions() {
   };
 
   /**
+   * The content attributes that mark a public reply as an AI suggestion sent unchanged: the agent
+   * inserted the suggestion in this conversation and `text` is still its text. Empty otherwise.
+   */
+  const acceptedSuggestionAttributes = (conversationId, text) => {
+    const used = usedSuggestion.value;
+    if (!used || String(used.conversationId) !== String(conversationId)) {
+      return {};
+    }
+    if (
+      !normalizeText(text) ||
+      normalizeText(text) !== normalizeText(used.text)
+    ) {
+      return {};
+    }
+    return {
+      ai_suggestion_id: used.suggestionId,
+      ai_suggestion_accepted: true,
+    };
+  };
+
+  /**
    * Reports the outcome of a used suggestion once the agent sends a public reply.
    */
   const reportSentMessage = ({
@@ -553,6 +609,7 @@ export function useAISuggestions() {
     getSuggestionComment,
     commentOnSuggestion,
     getSuggestionNeedingComment,
+    acceptedSuggestionAttributes,
     reportSentMessage,
   };
 }

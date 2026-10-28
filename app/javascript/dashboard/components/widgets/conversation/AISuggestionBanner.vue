@@ -44,6 +44,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isFlooding: {
+    type: Boolean,
+    default: false,
+  },
 });
 const emit = defineEmits([
   'useSuggestion',
@@ -290,14 +294,27 @@ onBeforeUnmount(() => {
   <div class="ai-suggestion-container mb-2 max-h-[50vh]">
     <div v-if="isLoading" class="ai-suggestion-banner">
       <div
-        class="flex items-center gap-2 px-3 py-1.5 bg-n-alpha-1 rounded-lg border border-n-weak"
+        class="flex items-center gap-2 px-3 py-1.5 rounded-lg border"
+        :class="
+          isFlooding
+            ? 'bg-n-teal-9/10 border-n-teal-9'
+            : 'bg-n-alpha-1 border-n-weak'
+        "
       >
         <Spinner :size="14" />
         <span class="text-xs text-n-slate-11">{{
           t('AI_SUGGESTION.LOADING')
         }}</span>
         <span
-          v-if="lockSecondsLeft > 0"
+          v-if="isFlooding"
+          class="flex items-center gap-1 min-w-0 text-xs font-medium text-n-teal-11"
+          data-testid="ai-suggestion-flood-hint"
+        >
+          <span class="i-ph-lightning-fill size-3.5 flex-shrink-0" />
+          <span class="truncate">{{ t('AI_SUGGESTION.FLOOD_HINT') }}</span>
+        </span>
+        <span
+          v-else-if="lockSecondsLeft > 0"
           class="flex items-center gap-1 min-w-0 text-xs text-n-slate-10 truncate"
         >
           <span class="i-ph-lock-simple size-3.5 flex-shrink-0" />
