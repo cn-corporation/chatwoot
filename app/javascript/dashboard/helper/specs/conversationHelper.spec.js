@@ -97,5 +97,28 @@ describe('conversationHelper', () => {
         testConversation.messages[1]
       );
     });
+
+    it('should skip bot system messages but keep automatic replies of the support engine', () => {
+      const hidden = {
+        ...conversationData.messages[1],
+        content_attributes: { bot_system_message: true },
+      };
+      const automatic = {
+        ...conversationData.messages[2],
+        content_attributes: {
+          bot_system_message: true,
+          support_engine_auto_reply: true,
+        },
+      };
+      expect(
+        getLastMessage({ messages: [conversationData.messages[0], hidden] })
+      ).toEqual(conversationData.messages[0]);
+      expect(
+        getLastMessage({ messages: [conversationData.messages[0], automatic] })
+      ).toEqual(automatic);
+      expect(
+        getLastMessage({ messages: [], last_non_activity_message: automatic })
+      ).toEqual(automatic);
+    });
   });
 });

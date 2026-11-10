@@ -257,7 +257,8 @@ export default {
       filteredMessages = filteredMessages.filter(
         m =>
           !m.content_attributes?.bot_system_message ||
-          m.content_attributes?.bot_break_message
+          m.content_attributes?.bot_break_message ||
+          m.content_attributes?.support_engine_auto_reply
       );
       if (this.linkedMessages.length > 0) {
         return [...this.linkedMessages, ...filteredMessages];
