@@ -124,15 +124,6 @@ services:
       - rails-data:/app/storage
       - rails-assets:/app/public/packs
       - agent_assignment_logs:/app/log/agent_assignment
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          "bundle exec rails runner 'puts Sidekiq.redis(&:info)' > /dev/null 2>&1",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
 volumes:
   rails-data:
