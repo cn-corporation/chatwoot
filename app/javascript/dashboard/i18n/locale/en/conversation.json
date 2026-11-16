@@ -229,7 +229,8 @@
         "COPIED": "Copied!",
         "LANG_RU": "Russian",
         "LANG_KZ": "Kazakh",
-        "LANG_UA": "Ukrainian"
+        "LANG_UA": "Ukrainian",
+        "LANG_EN": "English"
       },
       "INSERT_READ_MORE": "Read more",
       "DISMISS_REPLY": "Dismiss reply",

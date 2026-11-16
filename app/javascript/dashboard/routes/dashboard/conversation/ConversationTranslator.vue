@@ -37,6 +37,7 @@ const LANGUAGES = [
   { value: 'ru', labelKey: 'CONVERSATION.REPLYBOX.TRANSLATOR.LANG_RU' },
   { value: 'kk', labelKey: 'CONVERSATION.REPLYBOX.TRANSLATOR.LANG_KZ' },
   { value: 'uk', labelKey: 'CONVERSATION.REPLYBOX.TRANSLATOR.LANG_UA' },
+  { value: 'en', labelKey: 'CONVERSATION.REPLYBOX.TRANSLATOR.LANG_EN' },
 ];
 
 const sourceText = ref('');
@@ -156,7 +157,7 @@ onMounted(() => {
             {{ $t(lang.labelKey) }}
           </option>
         </select>
-        <span class="text-n-slate-9 text-xs">→</span>
+        <span class="text-n-slate-9 text-xs">{{ '→' }}</span>
         <span class="text-xs text-n-slate-11 shrink-0">
           {{ $t('CONVERSATION.REPLYBOX.TRANSLATOR.TO_LABEL') }}
         </span>
@@ -176,7 +177,7 @@ onMounted(() => {
           class="ml-auto text-xs text-n-blue-text hover:underline shrink-0"
           @click="fillLastMessage"
         >
-          ↙ {{ $t('CONVERSATION.REPLYBOX.TRANSLATOR.LAST_MESSAGE') }}
+          {{ '↙' }} {{ $t('CONVERSATION.REPLYBOX.TRANSLATOR.LAST_MESSAGE') }}
         </button>
       </div>
 
@@ -192,7 +193,9 @@ onMounted(() => {
       <div
         class="relative flex items-start gap-2 min-h-[3.5rem] px-3 py-2 bg-n-alpha-1"
       >
-        <span v-if="isLoading" class="text-xs text-n-slate-9 mt-0.5">…</span>
+        <span v-if="isLoading" class="text-xs text-n-slate-9 mt-0.5">{{
+          '…'
+        }}</span>
         <span
           v-else
           class="flex-1 text-sm text-n-slate-12 whitespace-pre-wrap break-words"
