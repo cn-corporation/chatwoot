@@ -9,7 +9,7 @@ class WebhookListener < BaseListener
       account_id: conversation.account_id,
       account: conversation.account.webhook_data,
       changed_attributes: changed_attributes,
-      performed_by: performed_by&.push_event_data,
+      performed_by: performer_webhook_data(performed_by),
       inbox: inbox.webhook_data
     )
     deliver_webhook_payloads(payload, inbox)
@@ -25,7 +25,7 @@ class WebhookListener < BaseListener
       account_id: conversation.account_id,
       account: conversation.account.webhook_data,
       changed_attributes: changed_attributes,
-      performed_by: performed_by&.push_event_data,
+      performed_by: performer_webhook_data(performed_by),
       inbox: inbox.webhook_data
     )
     deliver_webhook_payloads(payload, inbox)
@@ -145,6 +145,12 @@ class WebhookListener < BaseListener
       is_private: event.data[:is_private] || false
     }
     deliver_webhook_payloads(payload, inbox)
+  end
+
+  # Serializes the actor behind a conversation change; actors without push data,
+  # such as automation rules, are sent as nil.
+  def performer_webhook_data(performed_by)
+    performed_by.push_event_data if performed_by.respond_to?(:push_event_data)
   end
 
   def deliver_account_webhooks(payload, account)
