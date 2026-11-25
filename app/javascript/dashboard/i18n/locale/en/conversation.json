@@ -566,5 +566,9 @@
       "FAILED": "Transcription failed",
       "SKIPPED": "Voice message too long — not transcribed"
     }
+  },
+  "BACKOFFICE_SENDER": {
+    "LABEL": "Backoffice · {name}",
+    "TOOLTIP": "Sent from the backoffice CRM by {account}"
   }
 }

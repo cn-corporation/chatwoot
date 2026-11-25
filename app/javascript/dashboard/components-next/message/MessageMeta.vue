@@ -3,9 +3,11 @@ import { computed } from 'vue';
 import { messageTimestamp } from 'shared/helpers/timeHelper';
 
 import MessageStatus from './MessageStatus.vue';
+import MessageBackofficeSender from './MessageBackofficeSender.vue';
 import Icon from 'next/icon/Icon.vue';
 import { useInbox } from 'dashboard/composables/useInbox';
 import { useMessageContext } from './provider.js';
+import { backofficeSender } from 'dashboard/helper/backofficeSender';
 
 import { MESSAGE_STATUS, MESSAGE_TYPES } from './constants';
 
@@ -30,6 +32,10 @@ const {
   messageType,
   contentAttributes,
 } = useMessageContext();
+
+const isFromBackoffice = computed(
+  () => !!backofficeSender(contentAttributes.value)
+);
 
 const readableTime = computed(() =>
   messageTimestamp(createdAt.value, 'd LLL, HH:mm')
@@ -123,6 +129,7 @@ const statusToShow = computed(() => {
 
 <template>
   <div class="text-xs flex items-center gap-1.5">
+    <MessageBackofficeSender v-if="isFromBackoffice" />
     <div class="inline">
       <time class="inline">{{ readableTime }}</time>
     </div>

@@ -553,5 +553,9 @@
     "YOU": "Вы",
     "VIEWING": "Сейчас просматривает",
     "CONNECTING": "Подключение..."
+  },
+  "BACKOFFICE_SENDER": {
+    "LABEL": "Бэкофис · {name}",
+    "TOOLTIP": "Отправлено из CRM бэкофиса: {account}"
   }
 }

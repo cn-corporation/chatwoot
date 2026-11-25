@@ -479,5 +479,9 @@
     "YOU": "Ви",
     "VIEWING": "Зараз переглядає",
     "CONNECTING": "Підключення..."
+  },
+  "BACKOFFICE_SENDER": {
+    "LABEL": "Бекофіс · {name}",
+    "TOOLTIP": "Надіслано з CRM бекофісу: {account}"
   }
 }

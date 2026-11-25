@@ -2,9 +2,11 @@
 import { computed } from 'vue';
 
 import MessageMeta from '../MessageMeta.vue';
+import MessageBackofficeSender from '../MessageBackofficeSender.vue';
 
 import { emitter } from 'shared/helpers/mitt';
 import { useMessageContext } from '../provider.js';
+import { backofficeSender } from 'dashboard/helper/backofficeSender';
 import { useI18n } from 'vue-i18n';
 
 import { BUS_EVENTS } from 'shared/constants/busEvents';
@@ -14,8 +16,13 @@ const props = defineProps({
   hideMeta: { type: Boolean, default: false },
 });
 
-const { variant, orientation, inReplyTo, shouldGroupWithNext } =
-  useMessageContext();
+const {
+  variant,
+  orientation,
+  inReplyTo,
+  shouldGroupWithNext,
+  contentAttributes,
+} = useMessageContext();
 const { t } = useI18n();
 
 const varaintBaseMap = {
@@ -77,6 +84,13 @@ const shouldShowMeta = computed(
     variant.value !== MESSAGE_VARIANTS.ACTIVITY
 );
 
+const shouldShowBackofficeSender = computed(
+  () =>
+    !shouldShowMeta.value &&
+    variant.value !== MESSAGE_VARIANTS.ACTIVITY &&
+    !!backofficeSender(contentAttributes.value)
+);
+
 const replyToPreview = computed(() => {
   if (!inReplyTo) return '';
 
@@ -126,6 +140,16 @@ const replyToPreview = computed(() => {
             : 'text-n-slate-11',
       ]"
       class="mt-2"
+    />
+    <MessageBackofficeSender
+      v-else-if="shouldShowBackofficeSender"
+      :class="[
+        flexOrientationClass,
+        variant === MESSAGE_VARIANTS.PRIVATE
+          ? 'text-n-amber-12/50'
+          : 'text-n-slate-11',
+      ]"
+      class="mt-2 flex"
     />
   </div>
 </template>
