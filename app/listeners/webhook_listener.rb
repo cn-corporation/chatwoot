@@ -121,6 +121,20 @@ class WebhookListener < BaseListener
     deliver_account_webhooks(payload, account)
   end
 
+  def conversation_agent_read(event)
+    conversation = event.data[:conversation]
+    inbox = conversation.inbox
+    payload = {
+      event: __method__.to_s,
+      account_id: conversation.account_id,
+      account: conversation.account.webhook_data,
+      user: event.data[:user]&.webhook_data,
+      conversation: conversation.webhook_data,
+      inbox: inbox.webhook_data
+    }
+    deliver_webhook_payloads(payload, inbox)
+  end
+
   def conversation_typing_on(event)
     handle_typing_status(__method__.to_s, event)
   end

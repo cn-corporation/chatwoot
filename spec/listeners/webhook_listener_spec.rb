@@ -280,6 +280,36 @@ describe WebhookListener do
     end
   end
 
+  describe '#conversation_agent_read' do
+    let(:event_name) { :'conversation.agent_read' }
+    let!(:read_event) { Events::Base.new(event_name, Time.zone.now, conversation: conversation, user: user) }
+
+    context 'when no webhook subscribes to it' do
+      it 'does not trigger a webhook' do
+        create(:webhook, inbox: inbox, account: account, subscriptions: ['conversation_updated'])
+        expect(WebhookJob).not_to receive(:perform_later)
+        listener.conversation_agent_read(read_event)
+      end
+    end
+
+    context 'when a webhook subscribes to it' do
+      it 'sends the conversation with the agent who read it' do
+        webhook = create(:webhook, inbox: inbox, account: account, subscriptions: ['conversation_agent_read'])
+        payload = {
+          event: 'conversation_agent_read',
+          account_id: account.id,
+          account: account.webhook_data,
+          user: user.webhook_data,
+          conversation: conversation.webhook_data,
+          inbox: inbox.webhook_data
+        }
+
+        expect(WebhookJob).to receive(:perform_later).with(webhook.url, payload).once
+        listener.conversation_agent_read(read_event)
+      end
+    end
+  end
+
   describe '#conversation_typing_on' do
     let(:event_name) { :'conversation.typing_on' }
     let!(:typing_event) { Events::Base.new(event_name, Time.zone.now, conversation: conversation, user: user) }

@@ -152,6 +152,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def update_last_seen
     update_last_seen_on_conversation(DateTime.now.utc, assignee?)
+    dispatch_agent_read
   end
 
   def unread
@@ -159,6 +160,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     last_seen_at = last_incoming_message.created_at - 1.second if last_incoming_message.present?
     update_last_seen_on_conversation(last_seen_at, true)
     propagate_unread_to_chatwoot_extra
+    dispatch_agent_read
   end
 
   def custom_attributes
@@ -187,6 +189,10 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     ChatwootExtra::ApiClient.new.mark_conversation_unread(Current.account.id, @conversation.display_id)
   rescue StandardError => e
     Rails.logger.warn("[ChatwootExtra] Failed to propagate mark-unread for conversation #{@conversation.display_id}: #{e.message}")
+  end
+
+  def dispatch_agent_read
+    Rails.configuration.dispatcher.dispatch(CONVERSATION_AGENT_READ, Time.zone.now, conversation: @conversation, user: Current.user)
   end
 
   def update_last_seen_on_conversation(last_seen_at, update_assignee)

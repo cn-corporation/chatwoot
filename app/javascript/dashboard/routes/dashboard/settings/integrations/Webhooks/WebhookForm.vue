@@ -34,6 +34,7 @@ const SUPPORTED_WEBHOOK_EVENTS = [
   'contact_updated',
   'conversation_typing_on',
   'conversation_typing_off',
+  'conversation_agent_read',
 ];
 
 export default {
