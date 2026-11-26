@@ -5,6 +5,7 @@ json.data do
     json.unassigned_count @conversations_count[:unassigned_count]
     json.all_count @conversations_count[:all_count]
     json.pending_count @conversations_count[:pending_count]
+    json.stand_by_count @conversations_count[:stand_by_count]
     json.resolved_count @conversations_count[:resolved_count]
   end
   json.payload do
